@@ -51,6 +51,9 @@
       </Tooltip>
     </template>
   </LayoutHeader>
+  <div v-if="doc.name" class="border-b px-5 py-2">
+    <ConnectCallSummary doctype="CRM Lead" :name="leadId" />
+  </div>
   <div v-if="doc.name" class="flex h-full overflow-hidden">
     <Tabs
       v-model="activeTab"
@@ -271,6 +274,7 @@ import LinkIcon from '@/components/Icons/LinkIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
+import ConnectCallSummary from '@/components/ConnectCallSummary.vue'
 import Activities from '@/components/Activities/Activities.vue'
 import AssignTo from '@/components/AssignTo.vue'
 import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'

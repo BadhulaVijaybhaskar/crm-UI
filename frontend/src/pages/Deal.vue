@@ -38,6 +38,9 @@
       </Dropdown>
     </template>
   </LayoutHeader>
+  <div v-if="doc.name" class="border-b px-5 py-2">
+    <ConnectCallSummary doctype="CRM Deal" :name="dealId" />
+  </div>
   <div v-if="doc.name" class="flex h-full overflow-hidden">
     <Tabs
       ref="dealTabsRef"
@@ -377,6 +380,7 @@ import SuccessIcon from '@/components/Icons/SuccessIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import FileTextIcon from '@/components/Icons/FileTextIcon.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
+import ConnectCallSummary from '@/components/ConnectCallSummary.vue'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'

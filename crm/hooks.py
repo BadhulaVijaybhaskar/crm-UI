@@ -314,10 +314,14 @@ doc_events = {
 		"on_update": [
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext",
 			"crm.automation.events.on_deal_update",
+			"crm.integrations.astra_connect.outbound.on_deal_update",
 		],
 	},
 	"CRM Lead": {
-		"on_update": ["crm.automation.events.on_lead_update"],
+		"on_update": [
+			"crm.automation.events.on_lead_update",
+			"crm.integrations.astra_connect.outbound.on_lead_update",
+		],
 	},
 	"Sales Order": {
 		"before_validate": [

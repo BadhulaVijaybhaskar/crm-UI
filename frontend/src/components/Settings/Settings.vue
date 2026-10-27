@@ -83,6 +83,7 @@ import DashboardSettings from '@/components/Settings/DashboardSettings.vue'
 import WorkflowAutomationPage from '@/components/Settings/WorkflowAutomations/WorkflowAutomationPage.vue'
 import EmailTemplatePage from '@/components/Settings/EmailTemplate/EmailTemplatePage.vue'
 import TelephonyPage from '@/components/Settings/Telephony/TelephonyPage.vue'
+import AstraConnectSettings from '@/components/Settings/AstraConnectSettings.vue'
 import EmailConfig from '@/components/Settings/EmailConfig.vue'
 import Icon from '@/components/Icon.vue'
 import { usersStore } from '@/stores/users'
@@ -242,6 +243,12 @@ const tabs = computed(() => {
     {
       label: __('Integrations', null, 'FCRM'),
       items: [
+        {
+          label: __('Astra Connect'),
+          icon: PhoneIcon,
+          component: markRaw(AstraConnectSettings),
+          condition: () => isManager(),
+        },
         {
           label: __('Telephony'),
           icon: PhoneIcon,

@@ -19,6 +19,9 @@
       />
     </template>
   </LayoutHeader>
+  <div v-if="contact.doc" class="border-b px-5 py-2">
+    <ConnectCallSummary doctype="Contact" :name="contactId" />
+  </div>
   <div v-if="contact.doc" ref="parentRef" class="flex h-full">
     <Resizer
       v-if="contact.doc"
@@ -199,6 +202,7 @@ import Resizer from '@/components/Resizer.vue'
 import Icon from '@/components/Icon.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
+import ConnectCallSummary from '@/components/ConnectCallSummary.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import CameraIcon from '@/components/Icons/CameraIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
