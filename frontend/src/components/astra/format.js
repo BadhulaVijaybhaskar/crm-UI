@@ -48,6 +48,7 @@ export function formatTime(value) {
 
 /** Compact currency for KPI tiles (e.g. ₹3.2Cr). Returns empty string for null/NaN. */
 export function formatCompactCurrency(amount, currency = 'INR') {
+  if (amount == null || amount === '') return ''
   const n = Number(amount)
   if (!Number.isFinite(n)) return ''
   const abs = Math.abs(n)
