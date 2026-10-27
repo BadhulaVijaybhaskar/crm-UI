@@ -331,7 +331,9 @@ def ensure_lead_round_robin_rule():
 			"priority": 1,
 			"disabled": 1,
 			"description": "Round-robin new leads across Sales Users (disabled by default)",
-			"assign_condition": 'doc.status == "New"',
+			# Assignment Rule evaluates condition against the doc as `doc` is NOT in scope —
+			# use bare field names (same as Desk UI / test_availability).
+			"assign_condition": 'status == "New"',
 			"assignment_days": [{"day": day} for day in _ALL_WEEKDAYS],
 		}
 	)
@@ -340,3 +342,18 @@ def ensure_lead_round_robin_rule():
 	except Exception:
 		# Older sites may require users before insert — leave disabled stub via db
 		frappe.log_error(title="Astra India assignment rule seed")
+
+	# Backfill condition on older seeds that used the invalid `doc.status` form.
+	try:
+		if frappe.db.exists("Assignment Rule", name):
+			current = frappe.db.get_value("Assignment Rule", name, "assign_condition") or ""
+			if "doc.status" in current:
+				frappe.db.set_value(
+					"Assignment Rule",
+					name,
+					"assign_condition",
+					'status == "New"',
+					update_modified=False,
+				)
+	except Exception:
+		frappe.log_error(title="Astra India assignment rule condition backfill")
