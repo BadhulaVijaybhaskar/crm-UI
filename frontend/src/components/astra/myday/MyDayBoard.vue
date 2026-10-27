@@ -9,12 +9,15 @@
       </div>
     </header>
 
-    <div
-      class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12 xl:grid-rows-[auto_auto]"
-    >
+    <!--
+      Row 1 fills width: Today | Target | 3 KPIs
+      Row 2 fills width: Upcoming calls | Hot leads
+      No row-span holes at lg/xl; single column at mobile.
+    -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
       <!-- Today tasks -->
       <AstraCard
-        class="xl:col-span-3 xl:row-span-2"
+        class="lg:col-span-3"
         :title="__('Today')"
       >
         <div v-if="myDayLoading" class="astra-muted text-sm">
@@ -69,7 +72,7 @@
       </AstraCard>
 
       <!-- Target -->
-      <AstraCard class="xl:col-span-3" :title="__('Target')">
+      <AstraCard class="lg:col-span-3" :title="__('Target')">
         <AstraGauge
           v-if="target"
           :percent="target.percent"
@@ -86,7 +89,7 @@
       </AstraCard>
 
       <!-- KPI strip -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:col-span-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-6">
         <AstraCard
           v-for="kpi in kpis"
           :key="kpi.key"
@@ -111,7 +114,7 @@
 
       <!-- Upcoming calls -->
       <AstraCard
-        class="xl:col-span-5"
+        class="lg:col-span-5"
         :title="__('Upcoming calls')"
       >
         <div v-if="myDayLoading" class="astra-muted text-sm">
@@ -156,7 +159,7 @@
       </AstraCard>
 
       <!-- Hot leads -->
-      <AstraCard class="xl:col-span-7" :title="__('Hot leads')">
+      <AstraCard class="lg:col-span-7" :title="__('Hot leads')">
         <div v-if="hotLeads.loading" class="astra-muted text-sm">
           {{ __('Loading…') }}
         </div>

@@ -6,8 +6,8 @@
       </h1>
       <p class="astra-muted mt-1 text-sm">Wed, 28 Oct</p>
     </header>
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
-      <AstraCard class="xl:col-span-3 xl:row-span-2" title="Today">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <AstraCard class="lg:col-span-3" title="Today">
         <ul class="flex flex-col gap-2">
           <li v-for="t in tasks" :key="t" class="flex items-start gap-2.5 text-sm font-medium">
             <span class="mt-0.5 size-4 rounded-[4px] border border-[var(--astra-border)]" />
@@ -15,13 +15,13 @@
           </li>
         </ul>
       </AstraCard>
-      <AstraCard class="xl:col-span-3" title="Target">
+      <AstraCard class="lg:col-span-3" title="Target">
         <AstraEmptyState
           title="No sales target configured"
           body="A monthly target gauge will appear here when a sales target field is available on your CRM settings."
         />
       </AstraCard>
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:col-span-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-6">
         <AstraCard v-for="k in kpis" :key="k.label" class="!p-4">
           <p class="astra-label">{{ k.label }}</p>
           <p class="astra-value mt-1">{{ k.value }}</p>
@@ -31,7 +31,7 @@
           </div>
         </AstraCard>
       </div>
-      <AstraCard class="xl:col-span-5" title="Upcoming calls">
+      <AstraCard class="lg:col-span-5" title="Upcoming calls">
         <ul>
           <li v-for="c in calls" :key="c.name" class="astra-row">
             <AstraAvatar :name="c.name" :seed="c.name" size="sm" />
@@ -42,7 +42,7 @@
           </li>
         </ul>
       </AstraCard>
-      <AstraCard class="xl:col-span-7" title="Hot leads">
+      <AstraCard class="lg:col-span-7" title="Hot leads">
         <ul>
           <li v-for="l in leads" :key="l.name" class="astra-row">
             <AstraAvatar :name="l.name" :seed="l.name" size="sm" />
