@@ -1,5 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { createListResource, createResource } from 'frappe-ui'
+import { isWhatsAppInstalled } from '@/composables/whatsapp'
+import { shouldShowWhatsAppFilter } from '@/components/astra/workqueue/queueSummary'
 
 /**
  * Read-only conversations from Call Log + Communication (+ notes via feed).
@@ -79,6 +81,46 @@ export function useConversations() {
     cache: 'astra-conversations-notes',
   })
 
+  // Read-only WA Message probe — only when the WhatsApp app is installed.
+  const waMessages = createListResource({
+    doctype: 'WA Message',
+    fields: [
+      'name',
+      'creation',
+      'message',
+      'status',
+      'direction',
+      'reference_doctype',
+      'reference_name',
+      'modified',
+    ],
+    orderBy: 'creation desc',
+    pageLength: 40,
+    auto: false,
+    cache: 'astra-conversations-wa',
+  })
+
+  watch(
+    isWhatsAppInstalled,
+    (installed) => {
+      if (installed) waMessages.reload()
+    },
+    { immediate: true },
+  )
+
+  const waCount = computed(() => (waMessages.data || []).length)
+  const showWhatsApp = computed(() =>
+    shouldShowWhatsAppFilter({
+      installed: isWhatsAppInstalled.value,
+      hasDataSource: isWhatsAppInstalled.value,
+      count: waCount.value,
+    }),
+  )
+
+  watch(showWhatsApp, (show) => {
+    if (!show && channel.value === 'whatsapp') channel.value = 'all'
+  })
+
   const threads = computed(() => {
     const rows = []
 
@@ -131,17 +173,41 @@ export function useConversations() {
       })
     }
 
+    if (showWhatsApp.value) {
+      for (const m of waMessages.data || []) {
+        rows.push({
+          id: `wa-${m.name}`,
+          channel: 'whatsapp',
+          kind: 'whatsapp',
+          name: m.name,
+          title: m.reference_name || m.name,
+          snippet: m.message || __('WhatsApp'),
+          creation: m.creation,
+          reference_doctype: m.reference_doctype,
+          reference_docname: m.reference_name,
+          raw: m,
+        })
+      }
+    }
+
     rows.sort((a, b) => String(b.creation).localeCompare(String(a.creation)))
     return rows
   })
 
   const filteredThreads = computed(() => {
-    if (channel.value === 'all') return threads.value
+    if (channel.value === 'all') {
+      return showWhatsApp.value
+        ? threads.value
+        : threads.value.filter((t) => t.channel !== 'whatsapp')
+    }
     if (channel.value === 'calls')
       return threads.value.filter((t) => t.channel === 'calls')
     if (channel.value === 'emails')
       return threads.value.filter((t) => t.channel === 'emails')
-    if (channel.value === 'whatsapp') return []
+    if (channel.value === 'whatsapp')
+      return showWhatsApp.value
+        ? threads.value.filter((t) => t.channel === 'whatsapp')
+        : []
     return threads.value
   })
 
@@ -301,7 +367,11 @@ export function useConversations() {
   const panelDoc = computed(() => contactPanel.data || null)
 
   const loading = computed(
-    () => callLogs.loading || emails.loading || notes.loading,
+    () =>
+      callLogs.loading ||
+      emails.loading ||
+      notes.loading ||
+      (showWhatsApp.value && waMessages.loading),
   )
 
   return {
@@ -313,7 +383,8 @@ export function useConversations() {
     panelDoc,
     contactPanel,
     recordActivities,
+    showWhatsApp,
     loading,
-    resources: { callLogs, emails, notes },
+    resources: { callLogs, emails, notes, waMessages },
   }
 }
