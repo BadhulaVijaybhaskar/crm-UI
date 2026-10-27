@@ -68,7 +68,10 @@ import { confirmLoginToFrappeCloud } from '@/composables/frappecloud'
 import { spriteIcon } from '@/utils/spriteIcon'
 import { createResource, Dropdown } from 'frappe-ui'
 import { computed, h, markRaw } from 'vue'
+import { useRouter } from 'vue-router'
 import { ASTRA_LOGO_ON_DARK, ASTRA_MARK } from '@/assets/brand'
+
+const router = useRouter()
 
 const props = defineProps({
   isCollapsed: { type: Boolean, default: false },
@@ -122,8 +125,42 @@ const dropdownItems = computed(() => {
     }
   })
 
+  // Always expose Legal notices after About (post sign-in only — this menu is auth-gated).
+  ensureLegalNoticesLink(_dropdownItems)
+
   return _dropdownItems
 })
+
+function ensureLegalNoticesLink(groups) {
+  const hasLegal = groups.some((g) =>
+    (g.options || []).some(
+      (opt) => opt.label === __('Legal notices') || opt._name1 === 'legal_notices',
+    ),
+  )
+  if (hasLegal) return
+
+  const legalItem = {
+    icon: spriteIcon('file-text'),
+    label: __('Legal notices'),
+    onClick: () => router.push({ name: 'Legal Notices' }),
+  }
+
+  for (const group of groups) {
+    const opts = group.options || []
+    const aboutIdx = opts.findIndex(
+      (opt) => opt.label === __('About') || opt._name1 === 'about',
+    )
+    if (aboutIdx !== -1) {
+      opts.splice(aboutIdx + 1, 0, legalItem)
+      return
+    }
+  }
+
+  if (groups.length) {
+    groups[0].options = groups[0].options || []
+    groups[0].options.push(legalItem)
+  }
+}
 
 function dropdownItemObj(item) {
   let _item = JSON.parse(JSON.stringify(item))
@@ -169,9 +206,17 @@ function getStandardItem(item) {
       }
     case 'about':
       return {
+        _name1: 'about',
         icon: item.icon,
         label: __(item.label),
         onClick: () => (showAboutModal.value = true),
+      }
+    case 'legal_notices':
+      return {
+        _name1: 'legal_notices',
+        icon: item.icon,
+        label: __(item.label),
+        onClick: () => router.push({ name: 'Legal Notices' }),
       }
     case 'logout':
       return {

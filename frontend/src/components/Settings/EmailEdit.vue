@@ -9,7 +9,7 @@
     <div class="w-fit">
       <EmailProviderIcon
         :logo="emailIcon[accountData.service]"
-        :label="accountData.service"
+        :label="serviceDisplayName(accountData.service)"
       />
     </div>
     <!-- banner for setting up email account -->
@@ -21,10 +21,6 @@
       />
       <div class="text-xs text-ink-gray-6 text-wrap">
         {{ info.description }}
-        <a :href="info.link" target="_blank" class="underline">
-          {{ __('here') }}
-        </a>
-        .
       </div>
     </div>
     <!-- fields -->
@@ -92,6 +88,7 @@ import {
   customProviderFields,
   validateInputs,
   incomingOutgoingFields,
+  serviceDisplayName,
 } from './emailConfig'
 import CircleAlert from '~icons/lucide/circle-alert'
 
@@ -118,8 +115,7 @@ const state = reactive({
 })
 
 const info = {
-  description: __('To know more about setting up email accounts, click'),
-  link: 'https://docs.erpnext.com/docs/user/manual/en/email-account',
+  description: __('Update the credentials and sync options for this account.'),
 }
 
 const isCustomService = computed(() => {

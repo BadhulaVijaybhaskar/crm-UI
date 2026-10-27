@@ -156,6 +156,11 @@ const routes = [
     component: () => import('@/pages/Setup.vue'),
   },
   {
+    path: '/legal-notices',
+    name: 'Legal Notices',
+    component: () => import('@/pages/LegalNotices.vue'),
+  },
+  {
     path: '/:invalidpath',
     name: 'Invalid Page',
     component: () => import('@/pages/InvalidPage.vue'),

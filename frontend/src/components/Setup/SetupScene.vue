@@ -17,7 +17,7 @@
           <div
             class="url mx-auto flex h-6 w-60 items-center justify-center gap-1.5 rounded-full text-xs text-ink-gray-5"
           >
-            <LockIcon class="size-3" />acme.frappe.cloud
+            <LockIcon class="size-3" />acme.example.com
           </div>
           <Sk w="14px" /><Sk w="14px" />
           <span class="loadbar absolute -bottom-px left-0 h-0.5" />
@@ -267,7 +267,7 @@ const TOAST = {
   leads: '21 leads imported',
   team: 'Invite sent to Ria',
 }
-const PROVIDERS = ['Gmail', 'Outlook', 'Frappe Mail', 'Yahoo']
+const PROVIDERS = ['Gmail', 'Outlook', 'Mail', 'Yahoo']
 const INVITE = 'ria.kapoor@acme.com'
 
 const journey = computed(() => props.fx.includes('journey'))

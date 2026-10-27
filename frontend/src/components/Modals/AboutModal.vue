@@ -15,27 +15,8 @@
           </div>
         </div>
         <hr class="border-t my-3 mx-2" />
-        <div>
-          <a
-            v-for="link in links"
-            :key="link.label"
-            class="flex py-2 px-2 hover:bg-surface-gray-1 rounded-4 cursor-pointer"
-            target="_blank"
-            :href="link.url"
-          >
-            <component
-              :is="link.icon"
-              v-if="link.icon"
-              class="size-4 mr-2 text-ink-gray-7"
-            />
-            <span class="text-base text-ink-gray-8">
-              {{ link.label }}
-            </span>
-          </a>
-        </div>
-        <hr class="border-t my-3 mx-2" />
-        <p class="text-sm text-ink-gray-6 px-2 mt-2">
-          © Frappe Technologies Pvt. Ltd. and contributors
+        <p class="text-sm text-ink-gray-6 px-2 mt-2 text-center">
+          {{ __('Sales workspace for Astra Connect teams') }}
         </p>
       </div>
     </template>
@@ -43,40 +24,7 @@
 </template>
 <script setup>
 import { ASTRA_LOGO } from '@/assets/brand'
-import GitHubIcon from '@/components/Icons/GitHubIcon.vue'
-import LucideGlobe from '~icons/lucide/globe'
-import LucideHeadset from '~icons/lucide/headset'
-import LucideBug from '~icons/lucide/bug'
-import LucideBookOpen from '~icons/lucide/book-open'
 import { Dialog } from 'frappe-ui'
 
 let show = defineModel({ type: Boolean })
-
-let links = [
-  {
-    label: __('Website'),
-    url: 'https://frappe.io/crm',
-    icon: LucideGlobe,
-  },
-  {
-    label: __('GitHub Repository'),
-    url: 'https://github.com/frappe/crm',
-    icon: GitHubIcon,
-  },
-  {
-    label: __('Documentation'),
-    url: 'https://docs.frappe.io/crm',
-    icon: LucideBookOpen,
-  },
-  {
-    label: __('Report an Issue'),
-    url: 'https://github.com/frappe/crm/issues',
-    icon: LucideBug,
-  },
-  {
-    label: __('Contact Support'),
-    url: 'https://support.frappe.io',
-    icon: LucideHeadset,
-  },
-]
 </script>

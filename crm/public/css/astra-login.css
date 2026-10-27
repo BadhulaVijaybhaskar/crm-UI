@@ -29,12 +29,25 @@ body {
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Frappe /login page */
+/* Framework /login page */
 .for-login,
 .page-card,
 .login-content,
 .form-signin {
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Hide upstream "Powered by" / licence chrome on login and website shells */
+.for-login .powered-by-frappe,
+.for-login .footer-powered,
+.for-login .page-footer,
+.for-login footer .powered,
+.powered-by-frappe,
+.footer-powered,
+a.powered-by-frappe,
+.text-muted.text-center.small:has(a[href*="frappe.io"]),
+.for-login .text-muted.text-center.small {
+  display: none !important;
 }
 
 .page-card {

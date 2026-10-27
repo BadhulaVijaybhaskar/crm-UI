@@ -55,8 +55,8 @@
       <template v-if="selected.custom">
         <TextInput
           v-model="state.frappe_mail_site"
-          :label="__('Frappe Mail site')"
-          placeholder="https://frappemail.com"
+          :label="__('Mail site')"
+          placeholder="https://mail.example.com"
         />
         <TextInput v-model="state.api_key" :label="__('API key')" />
         <Password v-model="state.api_secret" :label="__('API secret')" />
@@ -65,6 +65,7 @@
         <template #description>
           {{ selected.info }}
           <a
+            v-if="selected.link"
             :href="selected.link"
             target="_blank"
             class="text-ink-gray-7 underline underline-offset-2"

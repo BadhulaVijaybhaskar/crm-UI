@@ -78,10 +78,10 @@ export const popularProviderFields = [
 export const customProviderFields = [
   ...fixedFields,
   {
-    label: __('Frappe Mail Site'),
+    label: __('Mail site'),
     name: 'frappe_mail_site',
     type: 'text',
-    placeholder: 'https://frappemail.com',
+    placeholder: 'https://mail.example.com',
   },
   {
     label: __('API Key'),
@@ -100,11 +100,12 @@ export const customProviderFields = [
 export const services = [
   {
     name: 'Frappe Mail',
+    label: __('Mail'),
     icon: LogoFrappeMail,
     info: __(
-      'Setting up Frappe Mail requires you to have an API key and API secret for your email account. Read more',
+      'Setting up Mail requires an API key and API secret for your email account.',
     ),
-    link: 'https://github.com/frappe/mail',
+    link: '',
     custom: true,
   },
   {
@@ -172,6 +173,13 @@ export const emailIcon = {
   Yahoo: LogoYahoo,
   Yandex: LogoYandex,
   'Frappe Mail': LogoFrappeMail,
+}
+
+/** User-visible label for an Email Account.service value (API keys stay unchanged). */
+export function serviceDisplayName(service) {
+  if (service === 'Frappe Mail') return __('Mail')
+  const match = services.find((s) => s.name === service)
+  return match?.label || service
 }
 
 export function validateInputs(state, isCustom) {

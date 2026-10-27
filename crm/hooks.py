@@ -29,7 +29,12 @@ add_to_apps_screen = [
 web_include_css = ["/assets/crm/css/astra-login.css"]
 website_context = {
 	"splash_image": "/assets/crm/images/astra-crm-logo.png",
+	"brand_html": "Astra CRM",
+	"footer_address": "",
+	"copyright": "",
 }
+
+update_website_context = ["crm.overrides.branding.update_website_context"]
 
 get_site_info = "crm.activation.get_site_info"
 
@@ -472,7 +477,7 @@ standard_dropdown_items = [
 	},
 	{
 		"name1": "login_to_fc",
-		"label": "Login to Frappe Cloud",
+		"label": "Login to Cloud",
 		"type": "Route",
 		"route": "#",
 		"is_standard": 1,
@@ -483,6 +488,14 @@ standard_dropdown_items = [
 		"type": "Route",
 		"icon": "info",
 		"route": "#",
+		"is_standard": 1,
+	},
+	{
+		"name1": "legal_notices",
+		"label": "Legal notices",
+		"type": "Route",
+		"icon": "file-text",
+		"route": "/crm/legal-notices",
 		"is_standard": 1,
 	},
 	{
