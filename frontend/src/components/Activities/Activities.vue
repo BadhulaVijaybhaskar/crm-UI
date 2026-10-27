@@ -11,6 +11,25 @@
     :customPane="Boolean(tabComponent)"
   />
   <FadedScrollableDiv class="flex flex-col h-full overflow-y-auto">
+    <div
+      v-if="title == 'Activity' && !tabComponent"
+      class="mx-3 mb-2 flex flex-wrap gap-1.5 sm:mx-10 sm:mt-2"
+    >
+      <button
+        v-for="chip in timelineChips"
+        :key="chip.value"
+        type="button"
+        class="rounded-full px-2.5 py-1 text-xs font-medium transition-colors"
+        :class="
+          timelineFilter === chip.value
+            ? 'bg-surface-gray-10 text-ink-white'
+            : 'bg-surface-gray-2 text-ink-gray-7 hover:bg-surface-gray-3'
+        "
+        @click="timelineFilter = chip.value"
+      >
+        {{ __(chip.label) }}
+      </button>
+    </div>
     <div v-if="tabComponent" class="flex flex-col h-full">
       <component
         :is="tabComponent"
@@ -345,6 +364,42 @@
           >
             <CallArea :activity="activity" />
           </div>
+          <div
+            v-else-if="activity.activity_type == 'stage_change'"
+            class="mb-4 flex flex-col gap-2 py-1.5"
+          >
+            <div class="flex items-center justify-stretch gap-2 text-base">
+              <div class="inline-flex items-center flex-wrap gap-1.5 text-ink-gray-8">
+                <span class="font-medium">{{ activity.owner_name || activity.owner }}</span>
+                <span class="text-ink-gray-5">{{ __('moved stage') }}</span>
+                <span class="font-medium">{{
+                  activity.data?.from || __('(start)')
+                }}</span>
+                <span class="text-ink-gray-5">→</span>
+                <span class="font-medium">{{ activity.data?.to }}</span>
+              </div>
+              <div class="ml-auto whitespace-nowrap">
+                <TimelineTimestamp :date="activity.creation" />
+              </div>
+            </div>
+          </div>
+          <div
+            v-else-if="activity.activity_type == 'whatsapp'"
+            class="mb-4 flex flex-col gap-1 py-1.5 text-base text-ink-gray-8"
+          >
+            <div class="flex items-center gap-2">
+              <span class="font-medium">{{ __('WhatsApp') }}</span>
+              <span class="text-ink-gray-5">{{
+                activity.data?.direction
+              }}</span>
+              <div class="ml-auto whitespace-nowrap">
+                <TimelineTimestamp :date="activity.creation" />
+              </div>
+            </div>
+            <p class="text-p-sm text-ink-gray-6 line-clamp-3">
+              {{ activity.data?.text }}
+            </p>
+          </div>
           <div v-else class="mb-4 flex flex-col gap-2 py-1.5">
             <div class="flex items-center justify-stretch gap-2 text-base">
               <div
@@ -617,6 +672,11 @@ import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'
 import TimelineTimestamp from '@/components/Activities/TimelineTimestamp.vue'
 import { startCase } from '@/utils'
 import { parseActivityHash } from '@/utils/activityHash'
+import {
+  TIMELINE_FILTER_CHIPS,
+  filterTimelineActivities,
+  whatsappMessagesAsActivities,
+} from '@/utils/timelineFilters'
 import { globalStore } from '@/stores/global'
 import { usersStore } from '@/stores/users'
 import { useTimelinePreferences } from '@/composables/useTimelinePreferences'
@@ -696,10 +756,13 @@ const changeTabTo = (tabName) => {
 // Data loads after mount, so the first load is what lands on a linked row.
 let linkedRowOnLoad = linkedRow(route.hash)
 
+const timelineFilter = ref('all')
+const timelineChips = TIMELINE_FILTER_CHIPS
+
 const all_activities = createResource({
   url: 'crm.api.activities.get_activities',
-  params: { name: props.docname },
-  cache: ['activity', props.docname],
+  params: { name: props.docname, doctype: props.doctype },
+  cache: ['activity', props.doctype, props.docname],
   auto: true,
   transform: ([versions, calls, notes, tasks, attachments]) => {
     return { versions, calls, notes, tasks, attachments }
@@ -846,13 +909,24 @@ const activities = computed(() => {
     return sortByModified(all_activities.data.attachments)
   }
 
+  if (title.value == 'Activity' && whatsappEnabled.value) {
+    _activities = [
+      ..._activities,
+      ...whatsappMessagesAsActivities(messages.messages || []),
+    ]
+  }
+
+  _activities = filterTimelineActivities(_activities, timelineFilter.value)
+
   _activities.forEach((activity) => {
     activity.icon = timelineIcon(activity.activity_type, activity.is_lead)
 
     if (
       activity.activity_type == 'incoming_call' ||
       activity.activity_type == 'outgoing_call' ||
-      activity.activity_type == 'communication'
+      activity.activity_type == 'communication' ||
+      activity.activity_type == 'stage_change' ||
+      activity.activity_type == 'whatsapp'
     )
       return
 
@@ -1015,6 +1089,12 @@ function timelineIcon(activity_type, is_lead) {
       break
     case 'note':
       icon = NoteIcon
+      break
+    case 'stage_change':
+      icon = DealsIcon
+      break
+    case 'whatsapp':
+      icon = WhatsAppIcon
       break
     default:
       icon = DotIcon

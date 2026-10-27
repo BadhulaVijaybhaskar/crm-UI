@@ -18,7 +18,7 @@ import { isAstraConnectConfigured } from '@/utils/astraConnect'
  * Items with ready:false are omitted from the sidebar and command palette.
  */
 export const NAV_FEATURE_READY = Object.freeze({
-  Activities: false,
+  Activities: true,
   Reports: false,
 })
 

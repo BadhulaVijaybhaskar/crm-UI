@@ -150,15 +150,23 @@
         </Badge>
       </template>
       <template #tab-panel="{ tab }">
+        <Activities
+          v-if="tab.value === 'activity'"
+          ref="activities"
+          doctype="Contact"
+          :docname="contact.doc.name"
+          :tabs="activityTabs"
+          v-model:activeTab="activityTab"
+        />
         <DealsListView
-          v-if="tab.label === 'Deals' && rows.length"
+          v-else-if="tab.label === 'Deals' && rows.length"
           class="mt-4"
           :rows="rows"
           :columns="columns"
           :options="{ selectable: false, showTooltip: false }"
         />
         <EmptyState
-          v-if="!rows.length"
+          v-else-if="tab.label === 'Deals' && !rows.length"
           :icon="tab.iconLeft"
           name="Deals"
           :description="__('Use New Deal to create a deal for this contact.')"
@@ -194,6 +202,8 @@ import LayoutHeader from '@/components/LayoutHeader.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import CameraIcon from '@/components/Icons/CameraIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
+import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
+import Activities from '@/components/Activities/Activities.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
 import DealModal from '@/components/Modals/DealModal.vue'
 import CustomActions from '@/components/CustomActions.vue'
@@ -336,8 +346,22 @@ function changeContactImage(file) {
   })
 }
 
-const activeTab = ref('deals')
+const activeTab = ref('activity')
+const activityTab = ref('activity')
+const activityTabs = [
+  {
+    name: 'Activity',
+    value: 'activity',
+    label: __('Activity'),
+    iconLeft: ActivityIcon,
+  },
+]
 const tabs = [
+  {
+    value: 'activity',
+    label: 'Activity',
+    iconLeft: ActivityIcon,
+  },
   {
     value: 'deals',
     label: 'Deals',
