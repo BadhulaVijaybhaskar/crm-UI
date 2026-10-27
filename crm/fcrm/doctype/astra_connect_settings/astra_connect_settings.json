@@ -6,7 +6,8 @@
  "field_order": [
   "enabled",
   "connect_base_url",
-  "default_lead_owner"
+  "default_lead_owner",
+  "connect_agent_number"
  ],
  "fields": [
   {
@@ -23,17 +24,25 @@
    "options": "URL"
   },
   {
-   "description": "Default owner assigned to leads created from Connect webhooks.",
+   "description": "Default owner assigned to leads and call logs created from Connect webhooks. Never Guest.",
    "fieldname": "default_lead_owner",
    "fieldtype": "Link",
    "label": "Default Lead Owner",
    "options": "User"
+  },
+  {
+   "default": "+910000000000",
+   "description": "E.164 number used for the Connect agent leg on CRM Call Log from/to. Must be a valid phone, never a label.",
+   "fieldname": "connect_agent_number",
+   "fieldtype": "Data",
+   "label": "Connect Agent Number",
+   "options": "Phone"
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-27 12:00:00.000000",
+ "modified": "2026-10-28 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "Astra Connect Settings",
