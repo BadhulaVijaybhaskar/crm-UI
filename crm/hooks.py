@@ -96,6 +96,16 @@ website_route_rules = [
 	{"from_route": "/crm-form/<route>", "to_route": "crm_form"},
 ]
 
+# Root favicon / PWA manifest — avoid 404 on bare /favicon.ico and /manifest.json
+website_redirects = [
+	{"source": "/favicon.ico", "target": "/assets/crm/images/favicon-32.png", "redirect_http_status": 301},
+	{
+		"source": "/manifest.json",
+		"target": "/assets/crm/manifest/manifest.webmanifest",
+		"redirect_http_status": 301,
+	},
+]
+
 # before_request redirect for sales users hitting /app (Desk)
 before_request = ["crm.overrides.desk.redirect_sales_users_from_desk"]
 
@@ -311,12 +321,19 @@ doc_events = {
 		],
 	},
 	"CRM Deal": {
+		"after_insert": [
+			# Runs after Assignment Rule (frappe) so we only default when still empty.
+			"crm.permissions.org_hierarchy.apply_default_record_owner",
+		],
 		"on_update": [
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext",
 			"crm.automation.events.on_deal_update",
 		],
 	},
 	"CRM Lead": {
+		"after_insert": [
+			"crm.permissions.org_hierarchy.apply_default_record_owner",
+		],
 		"on_update": ["crm.automation.events.on_lead_update"],
 	},
 	"Sales Order": {
