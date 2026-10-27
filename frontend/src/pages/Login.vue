@@ -5,7 +5,7 @@
     <div class="astra-login-card">
       <img
         class="astra-login-logo"
-        src="/assets/crm/images/astra-crm-logo.png"
+        :src="logoSrc"
         alt="Astra CRM"
       />
       <form class="flex flex-col gap-3" @submit.prevent="onSubmit">
@@ -41,11 +41,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { usePageMeta } from 'frappe-ui'
+import { computed, ref } from 'vue'
+import { usePageMeta, useColorScheme } from 'frappe-ui'
 
 const email = ref('')
 const password = ref('')
+const { resolvedColorScheme } = useColorScheme()
+
+const logoSrc = computed(() =>
+  resolvedColorScheme.value === 'dark'
+    ? '/assets/crm/images/astra-crm-logo-on-dark.png'
+    : '/assets/crm/images/astra-crm-logo.png',
+)
 
 usePageMeta(() => ({
   title: __('Login'),

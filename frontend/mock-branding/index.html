@@ -143,6 +143,7 @@
     <div id="login" class="astra-login-page">
       <div class="astra-login-card">
         <img
+          id="login-logo"
           class="astra-login-logo"
           src="/assets/crm/images/astra-crm-logo.png"
           alt="Astra CRM"
@@ -237,6 +238,13 @@
       document.documentElement.classList.toggle('dark', theme === 'dark')
       document.getElementById('login').classList.toggle('hidden', view !== 'login')
       document.getElementById('leads').classList.toggle('hidden', view !== 'leads')
+      const loginLogo = document.getElementById('login-logo')
+      if (loginLogo) {
+        loginLogo.src =
+          theme === 'dark'
+            ? '/assets/crm/images/astra-crm-logo-on-dark.png'
+            : '/assets/crm/images/astra-crm-logo.png'
+      }
     </script>
   </body>
 </html>
