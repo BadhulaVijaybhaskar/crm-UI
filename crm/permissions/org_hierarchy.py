@@ -122,6 +122,39 @@ def has_contact_permission(doc, ptype, user):
 	return _has_permission(doc, ptype, user, "Contact")
 
 
+def apply_default_record_owner(doc, method=None):
+	"""After Assignment Rule: set lead_owner/deal_owner only if still empty.
+
+	Prefers an open ToDo assignee from round-robin / availability; otherwise the
+	creating user (never Guest). Document-method after_insert must not set the
+	owner earlier or assignment is skipped.
+	"""
+	owner_field = _OWNER_FIELD.get(doc.doctype)
+	if not owner_field or owner_field == "owner":
+		return
+	if doc.get(owner_field):
+		return
+
+	assignees = []
+	try:
+		assignees = list(doc.get_assigned_users() or [])
+	except Exception:
+		assignees = []
+	if assignees:
+		doc.db_set(owner_field, assignees[0], update_modified=False)
+		return
+
+	user = frappe.session.user
+	if user in (None, "", "Guest"):
+		return
+	doc.db_set(owner_field, user, update_modified=False)
+	if hasattr(doc, "assign_agent"):
+		try:
+			doc.assign_agent(user)
+		except Exception:
+			frappe.log_error(title=f"CRM default owner assign {doc.doctype}")
+
+
 def _in_hierarchy(user: str) -> bool:
 	return bool(frappe.db.exists("CRM Sales Hierarchy", {"user": user}))
 

@@ -83,8 +83,7 @@ class CRMDeal(Document):
 		from crm.api.form import enrich_form_submission
 
 		enrich_form_submission(self)
-		if not self.deal_owner and frappe.session.user not in (None, "", "Guest"):
-			self.deal_owner = frappe.session.user
+		# Do NOT default deal_owner here — Assignment Rule / availability first.
 
 	def before_validate(self):
 		self.set_sla()
@@ -108,6 +107,7 @@ class CRMDeal(Document):
 			self.copy_enrichment_from_organization()
 
 	def after_insert(self):
+		# Only assign when an owner was explicitly set — see CRM Lead.after_insert.
 		if self.deal_owner:
 			if self.deal_owner != frappe.session.user:
 				self.share_with_agent(self.deal_owner)
