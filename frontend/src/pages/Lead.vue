@@ -146,6 +146,12 @@
                   "
                 />
 
+                <ConnectActions
+                  record-type="CRM Lead"
+                  :record-id="leadId"
+                  :phone="doc.mobile_no || doc.phone || ''"
+                />
+
                 <Button
                   :tooltip="__('Send an Email')"
                   :disabled="!emailTab"
@@ -272,6 +278,7 @@ import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
 import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
+import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
 import {
   openWebsite,
   setupCustomizations,

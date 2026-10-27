@@ -91,6 +91,12 @@
               @click="triggerCall"
             />
 
+            <ConnectActions
+              record-type="CRM Deal"
+              :record-id="dealId"
+              :phone="doc.mobile_no || doc.phone || ''"
+            />
+
             <Button
               :tooltip="__('Send an Email')"
               :disabled="!emailTab"
@@ -382,6 +388,7 @@ import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
+import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
 import {
   openWebsite,
   setupCustomizations,

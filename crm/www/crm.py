@@ -85,11 +85,23 @@ def get_boot():
 				or get_system_timezone(),
 			},
 			"state_options": get_state_options(),
-			# PLACEHOLDER base until SSO deep-link; overridable via site_config.json
-			"astra_connect_url": frappe.conf.get("astra_connect_url")
-			or "https://connect.astraconnect.io",
+			# Public Connect base for sidebar / Call-Message with AI (no secrets).
+			"astra_connect_url": _get_astra_connect_url(),
 		}
 	)
+
+
+def _get_astra_connect_url() -> str:
+	try:
+		from crm.fcrm.doctype.astra_connect_settings.astra_connect_settings import (
+			get_connect_base_url,
+		)
+
+		return get_connect_base_url()
+	except Exception:
+		return (frappe.conf.get("astra_connect_url") or "https://connect.astraconnect.io").rstrip(
+			"/"
+		)
 
 
 def get_state_options() -> dict[str, list[str]]:
