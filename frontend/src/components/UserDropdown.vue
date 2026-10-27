@@ -12,16 +12,10 @@
         "
       >
         <img
-          v-if="!isCollapsed"
-          src="/assets/crm/images/astra-crm-logo-on-dark.png"
-          alt="Astra CRM"
-          class="h-8 max-w-[148px] flex-shrink-0 object-contain"
-        />
-        <img
-          v-else
-          src="/assets/crm/images/astra-crm-mark.png"
-          alt="Astra CRM"
-          class="size-8 flex-shrink-0 object-contain"
+          :src="sidebarLogo"
+          :alt="brand.name || 'Astra CRM'"
+          class="flex-shrink-0 object-contain"
+          :class="isCollapsed ? 'size-8' : 'h-8 max-w-[148px]'"
         />
         <div
           class="flex flex-1 flex-col text-left duration-300 ease-in-out truncate"
@@ -31,7 +25,16 @@
               : 'ml-2 w-auto opacity-100'
           "
         >
-          <div class="text-sm leading-none text-ink-gray-7 truncate">
+          <div
+            v-if="customBrandLogo"
+            class="text-base-medium leading-none text-ink-gray-9 truncate"
+          >
+            {{ __(brand.name || 'Astra CRM') }}
+          </div>
+          <div
+            class="text-sm leading-none text-ink-gray-7 truncate"
+            :class="customBrandLogo ? 'mt-1' : ''"
+          >
             {{ user.full_name }}
           </div>
         </div>
@@ -66,7 +69,7 @@ import { spriteIcon } from '@/utils/spriteIcon'
 import { createResource, Dropdown } from 'frappe-ui'
 import { computed, h, markRaw } from 'vue'
 
-defineProps({
+const props = defineProps({
   isCollapsed: { type: Boolean, default: false },
 })
 
@@ -75,6 +78,15 @@ const { logout } = sessionStore()
 const { getUser } = usersStore()
 
 const user = computed(() => getUser() || {})
+
+// Brand Settings upload wins; otherwise the Astra lockup tuned for the dark rail.
+const customBrandLogo = computed(() => settings.value?.brand_logo || '')
+const sidebarLogo = computed(() => {
+  if (customBrandLogo.value) return customBrandLogo.value
+  return props.isCollapsed
+    ? '/assets/crm/images/astra-crm-mark.png'
+    : '/assets/crm/images/astra-crm-logo-on-dark.png'
+})
 
 const apps = createResource({
   url: 'frappe.apps.get_apps',
