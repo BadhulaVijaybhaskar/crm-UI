@@ -568,6 +568,7 @@ _CALL_LOG_FIELDS = [
 	"type",
 	"recording_url",
 	"creation",
+	"owner",
 	"note",
 	"reference_doctype",
 	"reference_docname",
@@ -856,12 +857,18 @@ def get_activity_feed(
 			if ref_dt and ref_dn and not frappe.has_permission(ref_dt, "read", ref_dn):
 				continue
 			parsed = parse_call_log(dict(call))
+			# Ingested Connect calls: prefer AI Employee over a blank / missing owner.
+			feed_owner = call.get("owner") or ""
+			if call.get("ai_employee_id") and not feed_owner:
+				feed_owner = _("AI Employee {0}").format(call.get("ai_employee_id"))
+			elif call.get("ai_employee_id") and not (call.get("caller") or call.get("receiver")):
+				feed_owner = _("AI Employee {0}").format(call.get("ai_employee_id"))
 			items.append(
 				{
 					"name": parsed.get("name"),
 					"activity_type": parsed.get("activity_type") or "outgoing_call",
 					"creation": parsed.get("creation") or call.get("creation"),
-					"owner": parsed.get("owner") or call.get("owner") or "",
+					"owner": feed_owner,
 					"reference_doctype": parsed.get("reference_doctype") or ref_dt,
 					"reference_docname": parsed.get("reference_docname") or ref_dn,
 					"data": {

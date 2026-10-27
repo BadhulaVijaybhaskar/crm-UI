@@ -294,7 +294,11 @@ class TestCRMCallLog(IntegrationTestCase):
 			frappe.set_user("Administrator")
 
 	def test_get_call_log_hides_lead_user_cannot_read(self):
-		"""A user who can read the call log but not its lead must not receive the lead id"""
+		"""A user who can read the call log but not its lead must not receive the lead id.
+
+		Sales Users no longer inherit plain read on every Call Log — grant access via
+		caller so the API still runs, while the referenced Lead stays unreadable.
+		"""
 		lead = frappe.get_doc(
 			{
 				"doctype": "CRM Lead",
@@ -302,9 +306,15 @@ class TestCRMCallLog(IntegrationTestCase):
 				"lead_owner": "Administrator",
 			}
 		).insert()
-		call = create_test_call_log(reference_doctype="CRM Lead", reference_docname=lead.name)
+		sales = create_sales_user()
+		call = create_test_call_log(
+			type="Outgoing",
+			caller=sales,
+			reference_doctype="CRM Lead",
+			reference_docname=lead.name,
+		)
 
-		frappe.set_user(create_sales_user())
+		frappe.set_user(sales)
 		try:
 			result = get_call_log(call.name)
 		finally:
@@ -312,6 +322,29 @@ class TestCRMCallLog(IntegrationTestCase):
 
 		self.assertEqual(result["name"], call.name)
 		self.assertNotIn("_lead", result)
+
+	def test_get_call_log_denies_unrelated_sales_user_on_foreign_lead(self):
+		"""Sales User with no caller/owner/parent access cannot open the call log."""
+		lead = frappe.get_doc(
+			{
+				"doctype": "CRM Lead",
+				"first_name": "Foreign Lead",
+				"lead_owner": "Administrator",
+			}
+		).insert()
+		call = create_test_call_log(
+			type="Outgoing",
+			caller="Administrator",
+			reference_doctype="CRM Lead",
+			reference_docname=lead.name,
+		)
+
+		frappe.set_user(create_sales_user())
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				get_call_log(call.name)
+		finally:
+			frappe.set_user("Administrator")
 
 	def test_get_call_log_with_reference_lead(self):
 		"""Test get_call_log API with reference to CRM Lead"""
@@ -383,17 +416,19 @@ class TestCRMCallLog(IntegrationTestCase):
 		self.assertEqual(get_call_log(call.name)["_receiver"]["label"], "Number Lead")
 
 	def test_call_log_hides_referenced_lead_name_user_cannot_read(self):
+		"""Caller can open the call, but an unreadable referenced lead stays Unknown."""
 		referenced = create_test_lead("Referenced Lead", "+919876500004")
 		create_test_lead("Other Lead", "+919876500004")
+		sales = create_sales_user()
 		call = create_test_call_log(
 			type="Outgoing",
-			caller="Administrator",
+			caller=sales,
 			to="+919876500004",
 			reference_doctype="CRM Lead",
 			reference_docname=referenced.name,
 		)
 
-		frappe.set_user(create_sales_user())
+		frappe.set_user(sales)
 		try:
 			result = get_call_log(call.name)
 		finally:
