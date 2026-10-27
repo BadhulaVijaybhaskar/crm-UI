@@ -28,6 +28,14 @@ class FCRMNote(Document):
 		title: DF.Data
 	# end: auto-generated types
 
+	def validate(self):
+		from crm.utils.sanitize import sanitize_html, sanitize_text
+
+		if self.title:
+			self.title = sanitize_text(self.title, max_length=140)
+		if self.content:
+			self.content = sanitize_html(self.content)
+
 	@staticmethod
 	def default_list_data():
 		rows = [

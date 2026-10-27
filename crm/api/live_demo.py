@@ -4,9 +4,11 @@
 import frappe
 from frappe import _
 from frappe.auth import LoginManager
+from frappe.rate_limiter import rate_limit
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=60)
 def login():
 	if not frappe.conf.demo_username or not frappe.conf.demo_password:
 		return

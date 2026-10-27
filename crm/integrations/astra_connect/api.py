@@ -7,6 +7,7 @@ from typing import Any
 
 import frappe
 from frappe import _
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime
 
 from crm.integrations.astra_connect.auth import (
@@ -17,6 +18,7 @@ from crm.integrations.astra_connect.auth import (
 	verify_signature,
 )
 from crm.integrations.astra_connect.processing import ProcessingError, process_event
+from crm.utils.sanitize import sanitize_text
 
 
 def _json_response(payload: dict[str, Any], status_code: int = 200):
@@ -26,7 +28,23 @@ def _json_response(payload: dict[str, Any], status_code: int = 200):
 	return payload
 
 
+def _sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
+	"""Strip HTML/script from inbound webhook string fields before persistence."""
+
+	def walk(value):
+		if isinstance(value, str):
+			return sanitize_text(value, max_length=4000)
+		if isinstance(value, list):
+			return [walk(v) for v in value]
+		if isinstance(value, dict):
+			return {k: walk(v) for k, v in value.items()}
+		return value
+
+	return walk(payload)
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=120, seconds=60)
 def receive() -> dict[str, Any]:
 	"""Inbound Astra Connect webhook.
 
@@ -67,6 +85,10 @@ def receive() -> dict[str, Any]:
 			raise ValueError("payload must be a JSON object")
 	except Exception:
 		return _json_response({"status": "rejected", "error": _("Invalid JSON body")}, status_code=400)
+
+	# Signature already bound this body to the per-site secret (frappe.conf).
+	# Sanitise string fields so notes/summaries cannot carry script markup.
+	payload = _sanitize_payload(payload)
 
 	event_id = (headers.get("event_id") or "").strip()
 	event_type = (payload.get("type") or payload.get("event") or "").strip()

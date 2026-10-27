@@ -10,6 +10,7 @@ from crm.utils import is_frappe_version
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=60, seconds=60)
 def get_translations():
 	if frappe.session.user != "Guest":
 		language = frappe.db.get_value("User", frappe.session.user, "language")
