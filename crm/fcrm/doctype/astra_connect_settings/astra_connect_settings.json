@@ -31,8 +31,7 @@
    "options": "User"
   },
   {
-   "default": "+910000000000",
-   "description": "E.164 number used for the Connect agent leg on CRM Call Log from/to. Must be a valid phone, never a label.",
+   "description": "E.164 number for the Connect agent leg on CRM Call Log from/to. Optional \u2014 when empty, the party phone is used on both legs (never a placeholder).",
    "fieldname": "connect_agent_number",
    "fieldtype": "Data",
    "label": "Connect Agent Number",
