@@ -199,6 +199,7 @@
         v-model="doc"
         @updateField="updateField"
       />
+      <StageHistory :rows="doc.status_change_log || []" />
       <div
         v-if="sections.data"
         class="flex flex-1 flex-col justify-between overflow-hidden"
@@ -279,6 +280,7 @@ import CustomActions from '@/components/CustomActions.vue'
 import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
 import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
 import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
+import StageHistory from '@/components/Pipeline/StageHistory.vue'
 import {
   openWebsite,
   setupCustomizations,
