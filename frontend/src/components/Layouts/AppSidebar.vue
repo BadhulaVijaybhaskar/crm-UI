@@ -155,9 +155,10 @@
     <Notifications v-if="!mobile" />
   </div>
 
-  <!-- Settings must mount on mobile too — drawer sets showSettings but had no listener. -->
-  <Settings />
+  <!-- Desktop only: on mobile, Settings lives in MobileLayout so closing the
+       drawer does not unmount the modal. -->
   <template v-if="!mobile">
+    <Settings />
     <HelpModal
       v-if="showHelpModal"
       v-model="showHelpModal"
