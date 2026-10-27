@@ -139,6 +139,16 @@ const routes = [
     name: 'Activities',
     component: () => import('@/pages/Activities.vue'),
   },
+  {
+    path: '/work-queue',
+    name: 'Work Queue',
+    component: () => import('@/pages/astra/WorkQueue.vue'),
+  },
+  {
+    path: '/conversations',
+    name: 'Conversations',
+    component: () => import('@/pages/astra/Conversations.vue'),
+  },
   // Reports route lands with CRM-09 (no placeholder page).
   // Dev-only mock login — production auth goes through /login (website).
   ...(import.meta.env.DEV

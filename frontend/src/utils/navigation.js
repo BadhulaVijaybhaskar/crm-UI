@@ -8,10 +8,15 @@ import LucidePhone from '~icons/lucide/phone'
 import LucideMessagesSquare from '~icons/lucide/messages-square'
 import LucideBot from '~icons/lucide/bot'
 import LucideActivity from '~icons/lucide/activity'
+import LucideListTodo from '~icons/lucide/list-todo'
+import LucideInbox from '~icons/lucide/inbox'
 import LucideChartColumn from '~icons/lucide/chart-column'
 import LucideSettings from '~icons/lucide/settings'
 import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
+import { navItemKey, resolveActiveNavKey } from '@/utils/navActive'
+
+export { navItemKey, resolveActiveNavKey }
 
 /**
  * Flip these when the real page ships (CRM-08 Activities, CRM-09 Reports).
@@ -19,6 +24,8 @@ import { isAstraConnectConfigured } from '@/utils/astraConnect'
  */
 export const NAV_FEATURE_READY = Object.freeze({
   Activities: true,
+  WorkQueue: true,
+  Conversations: true,
   Reports: false,
 })
 
@@ -69,6 +76,18 @@ export const navigationItems = [
     icon: LucideActivity,
     route: 'Activities',
     ready: NAV_FEATURE_READY.Activities,
+  },
+  {
+    label: 'Work queue',
+    icon: LucideListTodo,
+    route: 'Work Queue',
+    ready: NAV_FEATURE_READY.WorkQueue,
+  },
+  {
+    label: 'Conversations',
+    icon: LucideInbox,
+    route: 'Conversations',
+    ready: NAV_FEATURE_READY.Conversations,
   },
   {
     label: 'Reports',
