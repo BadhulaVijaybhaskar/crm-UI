@@ -1,0 +1,23 @@
+{
+  "name": "Astra CRM",
+  "short_name": "Astra CRM",
+  "description": "Sales workspace for Astra Connect teams",
+  "start_url": "/crm",
+  "display": "standalone",
+  "background_color": "#0F1626",
+  "theme_color": "#0B5FFF",
+  "icons": [
+    {
+      "src": "/assets/crm/manifest/manifest-icon-192.maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/crm/manifest/manifest-icon-512.maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
