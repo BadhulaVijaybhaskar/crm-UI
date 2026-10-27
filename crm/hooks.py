@@ -414,7 +414,7 @@ ignore_links_on_delete = ["Failed Lead Sync Log"]
 # Request Events
 # ----------------
 # before_request = ["crm.utils.before_request"]
-# after_request = ["crm.utils.after_request"]
+after_request = ["crm.overrides.response_headers.after_request"]
 
 # Job Events
 # ----------

@@ -167,31 +167,39 @@ def _ensure_translation(source: str, translated: str, language: str = "en") -> N
 	doc.insert(ignore_permissions=True)
 
 
-def rename_crm_workspace() -> None:
-	"""Idempotently rename the desk Workspace document Frappe CRM → Astra CRM."""
+def relabel_crm_workspace() -> None:
+	"""Set Workspace label/title to Astra CRM without changing the document name or route.
+
+	If a prior scrub renamed the Workspace document itself, restore the original
+	document name so internal identifiers stay stable.
+	"""
 	import frappe
 	from frappe.model.rename_doc import rename_doc
 
-	old, new = "Frappe CRM", "Astra CRM"
+	doc_name = "Frappe CRM"
+	visible = ASTRA_APP_NAME
 	if not frappe.db.exists("DocType", "Workspace"):
 		return
 
-	if frappe.db.exists("Workspace", old):
-		if frappe.db.exists("Workspace", new):
-			# Target already exists (re-run): drop the old leftover if present.
-			frappe.delete_doc("Workspace", old, force=True, ignore_permissions=True)
-		else:
-			rename_doc("Workspace", old, new, force=True, merge=False)
+	# Undo an earlier document rename if it happened.
+	if frappe.db.exists("Workspace", visible) and not frappe.db.exists("Workspace", doc_name):
+		rename_doc("Workspace", visible, doc_name, force=True, merge=False)
 
-	if frappe.db.exists("Workspace", new):
-		ws = frappe.get_doc("Workspace", new)
-		changed = False
-		if getattr(ws, "title", None) != new:
-			ws.title = new
-			changed = True
-		if getattr(ws, "label", None) != new:
-			ws.label = new
-			changed = True
-		if changed:
-			ws.flags.ignore_permissions = True
-			ws.save()
+	if not frappe.db.exists("Workspace", doc_name):
+		return
+
+	ws = frappe.get_doc("Workspace", doc_name)
+	changed = False
+	if getattr(ws, "title", None) != visible:
+		ws.title = visible
+		changed = True
+	if getattr(ws, "label", None) != visible:
+		ws.label = visible
+		changed = True
+	if changed:
+		ws.flags.ignore_permissions = True
+		ws.save()
+
+
+# Back-compat alias for older patch imports
+rename_crm_workspace = relabel_crm_workspace

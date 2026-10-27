@@ -1,7 +1,7 @@
 /**
  * Bundled brand assets. Prefer these over absolute `/assets/crm/images/...`
  * URLs so Vite's `/assets/crm/frontend/` base resolves in production builds.
- * Copies also live under `crm/public/images/` for Frappe website/login CSS.
+ * Copies also live under `crm/public/images/` for website/login CSS.
  */
 import astraLogo from './astra-crm-logo.png'
 import astraLogoOnDark from './astra-crm-logo-on-dark.png'

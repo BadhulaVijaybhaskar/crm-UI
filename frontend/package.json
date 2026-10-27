@@ -8,8 +8,9 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build --base=/assets/crm/frontend/ && yarn copy-html-entry",
+    "build": "vite build --base=/assets/crm/frontend/ && yarn copy-html-entry && yarn check:dist-scrub",
     "copy-html-entry": "cp ../crm/public/frontend/index.html ../crm/www/crm.html",
+    "check:dist-scrub": "node ./scripts/check-dist-scrub.mjs",
     "serve": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",

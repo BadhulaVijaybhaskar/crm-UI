@@ -7,8 +7,9 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const SRC_ROOT = join(HERE, '../../src')
 
 const EXCLUDED_PATHS = [
+  // Legal notices page may mention licence obligations; content is guarded
+  // separately in legalNotices.test.js (no vendor/repo strings allowed there).
   /pages\/LegalNotices\.vue$/,
-  /data\/legalNotices\.js$/,
 ]
 
 const TRANSLATE_CALL =

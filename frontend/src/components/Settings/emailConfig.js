@@ -6,7 +6,7 @@ import LogoSendgrid from '@/images/sendgrid.png'
 import LogoSparkpost from '@/images/sparkpost.webp'
 import LogoYahoo from '@/images/yahoo.png'
 import LogoYandex from '@/images/yandex.png'
-import LogoFrappeMail from '@/images/frappe-mail.svg'
+import LogoMail from '@/images/mail.svg'
 
 const fixedFields = [
   {
@@ -101,7 +101,7 @@ export const services = [
   {
     name: 'Frappe Mail',
     label: __('Mail'),
-    icon: LogoFrappeMail,
+    icon: LogoMail,
     info: __(
       'Setting up Mail requires an API key and API secret for your email account.',
     ),
@@ -172,7 +172,7 @@ export const emailIcon = {
   SparkPost: LogoSparkpost,
   Yahoo: LogoYahoo,
   Yandex: LogoYandex,
-  'Frappe Mail': LogoFrappeMail,
+  'Frappe Mail': LogoMail,
 }
 
 /** User-visible label for an Email Account.service value (API keys stay unchanged). */

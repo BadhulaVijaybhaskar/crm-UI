@@ -56,4 +56,11 @@ describe('Astra branding chrome (no vendor text in served HTML)', () => {
     const patches = readCrm('patches.txt')
     expect(patches).toMatch(/astra_branding_scrub/)
   })
+
+  it('keeps the Workspace document name stable (label/title only)', () => {
+    const ws = readCrm('fcrm/workspace/frappe_crm/frappe_crm.json')
+    expect(ws).toMatch(/"name": "Frappe CRM"/)
+    expect(ws).toMatch(/"label": "Astra CRM"/)
+    expect(ws).toMatch(/"title": "Astra CRM"/)
+  })
 })
