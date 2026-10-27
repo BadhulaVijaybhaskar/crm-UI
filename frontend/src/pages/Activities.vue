@@ -1,6 +1,6 @@
 <template>
-  <div class="astra-bento flex h-full min-h-0 flex-col overflow-hidden">
-    <div class="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+  <div class="astra-bento flex h-full min-h-0 min-w-0 flex-col overflow-x-hidden overflow-y-hidden">
+    <div class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 sm:px-6">
       <MyDayBoard
         :my-day-data="myDay.data"
         :my-day-loading="myDay.loading"
@@ -10,7 +10,11 @@
       <section class="mt-6">
         <AstraCard :title="__('Feed')">
           <template #actions>
-            <div class="flex flex-wrap gap-1.5" role="tablist" :aria-label="__('Feed filters')">
+            <div
+              class="flex max-w-full min-w-0 flex-wrap gap-1.5"
+              role="tablist"
+              :aria-label="__('Feed filters')"
+            >
               <button
                 v-for="chip in feedChips"
                 :key="chip.value"

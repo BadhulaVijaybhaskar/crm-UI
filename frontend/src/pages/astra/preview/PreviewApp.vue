@@ -1,6 +1,6 @@
 <template>
-  <div class="astra-bento min-h-screen" :data-theme="theme">
-    <div class="flex min-h-screen">
+  <div class="astra-bento min-h-screen overflow-x-hidden" :data-theme="theme">
+    <div class="flex min-h-screen min-w-0">
       <aside
         class="sticky top-0 flex h-screen w-16 shrink-0 flex-col items-center gap-3 bg-[var(--astra-nav)] py-4"
         aria-hidden="true"
@@ -16,8 +16,8 @@
           VB
         </div>
       </aside>
-      <main class="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6">
-        <div class="mb-4 flex flex-wrap gap-2">
+      <main class="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+        <div class="mb-4 flex min-w-0 flex-wrap gap-2">
           <button
             v-for="p in pages"
             :key="p.id"
@@ -30,7 +30,7 @@
           </button>
           <button
             type="button"
-            class="astra-pill ml-auto"
+            class="astra-pill sm:ml-auto"
             @click="theme = theme === 'light' ? 'dark' : 'light'"
           >
             {{ theme === 'light' ? 'Dark' : 'Light' }}
