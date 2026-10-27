@@ -534,6 +534,42 @@ class TestGetDealContacts(IntegrationTestCase):
 		self.assertFalse(frappe.db.exists("Contact Email", {"email_id": "noperm-deal@example.com"}))
 		self.assertFalse(frappe.db.exists("CRM Organization", {"organization_name": "No Perm Org"}))
 
+	def test_create_deal_api_inserts_without_ignore_permissions(self):
+		"""create_deal must insert under the caller's permissions (no ignore_permissions)."""
+		email = "deal-inserter@example.com"
+		for doctype in ("CRM Deal", "Contact", "CRM Organization"):
+			role = f"Test {doctype} Access"
+			if not frappe.db.exists("Role", role):
+				frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(
+					ignore_permissions=True
+				)
+			add_permission(doctype, role, 0)
+			update_permission_property(doctype, role, 0, "create", 1)
+			update_permission_property(doctype, role, 0, "write", 1)
+			update_permission_property(doctype, role, 0, "read", 1)
+
+		if not frappe.db.exists("User", email):
+			user = frappe.get_doc(
+				{"doctype": "User", "email": email, "first_name": "Inserter", "send_welcome_email": 0}
+			).insert(ignore_permissions=True)
+		else:
+			user = frappe.get_doc("User", email)
+		user.add_roles("Test CRM Deal Access", "Test Contact Access", "Test CRM Organization Access")
+
+		frappe.set_user(email)
+		try:
+			deal_name = create_deal(
+				{
+					"organization_name": "Permitted Insert Org",
+					"first_name": "Permitted",
+					"email": "permitted-insert@example.com",
+				}
+			)
+			deal = frappe.get_doc("CRM Deal", deal_name)
+			self.assertEqual(deal.owner, email)
+		finally:
+			frappe.set_user("Administrator")
+
 	def test_get_assigned_users_requires_read_permission(self):
 		deal = create_test_deal(organization="Assignees Read Org")
 		assign_add({"assign_to": ["crm.user1@example.com"], "doctype": "CRM Deal", "name": deal.name})

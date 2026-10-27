@@ -165,6 +165,45 @@ def check_permission(doc):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
+def get_permission_query_conditions(user=None):
+	"""Non-managers only list their own views plus public/standard ones."""
+	if not user:
+		user = frappe.session.user
+
+	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+		return ""
+
+	escaped_user = frappe.db.escape(user)
+	return (
+		f"(`tabCRM View Settings`.`user` = {escaped_user}"
+		f" OR `tabCRM View Settings`.`public` = 1"
+		f" OR `tabCRM View Settings`.`is_standard` = 1)"
+	)
+
+
+def has_permission(doc, ptype, user):
+	"""Restrict REST/doc access: managers unrestricted; others own + public/standard for read,
+	and the same owner/public-manager rules as check_permission for writes."""
+	if not user:
+		user = frappe.session.user
+
+	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+		return True
+
+	if ptype in ("read", "select", "export", "print", "email", "report", "share"):
+		return bool(doc.user == user or doc.public or doc.is_standard)
+
+	if ptype == "create":
+		return True
+
+	# write / delete / etc. — same owner rules as check_permission
+	if doc.public and "Sales Manager" in frappe.get_roles(user):
+		return True
+	if doc.user and doc.user == user:
+		return True
+	return False
+
+
 def remove_duplicates(l):
 	return list(dict.fromkeys(l))
 
@@ -208,8 +247,10 @@ def sync_default_columns(view):
 @frappe.whitelist()
 def set_as_default(name: str | int | None = None, type: str | None = None, doctype: str | None = None):
 	if name:
+		doc = frappe.get_doc("CRM View Settings", name)
+		check_permission(doc)
 		frappe.db.set_value("CRM View Settings", name, "is_default", 1)
-		doctype = doctype or frappe.db.get_value("CRM View Settings", name, "dt")
+		doctype = doctype or doc.dt
 	else:
 		doc = create_or_update_standard_view({"type": type, "doctype": doctype, "is_default": 1})
 		name = doc.name
@@ -308,7 +349,8 @@ def create_or_update_standard_view(view: dict):
 @frappe.whitelist()
 def fetch_and_update_kanban_columns(name: str | int):
 	doc = frappe.get_doc("CRM View Settings", name)
-	doc.check_permission("write")
+	# Owner/public-manager check — DocType write alone is unrestricted for Sales User.
+	check_permission(doc)
 	if doc.type != "kanban":
 		return
 

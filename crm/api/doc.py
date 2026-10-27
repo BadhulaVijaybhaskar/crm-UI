@@ -211,6 +211,9 @@ def get_quick_filters(doctype: str, cached: bool = True):
 
 @frappe.whitelist()
 def update_quick_filters(quick_filters: str, old_filters: str, doctype: str):
+	# Global Property Setter / CRM Global Settings — managers only.
+	frappe.only_for(["System Manager", "Sales Manager"], True)
+
 	quick_filters = json.loads(quick_filters)
 	old_filters = json.loads(old_filters)
 
