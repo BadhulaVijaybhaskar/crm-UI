@@ -69,10 +69,35 @@ export type DashboardChartConfig = Partial<
 
 export type AxisChartKind = 'line' | 'area' | 'bar'
 
-export function toNumberCardProps(config: NumberChartConfig): NumberCardProps {
-  const props = { ...config }
-  delete props.tooltip
+/** Astra brand chart palette (replaces upstream default blues/greens/purples). */
+export const ASTRA_CHART_PALETTE = [
+  '#145CF6',
+  '#09B5A4',
+  '#0E8BD6',
+  '#7FA6FF',
+] as const
+
+function withAstraPalette(colors?: string[]) {
+  return colors?.length ? colors : [...ASTRA_CHART_PALETTE]
+}
+
+function hideEmptyDelta<T extends Record<string, unknown>>(props: T): T {
+  const delta = props.delta ?? props.change ?? props.percentageChange
+  if (delta === 0 || delta === '0' || delta === '0%' || delta == null) {
+    const next = { ...props }
+    delete next.delta
+    delete next.change
+    delete next.percentageChange
+    delete next.deltaLabel
+    return next
+  }
   return props
+}
+
+export function toNumberCardProps(config: NumberChartConfig): NumberCardProps {
+  const props = { ...config } as Record<string, unknown>
+  delete props.tooltip
+  return hideEmptyDelta(props) as NumberCardProps
 }
 
 export function toDonutChartProps(config: DonutChartConfig): DonutChartProps {
@@ -84,7 +109,7 @@ export function toDonutChartProps(config: DonutChartConfig): DonutChartProps {
     value: config.valueColumn,
     maxSlices: config.maxSliceCount,
     showDataLabels: config.showInlineLabels,
-    palette: config.colors,
+    palette: withAstraPalette(config.colors),
     echartOptions: config.echartOptions,
   }
 }
@@ -112,10 +137,11 @@ function toValueAxis(
 export function toAxisChartProps(config: AxisChartConfig): BarChartProps {
   const series = config.series || []
   const seriesConfig: Record<string, SeriesStyle> = {}
+  const colors = withAstraPalette(config.colors)
   series.forEach((s, i) => {
     seriesConfig[s.name] = {
       type: s.type,
-      color: s.color || config.colors?.[i],
+      color: s.color || colors[i % colors.length],
       showDataLabels: s.showDataLabels,
       showDataPoints: s.showDataPoints,
       dashed: s.lineType === 'dashed' || s.lineType === 'dotted' || undefined,

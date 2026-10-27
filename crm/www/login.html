@@ -11,13 +11,14 @@
   (function () {
     try {
       var t = localStorage.getItem('theme') || localStorage.getItem('frappeTheme');
-      if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        t = 'dark';
+      if (!t || t === 'system' || t === 'auto') {
+        t =
+          window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
       }
-      if (t === 'dark' || t === 'light') {
-        document.documentElement.setAttribute('data-theme', t);
-        document.documentElement.classList.toggle('dark', t === 'dark');
-      }
+      document.documentElement.setAttribute('data-theme', t);
+      document.documentElement.classList.toggle('dark', t === 'dark');
     } catch (e) {}
   })();
 </script>

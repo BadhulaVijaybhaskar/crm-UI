@@ -226,15 +226,10 @@ def sync_table(key, hook):
 	items = [item for item in items if not (item.is_standard and (item.name1 not in new_standard_items))]
 	crm_settings.set(key, items)
 
-	# Keep Legal notices directly under About for white-label compliance.
-	ordered = list(crm_settings.get(key) or [])
-	about_idx = next((i for i, d in enumerate(ordered) if d.name1 == "about"), None)
-	legal_idx = next((i for i, d in enumerate(ordered) if d.name1 == "legal_notices"), None)
-	if about_idx is not None and legal_idx is not None and legal_idx != about_idx + 1:
-		legal = ordered.pop(legal_idx)
-		insert_at = about_idx + 1 if legal_idx > about_idx else about_idx
-		ordered.insert(insert_at, legal)
-		crm_settings.set(key, ordered)
+	# Drop retired standard rows (Legal notices lives under About; no Cloud login).
+	retired = {"legal_notices", "login_to_fc"}
+	items = [item for item in (crm_settings.get(key) or []) if item.name1 not in retired]
+	crm_settings.set(key, items)
 
 	crm_settings.save()
 

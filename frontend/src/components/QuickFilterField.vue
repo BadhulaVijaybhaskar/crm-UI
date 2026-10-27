@@ -12,7 +12,9 @@
     class="form-control cursor-pointer [&_select]:cursor-pointer"
     type="select"
     :options="filter.options"
+    :label="filter.label"
     :placeholder="filter.label"
+    :aria-label="filter.label"
     side="bottom"
     @update:modelValue="updateFilter(filter, $event)"
   />
@@ -21,6 +23,7 @@
     :value="filter.value"
     :doctype="filter.options"
     :placeholder="filter.label"
+    :aria-label="filter.label"
     @change="(data) => updateFilter(filter, data)"
   />
   <component
@@ -29,6 +32,7 @@
     class="border-none"
     :model-value="filter.value"
     :placeholder="filter.label"
+    :aria-label="filter.label"
     :format="
       filter.fieldtype === 'Date'
         ? getFormat('', '', true, false, false)
@@ -40,7 +44,9 @@
     v-else
     v-model="filter.value"
     type="text"
+    :label="filter.label"
     :placeholder="filter.label"
+    :aria-label="filter.label"
     @input.stop="debouncedFn(filter, $event.target.value)"
   />
 </template>

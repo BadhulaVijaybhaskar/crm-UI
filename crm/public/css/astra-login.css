@@ -109,17 +109,49 @@ body.dark .page-card {
 
 .btn-login,
 .btn-primary.btn-login,
-.page-card .btn-primary {
+.page-card .btn-primary,
+form.form-login button[type="submit"],
+.for-login button[type="submit"],
+.login-content button[type="submit"],
+.page-card button[type="submit"] {
   border: 0 !important;
   border-radius: 999px !important;
-  background-image: linear-gradient(115deg, #0e63e0, #1677ff 55%, #3b8eff) !important;
+  color: #fff !important;
+  min-height: 44px !important;
+  background-image: var(--astra-grad) !important;
+  background-color: transparent !important;
   box-shadow: 0 8px 24px -8px color-mix(in srgb, #145cf6 70%, transparent);
 }
 
+.for-login label,
+.page-card label,
+.login-content label,
+form.form-login label {
+  color: var(--astra-text) !important;
+}
+
 .for-login .form-control,
-.page-card .form-control {
+.page-card .form-control,
+form.form-login input,
+.login-content input[type="email"],
+.login-content input[type="password"],
+.login-content input[type="text"] {
+  min-height: 44px !important;
   border-radius: 12px !important;
   background: var(--astra-surface) !important;
   color: var(--astra-text) !important;
   border-color: var(--astra-border) !important;
+}
+
+@media (max-width: 390px) {
+  .page-card {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    min-height: 100dvh;
+    display: flex;
+    align-content: center;
+    flex-wrap: wrap;
+  }
 }
