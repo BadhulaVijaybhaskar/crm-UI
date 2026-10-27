@@ -161,6 +161,9 @@ def site_time_to_unix(value) -> int:
 
 @frappe.whitelist()
 def fetch_and_store_pages_from_facebook(access_token: str) -> list[dict]:
+	# ignore_permissions insert below — managers only (not Sales User).
+	frappe.only_for(["System Manager", "Sales Manager"], True)
+
 	if not access_token:
 		frappe.throw(frappe._("Access token is required"))
 
