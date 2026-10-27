@@ -15,9 +15,11 @@ const ROOTS = [
 ]
 
 const CONTENT_RE =
-  /github\.com|gitlab\.|frappe\.io|sourceMappingURL/i
+  /github\.com|gitlab\.|frappe\.io|sourceMappingURL|frappecloud\.com|pulse\.m\.frappe\.cloud|Welcome to Frappe(?: CRM)?|docs\.frappe\.io/i
 const NAME_RE = /frappe|erpnext/i
 const TEXT_EXT = /\.(js|css|html|webmanifest|json|txt|map)$/i
+// Soft checks that should not appear as user-facing defaults after scrub
+const SOFT_VENDOR_RE = /"Frappe CRM"|'Frappe CRM'|erpnext\.example\.com/i
 
 function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out
@@ -59,6 +61,9 @@ for (const root of ROOTS) {
     if (CONTENT_RE.test(text)) {
       const m = text.match(CONTENT_RE)
       hits.push(`content (${m?.[0]}): ${file}`)
+    } else if (SOFT_VENDOR_RE.test(text)) {
+      const m = text.match(SOFT_VENDOR_RE)
+      hits.push(`vendor string (${m?.[0]}): ${file}`)
     }
   }
 }

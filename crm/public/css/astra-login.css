@@ -1,7 +1,42 @@
 /* Astra CRM login / website chrome. Loaded via hooks.web_include_css.
-   Login card follows the active color scheme (dark card in dark mode). */
+   Login card follows the active color scheme (dark card in dark mode).
+   Fonts are self-hosted under /assets/crm/fonts/ (no Google Fonts). */
 
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-800.woff2") format("woff2");
+}
 
 :root {
   --ac: #145cf6;
@@ -25,11 +60,21 @@ body.dark {
   --astra-border: #232f47;
 }
 
+/* Fallback when data-theme was not set yet (no localStorage / first visit) */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --astra-bg: #070b14;
+    --astra-surface: #0f1626;
+    --astra-text: #e8edf5;
+    --astra-muted: #98a3b8;
+    --astra-border: #232f47;
+  }
+}
+
 body {
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Framework /login page */
 .for-login,
 .page-card,
 .login-content,

@@ -129,5 +129,6 @@
    "type": "DocType"
   }
  ],
- "title": "Astra CRM"
+ "title": "Astra CRM",
+ "type": "Workspace"
 }

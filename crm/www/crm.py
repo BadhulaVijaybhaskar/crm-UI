@@ -14,6 +14,11 @@ no_cache = 1
 def get_context():
 	from crm.api import check_app_permission
 
+	# Guests hitting /crm should go to login, not a raw 403 page.
+	if frappe.session.user == "Guest":
+		frappe.local.flags.redirect_location = "/login"
+		raise frappe.Redirect
+
 	if not check_app_permission():
 		frappe.throw(_("You do not have permission to access Astra CRM"), frappe.PermissionError)
 
