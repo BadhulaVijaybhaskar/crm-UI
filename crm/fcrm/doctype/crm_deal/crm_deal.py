@@ -83,6 +83,8 @@ class CRMDeal(Document):
 		from crm.api.form import enrich_form_submission
 
 		enrich_form_submission(self)
+		if not self.deal_owner and frappe.session.user not in (None, "", "Guest"):
+			self.deal_owner = frappe.session.user
 
 	def before_validate(self):
 		self.set_sla()
