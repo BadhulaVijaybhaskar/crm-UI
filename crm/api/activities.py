@@ -617,6 +617,7 @@ def get_linked_calls(name: str):
 				CallLog.recording_url,
 				CallLog.creation,
 				CallLog.note,
+				CallLog.ai_employee_id,
 				CallLog.reference_doctype,
 				CallLog.reference_docname,
 				Link.link_doctype,

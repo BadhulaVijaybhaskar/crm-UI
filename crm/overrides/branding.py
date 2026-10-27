@@ -27,13 +27,6 @@ def update_website_context(context: dict) -> None:
 	context["show_footer_on_login"] = 0
 
 
-def ensure_webmanifest_mime() -> None:
-	"""Serve ``.webmanifest`` as application/manifest+json (not octet-stream)."""
-	import mimetypes
-
-	mimetypes.add_type("application/manifest+json", ".webmanifest")
-
-
 def scrub_site_branding() -> None:
 	"""Persist Website / System Settings so login HTML and emails stay white-labelled.
 
@@ -42,7 +35,6 @@ def scrub_site_branding() -> None:
 	"""
 	import frappe
 
-	ensure_webmanifest_mime()
 	_scrub_system_settings()
 	_scrub_website_settings()
 	frappe.db.commit()
