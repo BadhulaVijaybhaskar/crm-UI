@@ -250,7 +250,16 @@ def ensure_starter_whatsapp_templates():
 	except Exception:
 		frappe.log_error(title="Astra India WhatsApp starters default")
 
-	# Prefer native WhatsApp Message Template when present
+	# Prefer native WhatsApp Message Template when present — requires a WhatsApp Account.
+	has_wa_account = False
+	for account_dt in ("WhatsApp Account", "WhatsApp Business Account"):
+		if frappe.db.exists("DocType", account_dt) and frappe.db.exists(account_dt, {"name": ["is", "set"]}):
+			has_wa_account = True
+			break
+	if not has_wa_account:
+		# Starters stay in defaults; skip DocType seed cleanly when no account exists.
+		return
+
 	for doctype in ("WhatsApp Templates", "WA Template", "WhatsApp Message Template"):
 		if not frappe.db.exists("DocType", doctype):
 			continue
@@ -297,15 +306,21 @@ def ensure_lead_round_robin_rule():
 		return
 	name = "Astra Lead Round Robin"
 	if frappe.db.exists("Assignment Rule", name):
-		# Backfill assignment_days on older seeds that omitted the child table.
+		# Backfill assignment_days / condition on older seeds.
 		existing = frappe.get_doc("Assignment Rule", name)
+		changed = False
 		if not existing.get("assignment_days"):
 			for day in _ALL_WEEKDAYS:
 				existing.append("assignment_days", {"day": day})
+			changed = True
+		if "doc.status" in (existing.assign_condition or ""):
+			existing.assign_condition = 'status == "New"'
+			changed = True
+		if changed:
 			try:
 				existing.save(ignore_permissions=True)
 			except Exception:
-				frappe.log_error(title="Astra India assignment rule days backfill")
+				frappe.log_error(title="Astra India assignment rule backfill")
 		return
 	doc = frappe.get_doc(
 		{
