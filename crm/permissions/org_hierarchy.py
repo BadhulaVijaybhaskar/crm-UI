@@ -225,15 +225,50 @@ def get_task_permission_query_conditions(user=None):
 	return _cond_sql(_child_permission_query_conditions(user, "CRM Task"))
 
 
+def _child_parent_targets(doc) -> list[tuple[str, str]]:
+	"""(doctype, name) parents this child points at via reference_* or Call Log links."""
+	targets: list[tuple[str, str]] = []
+	ref_dt = doc.get("reference_doctype")
+	ref_dn = doc.get("reference_docname")
+	if ref_dt and ref_dn:
+		targets.append((ref_dt, ref_dn))
+
+	# CRM Call Log may only link a Lead/Deal through the Dynamic Link child table.
+	if getattr(doc, "doctype", None) == "CRM Call Log" or doc.get("doctype") == "CRM Call Log":
+		for link in doc.get("links") or []:
+			link_dt = link.get("link_doctype")
+			link_nm = link.get("link_name")
+			if link_dt in ("CRM Lead", "CRM Deal", "Contact") and link_nm:
+				targets.append((link_dt, link_nm))
+	return targets
+
+
+def _can_read_child_parents(doc, user: str) -> bool:
+	"""False when any linked parent is set and ``user`` cannot read it."""
+	for parent_dt, parent_dn in _child_parent_targets(doc):
+		if parent_dt not in _CHILD_REF_PARENTS:
+			return False
+		if not frappe.has_permission(parent_dt, "read", parent_dn, user=user):
+			return False
+	return True
+
+
 def _has_child_permission(doc, ptype, user, doctype: str) -> bool | None:
 	if not user:
 		user = frappe.session.user
 
-	if _is_unrestricted_user(user):
+	# Guest + managers/admins: Connect webhooks run as Guest before switching to
+	# the integration user and insert with ignore_permissions — keep Guest open.
+	if user == "Guest" or _is_unrestricted_user(user):
 		return True
 
-	if ptype == "create" or not doc.name:
-		return True
+	# create / write / delete must not target a parent the user cannot read
+	# (including re-parenting an owned row onto someone else's Lead/Contact).
+	if ptype in ("create", "write", "delete"):
+		if not _can_read_child_parents(doc, user):
+			return False
+		if ptype == "create" or not doc.get("name"):
+			return True
 
 	conditions = _child_permission_query_conditions(user, doctype)
 	if not conditions:
