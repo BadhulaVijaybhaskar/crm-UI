@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+import frappe
+
 # Headers we remove when present on the response. CSRF tokens travel as cookies /
 # boot data, not as a required response header for the SPA.
 _HEADERS_TO_STRIP = (
