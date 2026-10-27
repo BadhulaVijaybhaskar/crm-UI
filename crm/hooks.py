@@ -280,6 +280,9 @@ doc_events = {
 	"Contact": {
 		"validate": ["crm.api.contact.validate"],
 	},
+	"CRM Organization": {
+		"validate": ["crm.install_india.validate_organization_tax_fields"],
+	},
 	"Notification Log": {
 		"before_insert": ["crm.extends.notification_log.before_insert"],
 	},
@@ -467,6 +470,7 @@ after_migrate = [
 	"crm.install.add_default_scripts",
 	"crm.install.add_web_form_custom_fields",
 	"crm.install.ensure_contact_sales_permissions",
+	"crm.install_india.ensure_india_defaults",
 ]
 
 sqlite_search = ["crm.search_sqlite.CRMSearch"]

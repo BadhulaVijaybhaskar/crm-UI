@@ -38,6 +38,9 @@ def after_install(force=False):
 	add_assignment_rule_property_setters()
 	seed_default_rules_and_mappings()
 	ensure_contact_sales_permissions()
+	from crm.install_india import ensure_india_defaults
+
+	ensure_india_defaults()
 	frappe.db.commit()
 
 
