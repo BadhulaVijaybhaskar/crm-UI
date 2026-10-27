@@ -332,17 +332,13 @@ doc_events = {
 		],
 	},
 	"CRM Lead": {
-<<<<<<< HEAD
+		"after_insert": [
+			"crm.permissions.org_hierarchy.apply_default_record_owner",
+		],
 		"on_update": [
 			"crm.automation.events.on_lead_update",
 			"crm.integrations.astra_connect.outbound.on_lead_update",
 		],
-=======
-		"after_insert": [
-			"crm.permissions.org_hierarchy.apply_default_record_owner",
-		],
-		"on_update": ["crm.automation.events.on_lead_update"],
->>>>>>> cursor/crm-india-defaults-88f9
 	},
 	"Sales Order": {
 		"before_validate": [
