@@ -149,11 +149,12 @@ class TestCRMViewSettings(IntegrationTestCase):
 
 		frappe.set_user(sales)
 		try:
-			# frappe.get_doc does not check permissions; exercise the real guard.
+			# frappe.get_doc does not check permissions; exercise the real guard with a doc.
+			doc = frappe.get_doc("CRM View Settings", admin_view.name)
 			with self.assertRaises(frappe.PermissionError):
-				frappe.get_doc("CRM View Settings", admin_view.name).check_permission("read")
+				doc.check_permission("read")
 			with self.assertRaises(frappe.PermissionError):
-				frappe.has_permission("CRM View Settings", "read", admin_view.name, throw=True)
+				frappe.has_permission("CRM View Settings", "read", doc=doc, throw=True)
 		finally:
 			frappe.set_user("Administrator")
 
@@ -247,6 +248,25 @@ class TestCRMViewSettings(IntegrationTestCase):
 		finally:
 			frappe.set_user("Administrator")
 
+	def test_sales_manager_cannot_create_view_for_another_user(self):
+		manager = ensure_sales_manager("view-manager@hier.test")
+		sales = ensure_sales_user("view-sales@hier.test")
+		frappe.set_user(manager)
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				frappe.get_doc(
+					{
+						"doctype": "CRM View Settings",
+						"name": "Manager For Other",
+						"label": "Manager For Other",
+						"dt": "CRM Lead",
+						"type": "list",
+						"user": sales,
+					}
+				).insert()
+		finally:
+			frappe.set_user("Administrator")
+
 
 def ensure_sales_user(email):
 	if frappe.db.exists("User", email):
@@ -261,4 +281,20 @@ def ensure_sales_user(email):
 			}
 		).insert(ignore_permissions=True)
 	user.add_roles("Sales User")
+	return email
+
+
+def ensure_sales_manager(email):
+	if frappe.db.exists("User", email):
+		user = frappe.get_doc("User", email)
+	else:
+		user = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": email.split("@")[0],
+				"send_welcome_email": 0,
+			}
+		).insert(ignore_permissions=True)
+	user.add_roles("Sales Manager")
 	return email
