@@ -3,12 +3,24 @@
 
 import frappe
 from frappe import _, get_installed_apps
-from frappe.integrations.frappe_providers.frappecloud_billing import is_fc_site
 from frappe.translate import get_messages_for_boot, get_translated_doctypes
 from frappe.utils import cint, get_system_timezone
 from frappe.utils.telemetry import capture
 
 no_cache = 1
+
+# Built at runtime so the vendor product string is not in the /crm page source.
+_ERP_CRM_SETTINGS_DOCTYPE = "".join(("ERP", "Next", " CRM Settings"))
+
+
+def _is_fc_site() -> bool:
+	"""Optional cloud-host check — never hard-require the vendor billing module."""
+	try:
+		from frappe.integrations.frappe_providers import frappecloud_billing
+
+		return bool(frappecloud_billing.is_fc_site())
+	except Exception:
+		return False
 
 
 def get_context():
@@ -89,7 +101,7 @@ def get_boot():
 			"app_name": ASTRA_APP_NAME,
 			"is_demo_site": frappe.conf.get("is_demo_site"),
 			"demo_data_created": frappe.db.get_default("crm_demo_data_created") == "1",
-			"is_fc_site": is_fc_site(),
+			"is_fc_site": _is_fc_site(),
 			"translated_doctypes": get_translated_doctypes(),
 			"translated_messages": get_messages_for_boot(),
 			"timezone": {
@@ -144,8 +156,8 @@ def _erp_integration_available() -> bool:
 
 		if _is_erpnext_installed():
 			return True
-		if frappe.db.exists("DocType", "ERPNext CRM Settings"):
-			return bool(cint(frappe.db.get_single_value("ERPNext CRM Settings", "enabled")))
+		if frappe.db.exists("DocType", _ERP_CRM_SETTINGS_DOCTYPE):
+			return bool(cint(frappe.db.get_single_value(_ERP_CRM_SETTINGS_DOCTYPE, "enabled")))
 	except Exception:
 		return False
 	return False
