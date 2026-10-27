@@ -3,17 +3,27 @@ import {
   ASTRA_CONNECT_DEFAULT_URL,
   getAstraConnectBaseUrl,
   getAstraConnectUrl,
+  isAstraConnectConfigured,
   openAstraConnect,
 } from '@/utils/astraConnect'
 
 describe('astraConnect', () => {
   afterEach(() => {
     delete window.astra_connect_url
+    delete window.astra_connect_enabled
     delete window.boot
     vi.restoreAllMocks()
   })
 
-  it('defaults to the production Connect base URL', () => {
+  it('is not configured without enabled Settings + base URL', () => {
+    expect(isAstraConnectConfigured()).toBe(false)
+    window.astra_connect_url = 'https://connect.example.test'
+    expect(isAstraConnectConfigured()).toBe(false)
+    window.astra_connect_enabled = true
+    expect(isAstraConnectConfigured()).toBe(true)
+  })
+
+  it('defaults getAstraConnectBaseUrl when boot has no URL', () => {
     expect(getAstraConnectBaseUrl()).toBe(ASTRA_CONNECT_DEFAULT_URL)
   })
 
@@ -25,11 +35,16 @@ describe('astraConnect', () => {
     )
   })
 
-  it('opens Connect paths in a new tab (SSO placeholder)', () => {
+  it('opens Connect paths only when configured', () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    expect(openAstraConnect('messages')).toBeNull()
+    expect(open).not.toHaveBeenCalled()
+
+    window.astra_connect_enabled = true
+    window.astra_connect_url = 'https://connect.example.test'
     openAstraConnect('messages')
     expect(open).toHaveBeenCalledWith(
-      `${ASTRA_CONNECT_DEFAULT_URL}/messages`,
+      'https://connect.example.test/messages',
       '_blank',
       'noopener,noreferrer',
     )

@@ -1,7 +1,19 @@
-import { getNavigationItems, navigationItems } from '@/utils/navigation'
+import { afterEach, describe, expect, it } from 'vitest'
+import {
+  getNavigationItems,
+  isNavItemAvailable,
+  NAV_FEATURE_READY,
+  navigationItems,
+} from '@/utils/navigation'
 
 describe('navigationItems', () => {
-  it('keeps the Astra CRM sidebar order', () => {
+  afterEach(() => {
+    delete window.astra_connect_enabled
+    delete window.astra_connect_url
+    delete window.boot
+  })
+
+  it('keeps the Astra CRM sidebar registry order', () => {
     const labels = navigationItems.map((item) => item.label)
     expect(labels).toEqual([
       'Dashboard',
@@ -25,14 +37,38 @@ describe('navigationItems', () => {
     expect(labels.some((l) => l === 'inbox')).toBe(false)
   })
 
-  it('marks Connect destinations as placeholders', () => {
-    const connect = navigationItems.filter((item) => item.connect)
-    expect(connect.map((item) => item.connect)).toEqual([
-      'calls',
-      'messages',
-      'employees',
-    ])
-    expect(connect.every((item) => item.placeholder)).toBe(true)
+  it('fails if any nav item is a placeholder / Soon stub', () => {
+    for (const item of navigationItems) {
+      expect(item.placeholder, `${item.label} must not be a placeholder`).toBeFalsy()
+      expect(String(item.label)).not.toMatch(/soon|placeholder/i)
+    }
+    for (const item of getNavigationItems()) {
+      expect(item.placeholder, `${item.label} surfaced as placeholder`).toBeFalsy()
+    }
+  })
+
+  it('hides Activities and Reports until their feature flags flip', () => {
+    expect(NAV_FEATURE_READY.Activities).toBe(false)
+    expect(NAV_FEATURE_READY.Reports).toBe(false)
+    const labels = getNavigationItems().map((item) => item.label)
+    expect(labels).not.toContain('Activities')
+    expect(labels).not.toContain('Reports')
+  })
+
+  it('hides Connect destinations until Settings is enabled with a base URL', () => {
+    expect(
+      getNavigationItems()
+        .filter((item) => item.connect)
+        .map((item) => item.connect),
+    ).toEqual([])
+
+    window.astra_connect_enabled = true
+    window.astra_connect_url = 'https://connect.example.test'
+    expect(
+      getNavigationItems()
+        .filter((item) => item.connect)
+        .map((item) => item.connect),
+    ).toEqual(['calls', 'messages', 'employees'])
   })
 
   it('uses unique keys for in-app routes and connect links', () => {
@@ -49,5 +85,13 @@ describe('navigationItems', () => {
     expect(mobileLabels).not.toContain('Dashboard')
     expect(mobileLabels).toContain('Leads')
     expect(mobileLabels).toContain('Companies')
+  })
+
+  it('rejects placeholder and not-ready items via isNavItemAvailable', () => {
+    expect(isNavItemAvailable({ label: 'X', placeholder: true })).toBe(false)
+    expect(isNavItemAvailable({ label: 'X', ready: false, route: 'Leads' })).toBe(
+      false,
+    )
+    expect(isNavItemAvailable({ label: 'Leads', route: 'Leads' })).toBe(true)
   })
 })

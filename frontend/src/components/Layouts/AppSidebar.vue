@@ -95,14 +95,7 @@
                   :hoverDelay="1500"
                   :disabled="isCollapsed"
                 >
-                  <span class="flex min-w-0 items-center gap-1.5 truncate text-sm">
-                    <span class="truncate">{{ __(link.label) }}</span>
-                    <span
-                      v-if="link.placeholder && !isCollapsed"
-                      class="astra-placeholder-banner shrink-0"
-                      >{{ __('Soon') }}</span
-                    >
-                  </span>
+                  <span class="truncate text-sm">{{ __(link.label) }}</span>
                 </Tooltip>
               </SidebarItem>
             </nav>
@@ -112,7 +105,7 @@
         <div v-if="!mobile" class="mt-auto flex flex-col gap-1 pt-2">
           <div class="mb-1 flex flex-col gap-2">
             <SignupBanner
-              v-if="isDemoSite"
+              v-if="isDemoSite && isFCSite"
               :isSidebarCollapsed="isCollapsed"
               :afterSignup="() => capture('signup_from_demo_site')"
             />
@@ -297,7 +290,6 @@ function navLinkFromItem(link) {
       icon: link.icon,
       key: `connect:${link.connect}`,
       external: true,
-      placeholder: true,
       connect: link.connect,
     }
   }
@@ -314,7 +306,6 @@ function navLinkFromItem(link) {
     icon: link.icon,
     key: link.route,
     to: { name: link.route },
-    placeholder: Boolean(link.placeholder),
   }
 }
 
@@ -335,7 +326,6 @@ function parseView(views) {
 
 function onNavClick(event, link) {
   if (link.connect) {
-    // PLACEHOLDER: Astra Connect until secure SSO deep-link
     openAstraConnect(link.connect)
     if (props.mobile) mobileSidebarOpened.value = false
     return

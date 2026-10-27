@@ -11,15 +11,25 @@ import LucideActivity from '~icons/lucide/activity'
 import LucideChartColumn from '~icons/lucide/chart-column'
 import LucideSettings from '~icons/lucide/settings'
 import router from '@/router'
+import { isAstraConnectConfigured } from '@/utils/astraConnect'
+
+/**
+ * Flip these when the real page ships (CRM-08 Activities, CRM-09 Reports).
+ * Items with ready:false are omitted from the sidebar and command palette.
+ */
+export const NAV_FEATURE_READY = Object.freeze({
+  Activities: false,
+  Reports: false,
+})
 
 /**
  * Sidebar registry. Each item is one of:
- * - { route } — in-app vue-router name (must exist)
- * - { connect } — Astra Connect path key (opens new tab; SSO placeholder)
+ * - { route } — in-app vue-router name (must exist and be ready)
+ * - { connect, requiresConnect: true } — Astra Connect path (only when configured)
  * - { action: 'settings' } — opens the settings modal
- * - { placeholder: true, route } — in-app page clearly labeled as placeholder
  *
- * WhatsApp inbox is intentionally omitted from this registry (app stays installed).
+ * Rules: every selectable item must work. No placeholder/Soon entries.
+ * WhatsApp inbox is intentionally omitted (app stays installed).
  */
 export const navigationItems = [
   {
@@ -41,34 +51,31 @@ export const navigationItems = [
     label: 'AI Calling',
     icon: LucidePhone,
     connect: 'calls',
-    // PLACEHOLDER: open Astra Connect until secure SSO deep-link exists
-    placeholder: true,
+    requiresConnect: true,
   },
   {
     label: 'Messages',
     icon: LucideMessagesSquare,
     connect: 'messages',
-    // PLACEHOLDER: open Astra Connect until secure SSO deep-link exists
-    placeholder: true,
+    requiresConnect: true,
   },
   {
     label: 'AI Employees',
     icon: LucideBot,
     connect: 'employees',
-    // PLACEHOLDER: open Astra Connect until secure SSO deep-link exists
-    placeholder: true,
+    requiresConnect: true,
   },
   {
     label: 'Activities',
     icon: LucideActivity,
     route: 'Activities',
-    placeholder: true,
+    ready: NAV_FEATURE_READY.Activities,
   },
   {
     label: 'Reports',
     icon: LucideChartColumn,
     route: 'Reports',
-    placeholder: true,
+    ready: NAV_FEATURE_READY.Reports,
   },
   {
     label: 'Settings',
@@ -77,10 +84,16 @@ export const navigationItems = [
   },
 ]
 
+export function isNavItemAvailable(item, { mobile = false } = {}) {
+  if (!item) return false
+  if (item.placeholder) return false
+  if (item.ready === false) return false
+  if (mobile && item.desktopOnly) return false
+  if (item.requiresConnect && !isAstraConnectConfigured()) return false
+  if (item.route && !router.hasRoute(item.route)) return false
+  return true
+}
+
 export function getNavigationItems({ mobile = false } = {}) {
-  return navigationItems.filter((item) => {
-    if (mobile && item.desktopOnly) return false
-    if (item.route && !router.hasRoute(item.route)) return false
-    return true
-  })
+  return navigationItems.filter((item) => isNavItemAvailable(item, { mobile }))
 }

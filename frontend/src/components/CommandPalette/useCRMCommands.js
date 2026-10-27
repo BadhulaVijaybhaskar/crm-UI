@@ -292,7 +292,6 @@ function navigationCommands(tracked) {
             icon: item.icon,
             weight: 0.7,
             keywords: `go open ${item.label} astra connect`,
-            // PLACEHOLDER: Astra Connect until secure SSO deep-link
             perform: () => openAstraConnect(item.connect),
           },
           'navigation',
