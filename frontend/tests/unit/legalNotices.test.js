@@ -5,20 +5,20 @@ import {
 } from '../../src/data/legalNotices'
 
 describe('legal notices content', () => {
-  it('lists licence names only — no vendor, project, or repo URLs', () => {
-    expect(legalNotices.length).toBeGreaterThan(0)
+  it('lists unique licence names only — no summaries or intro copy', () => {
+    expect(legalNotices).toEqual(['GNU AGPL-3.0', 'GPL-3.0', 'MIT'])
+    expect(new Set(legalNotices).size).toBe(legalNotices.length)
     for (const item of legalNotices) {
-      expect(item.licence).toMatch(/AGPL|MIT|GPL/i)
-      expect(item).not.toHaveProperty('name')
-      expect(item).not.toHaveProperty('licenceUrl')
-      expect(item).not.toHaveProperty('sourceUrl')
-      const blob = `${item.licence} ${item.summary}`
-      expect(blob).not.toMatch(/frappe|erpnext|github|gitlab|\.io\//i)
+      expect(typeof item).toBe('string')
+      expect(item).toMatch(/AGPL|MIT|GPL/i)
+      expect(item).not.toMatch(/frappe|erpnext|github|gitlab|\.io\//i)
     }
   })
 
   it('points source availability at Astra support only', () => {
-    expect(LEGAL_SOURCE_LINE).toMatch(/Source code available on request via Astra support/)
+    expect(LEGAL_SOURCE_LINE).toBe(
+      'Source code available on request via Astra support',
+    )
     expect(LEGAL_SOURCE_LINE).not.toMatch(/github|gitlab|frappe/i)
   })
 })

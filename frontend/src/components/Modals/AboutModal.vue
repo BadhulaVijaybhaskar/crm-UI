@@ -18,6 +18,15 @@
         <p class="text-sm text-ink-gray-6 px-2 mt-2 text-center">
           {{ __('Sales workspace for Astra Connect teams') }}
         </p>
+        <div class="mt-4 flex justify-center px-2 pb-1">
+          <button
+            type="button"
+            class="text-xs text-ink-gray-5 underline-offset-2 hover:text-ink-gray-7 hover:underline"
+            @click="openLegal"
+          >
+            {{ __('Legal notices') }}
+          </button>
+        </div>
       </div>
     </template>
   </Dialog>
@@ -25,6 +34,13 @@
 <script setup>
 import { ASTRA_LOGO } from '@/assets/brand'
 import { Dialog } from 'frappe-ui'
+import { useRouter } from 'vue-router'
 
 let show = defineModel({ type: Boolean })
+const router = useRouter()
+
+function openLegal() {
+  show.value = false
+  router.push({ name: 'Legal Notices' })
+}
 </script>

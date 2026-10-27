@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ASTRA_CHART_PALETTE,
   getAxisChartKind,
   toAxisChartProps,
   toDonutChartProps,
@@ -127,6 +128,7 @@ describe('toDonutChartProps', () => {
       value: 'count',
     })
     expect(props.data).toHaveLength(1)
+    expect(props.palette).toEqual([...ASTRA_CHART_PALETTE])
   })
 })
 
@@ -148,5 +150,24 @@ describe('toNumberCardProps', () => {
       delta: -5.7,
       negativeIsBetter: true,
     })
+  })
+
+  it('hides empty 0% deltas', () => {
+    const props = toNumberCardProps({
+      title: 'Leads',
+      value: 12,
+      delta: 0,
+      deltaLabel: '0%',
+    })
+    expect(props).not.toHaveProperty('delta')
+    expect(props).not.toHaveProperty('deltaLabel')
+  })
+})
+
+describe('toAxisChartProps palette', () => {
+  it('applies the Astra palette when colors are omitted', () => {
+    const props = toAxisChartProps(salesTrend)
+    expect(props.seriesConfig.leads.color).toBe(ASTRA_CHART_PALETTE[0])
+    expect(props.seriesConfig.deals.color).toBe(ASTRA_CHART_PALETTE[1])
   })
 })
