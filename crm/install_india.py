@@ -55,12 +55,28 @@ _PAN_RE = re.compile(r"^[A-Z]{5}[0-9]{4}[A-Z]{1}$")
 
 def ensure_india_defaults():
 	"""Idempotent seed called from after_install / after_migrate."""
+	ensure_system_country_india()
 	ensure_fcrm_currency_inr()
 	ensure_organization_tax_fields()
 	ensure_indian_state_territories()
 	ensure_starter_email_templates()
 	ensure_starter_whatsapp_templates()
 	ensure_lead_round_robin_rule()
+
+
+def ensure_system_country_india():
+	"""Drive +91 E.164 parsing via System Settings country → IN region."""
+	if not frappe.db.exists("DocType", "System Settings"):
+		return
+	if not frappe.db.get_single_value("System Settings", "country"):
+		frappe.db.set_single_value("System Settings", "country", "India")
+	# Keep timezone/currency aligned if scrubbing already ran
+	frappe.db.set_single_value("System Settings", "time_zone", "Asia/Kolkata")
+	frappe.db.set_single_value("System Settings", "currency", "INR")
+	frappe.db.set_single_value("System Settings", "number_format", "#,##,###.##")
+	frappe.db.set_default("country", "India")
+	frappe.db.set_default("currency", "INR")
+	frappe.db.set_default("number_format", "#,##,###.##")
 
 
 def ensure_fcrm_currency_inr():
