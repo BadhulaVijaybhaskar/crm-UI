@@ -4,9 +4,13 @@
       <div class="p-4 pt-5">
         <div class="flex justify-center">
           <div class="flex flex-col items-center">
-            <CRMLogo class="mb-3 size-12" />
+            <img
+              src="/assets/crm/images/astra-crm-logo.png"
+              alt="Astra CRM"
+              class="mb-3 h-12 w-auto object-contain"
+            />
             <Dialog.Title as-child>
-              <h3 class="text-2xl-semibold text-ink-gray-9">Frappe CRM</h3>
+              <h3 class="text-2xl-semibold text-ink-gray-9">Astra CRM</h3>
             </Dialog.Title>
           </div>
         </div>
@@ -38,7 +42,6 @@
   </Dialog>
 </template>
 <script setup>
-import CRMLogo from '@/components/Icons/CRMLogo.vue'
 import GitHubIcon from '@/components/Icons/GitHubIcon.vue'
 import LucideGlobe from '~icons/lucide/globe'
 import LucideHeadset from '~icons/lucide/headset'

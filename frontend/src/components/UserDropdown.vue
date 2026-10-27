@@ -11,7 +11,11 @@
               : 'w-full px-2 hover:bg-surface-gray-2'
         "
       >
-        <BrandLogo v-model="brand" class="h-8 max-w-16 flex-shrink-0" />
+        <BrandLogo
+          v-model="brand"
+          class="h-8 max-w-[148px] flex-shrink-0"
+          :class="isCollapsed ? 'max-w-8' : ''"
+        />
         <div
           class="flex flex-1 flex-col text-left duration-300 ease-in-out truncate"
           :class="
@@ -20,10 +24,7 @@
               : 'ml-2 w-auto opacity-100'
           "
         >
-          <div class="text-base-medium leading-none text-ink-gray-9 truncate">
-            {{ __(brand.name || 'CRM') }}
-          </div>
-          <div class="mt-1 text-sm leading-none text-ink-gray-7 truncate">
+          <div class="text-sm leading-none text-ink-gray-7 truncate">
             {{ user.full_name }}
           </div>
         </div>

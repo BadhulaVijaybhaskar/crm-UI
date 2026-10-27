@@ -1,14 +1,15 @@
 import frappe
 
 app_name = "crm"
-app_title = "Frappe CRM"
+app_title = "Astra CRM"
 app_publisher = "Frappe Technologies Pvt. Ltd."
-app_description = "Kick-ass Open Source CRM"
+app_description = "Astra CRM — sales workspace for Astra Connect teams"
 app_email = "shariq@frappe.io"
 app_license = "AGPLv3"
-app_icon_url = "/assets/crm/images/logo.svg"
-app_icon_title = "CRM"
+app_icon_url = "/assets/crm/images/astra-crm-logo.png"
+app_icon_title = "Astra CRM"
 app_icon_route = "/crm"
+app_logo_url = "/assets/crm/images/astra-crm-logo.png"
 
 # Apps
 # ------------------
@@ -17,12 +18,18 @@ required_apps = ["whatsapp"]
 add_to_apps_screen = [
 	{
 		"name": "crm",
-		"logo": "/assets/crm/images/logo.svg",
-		"title": "CRM",
+		"logo": "/assets/crm/images/astra-crm-logo.png",
+		"title": "Astra CRM",
 		"route": "/crm",
 		"has_permission": "crm.api.check_app_permission",
 	}
 ]
+
+# Login / website chrome for Astra branding (card follows light/dark theme)
+web_include_css = ["/assets/crm/css/astra-login.css"]
+website_context = {
+	"splash_image": "/assets/crm/images/astra-crm-logo.png",
+}
 
 get_site_info = "crm.activation.get_site_info"
 

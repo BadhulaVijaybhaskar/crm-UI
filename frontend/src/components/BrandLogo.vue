@@ -1,12 +1,19 @@
 <template>
-  <div v-if="brand?.logo">
-    <img :src="brand.logo" class="h-full w-auto max-w-full object-contain" />
+  <div v-if="brand?.logo" class="flex h-full items-center">
+    <img
+      :src="brand.logo"
+      :alt="brand.name || 'Astra CRM'"
+      class="h-full w-auto max-w-full object-contain"
+    />
   </div>
-  <CRMLogo v-else class="size-8 shrink-0 rounded-4" />
+  <img
+    v-else
+    src="/assets/crm/images/astra-crm-logo.png"
+    alt="Astra CRM"
+    class="h-full w-auto max-w-full object-contain"
+  />
 </template>
 
 <script setup>
-import CRMLogo from '@/components/Icons/CRMLogo.vue'
-
 const brand = defineModel({ type: Object, default: () => ({}) })
 </script>
