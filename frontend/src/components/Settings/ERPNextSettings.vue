@@ -60,7 +60,7 @@
               v-model="erpnextCRMSettingsResource.doc.erpnext_site_url"
               :label="__('Site URL')"
               type="text"
-              placeholder="https://erpnext.example.com"
+              placeholder="https://erp.example.com"
               required
               :description="
                 __(
