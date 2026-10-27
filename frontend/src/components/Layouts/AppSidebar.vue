@@ -8,11 +8,12 @@
        column falls through to the white page canvas. The token cannot be
        overridden on the Sidebar element itself — `bg-surface-sidebar` is emitted
        after `bg-surface-gray-1` in the utilities layer and would win. -->
-  <div class="relative flex h-full bg-surface-gray-1">
+  <div class="relative flex h-full bg-surface-sidebar text-ink-gray-9">
     <Sidebar
       v-model:collapsed="isSidebarCollapsed"
       :collapsible="!mobile"
-      :width="mobile ? '260px' : undefined"
+      :width="mobile ? '260px' : '240px'"
+      collapsed-width="64px"
       class="border-r border-outline-gray-1"
     >
       <div class="flex h-full flex-col p-2">
@@ -82,8 +83,8 @@
                 :key="link.key"
                 :route="link.to"
                 :label="__(link.label)"
-                :active="activeItem === link.key"
-                @click="selectItem($event, link.key)"
+                :active="!link.external && activeItem === link.key"
+                @click="onNavClick($event, link)"
               >
                 <template #prefix>
                   <Icon :icon="link.icon" class="size-4 text-ink-gray-7" />
@@ -94,7 +95,14 @@
                   :hoverDelay="1500"
                   :disabled="isCollapsed"
                 >
-                  <span class="truncate text-sm">{{ __(link.label) }}</span>
+                  <span class="flex min-w-0 items-center gap-1.5 truncate text-sm">
+                    <span class="truncate">{{ __(link.label) }}</span>
+                    <span
+                      v-if="link.placeholder && !isCollapsed"
+                      class="astra-placeholder-banner shrink-0"
+                      >{{ __('Soon') }}</span
+                    >
+                  </span>
                 </Tooltip>
               </SidebarItem>
             </nav>
@@ -185,6 +193,7 @@ import Icon from '@/components/Icon.vue'
 import PinIcon from '@/components/Icons/PinIcon.vue'
 import UserDropdown from '@/components/UserDropdown.vue'
 import { getNavigationItems } from '@/utils/navigation'
+import { openAstraConnect } from '@/utils/astraConnect'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
@@ -258,12 +267,7 @@ const allViews = computed(() => {
       name: 'All Views',
       hideLabel: true,
       opened: true,
-      views: links.map((link) => ({
-        label: link.label,
-        icon: link.icon,
-        key: link.route,
-        to: { name: link.route },
-      })),
+      views: links.map((link) => navLinkFromItem(link)),
     },
   ]
   if (getPublicViews().length) {
@@ -284,6 +288,34 @@ const allViews = computed(() => {
   return _views
 })
 
+function navLinkFromItem(link) {
+  if (link.connect) {
+    return {
+      label: link.label,
+      icon: link.icon,
+      key: `connect:${link.connect}`,
+      external: true,
+      placeholder: true,
+      connect: link.connect,
+    }
+  }
+  if (link.action === 'settings') {
+    return {
+      label: link.label,
+      icon: link.icon,
+      key: 'settings',
+      action: 'settings',
+    }
+  }
+  return {
+    label: link.label,
+    icon: link.icon,
+    key: link.route,
+    to: { name: link.route },
+    placeholder: Boolean(link.placeholder),
+  }
+}
+
 function parseView(views) {
   return views.map((view) => {
     return {
@@ -297,6 +329,21 @@ function parseView(views) {
       },
     }
   })
+}
+
+function onNavClick(event, link) {
+  if (link.connect) {
+    // PLACEHOLDER: Astra Connect until secure SSO deep-link
+    openAstraConnect(link.connect)
+    if (props.mobile) mobileSidebarOpened.value = false
+    return
+  }
+  if (link.action === 'settings') {
+    showSettings.value = true
+    if (props.mobile) mobileSidebarOpened.value = false
+    return
+  }
+  selectItem(event, link.key)
 }
 
 function getIcon(routeName, icon) {
@@ -661,7 +708,7 @@ const articles = ref([
     ],
   },
   {
-    title: __('Frappe CRM mobile'),
+    title: __('Astra CRM mobile'),
     opened: false,
     subArticles: [
       { name: 'mobile-app-installation', title: __('Mobile App Installation') },

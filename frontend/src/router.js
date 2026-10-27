@@ -135,6 +135,22 @@ const routes = [
     component: () => import('@/pages/Welcome.vue'),
   },
   {
+    path: '/activities',
+    name: 'Activities',
+    component: () => import('@/pages/Activities.vue'),
+  },
+  {
+    path: '/reports',
+    name: 'Reports',
+    component: () => import('@/pages/Reports.vue'),
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/pages/Login.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/setup',
     name: 'Setup',
     component: () => import('@/pages/Setup.vue'),
@@ -209,8 +225,15 @@ router.beforeEach(async (to, from, next) => {
     } else {
       next({ name: route_name, params: { viewType: type } })
     }
+  } else if (!isLoggedIn && to.name === 'Login') {
+    next()
   } else if (!isLoggedIn) {
-    window.location.href = '/login?redirect-to=/crm'
+    // Prefer the in-app Astra login mock under Vite; fall back to Frappe /login.
+    if (import.meta.env.DEV) {
+      next({ name: 'Login', query: { redirect: to.fullPath } })
+    } else {
+      window.location.href = '/login?redirect-to=/crm'
+    }
   } else if (to.matched.length === 0) {
     next({ name: 'Invalid Page' })
   } else if (['Deal', 'Lead'].includes(to.name) && !to.hash) {
