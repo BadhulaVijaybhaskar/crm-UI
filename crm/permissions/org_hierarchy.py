@@ -40,6 +40,7 @@ def _permission_query_conditions(user: str | None, doctype: str):
 	if in_tree:
 		# Owner is the user themselves or any member of their subtree
 		q1 = (DT[owner_field] == user) | DT[owner_field].isin(_team_mem_query(user))
+		q_doc_owner = (DT.owner == user) | DT.owner.isin(_team_mem_query(user))
 		# Assigned to the user or any member of their subtree by ToDo
 		q2 = DT.name.isin(
 			frappe.qb.from_(Todo)
@@ -50,16 +51,23 @@ def _permission_query_conditions(user: str | None, doctype: str):
 				& ((Todo.allocated_to == user) | (Todo.allocated_to.isin(_team_mem_query(user))))
 			)
 		)
-		return q1 | q2
+		if owner_field == "owner":
+			return q1 | q2
+		return q1 | q_doc_owner | q2
 
-	# Sales User default: own records and records directly assigned to them
+	# Sales User default: own records (owner field and/or lead_owner/deal_owner)
+	# and records directly assigned to them. Including document owner covers
+	# API/CSV creates that left the dedicated owner field blank.
 	q1 = DT[owner_field] == user
+	q_doc_owner = DT.owner == user
 	q2 = DT.name.isin(
 		frappe.qb.from_(Todo)
 		.select(Todo.reference_name)
 		.where((Todo.reference_type == doctype) & (Todo.status != "Cancelled") & (Todo.allocated_to == user))
 	)
-	return q1 | q2
+	if owner_field == "owner":
+		return q1 | q2
+	return q1 | q_doc_owner | q2
 
 
 def get_lead_permission_query_conditions(user=None):

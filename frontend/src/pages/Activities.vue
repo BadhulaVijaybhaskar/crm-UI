@@ -118,6 +118,25 @@
         <div v-if="feed.loading" class="text-p-sm text-ink-gray-5">
           {{ __('Loading…') }}
         </div>
+        <div
+          v-else-if="feed.error"
+          class="rounded-md border border-outline-gray-2 bg-surface-red-1 px-3 py-3 text-p-sm text-ink-red-4"
+          role="alert"
+        >
+          <p class="font-medium">{{ __('Could not load the activity feed.') }}</p>
+          <p class="mt-1 text-ink-gray-7">
+            {{
+              feed.error?.messages?.[0] ||
+              feed.error?.message ||
+              __('Check your permissions or try again.')
+            }}
+          </p>
+          <Button
+            class="mt-2"
+            :label="__('Retry')"
+            @click="feed.reload()"
+          />
+        </div>
         <p
           v-else-if="!(feed.data?.items || []).length"
           class="text-p-sm text-ink-gray-5"

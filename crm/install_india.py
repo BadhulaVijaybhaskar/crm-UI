@@ -54,13 +54,38 @@ _PAN_RE = re.compile(r"^[A-Z]{5}[0-9]{4}[A-Z]{1}$")
 
 
 def ensure_india_defaults():
-	"""Idempotent seed called from after_install / after_migrate."""
-	ensure_fcrm_currency_inr()
-	ensure_organization_tax_fields()
-	ensure_indian_state_territories()
-	ensure_starter_email_templates()
-	ensure_starter_whatsapp_templates()
-	ensure_lead_round_robin_rule()
+	"""Idempotent seed called from after_install / after_migrate.
+
+	Each step is isolated so a single LinkValidationError cannot abort migrate.
+	"""
+	for step in (
+		ensure_system_country_india,
+		ensure_fcrm_currency_inr,
+		ensure_organization_tax_fields,
+		ensure_indian_state_territories,
+		ensure_starter_email_templates,
+		ensure_starter_whatsapp_templates,
+		ensure_lead_round_robin_rule,
+	):
+		try:
+			step()
+		except Exception:
+			frappe.log_error(title=f"Astra India defaults: {step.__name__}")
+
+
+def ensure_system_country_india():
+	"""Drive +91 E.164 parsing via System Settings country → IN region."""
+	if not frappe.db.exists("DocType", "System Settings"):
+		return
+	if not frappe.db.get_single_value("System Settings", "country"):
+		frappe.db.set_single_value("System Settings", "country", "India")
+	# Keep timezone/currency aligned if scrubbing already ran
+	frappe.db.set_single_value("System Settings", "time_zone", "Asia/Kolkata")
+	frappe.db.set_single_value("System Settings", "currency", "INR")
+	frappe.db.set_single_value("System Settings", "number_format", "#,##,###.##")
+	frappe.db.set_default("country", "India")
+	frappe.db.set_default("currency", "INR")
+	frappe.db.set_default("number_format", "#,##,###.##")
 
 
 def ensure_fcrm_currency_inr():
@@ -206,8 +231,8 @@ def ensure_starter_email_templates():
 
 def ensure_starter_whatsapp_templates():
 	# WhatsApp templates live in different doctypes depending on the WA app.
-	# Seed a CRM Global Settings JSON fallback the UI can read if WA DocType is absent.
-	key = "india_whatsapp_starters"
+	# CRM Global Settings.dt is a Link to DocType — never seed a fake dt value
+	# (that LinkValidationError breaks migrate). Persist starters as a default.
 	payload = [
 		{
 			"name": "lead_intro",
@@ -220,15 +245,10 @@ def ensure_starter_whatsapp_templates():
 			"body": "Hi {{first_name}}, just checking if a quick call this week still works for you?",
 		},
 	]
-	if frappe.db.exists("DocType", "CRM Global Settings"):
-		if not frappe.db.exists("CRM Global Settings", {"dt": key}):
-			frappe.get_doc(
-				{
-					"doctype": "CRM Global Settings",
-					"dt": key,
-					"json": frappe.as_json(payload),
-				}
-			).insert(ignore_permissions=True)
+	try:
+		frappe.db.set_default("india_whatsapp_starters", frappe.as_json(payload))
+	except Exception:
+		frappe.log_error(title="Astra India WhatsApp starters default")
 
 	# Prefer native WhatsApp Message Template when present
 	for doctype in ("WhatsApp Templates", "WA Template", "WhatsApp Message Template"):

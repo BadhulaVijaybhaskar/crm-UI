@@ -886,7 +886,8 @@ def get_activity_feed(
 				}
 			)
 
-	# Comments
+	# Comments — Sales Users typically lack Comment DocType read, so list via
+	# get_all and keep only rows whose parent Lead/Deal/Contact they can read.
 	if not type_filter or type_filter in ("comments", "all", "comment"):
 		comment_filters = {
 			"reference_doctype": ("in", ["CRM Lead", "CRM Deal", "Contact"]),
@@ -894,7 +895,7 @@ def get_activity_feed(
 		}
 		if owner_filter:
 			comment_filters["owner"] = owner_filter
-		comments = frappe.get_list(
+		comments = frappe.get_all(
 			"Comment",
 			filters=comment_filters,
 			fields=["name", "content", "creation", "owner", "reference_doctype", "reference_name"],
@@ -903,6 +904,10 @@ def get_activity_feed(
 		)
 		for c in comments:
 			if not in_range(c.creation):
+				continue
+			if not c.reference_doctype or not c.reference_name:
+				continue
+			if not frappe.has_permission(c.reference_doctype, "read", c.reference_name):
 				continue
 			items.append(
 				{
