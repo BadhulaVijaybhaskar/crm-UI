@@ -42,8 +42,12 @@ class CRMCallLog(Document):
 			"Queued",
 			"Canceled",
 		]
-		telephony_medium: DF.Literal["", "Manual", "Twilio", "Exotel"]
+		ai_employee_id: DF.Data | None
+		call_summary: DF.Text | None
+		disposition: DF.Data | None
+		telephony_medium: DF.Literal["", "Manual", "Twilio", "Exotel", "Astra Connect"]
 		to: DF.Data
+		transcript_url: DF.SmallText | None
 		type: DF.Literal["Incoming", "Outgoing"]
 	# end: auto-generated types
 

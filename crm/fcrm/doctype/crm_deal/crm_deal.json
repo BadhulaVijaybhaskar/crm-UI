@@ -79,6 +79,8 @@
   "last_responded_on",
   "log_tab",
   "status_change_log",
+  "astra_connect_tab",
+  "ai_employee_id",
   "lost_details_tab",
   "lost_reason",
   "lost_notes"
@@ -421,6 +423,18 @@
    "fieldtype": "Text",
    "label": "Lost Notes",
    "mandatory_depends_on": "eval: doc.lost_reason == \"Other\""
+  },
+  {
+   "fieldname": "astra_connect_tab",
+   "fieldtype": "Tab Break",
+   "label": "Astra Connect"
+  },
+  {
+   "description": "AI Employee assignment from Astra Connect.",
+   "fieldname": "ai_employee_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "AI Employee ID"
   },
   {
    "default": "1",

@@ -1,0 +1,57 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "connect_base_url",
+  "default_lead_owner"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "description": "Base URL for Astra Connect (no trailing slash). Used for sidebar and Call/Message with AI entry points.",
+   "fieldname": "connect_base_url",
+   "fieldtype": "Data",
+   "label": "Connect Base URL",
+   "options": "URL"
+  },
+  {
+   "description": "Default owner assigned to leads created from Connect webhooks.",
+   "fieldname": "default_lead_owner",
+   "fieldtype": "Link",
+   "label": "Default Lead Owner",
+   "options": "User"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "Astra Connect Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
