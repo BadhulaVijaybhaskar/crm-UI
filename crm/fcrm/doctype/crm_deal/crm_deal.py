@@ -516,5 +516,6 @@ def create_deal(doc: dict):
 
 	deal.update(doc)
 
-	deal.insert(ignore_permissions=True)
+	# Create permission already checked above; do not bypass has_permission on insert.
+	deal.insert()
 	return deal.name
