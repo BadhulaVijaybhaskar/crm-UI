@@ -289,6 +289,12 @@ if int(frappe.__version__.split(".")[0]) < 16:
 doc_events = {
 	"Contact": {
 		"validate": ["crm.api.contact.validate"],
+		"after_insert": [
+			"crm.fcrm.doctype.crm_outbound_webhook.crm_outbound_webhook.on_contact_insert",
+		],
+		"on_update": [
+			"crm.fcrm.doctype.crm_outbound_webhook.crm_outbound_webhook.on_contact_update",
+		],
 	},
 	"CRM Organization": {
 		"validate": ["crm.install_india.validate_organization_tax_fields"],
@@ -324,20 +330,24 @@ doc_events = {
 		"after_insert": [
 			# Runs after Assignment Rule (frappe) so we only default when still empty.
 			"crm.permissions.org_hierarchy.apply_default_record_owner",
+			"crm.fcrm.doctype.crm_outbound_webhook.crm_outbound_webhook.on_deal_insert",
 		],
 		"on_update": [
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext",
 			"crm.automation.events.on_deal_update",
 			"crm.integrations.astra_connect.outbound.on_deal_update",
+			"crm.fcrm.doctype.crm_outbound_webhook.crm_outbound_webhook.on_deal_update",
 		],
 	},
 	"CRM Lead": {
 		"after_insert": [
 			"crm.permissions.org_hierarchy.apply_default_record_owner",
+			"crm.fcrm.doctype.crm_outbound_webhook.crm_outbound_webhook.on_lead_insert",
 		],
 		"on_update": [
 			"crm.automation.events.on_lead_update",
 			"crm.integrations.astra_connect.outbound.on_lead_update",
+			"crm.fcrm.doctype.crm_outbound_webhook.crm_outbound_webhook.on_lead_update",
 		],
 	},
 	"Sales Order": {
@@ -478,9 +488,9 @@ after_request = ["crm.overrides.response_headers.after_request"]
 # Authentication and authorization
 # --------------------------------
 
-# auth_hooks = [
-# "crm.auth.validate"
-# ]
+auth_hooks = [
+	"crm.api.api_key_auth.validate",
+]
 
 on_session_creation = ["crm.api.onboarding.complete_setup_for_fc_site"]
 

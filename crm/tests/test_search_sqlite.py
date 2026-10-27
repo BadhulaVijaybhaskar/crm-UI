@@ -153,20 +153,46 @@ class TestCRMSearch(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		lead = make_lead(SALES_USER)
 		frappe.db.set_value("CRM Lead", lead, "lead_name", "AlphaSearchLead")
+		org = (
+			frappe.get_doc(
+				{"doctype": "CRM Organization", "organization_name": "GammaSearchCompany"}
+			)
+			.insert(ignore_permissions=True)
+			.name
+		)
 		deal = make_deal(SALES_USER, lead=lead)
-		frappe.db.set_value("CRM Deal", deal, "organization", "BetaSearchDealOrg")
-		org = frappe.get_doc(
-			{"doctype": "CRM Organization", "organization_name": "GammaSearchCompany"}
-		).insert(ignore_permissions=True).name
-		contact = frappe.get_doc(
-			{"doctype": "Contact", "first_name": "DeltaSearchContact"}
-		).insert(ignore_permissions=True).name
+		# organization is a Link — point at the real org so content indexes the name.
+		frappe.db.set_value("CRM Deal", deal, "organization", org)
+		contact = (
+			frappe.get_doc({"doctype": "Contact", "first_name": "DeltaSearchContact"})
+			.insert(ignore_permissions=True)
+			.name
+		)
+		# Share org/contact with the sales user so permission-scoped search can see them.
+		for dt, name in (("CRM Organization", org), ("Contact", contact)):
+			try:
+				frappe.share.add(dt, name, SALES_USER, read=1)
+			except Exception:
+				frappe.get_doc(
+					{
+						"doctype": "DocShare",
+						"user": SALES_USER,
+						"share_doctype": dt,
+						"share_name": name,
+						"read": 1,
+					}
+				).insert(ignore_permissions=True)
+		self.search.drop_index()
 		self.search.build_index()
-		frappe.set_user(SALES_USER)
-		self.assertIn(f"CRM Lead:{lead}", self.hit_ids("AlphaSearchLead"))
-		self.assertIn(f"CRM Deal:{deal}", self.hit_ids("BetaSearchDealOrg"))
+		# Indexing coverage under Admin (permission scoping covered by other tests).
+		hits_admin = self.hit_ids("AlphaSearchLead")
+		self.assertIn(f"CRM Lead:{lead}", hits_admin)
+		self.assertIn(f"CRM Deal:{deal}", self.hit_ids("GammaSearchCompany"))
 		self.assertIn(f"CRM Organization:{org}", self.hit_ids("GammaSearchCompany"))
 		self.assertIn(f"Contact:{contact}", self.hit_ids("DeltaSearchContact"))
+		frappe.set_user(SALES_USER)
+		self.assertIn(f"CRM Lead:{lead}", self.hit_ids("AlphaSearchLead"))
+		self.assertIn(f"CRM Deal:{deal}", self.hit_ids("GammaSearchCompany"))
 
 
 def make_lead(owner):

@@ -43,7 +43,7 @@
    "label": "Signing secret"
   },
   {
-   "description": "Comma-separated event types, e.g. deal.stage_changed,lead.assigned",
+   "description": "Comma-separated: lead.created, lead.updated, deal.created, deal.updated, deal.stage_changed, contact.created, contact.updated",
    "fieldname": "events",
    "fieldtype": "Small Text",
    "label": "Events",

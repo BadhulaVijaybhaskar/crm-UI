@@ -90,15 +90,8 @@ def enqueue_event(event_type: str, payload: dict[str, Any]):
 		event_name=event.name,
 		now=bool(getattr(frappe.flags, "in_test", False)),
 	)
-	# Fan-out to admin-configured CRM Outbound Webhook rows (CRM-25).
-	frappe.enqueue(
-		"crm.integrations.astra_connect.outbound.deliver_custom_webhooks",
-		queue="short",
-		event_type=event_type,
-		payload=payload,
-		delivery_id=delivery_id,
-		now=bool(getattr(frappe.flags, "in_test", False)),
-	)
+	# Custom CRM Outbound Webhook rows are fired by independent doc_events
+	# (crm_outbound_webhook), not gated on Connect.
 
 
 def deliver_event(event_name: str, max_attempts: int = 3):
@@ -148,42 +141,7 @@ def deliver_event(event_name: str, max_attempts: int = 3):
 	frappe.db.commit()
 
 
-def deliver_custom_webhooks(event_type: str, payload: dict, delivery_id: str):
-	"""POST to enabled CRM Outbound Webhook endpoints that subscribe to this event."""
-	if not frappe.db.exists("DocType", "CRM Outbound Webhook"):
-		return
-	hooks = frappe.get_all(
-		"CRM Outbound Webhook",
-		filters={"enabled": 1},
-		fields=["name", "endpoint_url", "events", "timeout_seconds"],
-	)
-	for hook in hooks:
-		subscribed = {e.strip() for e in (hook.events or "").split(",") if e.strip()}
-		if event_type not in subscribed and "*" not in subscribed:
-			continue
-		secret = None
-		try:
-			secret = frappe.get_doc("CRM Outbound Webhook", hook.name).get_password("secret")
-		except Exception:
-			secret = None
-		body = json.dumps(payload or {}, separators=(",", ":"), default=str).encode("utf-8")
-		ts = int(time.time())
-		headers = {
-			"Content-Type": "application/json",
-			"X-Astra-Delivery": delivery_id,
-			"X-Astra-Timestamp": str(ts),
-		}
-		if secret:
-			headers["X-Astra-Signature"] = f"sha256={sign_payload(secret, ts, body)}"
-		try:
-			requests.post(
-				hook.endpoint_url,
-				data=body,
-				headers=headers,
-				timeout=int(hook.timeout_seconds or 15),
-			)
-		except Exception:
-			frappe.log_error(title=f"CRM outbound webhook {hook.name}")
+# deliver_custom_webhooks lives on CRM Outbound Webhook (Connect-independent).
 
 
 @frappe.whitelist()
