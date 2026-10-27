@@ -5,7 +5,7 @@
         <div class="flex justify-center">
           <div class="flex flex-col items-center">
             <img
-              src="/assets/crm/images/astra-crm-logo.png"
+              :src="ASTRA_LOGO"
               alt="Astra CRM"
               class="mb-3 h-12 w-auto object-contain"
             />
@@ -42,6 +42,7 @@
   </Dialog>
 </template>
 <script setup>
+import { ASTRA_LOGO } from '@/assets/brand'
 import GitHubIcon from '@/components/Icons/GitHubIcon.vue'
 import LucideGlobe from '~icons/lucide/globe'
 import LucideHeadset from '~icons/lucide/headset'

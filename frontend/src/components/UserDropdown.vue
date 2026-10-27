@@ -15,7 +15,7 @@
           :src="sidebarLogo"
           :alt="brand.name || 'Astra CRM'"
           class="flex-shrink-0 object-contain"
-          :class="isCollapsed ? 'size-8' : 'h-8 max-w-[148px]'"
+          :class="isCollapsed ? 'size-8' : 'h-9 max-w-[168px]'"
         />
         <div
           class="flex flex-1 flex-col text-left duration-300 ease-in-out truncate"
@@ -68,6 +68,7 @@ import { confirmLoginToFrappeCloud } from '@/composables/frappecloud'
 import { spriteIcon } from '@/utils/spriteIcon'
 import { createResource, Dropdown } from 'frappe-ui'
 import { computed, h, markRaw } from 'vue'
+import { ASTRA_LOGO_ON_DARK, ASTRA_MARK } from '@/assets/brand'
 
 const props = defineProps({
   isCollapsed: { type: Boolean, default: false },
@@ -83,9 +84,7 @@ const user = computed(() => getUser() || {})
 const customBrandLogo = computed(() => settings.value?.brand_logo || '')
 const sidebarLogo = computed(() => {
   if (customBrandLogo.value) return customBrandLogo.value
-  return props.isCollapsed
-    ? '/assets/crm/images/astra-crm-mark.png'
-    : '/assets/crm/images/astra-crm-logo-on-dark.png'
+  return props.isCollapsed ? ASTRA_MARK : ASTRA_LOGO_ON_DARK
 })
 
 const apps = createResource({

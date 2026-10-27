@@ -43,11 +43,7 @@
       </main>
       <SetupTelemetryConsent class="mb-3" />
       <footer class="flex items-center gap-2 text-sm text-ink-gray-5">
-        <img
-          src="/assets/crm/images/astra-crm-mark.png"
-          alt=""
-          class="size-4 object-contain"
-        />
+        <img :src="ASTRA_MARK" alt="" class="size-4 object-contain" />
         Astra CRM
       </footer>
     </section>
@@ -60,6 +56,7 @@
 </template>
 
 <script setup>
+import { ASTRA_MARK } from '@/assets/brand'
 import SetupPreview from '@/components/Setup/SetupPreview.vue'
 import SetupEmail from '@/components/Setup/SetupEmail.vue'
 import SetupLeads from '@/components/Setup/SetupLeads.vue'

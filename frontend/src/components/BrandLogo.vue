@@ -8,12 +8,14 @@
   </div>
   <img
     v-else
-    src="/assets/crm/images/astra-crm-logo.png"
+    :src="ASTRA_LOGO"
     alt="Astra CRM"
     class="h-full w-auto max-w-full object-contain"
   />
 </template>
 
 <script setup>
+import { ASTRA_LOGO } from '@/assets/brand'
+
 const brand = defineModel({ type: Object, default: () => ({}) })
 </script>

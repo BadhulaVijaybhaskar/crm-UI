@@ -43,20 +43,23 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { usePageMeta, useColorScheme } from 'frappe-ui'
+import {
+  ASTRA_FAVICON,
+  ASTRA_LOGO,
+  ASTRA_LOGO_ON_DARK,
+} from '@/assets/brand'
 
 const email = ref('')
 const password = ref('')
 const { resolvedColorScheme } = useColorScheme()
 
 const logoSrc = computed(() =>
-  resolvedColorScheme.value === 'dark'
-    ? '/assets/crm/images/astra-crm-logo-on-dark.png'
-    : '/assets/crm/images/astra-crm-logo.png',
+  resolvedColorScheme.value === 'dark' ? ASTRA_LOGO_ON_DARK : ASTRA_LOGO,
 )
 
 usePageMeta(() => ({
   title: __('Login'),
-  icon: '/assets/crm/images/favicon-32.png',
+  icon: ASTRA_FAVICON,
 }))
 
 function onSubmit() {
