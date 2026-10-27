@@ -71,10 +71,16 @@ class TestPasswordSetup(IntegrationTestCase):
 
 	def test_does_not_need_setup_when_password_login_is_disabled(self):
 		# not change_settings: it saves the doc, and validating System Settings
-		# fails on a bare site that has no language or time zone set
+		# fails on a bare site that has no language or time zone set.
+		# Isolate from sibling tests that toggle LDAP / cache system settings.
+		frappe.db.set_single_value("LDAP Settings", "enabled", 0)
 		frappe.db.set_single_value("System Settings", "disable_user_pass_login", 1)
+		frappe.clear_cache(doctype="System Settings")
 		frappe.local.system_settings = None
 
+		from frappe.utils import cint
+
+		self.assertEqual(cint(frappe.get_system_settings("disable_user_pass_login")), 1)
 		self.assertFalse(needs_password_setup())
 
 	# ---- redirect ----
