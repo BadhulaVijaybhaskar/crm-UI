@@ -24,6 +24,55 @@ class CRMSearch(SQLiteSearch):
 	}
 
 	INDEXABLE_DOCTYPES: ClassVar = {
+		"CRM Lead": {
+			"fields": [
+				"name",
+				{"title": "lead_name"},
+				"first_name",
+				"last_name",
+				"email",
+				"mobile_no",
+				"organization",
+				"status",
+				"modified",
+				{"author": "lead_owner"},
+			],
+		},
+		"CRM Deal": {
+			"fields": [
+				"name",
+				{"title": "organization"},
+				"email",
+				"mobile_no",
+				"status",
+				"modified",
+				{"author": "deal_owner"},
+			],
+		},
+		"Contact": {
+			"fields": [
+				"name",
+				{"title": "full_name"},
+				"first_name",
+				"last_name",
+				"email_id",
+				"mobile_no",
+				"company_name",
+				"modified",
+				{"author": "owner"},
+			],
+		},
+		"CRM Organization": {
+			"fields": [
+				"name",
+				{"title": "organization_name"},
+				"website",
+				"industry",
+				"territory",
+				"modified",
+				{"author": "owner"},
+			],
+		},
 		"Comment": {
 			"fields": [
 				"name",
@@ -83,25 +132,38 @@ class CRMSearch(SQLiteSearch):
 		"""Return `parent` keys the user can read, or None when there are too many to pre-filter."""
 		leads = frappe.get_list("CRM Lead", pluck="name", limit=PREFILTER_LIMIT + 1)
 		deals = frappe.get_list("CRM Deal", pluck="name", limit=PREFILTER_LIMIT + 1)
-		if len(leads) > PREFILTER_LIMIT or len(deals) > PREFILTER_LIMIT:
+		contacts = frappe.get_list("Contact", pluck="name", limit=PREFILTER_LIMIT + 1)
+		orgs = frappe.get_list("CRM Organization", pluck="name", limit=PREFILTER_LIMIT + 1)
+		if any(
+			len(rows) > PREFILTER_LIMIT for rows in (leads, deals, contacts, orgs)
+		):
 			return None
 
-		return [parent_key("CRM Lead", name) for name in leads] + [
-			parent_key("CRM Deal", name) for name in deals
-		]
+		return (
+			[parent_key("CRM Lead", name) for name in leads]
+			+ [parent_key("CRM Deal", name) for name in deals]
+			+ [parent_key("Contact", name) for name in contacts]
+			+ [parent_key("CRM Organization", name) for name in orgs]
+		)
 
 	def prepare_document(self, doc):
 		# The index queue loads documents by name, so the configured filters are not applied there.
 		config = self.doc_configs.get(doc.doctype)
-		if not config or not matches_filters(doc, config["filters"]):
+		if not config:
+			return None
+		filters = config.get("filters") or {}
+		if filters and not matches_filters(doc, filters):
 			return None
 
 		document = super().prepare_document(doc)
 		if not document:
 			return None
 
-		reference_name = doc.reference_docname if doc.doctype == "FCRM Note" else doc.reference_name
-		document["parent"] = parent_key(doc.reference_doctype, reference_name)
+		if doc.doctype in ("CRM Lead", "CRM Deal", "Contact", "CRM Organization"):
+			document["parent"] = parent_key(doc.doctype, doc.name)
+		else:
+			reference_name = doc.reference_docname if doc.doctype == "FCRM Note" else doc.reference_name
+			document["parent"] = parent_key(doc.reference_doctype, reference_name)
 
 		# Index only the new text of an email, so a phrase matches the email that said it
 		# and not every later reply that quotes it.
