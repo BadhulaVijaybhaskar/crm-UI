@@ -51,11 +51,16 @@ export function getMeta(doctype) {
   function getCurrencyWithPrecision(fieldname, doc) {
     let df = doctypesMeta[doctype]?.fields.find((f) => f.fieldname == fieldname)
     let precision = df?.precision || null
-    return formatCurrency(doc[fieldname], '', '', precision)
+    return formatCurrency(
+      doc[fieldname],
+      '',
+      window.sysdefaults?.currency || 'INR',
+      precision,
+    )
   }
 
   function getFormattedCurrency(fieldname, doc, parentDoc = null) {
-    let currency = window.sysdefaults.currency || 'USD'
+    let currency = window.sysdefaults.currency || 'INR'
     let df = doctypesMeta[doctype]?.fields.find((f) => f.fieldname == fieldname)
     let precision = df?.precision || null
 

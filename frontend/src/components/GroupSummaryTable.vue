@@ -108,7 +108,7 @@ function currencyOf(
   column: GroupByColumn,
   total?: boolean,
 ): string | null {
-  if (!column.options) return window.sysdefaults?.currency || 'USD'
+  if (!column.options) return window.sysdefaults?.currency || 'INR'
   if (total || !props.settings.fields.includes(column.options)) return null
   return row[column.options] ? String(row[column.options]) : null
 }

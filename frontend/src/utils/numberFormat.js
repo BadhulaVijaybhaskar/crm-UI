@@ -160,44 +160,49 @@ export function formatNumber(v, format, decimals) {
 }
 
 export function formatCompactNumber(value, maximumFractionDigits = 1) {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     notation: 'compact',
     maximumFractionDigits,
   }).format(flt(value))
 }
 
-export function formatCurrency(value, format, currency = 'USD', precision = 2) {
+export function formatProbability(value) {
+  const n = flt(value)
+  return `${new Intl.NumberFormat('en-IN', {
+    maximumFractionDigits: 0,
+  }).format(n)}%`
+}
+
+export function formatCurrency(
+  value,
+  format,
+  currency = window.sysdefaults?.currency || 'INR',
+  precision = 2,
+) {
   value = value == null || value === '' ? 0 : value
+  currency = currency || window.sysdefaults?.currency || 'INR'
 
   if (typeof precision != 'number') {
-    precision = cint(precision || window.sysdefaults.currency_precision || 2)
+    precision = cint(precision || window.sysdefaults?.currency_precision || 2)
   }
 
-  // If you change anything below, it's going to hurt a company in UAE, a bit.
-  // if (precision > 2) {
-  //   let parts = cstr(value).split('.') // should be minimum 2, comes from the DB
-  //   let decimals = parts.length > 1 ? parts[1] : '' // parts.length == 2 ???
-
-  //   if (decimals.length < 3 || decimals.length < precision) {
-  //     const fraction = 100
-
-  //     if (decimals.length < cstr(fraction).length) {
-  //       precision = cstr(fraction).length - 1
-  //     }
-  //   }
-  // }
-
-  format = getNumberFormat(format)
-
-  if (currency) {
-    let symbol = getCurrencySymbol(currency)
-
-    if (symbol) {
-      return __(symbol) + ' ' + formatNumber(value, format, precision)
+  try {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: precision,
+      maximumFractionDigits: precision,
+    }).format(flt(value))
+  } catch {
+    format = getNumberFormat(format)
+    if (currency) {
+      let symbol = getCurrencySymbol(currency)
+      if (symbol) {
+        return __(symbol) + formatNumber(value, format, precision)
+      }
     }
+    return formatNumber(value, format, precision)
   }
-
-  return formatNumber(value, format, precision)
 }
 
 function getNumberFormat(format = null) {
@@ -206,7 +211,7 @@ function getNumberFormat(format = null) {
 
 function getCurrencySymbol(currencyCode) {
   try {
-    const formatter = new Intl.NumberFormat('en-US', {
+    const formatter = new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: currencyCode,
       minimumFractionDigits: 0,

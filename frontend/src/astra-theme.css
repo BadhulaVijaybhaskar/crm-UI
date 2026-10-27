@@ -65,8 +65,19 @@
   --surface-gray-9: #1e293b;
   --surface-gray-10: #0f172a;
   --surface-sidebar: #0a1426;
-  --surface-menu: #ffffff;
-  --surface-cards: #ffffff;
+  --surface-elevation-1: #ffffff;
+  --surface-elevation-2: #f7f9fc;
+  --surface-elevation-3: #eff3f8;
+  --surface-alpha-gray-1: rgba(11, 19, 36, 0.03);
+  --surface-alpha-gray-2: rgba(11, 19, 36, 0.05);
+  --surface-alpha-gray-3: rgba(11, 19, 36, 0.08);
+  --surface-alpha-gray-4: rgba(11, 19, 36, 0.11);
+  --surface-alpha-gray-5: rgba(11, 19, 36, 0.14);
+  --surface-alpha-elevation-1: rgba(255, 255, 255, 0.92);
+  --surface-alpha-elevation-2: rgba(255, 255, 255, 0.96);
+  --surface-alpha-elevation-3: rgba(255, 255, 255, 1);
+  --nav-active-bg: color-mix(in srgb, #145cf6 28%, #0a1426);
+  --nav-active-shadow: inset 0 0 0 1px color-mix(in srgb, #145cf6 35%, transparent);
 
   --ink-gray-1: #e3e9f1;
   --ink-gray-2: #cbd5e1;
@@ -117,8 +128,17 @@ html.dark {
   --surface-gray-9: #e1e6ee;
   --surface-gray-10: #f1f4f8;
   --surface-sidebar: #0a1426;
-  --surface-menu: #0f1626;
-  --surface-cards: #0f1626;
+  --surface-elevation-1: #0f1626;
+  --surface-elevation-2: #131b2c;
+  --surface-elevation-3: #182235;
+  --surface-alpha-gray-1: rgba(232, 237, 245, 0.04);
+  --surface-alpha-gray-2: rgba(232, 237, 245, 0.06);
+  --surface-alpha-gray-3: rgba(232, 237, 245, 0.08);
+  --surface-alpha-gray-4: rgba(232, 237, 245, 0.11);
+  --surface-alpha-gray-5: rgba(232, 237, 245, 0.14);
+  --surface-alpha-elevation-1: rgba(15, 22, 38, 0.92);
+  --surface-alpha-elevation-2: rgba(19, 27, 44, 0.96);
+  --surface-alpha-elevation-3: rgba(24, 34, 53, 1);
 
   --ink-gray-1: #232f47;
   --ink-gray-2: #34425e;
@@ -189,6 +209,19 @@ body {
   overflow: hidden;
   background: var(--surface-sidebar);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
+  /* Scope rc.2 elevation/ink tokens on the dark rail — no !important class wars */
+  --surface-elevation-1: color-mix(in srgb, #145cf6 14%, #0f1626);
+  --surface-elevation-2: var(--surface-elevation-1);
+  --surface-elevation-3: color-mix(in srgb, #145cf6 20%, #0f1626);
+  --surface-alpha-gray-2: rgba(255, 255, 255, 0.05);
+  --surface-alpha-gray-3: rgba(255, 255, 255, 0.08);
+  --surface-gray-1: color-mix(in srgb, #145cf6 14%, #0f1626);
+  --ink-gray-9: #ffffff;
+  --ink-gray-8: #ffffff;
+  --ink-gray-7: rgba(255, 255, 255, 0.72);
+  --ink-gray-5: rgba(255, 255, 255, 0.55);
+  --ink-gray-4: rgba(255, 255, 255, 0.35);
+  --outline-gray-2: rgba(255, 255, 255, 0.08);
 }
 
 .astra-shell__sidebar[data-collapsed='true'] {
@@ -218,14 +251,20 @@ body {
   overflow-y: auto;
 }
 
-/* Primary actions: blue→teal gradient */
-button.bg-surface-gray-7,
-.bg-surface-gray-7.text-ink-white,
-button[class*='bg-surface-gray-7'] {
+/* Primary actions: rc.2 solid buttons use bg-surface-gray-10 */
+button.bg-surface-gray-10,
+button[class*='bg-surface-gray-10'],
+.bg-surface-gray-10.text-ink-white {
   background-image: var(--astra-grad) !important;
   background-color: transparent !important;
+  color: #fff !important;
   box-shadow: var(--astra-shadow-primary);
   border: 0;
+}
+
+button.bg-surface-gray-10:hover,
+button[class*='bg-surface-gray-10']:hover {
+  filter: brightness(1.05);
 }
 
 /* Cards / panels */
@@ -302,56 +341,27 @@ button[class*='bg-surface-gray-7'] {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 10%, transparent);
 }
 
-/* Sidebar nav chrome (dark rail in both themes) */
-.astra-shell__sidebar .text-ink-gray-9,
-.astra-shell__sidebar .text-ink-gray-8,
-.astra-shell__sidebar .text-ink-gray-7 {
-  color: rgba(255, 255, 255, 0.72) !important;
-}
-
-.astra-shell__sidebar .text-ink-gray-5,
-.astra-shell__sidebar .text-ink-gray-4 {
-  color: rgba(255, 255, 255, 0.45) !important;
-}
-
-/* Active nav item: tinted pill on dark rail (never a white pill with white text) */
+/* Active nav item — keyed on aria-current so rc.2 elevation classes stay navy */
 .astra-shell__sidebar [aria-current='page'],
-.astra-shell__sidebar [data-active='true'],
-.astra-shell__sidebar .bg-surface-white,
-.astra-shell__sidebar .bg-surface-selected,
-.astra-shell__sidebar .bg-surface-gray-1,
-.astra-shell__sidebar button.bg-surface-white,
-.astra-shell__sidebar a.bg-surface-white {
-  background: color-mix(in srgb, #145cf6 28%, #0a1426) !important;
-  color: #ffffff !important;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, #145cf6 35%, transparent);
+.astra-shell__sidebar [data-active='true'] {
+  background: var(--nav-active-bg);
+  box-shadow: var(--nav-active-shadow);
+  color: #fff;
 }
 
-.astra-shell__sidebar [aria-current='page'] .text-ink-gray-9,
-.astra-shell__sidebar [data-active='true'] .text-ink-gray-9,
-.astra-shell__sidebar .bg-surface-white .text-ink-gray-9,
-.astra-shell__sidebar .bg-surface-selected .text-ink-gray-9,
-.astra-shell__sidebar .bg-surface-white .text-ink-gray-8,
-.astra-shell__sidebar .bg-surface-white .text-ink-gray-7 {
-  color: #ffffff !important;
+.astra-shell__sidebar [aria-current='page'] *,
+.astra-shell__sidebar [data-active='true'] * {
+  color: #fff;
 }
 
-/* Getting started / onboarding card on the dark rail */
-.astra-shell__sidebar .bg-surface-cards,
-.astra-shell__sidebar .bg-surface-menu,
-.astra-shell__sidebar .bg-surface-elevation-1,
-.astra-shell__sidebar .bg-surface-elevation-2 {
-  background: color-mix(in srgb, #145cf6 14%, #0f1626) !important;
-  color: #e8edf5 !important;
-  border-color: color-mix(in srgb, #145cf6 28%, transparent) !important;
-}
-
-.astra-shell__sidebar .bg-surface-cards .text-ink-gray-9,
-.astra-shell__sidebar .bg-surface-cards .text-ink-gray-8,
-.astra-shell__sidebar .bg-surface-elevation-2 .text-ink-gray-9,
-.astra-shell__sidebar .bg-surface-elevation-2 .text-ink-gray-8,
-.astra-shell__sidebar .bg-surface-elevation-2 .text-ink-gray-7 {
-  color: #e8edf5 !important;
+/* Collapsed brand mark: transparent tile (no white square) */
+.astra-shell__sidebar[data-collapsed='true'] img[alt],
+.astra-shell__sidebar .astra-brand-mark {
+  background: transparent !important;
+  box-shadow: none !important;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .astra-placeholder-banner {
@@ -362,7 +372,41 @@ button[class*='bg-surface-gray-7'] {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--ac);
-  background: color-mix(in srgb, var(--ac) 8%, var(--surface-gray-1));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ac) 22%, transparent);
+  color: #7fa6ff;
+  background: rgba(127, 166, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(127, 166, 255, 0.22);
+}
+
+/* Avatars visible on light surfaces */
+.avatar,
+[class*='Avatar'] {
+  --avatar-bg: var(--surface-gray-3);
+  background-color: var(--surface-gray-3);
+  box-shadow: inset 0 0 0 1px var(--outline-gray-2);
+}
+
+/* Global focus ring */
+:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* Mobile lists: avoid sideways scroll; pin the leading name cell */
+@media (max-width: 639px) {
+  .list-table,
+  table.frappe-list,
+  [data-list-view] table {
+    min-width: 0 !important;
+  }
+
+  .list-table th:first-child,
+  .list-table td:first-child,
+  [data-list-view] th:first-child,
+  [data-list-view] td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--surface-base);
+  }
 }

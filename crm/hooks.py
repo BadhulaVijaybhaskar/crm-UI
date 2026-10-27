@@ -85,15 +85,19 @@ doctype_js = {
 # application home page (will override Website Settings)
 # home_page = "login"
 
-# website user home page (by Role)
-# role_home_page = {
-# "Role": "home_page"
-# }
+# Sales roles land in Astra CRM, not the Desk /app workspace.
+role_home_page = {
+	"Sales User": "crm",
+	"Sales Manager": "crm",
+}
 
 website_route_rules = [
 	{"from_route": "/crm/<path:app_path>", "to_route": "crm"},
 	{"from_route": "/crm-form/<route>", "to_route": "crm_form"},
 ]
+
+# before_request redirect for sales users hitting /app (Desk)
+before_request = ["crm.overrides.desk.redirect_sales_users_from_desk"]
 
 # Generators
 # ----------
@@ -481,26 +485,11 @@ standard_dropdown_items = [
 		"is_standard": 1,
 	},
 	{
-		"name1": "login_to_fc",
-		"label": "Login to Cloud",
-		"type": "Route",
-		"route": "#",
-		"is_standard": 1,
-	},
-	{
 		"name1": "about",
 		"label": "About",
 		"type": "Route",
 		"icon": "info",
 		"route": "#",
-		"is_standard": 1,
-	},
-	{
-		"name1": "legal_notices",
-		"label": "Legal notices",
-		"type": "Route",
-		"icon": "file-text",
-		"route": "/crm/legal-notices",
 		"is_standard": 1,
 	},
 	{
