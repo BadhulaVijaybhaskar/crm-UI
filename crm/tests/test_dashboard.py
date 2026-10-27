@@ -68,6 +68,11 @@ class TestDashboard(IntegrationTestCase):
 		cls.user = "crm.manager@example.com"  # CRM manager from test_records.json
 		cls.user2_email = "crm.user1@example.com"  # Test user from test_records.json
 
+		# Test deal fixtures are USD with exchange_rate=1. Pin base currency to USD
+		# so India defaults (INR) cannot rewrite rates on insert (~95× averages).
+		if frappe.db.exists("DocType", "FCRM Settings"):
+			frappe.db.set_single_value("FCRM Settings", "currency", "USD")
+
 		# Load test records from test_records.json files in dependency order
 		make_test_records("CRM Lead Status")
 		make_test_records("CRM Deal Status")
@@ -76,6 +81,8 @@ class TestDashboard(IntegrationTestCase):
 		make_test_records("CRM Organization")  # Load organizations before deals
 		make_test_records("CRM Lead")
 		make_test_records("CRM Deal")
+		# Belt-and-suspenders: keep fixture rates at 1 even if validate rewrote them.
+		frappe.db.sql("UPDATE `tabCRM Deal` SET exchange_rate = 1 WHERE exchange_rate IS NULL OR exchange_rate = 0 OR exchange_rate > 1")
 
 	@classmethod
 	def tearDownClass(cls):
@@ -881,5 +888,7 @@ class TestDashboardContributedCharts(IntegrationTestCase):
 			"average_deal_value",
 			"average_time_to_close_a_lead",
 			"average_time_to_close_a_deal",
+			"lead_to_deal_rate",
+			"qualified_call_rate",
 		}
 		self.assertEqual(contributed_values, set())

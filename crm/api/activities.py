@@ -993,12 +993,15 @@ def get_my_day():
 	day_start = get_datetime(f"{today_str} 00:00:00")
 	day_end = get_datetime(f"{today_str} 23:59:59")
 
+	# due_date is Datetime — compare against end-of-day in the site TZ so tasks
+	# due later today (e.g. 17:30) are included. A bare date string truncates to
+	# midnight and drops them.
 	tasks = frappe.get_list(
 		"CRM Task",
 		filters={
 			"assigned_to": user,
 			"status": ("not in", ["Done", "Canceled", "Cancelled"]),
-			"due_date": ("<=", today_str),
+			"due_date": ("<=", day_end),
 		},
 		fields=[
 			"name",
