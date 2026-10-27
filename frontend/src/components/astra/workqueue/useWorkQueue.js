@@ -1,5 +1,11 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { createListResource } from 'frappe-ui'
+import { isWhatsAppInstalled } from '@/composables/whatsapp'
+import {
+  classifyQueueType,
+  shouldShowWhatsAppFilter,
+  summarizeWorkQueue,
+} from '@/components/astra/workqueue/queueSummary'
 
 const STUCK_DAYS = 14
 const QUIET_DAYS = 14
@@ -121,7 +127,9 @@ export function useWorkQueue() {
         id: `lead-${lead.name}`,
         type: 'call',
         priority: 'Med',
-        title: [lead.lead_name, lead.organization].filter(Boolean).join(' - ') || lead.name,
+        title:
+          [lead.lead_name, lead.organization].filter(Boolean).join(' - ') ||
+          lead.name,
         subtitle: lead.status || '',
         reason: __('No recent activity'),
         action: lead.mobile_no ? 'call' : 'open',
@@ -156,28 +164,52 @@ export function useWorkQueue() {
     return rows
   })
 
-  const filtered = computed(() => {
-    if (typeFilter.value === 'all') return items.value
-    if (typeFilter.value === 'calls')
-      return items.value.filter((i) => i.type === 'call' || i.action === 'call')
-    if (typeFilter.value === 'follow_ups')
-      return items.value.filter((i) => i.type === 'follow_up')
-    // WhatsApp channel is Connect-owned — keep filter count empty / unused.
-    if (typeFilter.value === 'whatsapp') return []
-    return items.value
-  })
+  // WhatsApp actions are Connect-owned; only surface the chip when queue items
+  // of that type exist and the WhatsApp app is installed (never a zero chip).
+  const whatsappItemCount = computed(
+    () => items.value.filter((i) => classifyQueueType(i) === 'whatsapp').length,
+  )
+  const showWhatsApp = computed(() =>
+    shouldShowWhatsAppFilter({
+      installed: isWhatsAppInstalled.value,
+      hasDataSource: isWhatsAppInstalled.value,
+      count: whatsappItemCount.value,
+    }),
+  )
+
+  const summary = computed(() =>
+    summarizeWorkQueue(items.value, { showWhatsApp: showWhatsApp.value }),
+  )
 
   const counts = computed(() => {
-    const all = items.value
+    const s = summary.value
     return {
-      all: all.length,
-      calls: all.filter((i) => i.type === 'call' || i.action === 'call').length,
-      whatsapp: 0,
-      follow_ups: all.filter((i) => i.type === 'follow_up').length,
-      high: all.filter((i) => i.priority === 'High').length,
-      med: all.filter((i) => i.priority === 'Med').length,
-      low: all.filter((i) => i.priority === 'Low').length,
+      all: s.total,
+      calls: s.byType.calls,
+      follow_ups: s.byType.follow_ups,
+      whatsapp: showWhatsApp.value ? s.byType.whatsapp || 0 : 0,
+      high: s.byPriority.high,
+      med: s.byPriority.med,
+      low: s.byPriority.low,
     }
+  })
+
+  const filtered = computed(() => {
+    const list = showWhatsApp.value
+      ? items.value
+      : items.value.filter((i) => classifyQueueType(i) !== 'whatsapp')
+    if (typeFilter.value === 'all') return list
+    if (typeFilter.value === 'calls')
+      return list.filter((i) => classifyQueueType(i) === 'calls')
+    if (typeFilter.value === 'follow_ups')
+      return list.filter((i) => classifyQueueType(i) === 'follow_ups')
+    if (typeFilter.value === 'whatsapp')
+      return list.filter((i) => classifyQueueType(i) === 'whatsapp')
+    return list
+  })
+
+  watch(showWhatsApp, (show) => {
+    if (!show && typeFilter.value === 'whatsapp') typeFilter.value = 'all'
   })
 
   const loading = computed(
@@ -192,6 +224,8 @@ export function useWorkQueue() {
     typeFilter,
     items: filtered,
     counts,
+    summary,
+    showWhatsApp,
     loading,
     resources: { tasks, quietLeads, stuckDeals, dealStatuses },
     reload() {
