@@ -474,6 +474,94 @@ class TestOrgHierarchy(IntegrationTestCase):
 		self.assertFalse(get_task_permission_query_conditions("Administrator"))
 		self.assertTrue(get_call_log_permission_query_conditions("rep1@hier.test"))
 
+	def test_create_child_on_unreadable_parent_is_refused(self):
+		"""Sales User must not create Note/Call Log on a parent they cannot read."""
+		other_lead = make_lead("rep1@hier.test")
+		frappe.set_user("outsider@hier.test")
+		try:
+			note = frappe.get_doc(
+				{
+					"doctype": "FCRM Note",
+					"title": "Should fail",
+					"content": "<p>x</p>",
+					"reference_doctype": "CRM Lead",
+					"reference_docname": other_lead.name,
+				}
+			)
+			self.assertFalse(has_note_permission(note, "create", "outsider@hier.test"))
+			with self.assertRaises(frappe.PermissionError):
+				note.insert()
+
+			call = frappe.get_doc(
+				{
+					"doctype": "CRM Call Log",
+					"id": frappe.generate_hash(length=12),
+					"type": "Outgoing",
+					"status": "Completed",
+					"from": "+911111111111",
+					"to": "+912222222222",
+					"reference_doctype": "CRM Lead",
+					"reference_docname": other_lead.name,
+				}
+			)
+			call.flags.ignore_mandatory = True
+			self.assertFalse(has_call_log_permission(call, "create", "outsider@hier.test"))
+			with self.assertRaises(frappe.PermissionError):
+				call.insert()
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_create_child_on_own_lead_is_allowed(self):
+		lead = make_lead("rep1@hier.test")
+		frappe.set_user("rep1@hier.test")
+		try:
+			note = frappe.get_doc(
+				{
+					"doctype": "FCRM Note",
+					"title": f"Own-{frappe.generate_hash(length=6)}",
+					"content": "<p>ok</p>",
+					"reference_doctype": "CRM Lead",
+					"reference_docname": lead.name,
+				}
+			)
+			self.assertTrue(has_note_permission(note, "create", "rep1@hier.test"))
+			note.insert()
+			self.assertTrue(frappe.db.exists("FCRM Note", note.name))
+
+			call = frappe.get_doc(
+				{
+					"doctype": "CRM Call Log",
+					"id": frappe.generate_hash(length=12),
+					"type": "Outgoing",
+					"status": "Completed",
+					"from": "+911111111111",
+					"to": "+912222222222",
+					"reference_doctype": "CRM Lead",
+					"reference_docname": lead.name,
+				}
+			)
+			call.flags.ignore_mandatory = True
+			self.assertTrue(has_call_log_permission(call, "create", "rep1@hier.test"))
+			call.insert()
+			self.assertTrue(frappe.db.exists("CRM Call Log", call.name))
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_reparent_child_to_unreadable_parent_is_refused(self):
+		"""Owning a note does not allow moving its reference onto an unreadable parent."""
+		own_lead = make_lead("rep1@hier.test")
+		other_lead = make_lead("outsider@hier.test")
+		note = make_note(own_lead.name, owner="rep1@hier.test")
+
+		frappe.set_user("rep1@hier.test")
+		try:
+			note.reference_docname = other_lead.name
+			self.assertFalse(has_note_permission(note, "write", "rep1@hier.test"))
+			with self.assertRaises(frappe.PermissionError):
+				note.save()
+		finally:
+			frappe.set_user("Administrator")
+
 
 def make_call_log(lead_name, owner):
 	doc = frappe.get_doc(
