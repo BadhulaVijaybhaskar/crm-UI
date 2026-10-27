@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   filterUpcomingCalls,
+  formatOnboardingProgressLabel,
   isUpcomingCall,
   onboardingProgressPercent,
   shouldShowGettingStartedBanner,
@@ -91,6 +92,8 @@ describe('Getting started empty / NaN guard', () => {
   it('returns null percent and hides banner when totalSteps is 0', () => {
     expect(onboardingProgressPercent(0, 0)).toBe(null)
     expect(onboardingProgressPercent(1, 0)).toBe(null)
+    expect(formatOnboardingProgressLabel(0, 0)).toBe(null)
+    expect(String(formatOnboardingProgressLabel(0, 0) ?? '')).not.toMatch(/NaN/)
     expect(shouldShowGettingStartedBanner({ completed: false, totalSteps: 0 })).toBe(
       false,
     )
@@ -106,5 +109,7 @@ describe('Getting started empty / NaN guard', () => {
     expect(onboardingProgressPercent(1, 4)).toBe(25)
     expect(onboardingProgressPercent(0, 4)).toBe(0)
     expect(Number.isNaN(onboardingProgressPercent(0, 0))).toBe(false)
+    expect(formatOnboardingProgressLabel(1, 4)).toBe('1/4 steps · 25%')
+    expect(formatOnboardingProgressLabel(0, 4)).toBe('0/4 steps · 0%')
   })
 })

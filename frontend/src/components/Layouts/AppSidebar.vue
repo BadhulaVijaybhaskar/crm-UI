@@ -115,8 +115,9 @@
               :afterUpgrade="() => capture('upgrade_plan_from_trial_banner')"
             />
             <GettingStartedBanner
-              v-if="showGettingStarted"
+              v-if="showGettingStarted && onboardingProgressLabel"
               :isSidebarCollapsed="isCollapsed"
+              :progress-label="onboardingProgressLabel"
             />
           </div>
           <SidebarItem
@@ -194,7 +195,10 @@ import {
   resolveActiveNavKey,
 } from '@/utils/navigation'
 import { openAstraConnect } from '@/utils/astraConnect'
-import { shouldShowGettingStartedBanner } from '@/components/astra/myday/myDayHelpers'
+import {
+  formatOnboardingProgressLabel,
+  shouldShowGettingStartedBanner,
+} from '@/components/astra/myday/myDayHelpers'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
@@ -236,7 +240,7 @@ import router from '@/router'
 import { useStorage } from '@vueuse/core'
 import { useDemoData } from '@/composables/demoData'
 import { useCrmOnboarding } from '@/composables/onboarding'
-import { ref, reactive, computed, markRaw, onMounted, watch } from 'vue'
+import { ref, reactive, computed, markRaw, onMounted, unref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const props = defineProps({
@@ -422,14 +426,28 @@ const onboarding = useOnboarding('frappecrm')
 const { isOnboardingStepsCompleted, setUp } = onboarding
 const { flushPendingSteps } = useCrmOnboarding()
 
-// Hide Getting started when there are zero steps (avoids NaN% 0/0).
-const showGettingStarted = computed(() =>
-  shouldShowGettingStartedBanner({
-    completed: Boolean(isOnboardingStepsCompleted?.value ?? isOnboardingStepsCompleted),
-    totalSteps: Number(
-      onboarding.totalSteps?.value ?? onboarding.totalSteps ?? 0,
-    ),
-  }),
+// Only show after setUp; never render when totalSteps is 0 (avoids "0/0 · NaN%").
+const onboardingReady = ref(false)
+const onboardingTotalSteps = computed(() =>
+  Number(unref(onboarding.totalSteps) || 0),
+)
+const onboardingStepsCompleted = computed(() =>
+  Number(unref(onboarding.stepsCompleted) || 0),
+)
+const onboardingProgressLabel = computed(() =>
+  formatOnboardingProgressLabel(
+    onboardingStepsCompleted.value,
+    onboardingTotalSteps.value,
+  ),
+)
+const showGettingStarted = computed(
+  () =>
+    onboardingReady.value &&
+    onboardingProgressLabel.value != null &&
+    shouldShowGettingStartedBanner({
+      completed: Boolean(unref(isOnboardingStepsCompleted)),
+      totalSteps: onboardingTotalSteps.value,
+    }),
 )
 
 // The onboarding composable persists the checklist as a positional
@@ -636,6 +654,7 @@ onMounted(async () => {
   await reconcileOnboarding(filteredSteps)
   setUp(filteredSteps)
   flushPendingSteps()
+  onboardingReady.value = true
 })
 
 // help center

@@ -55,6 +55,19 @@ export function onboardingProgressPercent(stepsCompleted, totalSteps) {
   return Math.round((done / total) * 100)
 }
 
+/**
+ * Human-readable progress for Getting started / Help panels.
+ * Returns null when there are no steps — callers must not render "0/0 · NaN%".
+ * @returns {string|null}
+ */
+export function formatOnboardingProgressLabel(stepsCompleted, totalSteps) {
+  const percent = onboardingProgressPercent(stepsCompleted, totalSteps)
+  if (percent == null) return null
+  const total = Number(totalSteps)
+  const done = Math.min(Math.max(0, Number(stepsCompleted) || 0), total)
+  return `${done}/${total} steps · ${percent}%`
+}
+
 export function shouldShowGettingStartedBanner({
   completed = false,
   totalSteps = 0,
