@@ -11,10 +11,17 @@
               : 'w-full px-2 hover:bg-surface-gray-2'
         "
       >
-        <BrandLogo
-          v-model="brand"
-          class="h-8 max-w-[148px] flex-shrink-0"
-          :class="isCollapsed ? 'max-w-8' : ''"
+        <img
+          v-if="!isCollapsed"
+          src="/assets/crm/images/astra-crm-logo-on-dark.png"
+          alt="Astra CRM"
+          class="h-8 max-w-[148px] flex-shrink-0 object-contain"
+        />
+        <img
+          v-else
+          src="/assets/crm/images/astra-crm-mark.png"
+          alt="Astra CRM"
+          class="size-8 flex-shrink-0 object-contain"
         />
         <div
           class="flex flex-1 flex-col text-left duration-300 ease-in-out truncate"
@@ -47,7 +54,6 @@
 </template>
 
 <script setup>
-import BrandLogo from '@/components/BrandLogo.vue'
 import FrappeCloudIcon from '@/components/Icons/FrappeCloudIcon.vue'
 import AppsIcon from '@/components/Icons/AppsIcon.vue'
 import { sessionStore } from '@/stores/session'

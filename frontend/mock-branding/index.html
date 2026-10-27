@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astra CRM — branding mock</title>
+    <link rel="stylesheet" href="/src/astra-theme.css" />
+    <style>
+      * { box-sizing: border-box; }
+      .hidden { display: none !important; }
+      .mock-leads {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px 24px;
+      }
+      .mock-leads h1 {
+        margin: 0;
+        font: 700 28px/1.2 var(--font-sans);
+        letter-spacing: -0.7px;
+        color: var(--ink-gray-9);
+      }
+      .mock-toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .mock-search {
+        flex: 1;
+        max-width: 28rem;
+        height: 40px;
+        border-radius: 999px;
+        border: 0;
+        padding: 0 1rem;
+        background: color-mix(in srgb, var(--surface-gray-3) 70%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--outline-gray-2) 80%, transparent);
+        color: var(--ink-gray-9);
+        font: 400 0.875rem var(--font-sans);
+      }
+      .mock-table {
+        background: var(--surface-gray-1);
+        border: 1px solid color-mix(in srgb, var(--outline-gray-2) 70%, transparent);
+        border-radius: 20px;
+        box-shadow: var(--elevation-sm);
+        overflow: hidden;
+      }
+      .mock-table table {
+        width: 100%;
+        border-collapse: collapse;
+        font: 400 0.875rem var(--font-sans);
+        color: var(--ink-gray-9);
+      }
+      .mock-table th {
+        text-align: left;
+        padding: 12px 16px;
+        background: var(--surface-gray-2);
+        color: var(--ink-gray-5);
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .mock-table td {
+        padding: 14px 16px;
+        border-top: 1px solid color-mix(in srgb, var(--outline-gray-2) 70%, transparent);
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        flex: 0 0 240px;
+        width: 240px;
+        height: 100dvh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 14px 10px 12px;
+        background: #0a1426;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        color: #c9d3e4;
+      }
+      .nav.collapsed { flex-basis: 64px; width: 64px; }
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 8px 12px;
+      }
+      .nav-brand img { height: 28px; width: auto; max-width: 150px; object-fit: contain; }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 40px;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.55);
+        text-decoration: none;
+      }
+      .nav-item:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+      .nav-item.active {
+        color: #fff;
+        background: linear-gradient(
+          90deg,
+          color-mix(in srgb, #145cf6 90%, transparent),
+          color-mix(in srgb, #145cf6 40%, transparent)
+        );
+        box-shadow: 0 0 24px color-mix(in srgb, #145cf6 55%, transparent),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+      }
+      .nav-item .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 99px;
+        background: currentColor;
+        opacity: 0.7;
+      }
+      .pill-soon {
+        margin-left: auto;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        color: #7fa6ff;
+        background: color-mix(in srgb, #145cf6 18%, transparent);
+      }
+      .banner {
+        position: fixed;
+        bottom: 12px;
+        right: 12px;
+        z-index: 50;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #0a1426;
+        color: #e8edf5;
+        font: 600 12px var(--font-sans);
+        opacity: 0.85;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="login" class="astra-login-page">
+      <div class="astra-login-card">
+        <img
+          class="astra-login-logo"
+          src="/assets/crm/images/astra-crm-logo.png"
+          alt="Astra CRM"
+        />
+        <form class="flex" style="display: flex; flex-direction: column; gap: 12px">
+          <label style="font: 600 14px var(--font-sans); color: var(--ink-gray-7)">
+            Email
+            <input type="email" value="you@astra.example" style="margin-top: 4px" />
+          </label>
+          <label style="font: 600 14px var(--font-sans); color: var(--ink-gray-7)">
+            Password
+            <input type="password" value="••••••••" style="margin-top: 4px" />
+          </label>
+          <button class="btn-primary" type="button" style="margin-top: 8px">Login</button>
+        </form>
+        <p style="margin-top: 16px; text-align: center; color: var(--ink-gray-5); font: 400 14px var(--font-sans)">
+          Astra CRM
+        </p>
+      </div>
+    </div>
+
+    <div id="leads" class="astra-shell hidden">
+      <aside class="nav">
+        <div class="nav-brand">
+          <img src="/assets/crm/images/astra-crm-logo-on-dark.png" alt="Astra CRM" />
+        </div>
+        <a class="nav-item" href="#"><span class="dot"></span>Dashboard</a>
+        <a class="nav-item active" href="#"><span class="dot"></span>Leads</a>
+        <a class="nav-item" href="#"><span class="dot"></span>Contacts</a>
+        <a class="nav-item" href="#"><span class="dot"></span>Companies</a>
+        <a class="nav-item" href="#"><span class="dot"></span>Deals</a>
+        <a class="nav-item" href="#"><span class="dot"></span>Tasks</a>
+        <a class="nav-item" href="#"><span class="dot"></span>AI Calling<span class="pill-soon">Soon</span></a>
+        <a class="nav-item" href="#"><span class="dot"></span>Messages<span class="pill-soon">Soon</span></a>
+        <a class="nav-item" href="#"><span class="dot"></span>AI Employees<span class="pill-soon">Soon</span></a>
+        <a class="nav-item" href="#"><span class="dot"></span>Activities<span class="pill-soon">Soon</span></a>
+        <a class="nav-item" href="#"><span class="dot"></span>Reports<span class="pill-soon">Soon</span></a>
+        <a class="nav-item" href="#"><span class="dot"></span>Settings</a>
+      </aside>
+      <div class="astra-shell__main">
+        <div class="astra-shell__content mock-leads">
+          <h1>Leads</h1>
+          <div class="mock-toolbar">
+            <input class="mock-search" placeholder="Search leads" />
+            <button class="btn-primary" type="button" style="padding: 0 1.1rem; min-height: 40px; border: 0; border-radius: 999px; color: #fff; font: 600 14px var(--font-sans); background-image: var(--astra-grad);">
+              Create
+            </button>
+          </div>
+          <div class="mock-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Organization</th>
+                  <th>Status</th>
+                  <th>Owner</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Ada Lovelace</td>
+                  <td>Analytical Engines</td>
+                  <td>New</td>
+                  <td>You</td>
+                </tr>
+                <tr>
+                  <td>Grace Hopper</td>
+                  <td>Cobol Systems</td>
+                  <td>Qualified</td>
+                  <td>You</td>
+                </tr>
+                <tr>
+                  <td>Katherine Johnson</td>
+                  <td>Orbital Math</td>
+                  <td>Contacted</td>
+                  <td>You</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner">Vite static mock — not a live bench session</div>
+
+    <script>
+      const params = new URLSearchParams(location.search)
+      const view = params.get('view') || 'login'
+      const theme = params.get('theme') || 'light'
+      document.documentElement.setAttribute('data-theme', theme)
+      document.documentElement.classList.toggle('dark', theme === 'dark')
+      document.getElementById('login').classList.toggle('hidden', view !== 'login')
+      document.getElementById('leads').classList.toggle('hidden', view !== 'leads')
+    </script>
+  </body>
+</html>
