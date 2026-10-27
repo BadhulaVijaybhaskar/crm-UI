@@ -48,7 +48,7 @@
                 class="mt-0.5 block text-xs font-normal"
                 :class="task.overdue ? 'text-[var(--astra-danger)]' : 'astra-muted'"
               >
-                {{ task.overdue ? __('Overdue') : __('Due today') }}
+                {{ taskDueLabel(task) }}
                 <template v-if="task.priority"> · {{ task.priority }}</template>
               </span>
             </button>
@@ -147,12 +147,22 @@
               </p>
             </div>
             <button
+              v-if="callEnabled"
               type="button"
               class="astra-btn astra-btn--primary"
               :aria-label="__('Open call log')"
               @click="openCall(call)"
             >
               {{ __('Call') }}
+            </button>
+            <button
+              v-else
+              type="button"
+              class="astra-btn astra-btn--outline"
+              :aria-label="__('Open call log')"
+              @click="openCall(call)"
+            >
+              {{ __('Open') }}
             </button>
           </li>
         </ul>
@@ -222,6 +232,9 @@ import {
   greetingFor,
 } from '@/components/astra/format'
 import { useMyDayMetrics } from '@/components/astra/myday/useMyDayMetrics'
+import { filterUpcomingCalls } from '@/components/astra/myday/myDayHelpers'
+import { taskDueReason } from '@/components/astra/workqueue/queueHelpers'
+import { callEnabled } from '@/composables/telephony'
 import { usersStore } from '@/stores/users'
 import { sessionStore } from '@/stores/session'
 import { useDoctypeModal } from '@/composables/doctypeModal'
@@ -248,8 +261,15 @@ const greeting = computed(() => __(greetingFor()))
 const dateLabel = computed(() => formatShortDate())
 
 const tasks = computed(() => props.myDayData?.tasks || [])
-const calls = computed(() => props.myDayData?.calls || [])
+const calls = computed(() =>
+  filterUpcomingCalls(props.myDayData?.calls || [], new Date()),
+)
 const meetings = computed(() => props.myDayData?.meetings || [])
+
+function taskDueLabel(task) {
+  if (task.overdue) return __('Overdue')
+  return __(taskDueReason(task.due_date, {}))
+}
 
 function callLabel(call) {
   return (

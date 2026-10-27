@@ -2,14 +2,68 @@ import { computed, ref, watch } from 'vue'
 import { createListResource, createResource } from 'frappe-ui'
 import { isWhatsAppInstalled } from '@/composables/whatsapp'
 import { shouldShowWhatsAppFilter } from '@/components/astra/workqueue/queueSummary'
+import {
+  buildParentTitleMap,
+  buildReadableParentSets,
+  filterThreadsByReadableParents,
+  threadDisplayTitle,
+  waMessageReference,
+} from '@/components/astra/conversations/conversationHelpers'
 
 /**
  * Read-only conversations from Call Log + Communication (+ notes via feed).
  * No WhatsApp compose — Connect handles messaging.
+ * Threads are limited to parents the current user can read (no post-list 403s).
  */
 export function useConversations() {
   const channel = ref('all')
   const selectedId = ref(null)
+
+  // Permission-aware parent lists (get_list already scopes to readable docs).
+  const readableLeads = createListResource({
+    doctype: 'CRM Lead',
+    fields: ['name', 'lead_name', 'organization'],
+    pageLength: 200,
+    auto: true,
+    cache: 'astra-conversations-readable-leads',
+  })
+  const readableDeals = createListResource({
+    doctype: 'CRM Deal',
+    fields: ['name', 'organization'],
+    pageLength: 200,
+    auto: true,
+    cache: 'astra-conversations-readable-deals',
+  })
+  const readableContacts = createListResource({
+    doctype: 'Contact',
+    fields: ['name', 'full_name', 'first_name', 'last_name'],
+    pageLength: 200,
+    auto: true,
+    cache: 'astra-conversations-readable-contacts',
+  })
+
+  const titleMap = computed(() =>
+    buildParentTitleMap({
+      leads: readableLeads.data || [],
+      deals: readableDeals.data || [],
+      contacts: readableContacts.data || [],
+    }),
+  )
+
+  const readableSets = computed(() =>
+    buildReadableParentSets({
+      leads: readableLeads.data || [],
+      deals: readableDeals.data || [],
+      contacts: readableContacts.data || [],
+    }),
+  )
+
+  const parentsReady = computed(
+    () =>
+      !readableLeads.loading &&
+      !readableDeals.loading &&
+      !readableContacts.loading,
+  )
 
   const callLogs = createListResource({
     doctype: 'CRM Call Log',
@@ -82,6 +136,7 @@ export function useConversations() {
   })
 
   // Read-only WA Message probe — only when the WhatsApp app is installed.
+  // Field is reference_docname (not reference_name).
   const waMessages = createListResource({
     doctype: 'WA Message',
     fields: [
@@ -91,7 +146,7 @@ export function useConversations() {
       'status',
       'direction',
       'reference_doctype',
-      'reference_name',
+      'reference_docname',
       'modified',
     ],
     orderBy: 'creation desc',
@@ -123,14 +178,23 @@ export function useConversations() {
 
   const threads = computed(() => {
     const rows = []
+    const titles = titleMap.value
 
     for (const c of callLogs.data || []) {
+      const fallback = c.to || c.from || c.name
       rows.push({
         id: `call-${c.name}`,
         channel: 'calls',
         kind: 'call',
         name: c.name,
-        title: c.reference_docname || c.to || c.from || c.name,
+        title: threadDisplayTitle(
+          {
+            reference_doctype: c.reference_doctype,
+            reference_docname: c.reference_docname,
+            fallback,
+          },
+          titles,
+        ),
         snippet: [c.type, c.status, c.outcome].filter(Boolean).join(' · '),
         creation: c.creation,
         reference_doctype: c.reference_doctype,
@@ -140,31 +204,44 @@ export function useConversations() {
     }
 
     for (const e of emails.data || []) {
+      const refName = e.reference_name
+      const fallback = e.sender || e.subject || e.name
       rows.push({
         id: `email-${e.name}`,
         channel: 'emails',
         kind: 'email',
         name: e.name,
-        title:
-          e.reference_name ||
-          e.sender ||
-          e.subject ||
-          e.name,
+        title: threadDisplayTitle(
+          {
+            reference_doctype: e.reference_doctype,
+            reference_docname: refName,
+            fallback,
+          },
+          titles,
+        ),
         snippet: e.subject || __('Email'),
         creation: e.creation,
         reference_doctype: e.reference_doctype,
-        reference_docname: e.reference_name,
+        reference_docname: refName,
         raw: e,
       })
     }
 
     for (const n of notes.data || []) {
+      const fallback = n.title || n.name
       rows.push({
         id: `note-${n.name}`,
         channel: 'notes',
         kind: 'note',
         name: n.name,
-        title: n.reference_docname || n.title || n.name,
+        title: threadDisplayTitle(
+          {
+            reference_doctype: n.reference_doctype,
+            reference_docname: n.reference_docname,
+            fallback,
+          },
+          titles,
+        ),
         snippet: n.title || __('Note'),
         creation: n.creation,
         reference_doctype: n.reference_doctype,
@@ -175,23 +252,35 @@ export function useConversations() {
 
     if (showWhatsApp.value) {
       for (const m of waMessages.data || []) {
+        const ref = waMessageReference(m)
+        const fallback = m.name
         rows.push({
           id: `wa-${m.name}`,
           channel: 'whatsapp',
           kind: 'whatsapp',
           name: m.name,
-          title: m.reference_name || m.name,
+          title: threadDisplayTitle(
+            {
+              reference_doctype: m.reference_doctype,
+              reference_docname: ref,
+              fallback,
+            },
+            titles,
+          ),
           snippet: m.message || __('WhatsApp'),
           creation: m.creation,
           reference_doctype: m.reference_doctype,
-          reference_docname: m.reference_name,
+          reference_docname: ref,
           raw: m,
         })
       }
     }
 
     rows.sort((a, b) => String(b.creation).localeCompare(String(a.creation)))
-    return rows
+
+    // Wait until readable parent sets have loaded so we never flash 403 rows.
+    if (!parentsReady.value) return []
+    return filterThreadsByReadableParents(rows, readableSets.value)
   })
 
   const filteredThreads = computed(() => {
@@ -368,6 +457,7 @@ export function useConversations() {
 
   const loading = computed(
     () =>
+      !parentsReady.value ||
       callLogs.loading ||
       emails.loading ||
       notes.loading ||
@@ -385,6 +475,14 @@ export function useConversations() {
     recordActivities,
     showWhatsApp,
     loading,
-    resources: { callLogs, emails, notes, waMessages },
+    resources: {
+      callLogs,
+      emails,
+      notes,
+      waMessages,
+      readableLeads,
+      readableDeals,
+      readableContacts,
+    },
   }
 }
