@@ -26,6 +26,8 @@ describe('navigationItems', () => {
       'Messages',
       'AI Employees',
       'Activities',
+      'Work queue',
+      'Conversations',
       'Reports',
       'Settings',
     ])
@@ -47,11 +49,15 @@ describe('navigationItems', () => {
     }
   })
 
-  it('shows Activities when ready and still hides Reports', () => {
+  it('shows Activities, Work queue and Conversations when ready and still hides Reports', () => {
     expect(NAV_FEATURE_READY.Activities).toBe(true)
+    expect(NAV_FEATURE_READY.WorkQueue).toBe(true)
+    expect(NAV_FEATURE_READY.Conversations).toBe(true)
     expect(NAV_FEATURE_READY.Reports).toBe(false)
     const labels = getNavigationItems().map((item) => item.label)
     expect(labels).toContain('Activities')
+    expect(labels).toContain('Work queue')
+    expect(labels).toContain('Conversations')
     expect(labels).not.toContain('Reports')
   })
 
