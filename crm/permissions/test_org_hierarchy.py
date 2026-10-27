@@ -6,13 +6,20 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils.nestedset import rebuild_tree
 
 from crm.api.activities import get_activities
+from crm.api.activities import get_activity_feed
 from crm.permissions.org_hierarchy import (
+	get_call_log_permission_query_conditions,
 	get_contact_permission_query_conditions,
 	get_deal_permission_query_conditions,
 	get_lead_permission_query_conditions,
+	get_note_permission_query_conditions,
+	get_task_permission_query_conditions,
+	has_call_log_permission,
 	has_contact_permission,
 	has_deal_permission,
 	has_lead_permission,
+	has_note_permission,
+	has_task_permission,
 	hierarchy_enabled,
 )
 
@@ -370,6 +377,155 @@ class TestOrgHierarchy(IntegrationTestCase):
 		finally:
 			settings.enable_sales_hierarchy = 1
 			settings.save(ignore_permissions=True)
+
+	# ------------------------------------------------------------------
+	# Child docs (Call Log / Note / Task) inherit parent Lead access
+	# ------------------------------------------------------------------
+
+	def test_sales_user_cannot_list_other_owners_child_docs(self):
+		"""Sales User must not see Call Log / Note / Task on leads they cannot read."""
+		other_lead = make_lead("rep1@hier.test")
+		call = make_call_log(other_lead.name, owner="rep1@hier.test")
+		note = make_note(other_lead.name, owner="rep1@hier.test")
+		task = make_task(other_lead.name, owner="rep1@hier.test", assigned_to="rep1@hier.test")
+
+		self.assertFalse(has_call_log_permission(call, "read", "outsider@hier.test"))
+		self.assertFalse(has_note_permission(note, "read", "outsider@hier.test"))
+		self.assertFalse(has_task_permission(task, "read", "outsider@hier.test"))
+
+		frappe.set_user("outsider@hier.test")
+		try:
+			self.assertNotIn(call.name, frappe.get_list("CRM Call Log", pluck="name", limit_page_length=500))
+			self.assertNotIn(note.name, frappe.get_list("FCRM Note", pluck="name", limit_page_length=500))
+			self.assertNotIn(task.name, frappe.get_list("CRM Task", pluck="name", limit_page_length=500))
+			# REST-style client.get_list uses the same permission_query_conditions.
+			from frappe.client import get_list as client_get_list
+
+			self.assertNotIn(
+				call.name,
+				[r["name"] for r in client_get_list("CRM Call Log", fields=["name"], limit_page_length=500)],
+			)
+			self.assertNotIn(
+				note.name,
+				[r["name"] for r in client_get_list("FCRM Note", fields=["name"], limit_page_length=500)],
+			)
+			self.assertNotIn(
+				task.name,
+				[r["name"] for r in client_get_list("CRM Task", fields=["name"], limit_page_length=500)],
+			)
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_sales_user_sees_child_docs_on_own_lead(self):
+		lead = make_lead("rep1@hier.test")
+		call = make_call_log(lead.name, owner="Administrator")  # Connect-style foreign owner
+		note = make_note(lead.name, owner="Administrator")
+		task = make_task(lead.name, owner="Administrator", assigned_to="rep1@hier.test")
+
+		self.assertTrue(has_call_log_permission(call, "read", "rep1@hier.test"))
+		self.assertTrue(has_note_permission(note, "read", "rep1@hier.test"))
+		self.assertTrue(has_task_permission(task, "read", "rep1@hier.test"))
+
+		frappe.set_user("rep1@hier.test")
+		try:
+			self.assertIn(call.name, frappe.get_list("CRM Call Log", pluck="name", limit_page_length=500))
+			self.assertIn(note.name, frappe.get_list("FCRM Note", pluck="name", limit_page_length=500))
+			self.assertIn(task.name, frappe.get_list("CRM Task", pluck="name", limit_page_length=500))
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_manager_sees_team_child_docs(self):
+		lead = make_lead("rep1@hier.test")
+		call = make_call_log(lead.name, owner="rep1@hier.test")
+		note = make_note(lead.name, owner="rep1@hier.test")
+		task = make_task(lead.name, owner="rep1@hier.test", assigned_to="rep1@hier.test")
+
+		self.assertTrue(has_call_log_permission(call, "read", "manager@hier.test"))
+		self.assertTrue(has_note_permission(note, "read", "manager@hier.test"))
+		self.assertTrue(has_task_permission(task, "read", "manager@hier.test"))
+
+		frappe.set_user("manager@hier.test")
+		try:
+			self.assertIn(call.name, frappe.get_list("CRM Call Log", pluck="name", limit_page_length=500))
+			self.assertIn(note.name, frappe.get_list("FCRM Note", pluck="name", limit_page_length=500))
+			self.assertIn(task.name, frappe.get_list("CRM Task", pluck="name", limit_page_length=500))
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_activity_feed_ignores_owner_arg_for_sales_user(self):
+		"""Sales User cannot pull another owner's notes/calls via owner= on the feed."""
+		other_lead = make_lead("rep1@hier.test")
+		call = make_call_log(other_lead.name, owner="rep1@hier.test")
+		note = make_note(other_lead.name, owner="rep1@hier.test")
+
+		frappe.set_user("outsider@hier.test")
+		try:
+			for owner_arg in (None, "rep1@hier.test", "Administrator"):
+				feed = get_activity_feed(owner=owner_arg, limit=100, start=0)
+				names = {i["name"] for i in feed["items"]}
+				self.assertNotIn(call.name, names)
+				self.assertNotIn(note.name, names)
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_child_query_conditions_empty_for_administrator(self):
+		self.assertFalse(get_call_log_permission_query_conditions("Administrator"))
+		self.assertFalse(get_note_permission_query_conditions("Administrator"))
+		self.assertFalse(get_task_permission_query_conditions("Administrator"))
+		self.assertTrue(get_call_log_permission_query_conditions("rep1@hier.test"))
+
+
+def make_call_log(lead_name, owner):
+	doc = frappe.get_doc(
+		{
+			"doctype": "CRM Call Log",
+			"id": frappe.generate_hash(length=12),
+			"type": "Outgoing",
+			"status": "Completed",
+			"from": "+911111111111",
+			"to": "+912222222222",
+			"reference_doctype": "CRM Lead",
+			"reference_docname": lead_name,
+		}
+	)
+	doc.flags.ignore_permissions = True
+	doc.flags.ignore_mandatory = True
+	doc.insert(ignore_permissions=True)
+	frappe.db.set_value("CRM Call Log", doc.name, "owner", owner, update_modified=False)
+	doc.reload()
+	return doc
+
+
+def make_note(lead_name, owner):
+	doc = frappe.get_doc(
+		{
+			"doctype": "FCRM Note",
+			"title": f"Note-{frappe.generate_hash(length=6)}",
+			"content": "<p>secret summary</p>",
+			"reference_doctype": "CRM Lead",
+			"reference_docname": lead_name,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value("FCRM Note", doc.name, "owner", owner, update_modified=False)
+	doc.reload()
+	return doc
+
+
+def make_task(lead_name, owner, assigned_to=None):
+	doc = frappe.get_doc(
+		{
+			"doctype": "CRM Task",
+			"title": f"Task-{frappe.generate_hash(length=6)}",
+			"status": "Todo",
+			"priority": "Medium",
+			"reference_doctype": "CRM Lead",
+			"reference_docname": lead_name,
+			"assigned_to": assigned_to or owner,
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.set_value("CRM Task", doc.name, "owner", owner, update_modified=False)
+	doc.reload()
+	return doc
 
 
 def make_user(email, roles=None):
