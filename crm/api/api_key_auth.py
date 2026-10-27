@@ -5,9 +5,12 @@
 Accepted schemes (raw key shown once at creation, hashed at rest):
 
 * ``Authorization: Bearer <api_key>``
-* ``Authorization: token <api_key>``
-* ``Authorization: token <api_key>:<ignored>`` (Frappe-style token header)
+* ``Authorization: token <api_key>``  (opaque key, no colon)
 * ``X-API-Key: <api_key>``
+
+Note: ``Authorization: token <key>:<secret>`` is handled by Frappe's User API
+key validator *before* auth_hooks and will 401 for CRM keys. Use Bearer or
+X-API-Key (or ``token <key>`` without a colon) instead.
 """
 
 from __future__ import annotations
@@ -46,7 +49,16 @@ def validate():
 			frappe.AuthenticationError,
 		)
 
+	# frappe.set_user() clears form_dict (frappe/__init__.py) — preserve request args
+	# the same way frappe/auth.py does around set_user during token auth.
+	form_dict = getattr(frappe.local, "form_dict", None)
+	saved = dict(form_dict) if form_dict is not None else None
+
 	frappe.set_user(row.user)
+
+	if saved is not None:
+		frappe.local.form_dict = frappe._dict(saved)
+
 	login_manager = getattr(frappe.local, "login_manager", None)
 	if login_manager is not None:
 		login_manager.user = row.user
@@ -70,18 +82,10 @@ def _extract_api_key_from_request() -> str | None:
 			return authorization[7:].strip() or None
 		if lower.startswith("token "):
 			token = authorization[6:].strip()
-			# Frappe uses key:secret; CRM keys are a single opaque token. Accept either.
+			# Colon form is owned by Frappe User API keys (runs before auth_hooks).
+			# Only accept opaque CRM keys here (no colon).
 			if ":" in token:
-				key, _, secret = token.partition(":")
-				# Prefer the secret segment when both look non-empty (key:secret),
-				# otherwise the whole token / left side.
-				candidate = (secret or key).strip()
-				# Also accept key-only forms and full "crm_…" keys on either side.
-				if key.strip().startswith("crm_"):
-					return key.strip()
-				if candidate.startswith("crm_"):
-					return candidate
-				return candidate or None
+				return None
 			return token or None
 
 	header_key = (frappe.get_request_header("X-API-Key", "") or "").strip()

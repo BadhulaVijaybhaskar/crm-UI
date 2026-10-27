@@ -20,8 +20,8 @@ def hash_api_key(raw: str) -> str:
 def create_api_key(label: str, user: str | None = None):
 	"""Create an API key. Returns the plaintext once; only the hash is stored.
 
-	Authenticate later with ``Authorization: Bearer <key>``, ``Authorization: token <key>``,
-	or ``X-API-Key: <key>`` (see ``crm.api.api_key_auth.validate``).
+	Authenticate later with ``Authorization: Bearer <key>``, ``Authorization: token <key>``
+	(no colon — colon form is Frappe User API keys), or ``X-API-Key: <key>``.
 	"""
 	frappe.only_for("System Manager")
 	user = user or frappe.session.user

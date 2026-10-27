@@ -59,11 +59,15 @@ class TestApiKeyAuth(IntegrationTestCase):
 		self._run_validate_as_guest(authorization=f"token {created['api_key']}")
 		self.assertEqual(frappe.session.user, SALES_USER)
 
-	def test_token_key_secret_style_accepts_crm_key(self):
+	def test_token_key_secret_style_is_not_handled_here(self):
+		"""Colon form is owned by Frappe User API keys (before auth_hooks).
+
+		Our hook must not claim it — leave Guest so Frappe's validator is the
+		source of truth (401 for CRM keys at the HTTP layer).
+		"""
 		created = self._create_key()
-		# Frappe-style "token key:secret" — our opaque key on either side.
 		self._run_validate_as_guest(authorization=f"token api:{created['api_key']}")
-		self.assertEqual(frappe.session.user, SALES_USER)
+		self.assertEqual(frappe.session.user, "Guest")
 
 	def test_x_api_key_header_authenticates(self):
 		created = self._create_key()
@@ -81,13 +85,57 @@ class TestApiKeyAuth(IntegrationTestCase):
 		with self.assertRaises(frappe.AuthenticationError):
 			self._run_validate_as_guest(authorization=f"Bearer {created['api_key']}")
 
+	def test_set_user_preserves_form_dict_args(self):
+		"""frappe.set_user clears form_dict — auth must restore method arguments."""
+		created = self._create_key()
+		frappe.set_user("Guest")
+		frappe.local.form_dict = frappe._dict({"label": "from-request", "user": SALES_USER})
+
+		def _header(name, default=None):
+			if (name or "").lower() == "authorization":
+				return f"Bearer {created['api_key']}"
+			return default
+
+		with patch("frappe.get_request_header", side_effect=_header):
+			validate()
+
+		self.assertEqual(frappe.session.user, SALES_USER)
+		self.assertEqual(frappe.local.form_dict.get("label"), "from-request")
+		self.assertEqual(frappe.local.form_dict.get("user"), SALES_USER)
+
+	def test_method_call_with_args_via_key(self):
+		"""Simulate /api/method with params after key auth (no missing-arg 500)."""
+		created = self._create_key(user="Administrator")
+		frappe.set_user("Guest")
+		frappe.local.form_dict = frappe._dict({"label": "param-key-test"})
+
+		def _header(name, default=None):
+			if (name or "").lower() == "authorization":
+				return f"Bearer {created['api_key']}"
+			return default
+
+		with patch("frappe.get_request_header", side_effect=_header):
+			validate()
+
+		self.assertEqual(frappe.session.user, "Administrator")
+		# Call a whitelist that requires an argument sourced from form_dict.
+		from crm.fcrm.doctype.crm_api_key.crm_api_key import create_api_key as create_key_fn
+
+		label = frappe.local.form_dict.get("label")
+		self.assertEqual(label, "param-key-test")
+		res = create_key_fn(label=label)
+		self.assertTrue(res["api_key"].startswith("crm_"))
+		self.assertEqual(
+			frappe.db.get_value("CRM API Key", res["name"], "label"),
+			"param-key-test",
+		)
+
 	def test_whitelisted_method_via_key_session(self):
 		"""After auth_hook, session user is the key owner for subsequent work."""
 		created = self._create_key()
 		self._run_validate_as_guest(authorization=f"Bearer {created['api_key']}")
 		self.assertEqual(frappe.session.user, SALES_USER)
 		self.assertNotEqual(frappe.session.user, "Guest")
-		# Creating a lead as the authenticated key user must stamp the owner.
 		lead = frappe.get_doc(
 			{"doctype": "CRM Lead", "first_name": "ApiKeyAuth", "status": "New"}
 		).insert(ignore_permissions=True)

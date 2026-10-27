@@ -79,6 +79,10 @@ def save_outbound_webhook(
 		frappe.throw(frappe._("Endpoint URL is required"))
 	if not events_list:
 		frappe.throw(frappe._("Select at least one event"))
+	try:
+		_assert_webhook_url_safe(endpoint_url.strip())
+	except ValueError as exc:
+		frappe.throw(frappe._(str(exc)))
 
 	if name and frappe.db.exists("CRM Outbound Webhook", name):
 		doc = frappe.get_doc("CRM Outbound Webhook", name)
@@ -144,7 +148,56 @@ def emit_outbound_event(event_type: str, payload: dict[str, Any] | None = None):
 	)
 
 
-def deliver_custom_webhooks(event_type: str, payload: dict, delivery_id: str):
+def _allow_private_webhook_hosts() -> bool:
+	"""site_config ``crm_outbound_webhook_allow_private_hosts`` for local receivers."""
+	return bool(frappe.conf.get("crm_outbound_webhook_allow_private_hosts"))
+
+
+def _is_blocked_webhook_host(hostname: str) -> bool:
+	"""Block loopback / private / link-local destinations unless explicitly allowed."""
+	import ipaddress
+	import socket
+
+	host = (hostname or "").strip().lower().rstrip(".")
+	if not host:
+		return True
+	if host in ("localhost", "localhost.localdomain"):
+		return not _allow_private_webhook_hosts()
+	try:
+		addr = ipaddress.ip_address(host)
+		return bool(addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved)
+	except ValueError:
+		pass
+	try:
+		infos = socket.getaddrinfo(host, None)
+	except Exception:
+		# Unresolvable — treat as blocked to be safe.
+		return True
+	for info in infos:
+		ip_str = info[4][0]
+		try:
+			addr = ipaddress.ip_address(ip_str)
+		except ValueError:
+			continue
+		if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved:
+			return not _allow_private_webhook_hosts()
+	return False
+
+
+def _assert_webhook_url_safe(url: str) -> None:
+	from urllib.parse import urlparse
+
+	parsed = urlparse(url)
+	if parsed.scheme not in ("http", "https"):
+		raise ValueError("webhook URL scheme must be http or https")
+	if _is_blocked_webhook_host(parsed.hostname or ""):
+		raise ValueError(
+			"webhook host is private/loopback; set site_config "
+			"crm_outbound_webhook_allow_private_hosts for local testing"
+		)
+
+
+def deliver_custom_webhooks(event_type: str, payload: dict, delivery_id: str, max_attempts: int = 3):
 	"""POST to enabled CRM Outbound Webhook endpoints that subscribe to this event."""
 	if not frappe.db.exists("DocType", "CRM Outbound Webhook"):
 		return
@@ -157,29 +210,55 @@ def deliver_custom_webhooks(event_type: str, payload: dict, delivery_id: str):
 		subscribed = {e.strip() for e in (hook.events or "").split(",") if e.strip()}
 		if event_type not in subscribed and "*" not in subscribed:
 			continue
+		try:
+			_assert_webhook_url_safe(hook.endpoint_url)
+		except Exception as exc:
+			frappe.log_error(
+				title=f"CRM outbound webhook blocked {hook.name}",
+				message=str(exc),
+			)
+			continue
 		secret = None
 		try:
 			secret = frappe.get_doc("CRM Outbound Webhook", hook.name).get_password("secret")
 		except Exception:
 			secret = None
 		body = json.dumps(payload or {}, separators=(",", ":"), default=str).encode("utf-8")
-		ts = int(time.time())
-		headers = {
-			"Content-Type": "application/json",
-			"X-Astra-Delivery": delivery_id,
-			"X-Astra-Timestamp": str(ts),
-		}
-		if secret:
-			headers["X-Astra-Signature"] = f"sha256={sign_payload(secret, ts, body)}"
-		try:
-			requests.post(
-				hook.endpoint_url,
-				data=body,
-				headers=headers,
-				timeout=int(hook.timeout_seconds or 15),
+		timeout = int(hook.timeout_seconds or 15)
+		last_error = ""
+		for attempt in range(1, max_attempts + 1):
+			ts = int(time.time())
+			headers = {
+				"Content-Type": "application/json",
+				"X-Astra-Delivery": delivery_id,
+				"X-Astra-Timestamp": str(ts),
+				"X-Astra-Attempt": str(attempt),
+			}
+			if secret:
+				headers["X-Astra-Signature"] = f"sha256={sign_payload(secret, ts, body)}"
+			try:
+				resp = requests.post(
+					hook.endpoint_url,
+					data=body,
+					headers=headers,
+					timeout=timeout,
+				)
+				if 200 <= resp.status_code < 300:
+					last_error = ""
+					break
+				last_error = f"HTTP {resp.status_code}: {(resp.text or '')[:500]}"
+				# Permanent client errors — do not retry (except 429).
+				if resp.status_code < 500 and resp.status_code != 429:
+					break
+			except Exception as exc:
+				last_error = str(exc)
+			if attempt < max_attempts:
+				time.sleep(0.25 * (2 ** (attempt - 1)))
+		if last_error:
+			frappe.log_error(
+				title=f"CRM outbound webhook failed {hook.name}",
+				message=f"{event_type} → {hook.endpoint_url}\n{last_error}",
 			)
-		except Exception:
-			frappe.log_error(title=f"CRM outbound webhook {hook.name}")
 
 
 # --- Document event hooks (Connect-independent) ---
@@ -227,16 +306,7 @@ def on_deal_insert(doc, method=None):
 
 
 def on_deal_update(doc, method=None):
-	emit_outbound_event(
-		"deal.updated",
-		{
-			"type": "deal.updated",
-			"dealId": doc.name,
-			"dealOwner": doc.deal_owner,
-			"stage": doc.status,
-			"organization": doc.organization,
-		},
-	)
+	# Stage changes emit deal.stage_changed only — avoid double-sending deal.updated.
 	if doc.has_value_changed("status"):
 		prev = doc.get_doc_before_save()
 		emit_outbound_event(
@@ -250,6 +320,17 @@ def on_deal_update(doc, method=None):
 				"dealOwner": doc.deal_owner,
 			},
 		)
+		return
+	emit_outbound_event(
+		"deal.updated",
+		{
+			"type": "deal.updated",
+			"dealId": doc.name,
+			"dealOwner": doc.deal_owner,
+			"stage": doc.status,
+			"organization": doc.organization,
+		},
+	)
 
 
 def on_contact_insert(doc, method=None):

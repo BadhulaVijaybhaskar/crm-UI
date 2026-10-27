@@ -6,13 +6,18 @@
         <p class="mt-1 text-p-sm text-ink-gray-6">
           {{
             __(
-              'Keys are hashed at rest. Authenticate with Authorization: Bearer <key>, Authorization: token <key>, or X-API-Key. The full key is shown only once.',
+              'Keys are hashed at rest. Authenticate with Authorization: Bearer <key>, Authorization: token <key> (no colon), or X-API-Key. The full key is shown only once.',
             )
           }}
         </p>
       </div>
       <div class="flex flex-wrap items-end gap-2">
-        <FormControl v-model="newLabel" type="text" :label="__('Label')" class="w-56" />
+        <FormControl
+          v-model="newLabel"
+          type="text"
+          :label="__('Label')"
+          class="w-56 [&_input]:border [&_input]:border-outline-gray-2 [&_input]:bg-surface-white"
+        />
         <Button variant="solid" :label="__('Create key')" :loading="creating" @click="createKey" />
       </div>
       <div
@@ -57,12 +62,23 @@
       </div>
 
       <div class="flex flex-col gap-3 rounded-md border border-outline-gray-2 p-3">
-        <FormControl v-model="hookForm.title" type="text" :label="__('Title')" />
-        <FormControl v-model="hookForm.endpoint_url" type="text" :label="__('Endpoint URL')" />
+        <FormControl
+          v-model="hookForm.title"
+          type="text"
+          :label="__('Title')"
+          class="[&_input]:border [&_input]:border-outline-gray-2 [&_input]:bg-surface-white"
+        />
+        <FormControl
+          v-model="hookForm.endpoint_url"
+          type="text"
+          :label="__('Endpoint URL')"
+          class="[&_input]:border [&_input]:border-outline-gray-2 [&_input]:bg-surface-white"
+        />
         <FormControl
           v-model="hookForm.secret"
           type="password"
           :label="__('Signing secret')"
+          class="[&_input]:border [&_input]:border-outline-gray-2 [&_input]:bg-surface-white"
         />
         <div>
           <p class="mb-2 text-p-sm font-medium text-ink-gray-8">{{ __('Events') }}</p>
