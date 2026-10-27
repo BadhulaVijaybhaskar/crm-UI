@@ -138,14 +138,35 @@ class TestCRMSearch(IntegrationTestCase):
 		locked = sqlite3.OperationalError("database is locked")
 		with (
 			patch("frappe.search.sqlite_search.get_search_classes", return_value=[CRMSearchForTest]),
-			patch.object(CRMSearchForTest, "add_to_queue", side_effect=locked),
-			patch.object(CRMSearchForTest, "sql", side_effect=locked),
+			patch.object(CRMSearchForTest, "add_to_queue", side_effect=locked, create=True),
+			patch.object(CRMSearchForTest, "sql", side_effect=locked, create=True),
 		):
 			name = add_comment("CRM Lead", self.own_lead, "lockedmarker")
 			self.search.index_doc("Comment", name)
 			self.search.remove_doc("Comment", name)
 
 		self.assertTrue(frappe.db.exists("Comment", name))
+
+
+	def test_lead_deal_contact_org_are_indexed(self):
+		"""CRM-33: primary records must be in the index (requires content field)."""
+		frappe.set_user("Administrator")
+		lead = make_lead(SALES_USER)
+		frappe.db.set_value("CRM Lead", lead, "lead_name", "AlphaSearchLead")
+		deal = make_deal(SALES_USER, lead=lead)
+		frappe.db.set_value("CRM Deal", deal, "organization", "BetaSearchDealOrg")
+		org = frappe.get_doc(
+			{"doctype": "CRM Organization", "organization_name": "GammaSearchCompany"}
+		).insert(ignore_permissions=True).name
+		contact = frappe.get_doc(
+			{"doctype": "Contact", "first_name": "DeltaSearchContact"}
+		).insert(ignore_permissions=True).name
+		self.search.build_index()
+		frappe.set_user(SALES_USER)
+		self.assertIn(f"CRM Lead:{lead}", self.hit_ids("AlphaSearchLead"))
+		self.assertIn(f"CRM Deal:{deal}", self.hit_ids("BetaSearchDealOrg"))
+		self.assertIn(f"CRM Organization:{org}", self.hit_ids("GammaSearchCompany"))
+		self.assertIn(f"Contact:{contact}", self.hit_ids("DeltaSearchContact"))
 
 
 def make_lead(owner):

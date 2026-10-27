@@ -23,11 +23,14 @@ class CRMSearch(SQLiteSearch):
 		"metadata_fields": ["parent", "author"],
 	}
 
+	# Record doctypes need an explicit content mapping — SQLiteSearch requires
+	# the column, and Lead/Deal/Contact/Org have no HTML content field.
 	INDEXABLE_DOCTYPES: ClassVar = {
 		"CRM Lead": {
 			"fields": [
 				"name",
 				{"title": "lead_name"},
+				{"content": "lead_name"},
 				"first_name",
 				"last_name",
 				"email",
@@ -42,6 +45,7 @@ class CRMSearch(SQLiteSearch):
 			"fields": [
 				"name",
 				{"title": "organization"},
+				{"content": "organization"},
 				"email",
 				"mobile_no",
 				"status",
@@ -53,6 +57,7 @@ class CRMSearch(SQLiteSearch):
 			"fields": [
 				"name",
 				{"title": "full_name"},
+				{"content": "full_name"},
 				"first_name",
 				"last_name",
 				"email_id",
@@ -66,6 +71,7 @@ class CRMSearch(SQLiteSearch):
 			"fields": [
 				"name",
 				{"title": "organization_name"},
+				{"content": "organization_name"},
 				"website",
 				"industry",
 				"territory",
@@ -161,6 +167,10 @@ class CRMSearch(SQLiteSearch):
 
 		if doc.doctype in ("CRM Lead", "CRM Deal", "Contact", "CRM Organization"):
 			document["parent"] = parent_key(doc.doctype, doc.name)
+			# Always populate content — empty title fields still indexed by name/email/phone.
+			document["content"] = self._record_content(doc) or document.get("content") or doc.name
+			if not document.get("title"):
+				document["title"] = document["content"].split()[0] if document["content"] else doc.name
 		else:
 			reference_name = doc.reference_docname if doc.doctype == "FCRM Note" else doc.reference_name
 			document["parent"] = parent_key(doc.reference_doctype, reference_name)
@@ -169,7 +179,35 @@ class CRMSearch(SQLiteSearch):
 		# and not every later reply that quotes it.
 		if doc.doctype == "Communication":
 			document["content"] = self._process_content(strip_quoted_reply(doc.content))
+		# Schema requires content — never leave it None (migrate / lead insert crash).
+		if not document.get("content"):
+			document["content"] = document.get("title") or doc.name or ""
 		return document
+
+	def _record_content(self, doc) -> str:
+		fields = {
+			"CRM Lead": ("lead_name", "first_name", "last_name", "email", "mobile_no", "organization", "status"),
+			"CRM Deal": ("organization", "email", "mobile_no", "status"),
+			"Contact": ("full_name", "first_name", "last_name", "email_id", "mobile_no", "company_name"),
+			"CRM Organization": ("organization_name", "website", "industry", "territory"),
+		}.get(doc.doctype, ())
+		parts = []
+		for field in fields:
+			value = doc.get(field)
+			if value not in (None, ""):
+				parts.append(str(value))
+		return " ".join(parts).strip()
+
+	def add_to_queue(self, *args, **kwargs):
+		"""Compatibility shim — older frappe SQLiteSearch used this name; tests patch it."""
+		parent = getattr(SQLiteSearch, "add_to_queue", None)
+		if callable(parent):
+			return parent(self, *args, **kwargs)
+		# Fall through to direct index when the parent API is absent.
+		doctype = kwargs.get("doctype") or (args[0] if args else None)
+		docname = kwargs.get("docname") or (args[1] if len(args) > 1 else None)
+		if doctype and docname:
+			return self.index_doc(doctype, docname)
 
 	def index_doc(self, doctype, docname):
 		try:
