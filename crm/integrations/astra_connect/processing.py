@@ -9,48 +9,63 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, get_datetime, now_datetime
 
-from crm.integrations.api import find_contact_by_phone_number
+from crm.integrations.astra_connect.mapping import (
+	map_disposition,
+	map_lead_status,
+	store_outcome,
+)
 from crm.utils import normalize_phone
 
-
-SUPPORTED_EVENTS = ("lead.upsert", "call.outcome")
+# Connect today + draft aliases (kept for compatibility with earlier CRM-04 docs).
+PRIMARY_EVENTS = ("lead.created", "call.completed", "employee.call.completed")
+ALIAS_EVENTS = {
+	"lead.upsert": "lead.created",
+	"call.outcome": "call.completed",
+}
+SUPPORTED_EVENTS = PRIMARY_EVENTS + tuple(ALIAS_EVENTS.keys())
 TELEPHONY_MEDIUM = "Astra Connect"
+# Connect payloads normalize phones with IN as the default region.
+CONNECT_PHONE_REGION = "IN"
 
 
 class ProcessingError(frappe.ValidationError):
+	"""Business / data error — acknowledge with 2xx; do not ask Connect to retry."""
+
 	pass
 
 
 def process_event(event_doc) -> dict[str, Any]:
 	"""Dispatch a stored Astra Connect Event. Raises ProcessingError on failure."""
 	payload = _as_dict(event_doc.payload)
-	event_type = event_doc.event_type or payload.get("type") or payload.get("event")
-	data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+	raw_type = (event_doc.event_type or payload.get("type") or payload.get("event") or "").strip()
+	event_type = ALIAS_EVENTS.get(raw_type, raw_type)
+	data = _event_data(payload)
 
-	if event_type == "lead.upsert":
-		result = process_lead_upsert(data)
-	elif event_type == "call.outcome":
-		result = process_call_outcome(data)
-	else:
-		raise ProcessingError(_("Unsupported event type: {0}").format(event_type))
-
-	return result
+	if event_type == "lead.created":
+		return process_lead_created(data)
+	if event_type in ("call.completed", "employee.call.completed"):
+		return process_call_completed(data, employee_enriched=(event_type == "employee.call.completed"))
+	raise ProcessingError(_("Unsupported event type: {0}").format(raw_type or "-"))
 
 
-def process_lead_upsert(data: dict) -> dict[str, Any]:
-	external_id = (data.get("external_id") or "").strip()
-	phone = normalize_phone(data.get("phone"))
-	email = (data.get("email") or "").strip() or None
-	name = (data.get("name") or "").strip()
-	company = (data.get("company") or "").strip() or None
-	source = (data.get("source") or "Astra Connect").strip()
-	ai_employee_id = (data.get("ai_employee_id") or "").strip() or None
-	campaign_id = (data.get("campaign_id") or "").strip() or None
+def process_lead_created(data: dict) -> dict[str, Any]:
+	"""Upsert CRM Lead keyed on leadId → astra_external_id (alias: lead.upsert)."""
+	external_id = _first_str(data, "leadId", "lead_id", "external_id")
+	phone = _normalize_connect_phone(data.get("phone"))
+	email = _first_str(data, "email") or None
+	name = _first_str(data, "name")
+	source = _first_str(data, "source") or "Astra Connect"
+	ai_employee_id = _first_str(data, "employeeId", "employee_id", "ai_employee_id") or None
+	connect_status = _first_str(data, "status")
+	channel = _normalize_channel(data.get("channel"))
 
 	if not external_id and not phone and not email:
-		raise ProcessingError(_("lead.upsert requires external_id, phone, or email"))
+		raise ProcessingError(_("lead.created requires leadId, phone, or email"))
 
-	lead_name = _find_lead(external_id=external_id, phone=phone, email=email)
+	lead_name = None
+	if external_id:
+		lead_name = _find_lead_by_external_id(external_id)
+
 	created = False
 	if lead_name:
 		lead = frappe.get_doc("CRM Lead", lead_name)
@@ -68,15 +83,15 @@ def process_lead_upsert(data: dict) -> dict[str, Any]:
 		lead.mobile_no = phone
 	if email:
 		lead.email = email
-	if company:
-		lead.organization = company
 	if source:
 		_ensure_lead_source(source)
 		lead.source = source
 	if ai_employee_id:
 		lead.ai_employee_id = ai_employee_id
-	if campaign_id and hasattr(lead, "campaign_id"):
-		lead.campaign_id = campaign_id
+
+	crm_status = map_lead_status(connect_status)
+	if frappe.db.exists("CRM Lead Status", crm_status):
+		lead.status = crm_status
 
 	owner = frappe.db.get_single_value("Astra Connect Settings", "default_lead_owner")
 	if created and owner:
@@ -88,41 +103,63 @@ def process_lead_upsert(data: dict) -> dict[str, Any]:
 	else:
 		lead.save(ignore_permissions=True)
 
-	return {"action": "created" if created else "updated", "doctype": "CRM Lead", "name": lead.name}
+	return {
+		"action": "created" if created else "updated",
+		"doctype": "CRM Lead",
+		"name": lead.name,
+		"channel": channel,
+		"mapped_status": crm_status,
+	}
 
 
-def process_call_outcome(data: dict) -> dict[str, Any]:
-	call_id = (data.get("call_id") or "").strip()
+def process_call_completed(data: dict, *, employee_enriched: bool = False) -> dict[str, Any]:
+	"""Create/update CRM Call Log from call.completed / employee.call.completed.
+
+	Matching is by phone (contactId is Connect's id — not a CRM leadId). Ambiguous
+	phone matches fail the event with a clear error.
+	"""
+	call_id = _first_str(data, "callId", "call_id")
 	if not call_id:
-		raise ProcessingError(_("call.outcome requires call_id"))
+		raise ProcessingError(_("call.completed requires callId"))
 
-	lead_external_id = (data.get("lead_external_id") or data.get("external_id") or "").strip()
-	phone = normalize_phone(data.get("phone") or data.get("lead_phone"))
-	email = (data.get("email") or "").strip() or None
+	phone = _normalize_connect_phone(data.get("phone"))
+	contact_id = _first_str(data, "contactId", "contact_id") or None
 	direction = _map_direction(data.get("direction"))
-	started_at = data.get("started_at")
-	duration_s = int(data.get("duration_s") or 0)
-	status = _map_call_status(data.get("status"))
-	disposition = (data.get("disposition") or "").strip() or None
-	summary = (data.get("summary") or "").strip() or None
-	transcript_url = (data.get("transcript_url") or "").strip() or None
-	recording_url = (data.get("recording_url") or "").strip() or None
-	ai_employee_id = (data.get("ai_employee_id") or "").strip() or None
-	next_action = data.get("next_action") if isinstance(data.get("next_action"), dict) else None
+	outcome_raw = store_outcome(_first_str(data, "outcome"))
+	disposition = map_disposition(outcome_raw)
+	qualified = _as_bool(data.get("qualified"))
+	summary = _first_str(data, "summary") or None
+	ai_employee_id = _first_str(data, "employeeId", "employee_id", "ai_employee_id") or None
+	channel = _normalize_channel(data.get("channel"))
+	ended_at = data.get("endedAt") or data.get("ended_at")
+	fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
 
-	match = _resolve_party(
-		lead_external_id=lead_external_id,
-		phone=phone,
-		email=email,
-	)
+	# employee.call.completed extras
+	started_at = data.get("startedAt") or data.get("started_at")
+	duration_s = _as_int(data.get("durationSec") if data.get("durationSec") is not None else data.get("duration_s"))
+	end_reason = _first_str(data, "endReason", "end_reason", "status")
+	recording_url = _first_str(data, "recordingUrl", "recording_url") or None
+	transcript = data.get("transcript")
+
+	# Optional next action (not sent by Connect yet)
+	next_action = _first_str(data, "nextAction", "next_action") or None
+	next_action_at = data.get("nextActionAt") or data.get("next_action_at")
+	# Old draft nested shape
+	if not next_action and isinstance(data.get("next_action"), dict):
+		nested = data["next_action"]
+		next_action = _first_str(nested, "title", "action") or None
+		next_action_at = nested.get("due_at") or next_action_at
+
+	match = resolve_party_by_phone(phone)
 	if not match:
 		raise ProcessingError(
-			_("No matching lead, deal, or contact for call.outcome (external_id={0}, phone={1})").format(
-				lead_external_id or "-", phone or "-"
+			_("No matching lead or contact for call.completed (phone={0}, contactId={1})").format(
+				phone or "-", contact_id or "-"
 			)
 		)
 
-	from_number, to_number = _call_numbers(direction, phone, match)
+	status = _map_call_status(end_reason) if end_reason else "Completed"
+	from_number, to_number = _call_numbers(direction, phone)
 
 	if frappe.db.exists("CRM Call Log", call_id):
 		call_log = frappe.get_doc("CRM Call Log", call_id)
@@ -133,19 +170,39 @@ def process_call_outcome(data: dict) -> dict[str, Any]:
 	call_log.type = direction
 	call_log.status = status
 	call_log.telephony_medium = TELEPHONY_MEDIUM
-	call_log.medium = TELEPHONY_MEDIUM
-	call_log.duration = duration_s
-	call_log.start_time = get_datetime(started_at) if started_at else now_datetime()
+	call_log.medium = channel or TELEPHONY_MEDIUM
 	if duration_s:
+		call_log.duration = duration_s
+	if started_at:
+		call_log.start_time = get_datetime(started_at)
+	elif ended_at and duration_s:
+		end_dt = get_datetime(ended_at)
+		call_log.end_time = end_dt
+		call_log.start_time = add_to_date(end_dt, seconds=-duration_s)
+	elif ended_at:
+		call_log.end_time = get_datetime(ended_at)
+		call_log.start_time = call_log.end_time
+	else:
+		call_log.start_time = call_log.start_time or now_datetime()
+	if duration_s and call_log.start_time and not call_log.end_time:
 		call_log.end_time = add_to_date(call_log.start_time, seconds=duration_s)
+
 	call_log.set("from", from_number or "unknown")
 	call_log.to = to_number or "unknown"
 	if recording_url:
 		call_log.recording_url = recording_url
+
+	# Store outcome as-is; disposition is the mapped label (default Other).
+	call_log.outcome = outcome_raw
 	call_log.disposition = disposition
-	call_log.call_summary = summary
-	call_log.transcript_url = transcript_url
+	call_log.qualified = 1 if qualified else 0
+	call_log.call_summary = _compose_summary(summary, fields)
 	call_log.ai_employee_id = ai_employee_id
+	call_log.channel = channel
+	call_log.astra_contact_id = contact_id
+	if transcript is not None:
+		call_log.transcript = _format_transcript(transcript)
+
 	call_log.reference_doctype = match["doctype"]
 	call_log.reference_docname = match["name"]
 
@@ -155,18 +212,17 @@ def process_call_outcome(data: dict) -> dict[str, Any]:
 	else:
 		call_log.save(ignore_permissions=True)
 
-	# Link table
 	call_log.link_with_reference_doc(match["doctype"], match["name"])
 	if match.get("contact"):
 		call_log.link_with_reference_doc("Contact", match["contact"])
 
 	note_name = None
-	if summary:
+	if call_log.call_summary:
 		note = frappe.get_doc(
 			{
 				"doctype": "FCRM Note",
 				"title": _("Call summary ({0})").format(call_id),
-				"content": f"<p>{frappe.utils.escape_html(summary)}</p>",
+				"content": f"<p>{frappe.utils.escape_html(call_log.call_summary)}</p>",
 				"reference_doctype": match["doctype"],
 				"reference_docname": match["name"],
 			}
@@ -178,16 +234,14 @@ def process_call_outcome(data: dict) -> dict[str, Any]:
 
 	task_name = None
 	if next_action:
-		title = (next_action.get("title") or next_action.get("action") or _("Follow up")).strip()
-		due_at = next_action.get("due_at")
 		task = frappe.get_doc(
 			{
 				"doctype": "CRM Task",
-				"title": title,
-				"description": next_action.get("description") or summary or "",
+				"title": next_action,
+				"description": call_log.call_summary or "",
 				"status": "Todo",
-				"priority": next_action.get("priority") or "Medium",
-				"due_date": get_datetime(due_at) if due_at else None,
+				"priority": "Medium",
+				"due_date": get_datetime(next_action_at) if next_action_at else None,
 				"reference_doctype": match["doctype"],
 				"reference_docname": match["name"],
 			}
@@ -196,9 +250,11 @@ def process_call_outcome(data: dict) -> dict[str, Any]:
 		call_log.link_with_reference_doc("CRM Task", task.name)
 		call_log.save(ignore_permissions=True)
 
-	# Propagate AI employee onto Lead/Deal when present
 	if ai_employee_id and match["doctype"] in ("CRM Lead", "CRM Deal"):
 		frappe.db.set_value(match["doctype"], match["name"], "ai_employee_id", ai_employee_id)
+
+	if qualified and match["doctype"] == "CRM Lead" and frappe.db.exists("CRM Lead Status", "Qualified"):
+		frappe.db.set_value("CRM Lead", match["name"], "status", "Qualified")
 
 	return {
 		"doctype": "CRM Call Log",
@@ -206,77 +262,117 @@ def process_call_outcome(data: dict) -> dict[str, Any]:
 		"linked": match,
 		"note": note_name,
 		"task": task_name,
+		"outcome": outcome_raw,
+		"disposition": disposition,
+		"channel": channel,
+		"employee_enriched": employee_enriched,
 	}
 
 
-def _resolve_party(
-	*, lead_external_id: str = "", phone: str = "", email: str | None = None
-) -> dict | None:
-	"""Prefer lead by external id, then phone match (lead/deal/contact), then email."""
-	if lead_external_id and frappe.db.has_column("CRM Lead", "astra_external_id"):
-		name = frappe.db.get_value("CRM Lead", {"astra_external_id": lead_external_id}, "name")
-		if name:
-			return {"doctype": "CRM Lead", "name": name}
-
-	if phone:
-		# Prefer Lead, then Deal (via contact), then Contact — phone first as specified
-		matches = find_contact_by_phone_number(phone)
-		for row in matches:
-			if row["doctype"] == "CRM Lead":
-				return {"doctype": "CRM Lead", "name": row["docname"]}
-		for row in matches:
-			if row["doctype"] == "CRM Deal":
-				return {
-					"doctype": "CRM Deal",
-					"name": row["docname"],
-					"contact": row.get("contact"),
-				}
-		for row in matches:
-			if row["doctype"] == "Contact":
-				return {"doctype": "Contact", "name": row["docname"], "contact": row["docname"]}
-
-		# Direct lead lookup by normalized phone
-		lead = _find_lead(phone=phone)
-		if lead:
-			return {"doctype": "CRM Lead", "name": lead}
-
-	if email:
-		lead = frappe.db.get_value("CRM Lead", {"email": email, "converted": 0}, "name")
-		if lead:
-			return {"doctype": "CRM Lead", "name": lead}
-		contact = frappe.db.get_value("Contact", {"email_id": email}, "name")
-		if contact:
-			deal = frappe.db.get_value("CRM Contacts", {"contact": contact, "is_primary": 1}, "parent")
-			if deal:
-				return {"doctype": "CRM Deal", "name": deal, "contact": contact}
-			return {"doctype": "Contact", "name": contact, "contact": contact}
-
-	return None
+# Back-compat names used by older tests / callers
+process_lead_upsert = process_lead_created
+process_call_outcome = process_call_completed
 
 
-def _find_lead(*, external_id: str = "", phone: str = "", email: str | None = None) -> str | None:
-	if external_id and frappe.db.has_column("CRM Lead", "astra_external_id"):
-		name = frappe.db.get_value("CRM Lead", {"astra_external_id": external_id}, "name")
-		if name:
-			return name
-	if phone:
-		for field in ("mobile_no", "phone"):
-			# Scan recent candidates with digit overlap via normalize
-			digits = "".join(ch for ch in phone if ch.isdigit())
-			if not digits:
-				continue
-			rows = frappe.get_all(
-				"CRM Lead",
-				filters={"converted": 0, field: ("like", f"%{digits[-10:]}")},
-				fields=["name", "mobile_no", "phone"],
-				limit=20,
-			)
-			for row in rows:
-				if normalize_phone(row.mobile_no) == phone or normalize_phone(row.phone) == phone:
-					return row.name
-	if email:
-		return frappe.db.get_value("CRM Lead", {"email": email, "converted": 0}, "name")
-	return None
+def resolve_party_by_phone(phone: str) -> dict | None:
+	"""Match Lead or Contact by full E.164, then last-10 digits. Ambiguous → fail."""
+	if not phone:
+		return None
+
+	exact = _collect_phone_matches(phone, mode="e164")
+	candidates = exact if exact else _collect_phone_matches(phone, mode="last10")
+
+	if not candidates:
+		return None
+	if len(candidates) > 1:
+		labels = ", ".join(f"{c['doctype']} {c['name']}" for c in candidates)
+		raise ProcessingError(
+			_("Ambiguous phone match for {0}: {1}").format(phone, labels)
+		)
+	return candidates[0]
+
+
+def _collect_phone_matches(phone: str, *, mode: str) -> list[dict]:
+	digits = "".join(ch for ch in phone if ch.isdigit())
+	last10 = digits[-10:] if len(digits) >= 10 else digits
+	if not last10:
+		return []
+
+	seen: set[tuple[str, str]] = set()
+	out: list[dict] = []
+
+	def add(doctype: str, name: str, **extra):
+		key = (doctype, name)
+		if key in seen:
+			return
+		seen.add(key)
+		out.append({"doctype": doctype, "name": name, **extra})
+
+	# Leads
+	rows = frappe.get_all(
+		"CRM Lead",
+		filters={"converted": 0},
+		or_filters=[
+			["mobile_no", "like", f"%{last10}%"],
+			["phone", "like", f"%{last10}%"],
+		],
+		fields=["name", "mobile_no", "phone"],
+		limit=50,
+	)
+	for row in rows:
+		if _phone_matches(phone, row.mobile_no, mode=mode) or _phone_matches(
+			phone, row.phone, mode=mode
+		):
+			add("CRM Lead", row.name)
+
+	# Contacts (primary mobile + Contact Phone child rows)
+	contacts = frappe.get_all(
+		"Contact",
+		filters={"mobile_no": ("like", f"%{last10}%")},
+		fields=["name", "mobile_no"],
+		limit=50,
+	)
+	for row in contacts:
+		if _phone_matches(phone, row.mobile_no, mode=mode):
+			add("Contact", row.name, contact=row.name)
+
+	phone_rows = frappe.get_all(
+		"Contact Phone",
+		filters={"phone": ("like", f"%{last10}%"), "parenttype": "Contact"},
+		fields=["parent", "phone"],
+		limit=50,
+	)
+	for row in phone_rows:
+		if _phone_matches(phone, row.phone, mode=mode):
+			add("Contact", row.parent, contact=row.parent)
+
+	return out
+
+
+def _phone_matches(target_e164: str, candidate: str | None, *, mode: str) -> bool:
+	if not candidate:
+		return False
+	cand = normalize_phone(candidate, region=CONNECT_PHONE_REGION)
+	if not cand:
+		return False
+	if mode == "e164":
+		return cand == target_e164
+	# last10
+	t_digits = "".join(ch for ch in target_e164 if ch.isdigit())
+	c_digits = "".join(ch for ch in cand if ch.isdigit())
+	if len(t_digits) < 10 or len(c_digits) < 10:
+		return t_digits == c_digits and bool(t_digits)
+	return t_digits[-10:] == c_digits[-10:]
+
+
+def _normalize_connect_phone(value) -> str:
+	return normalize_phone(value, region=CONNECT_PHONE_REGION) if value else ""
+
+
+def _find_lead_by_external_id(external_id: str) -> str | None:
+	if not external_id or not frappe.db.has_column("CRM Lead", "astra_external_id"):
+		return None
+	return frappe.db.get_value("CRM Lead", {"astra_external_id": external_id}, "name")
 
 
 def _split_name(name: str) -> tuple[str, str]:
@@ -298,7 +394,6 @@ def _ensure_lead_source(source: str) -> None:
 			ignore_permissions=True
 		)
 	except Exception:
-		# Source may already exist under a different naming scheme — non-fatal
 		frappe.log_error(title="Astra Connect lead source ensure failed")
 
 
@@ -310,6 +405,7 @@ def _map_direction(value: str | None) -> str:
 
 
 def _map_call_status(value: str | None) -> str:
+	"""Accept both canceled (one L) and cancelled (two Ls)."""
 	v = (value or "").strip().lower()
 	mapping = {
 		"completed": "Completed",
@@ -330,12 +426,78 @@ def _map_call_status(value: str | None) -> str:
 	return mapping.get(v, "Completed")
 
 
-def _call_numbers(direction: str, phone: str, match: dict) -> tuple[str, str]:
+def _call_numbers(direction: str, phone: str) -> tuple[str, str]:
 	party_phone = phone or "unknown"
 	agent = "astra-connect"
 	if direction == "Incoming":
 		return party_phone, agent
 	return agent, party_phone
+
+
+def _normalize_channel(value) -> str | None:
+	v = (str(value).strip().lower() if value is not None else "")
+	if v in ("voice", "whatsapp"):
+		return v
+	return None
+
+
+def _compose_summary(summary: str | None, fields: dict) -> str | None:
+	parts = []
+	if summary:
+		parts.append(summary)
+	if fields:
+		try:
+			parts.append(json.dumps(fields, ensure_ascii=False, sort_keys=True))
+		except Exception:
+			parts.append(str(fields))
+	return "\n".join(parts) if parts else None
+
+
+def _format_transcript(transcript) -> str:
+	if isinstance(transcript, str):
+		return transcript
+	try:
+		return json.dumps(transcript, ensure_ascii=False)
+	except Exception:
+		return str(transcript)
+
+
+def _event_data(payload: dict) -> dict:
+	"""Flat camelCase payloads are the Connect-today shape; nested data is the old draft."""
+	if isinstance(payload.get("data"), dict):
+		# Merge flat top-level keys under data for mixed senders
+		merged = dict(payload)
+		merged.update(payload["data"])
+		return merged
+	return payload
+
+
+def _first_str(data: dict, *keys: str) -> str:
+	for key in keys:
+		val = data.get(key)
+		if val is None:
+			continue
+		text = str(val).strip()
+		if text:
+			return text
+	return ""
+
+
+def _as_bool(value) -> bool:
+	if isinstance(value, bool):
+		return value
+	if isinstance(value, (int, float)):
+		return bool(value)
+	if isinstance(value, str):
+		return value.strip().lower() in ("1", "true", "yes", "y")
+	return False
+
+
+def _as_int(value) -> int:
+	try:
+		return int(value or 0)
+	except (TypeError, ValueError):
+		return 0
 
 
 def _as_dict(value) -> dict:

@@ -43,10 +43,15 @@ class CRMCallLog(Document):
 			"Canceled",
 		]
 		ai_employee_id: DF.Data | None
+		astra_contact_id: DF.Data | None
 		call_summary: DF.Text | None
+		channel: DF.Literal["", "voice", "whatsapp"] | None
 		disposition: DF.Data | None
+		outcome: DF.Data | None
+		qualified: DF.Check
 		telephony_medium: DF.Literal["", "Manual", "Twilio", "Exotel", "Astra Connect"]
 		to: DF.Data
+		transcript: DF.LongText | None
 		transcript_url: DF.SmallText | None
 		type: DF.Literal["Incoming", "Outgoing"]
 	# end: auto-generated types

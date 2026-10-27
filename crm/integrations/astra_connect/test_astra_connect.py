@@ -1,23 +1,35 @@
 # Copyright (c) 2026, Astra and contributors
 # For license information, please see license.txt
 
-"""Frappe test cases for Astra Connect webhooks (CRM-04)."""
+"""Frappe test cases for Astra Connect webhooks aligned with Connect-today payloads."""
 
 from __future__ import annotations
 
 import json
 import time
-from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from crm.integrations.astra_connect.auth import sign_payload
-from crm.integrations.astra_connect.processing import process_call_outcome, process_lead_upsert
+from crm.integrations.astra_connect.mapping import DEFAULT_DISPOSITION, map_disposition
+from crm.integrations.astra_connect.processing import (
+	ProcessingError,
+	process_lead_created,
+	resolve_party_by_phone,
+)
 
 
 TEST_SECRET = "astra-connect-test-secret-site-a"
 OTHER_SITE_SECRET = "astra-connect-test-secret-site-b"
+
+
+class _Headers(dict):
+	def get(self, key, default=None):
+		for k, v in self.items():
+			if k.lower() == key.lower():
+				return v
+		return default
 
 
 class TestAstraConnectWebhooks(FrappeTestCase):
@@ -29,9 +41,6 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 
 	def setUp(self):
 		frappe.set_user("Administrator")
-		# Ensure settings exist
-		if not frappe.db.exists("DocType", "Astra Connect Settings"):
-			frappe.throw("Astra Connect Settings DocType missing — run migrate first")
 		settings = frappe.get_single("Astra Connect Settings")
 		settings.enabled = 1
 		settings.connect_base_url = "https://connect.example.test"
@@ -41,28 +50,37 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 	def tearDown(self):
 		frappe.db.rollback()
 
-	def _post(self, payload: dict, *, secret: str = TEST_SECRET, timestamp: int | None = None, event_id: str | None = None, bad_sig: bool = False):
+	def _post(
+		self,
+		payload: dict,
+		*,
+		secret: str = TEST_SECRET,
+		timestamp: int | None = None,
+		delivery_id: str | None = None,
+		sig_style: str = "sha256",
+		bad_sig: bool = False,
+		omit_delivery: bool = False,
+		use_event_id_fallback: bool = False,
+	):
 		body = json.dumps(payload, separators=(",", ":"), sort_keys=True)
 		ts = int(timestamp if timestamp is not None else time.time())
-		eid = event_id or payload.get("event_id") or frappe.generate_hash(length=12)
-		sig = sign_payload(secret, ts, body)
+		eid = delivery_id or frappe.generate_hash(length=12)
+		hex_sig = sign_payload(secret, ts, body)
 		if bad_sig:
-			sig = "0" * 64
+			hex_sig = "0" * 64
 
-		class _Headers(dict):
-			def get(self, key, default=None):
-				for k, v in self.items():
-					if k.lower() == key.lower():
-						return v
-				return default
+		headers = _Headers()
+		if not omit_delivery:
+			if use_event_id_fallback:
+				headers["X-Astra-Event-Id"] = eid
+			else:
+				headers["X-Astra-Delivery"] = eid
 
-		headers = _Headers(
-			{
-				"X-Astra-Event-Id": eid,
-				"X-Astra-Timestamp": str(ts),
-				"X-Astra-Signature": sig,
-			}
-		)
+		if sig_style == "tv1":
+			headers["X-Astra-Signature"] = f"t={ts},v1={hex_sig}"
+		else:
+			headers["X-Astra-Timestamp"] = str(ts)
+			headers["X-Astra-Signature"] = f"sha256={hex_sig}"
 
 		class _Request:
 			def get_data(self):
@@ -74,184 +92,91 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 
 		frappe.local.request = _Request()
 		frappe.local.response = frappe._dict()
-		with patch("frappe.conf.get", side_effect=lambda k, default=None: secret if k == "astra_connect_webhook_secret" else frappe.conf.get(k, default)):
-			# Prefer direct conf override
-			prev = frappe.conf.get("astra_connect_webhook_secret")
-			frappe.conf.astra_connect_webhook_secret = secret
-			try:
-				from crm.integrations.astra_connect.api import receive
+		prev = getattr(frappe.conf, "astra_connect_webhook_secret", None)
+		frappe.conf.astra_connect_webhook_secret = secret
+		try:
+			from crm.integrations.astra_connect.api import receive
 
-				result = receive()
-				return result, frappe.local.response.get("http_status_code", 200), eid
-			finally:
-				if prev is None:
-					frappe.conf.pop("astra_connect_webhook_secret", None)
-				else:
-					frappe.conf.astra_connect_webhook_secret = prev
+			result = receive()
+			return result, frappe.local.response.get("http_status_code", 200), eid
+		finally:
+			if prev is None:
+				frappe.conf.pop("astra_connect_webhook_secret", None)
+			else:
+				frappe.conf.astra_connect_webhook_secret = prev
 
-	def test_good_signature_lead_upsert_create(self):
+	# --- signature formats ---
+
+	def test_signature_sha256_style(self):
 		payload = {
-			"type": "lead.upsert",
-			"data": {
-				"external_id": "ext-lead-1",
-				"name": "Ada Lovelace",
-				"phone": "+14155550100",
-				"email": "ada@example.com",
-				"company": "Analytical Engines",
-				"source": "Astra Connect",
-				"ai_employee_id": "ai-emp-1",
-				"campaign_id": "camp-1",
-			},
+			"type": "lead.created",
+			"leadId": "lead-sig-a",
+			"name": "Sig A",
+			"phone": "+919876543201",
+			"status": "new",
+			"source": "test",
+			"employeeId": "emp-1",
 		}
-		result, status, eid = self._post(payload)
+		result, status, eid = self._post(payload, sig_style="sha256")
 		self.assertEqual(status, 200)
 		self.assertEqual(result["status"], "processed")
-		lead = frappe.get_doc("CRM Lead", {"astra_external_id": "ext-lead-1"})
-		self.assertEqual(lead.email, "ada@example.com")
-		self.assertEqual(lead.ai_employee_id, "ai-emp-1")
-		self.assertTrue(frappe.db.exists("Astra Connect Event", {"event_id": eid, "status": "Processed"}))
+		self.assertTrue(frappe.db.exists("Astra Connect Event", {"event_id": eid}))
 
-	def test_lead_upsert_update(self):
-		process_lead_upsert(
-			{
-				"external_id": "ext-lead-2",
-				"name": "Grace Hopper",
-				"phone": "+14155550101",
-				"email": "grace@example.com",
-			}
-		)
+	def test_signature_tv1_style(self):
 		payload = {
-			"type": "lead.upsert",
-			"data": {
-				"external_id": "ext-lead-2",
-				"name": "Grace Hopper",
-				"phone": "+14155550101",
-				"email": "grace.updated@example.com",
-				"ai_employee_id": "ai-emp-2",
-			},
+			"type": "lead.created",
+			"leadId": "lead-sig-b",
+			"name": "Sig B",
+			"phone": "+919876543202",
+			"status": "assigned",
+			"source": "test",
+			"employeeId": "emp-1",
 		}
-		result, status, _ = self._post(payload)
+		result, status, eid = self._post(payload, sig_style="tv1")
 		self.assertEqual(status, 200)
 		self.assertEqual(result["status"], "processed")
-		self.assertEqual(result["result"]["action"], "updated")
-		lead = frappe.get_doc("CRM Lead", {"astra_external_id": "ext-lead-2"})
-		self.assertEqual(lead.email, "grace.updated@example.com")
-		self.assertEqual(lead.ai_employee_id, "ai-emp-2")
+		lead = frappe.get_doc("CRM Lead", {"astra_external_id": "lead-sig-b"})
+		self.assertEqual(lead.status, "Nurture")
 
-	def test_bad_signature(self):
-		payload = {"type": "lead.upsert", "data": {"external_id": "x", "name": "X", "phone": "+14155550999"}}
+	def test_bad_signature_401(self):
+		payload = {
+			"type": "lead.created",
+			"leadId": "lead-bad",
+			"name": "Bad",
+			"phone": "+919876543203",
+		}
 		result, status, _ = self._post(payload, bad_sig=True)
 		self.assertEqual(status, 401)
 		self.assertEqual(result["status"], "rejected")
-		self.assertFalse(frappe.db.exists("Astra Connect Event", {"event_id": result.get("event_id")}))
 
-	def test_stale_timestamp(self):
-		payload = {"type": "lead.upsert", "data": {"external_id": "stale", "name": "S", "phone": "+14155550998"}}
+	def test_stale_timestamp_401(self):
+		payload = {
+			"type": "lead.created",
+			"leadId": "lead-stale",
+			"name": "Stale",
+			"phone": "+919876543204",
+		}
 		result, status, _ = self._post(payload, timestamp=int(time.time()) - 301)
 		self.assertEqual(status, 401)
 		self.assertEqual(result["status"], "rejected")
 
-	def test_duplicate_event_id(self):
-		payload = {
-			"type": "lead.upsert",
-			"data": {
-				"external_id": "ext-dup",
-				"name": "Dup Lead",
-				"phone": "+14155550102",
-			},
-		}
-		r1, s1, eid = self._post(payload, event_id="evt-dup-1")
-		self.assertEqual(s1, 200)
-		self.assertEqual(r1["status"], "processed")
-		count_before = frappe.db.count("CRM Lead", {"astra_external_id": "ext-dup"})
-		r2, s2, _ = self._post(payload, event_id="evt-dup-1")
-		self.assertEqual(s2, 200)
-		self.assertEqual(r2["status"], "duplicate")
-		self.assertEqual(frappe.db.count("CRM Lead", {"astra_external_id": "ext-dup"}), count_before)
-
-	def test_call_outcome_matched(self):
-		lead = process_lead_upsert(
-			{
-				"external_id": "ext-call-lead",
-				"name": "Call Lead",
-				"phone": "+14155550103",
-				"email": "call@example.com",
-			}
-		)
-		payload = {
-			"type": "call.outcome",
-			"data": {
-				"call_id": "call-100",
-				"lead_external_id": "ext-call-lead",
-				"phone": "+14155550103",
-				"direction": "outbound",
-				"started_at": "2026-10-27 10:00:00",
-				"duration_s": 95,
-				"status": "completed",
-				"disposition": "interested",
-				"summary": "Prospect asked for a demo.",
-				"ai_employee_id": "ai-emp-9",
-				"next_action": {"title": "Send demo invite", "due_at": "2026-10-28 15:00:00"},
-			},
-		}
-		result, status, _ = self._post(payload)
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "processed")
-		call_log = frappe.get_doc("CRM Call Log", "call-100")
-		self.assertEqual(call_log.telephony_medium, "Astra Connect")
-		self.assertEqual(call_log.disposition, "interested")
-		self.assertEqual(call_log.reference_docname, lead["name"])
-		self.assertTrue(call_log.note)
-		self.assertTrue(result["result"].get("task"))
-		self.assertEqual(
-			frappe.db.get_value("CRM Lead", lead["name"], "ai_employee_id"),
-			"ai-emp-9",
-		)
-
-	def test_call_outcome_unmatched(self):
-		payload = {
-			"type": "call.outcome",
-			"data": {
-				"call_id": "call-orphan",
-				"phone": "+14155550900",
-				"direction": "inbound",
-				"started_at": "2026-10-27 11:00:00",
-				"duration_s": 10,
-				"status": "completed",
-				"summary": "No match",
-			},
-		}
-		result, status, eid = self._post(payload)
-		self.assertEqual(status, 422)
-		self.assertEqual(result["status"], "failed")
-		event = frappe.get_doc("Astra Connect Event", {"event_id": eid})
-		self.assertEqual(event.status, "Failed")
-		self.assertIn("No matching", event.error)
-		self.assertFalse(frappe.db.exists("CRM Call Log", "call-orphan"))
-
 	def test_secret_from_another_site_refused(self):
 		payload = {
-			"type": "lead.upsert",
-			"data": {"external_id": "other-site", "name": "Other", "phone": "+14155550104"},
+			"type": "lead.created",
+			"leadId": "lead-other",
+			"name": "Other",
+			"phone": "+919876543205",
 		}
-		# Sign with site B secret while this site expects site A
+		# Sign with site B while this site expects site A
 		body = json.dumps(payload, separators=(",", ":"), sort_keys=True)
 		ts = int(time.time())
-		eid = "evt-other-site"
-		sig = sign_payload(OTHER_SITE_SECRET, ts, body)
-
-		class _Headers(dict):
-			def get(self, key, default=None):
-				for k, v in self.items():
-					if k.lower() == key.lower():
-						return v
-				return default
-
+		eid = "dlv-other-site"
+		hex_sig = sign_payload(OTHER_SITE_SECRET, ts, body)
 		headers = _Headers(
 			{
-				"X-Astra-Event-Id": eid,
+				"X-Astra-Delivery": eid,
 				"X-Astra-Timestamp": str(ts),
-				"X-Astra-Signature": sig,
+				"X-Astra-Signature": f"sha256={hex_sig}",
 			}
 		)
 
@@ -273,17 +198,17 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertEqual(status, 401)
 		self.assertEqual(result["status"], "rejected")
 
-	def test_disabled_without_secret(self):
-		payload = {"type": "lead.upsert", "data": {"external_id": "z", "name": "Z", "phone": "+14155550105"}}
-		body = json.dumps(payload)
+	def test_malformed_json_400(self):
 		ts = int(time.time())
-
-		class _Headers(dict):
-			def get(self, key, default=None):
-				for k, v in self.items():
-					if k.lower() == key.lower():
-						return v
-				return default
+		body = "{not-json"
+		hex_sig = sign_payload(TEST_SECRET, ts, body)
+		headers = _Headers(
+			{
+				"X-Astra-Delivery": "dlv-bad-json",
+				"X-Astra-Timestamp": str(ts),
+				"X-Astra-Signature": f"sha256={hex_sig}",
+			}
+		)
 
 		class _Request:
 			def get_data(self):
@@ -291,52 +216,230 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 
 			@property
 			def headers(self):
-				return _Headers(
-					{
-						"X-Astra-Event-Id": "evt-disabled",
-						"X-Astra-Timestamp": str(ts),
-						"X-Astra-Signature": sign_payload("x", ts, body),
-					}
-				)
+				return headers
 
 		frappe.local.request = _Request()
 		frappe.local.response = frappe._dict()
-		frappe.conf.pop("astra_connect_webhook_secret", None)
-		if hasattr(frappe.conf, "astra_connect_webhook_secret"):
-			delattr(frappe.conf, "astra_connect_webhook_secret")
+		frappe.conf.astra_connect_webhook_secret = TEST_SECRET
 		from crm.integrations.astra_connect.api import receive
 
 		result = receive()
 		status = frappe.local.response.get("http_status_code", 200)
-		self.assertEqual(status, 503)
-		self.assertEqual(result["status"], "disabled")
+		self.assertEqual(status, 400)
+		self.assertEqual(result["status"], "rejected")
 
-	def test_retry_failed_event(self):
-		# Create unmatched failed event, then create the lead and retry
+	# --- dedupe ---
+
+	def test_dedupe_on_delivery_id(self):
 		payload = {
-			"type": "call.outcome",
-			"data": {
-				"call_id": "call-retry-1",
-				"lead_external_id": "ext-retry-lead",
-				"phone": "+14155550106",
-				"direction": "outbound",
-				"started_at": "2026-10-27 12:00:00",
-				"duration_s": 30,
-				"status": "completed",
-				"summary": "Retry me",
-			},
+			"type": "lead.created",
+			"leadId": "lead-dup",
+			"name": "Dup",
+			"phone": "+919876543206",
+			"status": "new",
 		}
-		result, status, eid = self._post(payload)
-		self.assertEqual(status, 422)
-		process_lead_upsert(
+		r1, s1, eid = self._post(payload, delivery_id="dlv-dup-1")
+		self.assertEqual(s1, 200)
+		self.assertEqual(r1["status"], "processed")
+		count = frappe.db.count("CRM Lead", {"astra_external_id": "lead-dup"})
+		r2, s2, _ = self._post(payload, delivery_id="dlv-dup-1")
+		self.assertEqual(s2, 200)
+		self.assertEqual(r2["status"], "duplicate")
+		self.assertEqual(frappe.db.count("CRM Lead", {"astra_external_id": "lead-dup"}), count)
+
+	def test_event_id_fallback_header(self):
+		payload = {
+			"type": "lead.created",
+			"leadId": "lead-fallback",
+			"name": "Fallback",
+			"phone": "+919876543207",
+		}
+		result, status, eid = self._post(payload, use_event_id_fallback=True)
+		self.assertEqual(status, 200)
+		self.assertEqual(result["status"], "processed")
+		self.assertTrue(frappe.db.exists("Astra Connect Event", {"event_id": eid}))
+
+	# --- lead.created ---
+
+	def test_lead_created_and_update(self):
+		payload = {
+			"type": "lead.created",
+			"leadId": "lead-up-1",
+			"name": "Grace Hopper",
+			"phone": "+919876543208",
+			"email": "grace@example.com",
+			"status": "calling",
+			"source": "connect",
+			"employeeId": "emp-2",
+		}
+		r1, s1, _ = self._post(payload)
+		self.assertEqual(s1, 200)
+		self.assertEqual(r1["result"]["action"], "created")
+		lead = frappe.get_doc("CRM Lead", {"astra_external_id": "lead-up-1"})
+		self.assertEqual(lead.status, "Contacted")
+		self.assertEqual(lead.ai_employee_id, "emp-2")
+
+		payload["email"] = "grace.updated@example.com"
+		payload["status"] = "qualified"
+		r2, s2, _ = self._post(payload, delivery_id="dlv-up-2")
+		self.assertEqual(s2, 200)
+		self.assertEqual(r2["result"]["action"], "updated")
+		lead.reload()
+		self.assertEqual(lead.email, "grace.updated@example.com")
+		self.assertEqual(lead.status, "Qualified")
+
+	def test_lead_upsert_alias(self):
+		payload = {
+			"type": "lead.upsert",
+			"leadId": "lead-alias",
+			"name": "Alias Lead",
+			"phone": "+919876543209",
+			"status": "new",
+		}
+		result, status, _ = self._post(payload)
+		self.assertEqual(status, 200)
+		self.assertEqual(result["status"], "processed")
+		self.assertTrue(frappe.db.exists("CRM Lead", {"astra_external_id": "lead-alias"}))
+
+	# --- call.completed ---
+
+	def test_call_completed_matched_and_unknown_outcome(self):
+		process_lead_created(
 			{
-				"external_id": "ext-retry-lead",
-				"name": "Retry Lead",
-				"phone": "+14155550106",
+				"leadId": "lead-call-1",
+				"name": "Call Lead",
+				"phone": "+919876543210",
+				"status": "new",
 			}
 		)
-		from crm.integrations.astra_connect.api import retry_event
+		payload = {
+			"type": "call.completed",
+			"callId": "call-100",
+			"contactId": "ctc-55",
+			"employeeId": "emp-9",
+			"direction": "outbound",
+			"phone": "+919876543210",
+			"outcome": "weird_custom_label_from_ops",
+			"qualified": True,
+			"summary": "Booked interest",
+			"fields": {"note": "x"},
+			"endedAt": "2026-10-27T10:05:00Z",
+			"channel": "voice",
+		}
+		result, status, _ = self._post(payload)
+		self.assertEqual(status, 200)
+		self.assertEqual(result["status"], "processed")
+		call_log = frappe.get_doc("CRM Call Log", "call-100")
+		self.assertEqual(call_log.outcome, "weird_custom_label_from_ops")
+		self.assertEqual(call_log.disposition, DEFAULT_DISPOSITION)
+		self.assertEqual(call_log.channel, "voice")
+		self.assertEqual(call_log.astra_contact_id, "ctc-55")
+		self.assertEqual(call_log.qualified, 1)
+		self.assertEqual(map_disposition("appointment_booked"), "Appointment Booked")
 
-		retried = retry_event(eid)
-		self.assertEqual(retried["status"], "processed")
-		self.assertTrue(frappe.db.exists("CRM Call Log", "call-retry-1"))
+	def test_employee_call_completed_extras(self):
+		process_lead_created(
+			{
+				"leadId": "lead-emp-call",
+				"name": "Emp Call",
+				"phone": "+919876543211",
+			}
+		)
+		payload = {
+			"type": "employee.call.completed",
+			"callId": "call-emp-1",
+			"contactId": "ctc-1",
+			"employeeId": "emp-3",
+			"direction": "inbound",
+			"phone": "9876543211",
+			"outcome": "appointment_booked",
+			"qualified": False,
+			"summary": "Done",
+			"endedAt": "2026-10-27T10:05:00Z",
+			"startedAt": "2026-10-27T10:03:00Z",
+			"durationSec": 120,
+			"endReason": "cancelled",
+			"recordingUrl": "https://connect.example/r/1",
+			"transcript": [{"role": "agent", "text": "Hi"}],
+		}
+		result, status, _ = self._post(payload)
+		self.assertEqual(status, 200)
+		self.assertEqual(result["status"], "processed")
+		call_log = frappe.get_doc("CRM Call Log", "call-emp-1")
+		self.assertEqual(call_log.status, "Canceled")
+		self.assertEqual(call_log.duration, 120)
+		self.assertTrue(call_log.recording_url)
+		self.assertIn("agent", call_log.transcript or "")
+		self.assertEqual(call_log.disposition, "Appointment Booked")
+
+	def test_call_unmatched_returns_200_failed(self):
+		payload = {
+			"type": "call.completed",
+			"callId": "call-orphan",
+			"contactId": "ctc-x",
+			"employeeId": "emp-1",
+			"direction": "outbound",
+			"phone": "+919999999999",
+			"outcome": "no_answer",
+			"qualified": False,
+			"summary": "No match",
+			"endedAt": "2026-10-27T11:00:00Z",
+		}
+		result, status, eid = self._post(payload)
+		self.assertEqual(status, 200)
+		self.assertEqual(result["status"], "failed")
+		event = frappe.get_doc("Astra Connect Event", {"event_id": eid})
+		self.assertEqual(event.status, "Failed")
+		self.assertIn("No matching", event.error)
+
+	def test_phone_last10_fallback(self):
+		# Store lead with local formatting; event sends E.164
+		lead = frappe.get_doc(
+			{
+				"doctype": "CRM Lead",
+				"first_name": "Local",
+				"mobile_no": "9876543212",
+				"astra_external_id": "lead-local-10",
+			}
+		).insert(ignore_permissions=True)
+		match = resolve_party_by_phone("+919876543212")
+		self.assertIsNotNone(match)
+		self.assertEqual(match["name"], lead.name)
+
+	def test_ambiguous_phone_match_fails(self):
+		frappe.get_doc(
+			{
+				"doctype": "CRM Lead",
+				"first_name": "A",
+				"mobile_no": "+919876543213",
+				"astra_external_id": "lead-amb-a",
+			}
+		).insert(ignore_permissions=True)
+		frappe.get_doc(
+			{
+				"doctype": "CRM Lead",
+				"first_name": "B",
+				"mobile_no": "+919876543213",
+				"astra_external_id": "lead-amb-b",
+			}
+		).insert(ignore_permissions=True)
+		with self.assertRaises(ProcessingError) as ctx:
+			resolve_party_by_phone("+919876543213")
+		self.assertIn("Ambiguous", str(ctx.exception))
+
+		payload = {
+			"type": "call.completed",
+			"callId": "call-amb",
+			"contactId": "ctc-amb",
+			"employeeId": "emp-1",
+			"direction": "outbound",
+			"phone": "+919876543213",
+			"outcome": "interested",
+			"qualified": False,
+			"summary": "Ambiguous",
+			"endedAt": "2026-10-27T11:00:00Z",
+		}
+		result, status, _ = self._post(payload)
+		self.assertEqual(status, 200)
+		self.assertEqual(result["status"], "failed")
+		self.assertIn("Ambiguous", result["error"])

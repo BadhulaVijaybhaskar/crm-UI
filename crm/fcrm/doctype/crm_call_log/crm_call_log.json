@@ -27,9 +27,14 @@
   "recording_url",
   "end_time",
   "note",
+  "outcome",
   "disposition",
+  "qualified",
   "call_summary",
   "transcript_url",
+  "transcript",
+  "channel",
+  "astra_contact_id",
   "ai_employee_id",
   "section_break_kebz",
   "links"
@@ -113,9 +118,22 @@
    "options": "FCRM Note"
   },
   {
+   "description": "Free-text Connect outcome (stored as sent; max 64 chars).",
+   "fieldname": "outcome",
+   "fieldtype": "Data",
+   "label": "Outcome"
+  },
+  {
+   "description": "Mapped disposition from a known outcome, or Other.",
    "fieldname": "disposition",
    "fieldtype": "Data",
    "label": "Disposition"
+  },
+  {
+   "default": "0",
+   "fieldname": "qualified",
+   "fieldtype": "Check",
+   "label": "Qualified"
   },
   {
    "fieldname": "call_summary",
@@ -126,6 +144,23 @@
    "fieldname": "transcript_url",
    "fieldtype": "Small Text",
    "label": "Transcript URL"
+  },
+  {
+   "fieldname": "transcript",
+   "fieldtype": "Long Text",
+   "label": "Transcript"
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "label": "Channel",
+   "options": "\nvoice\nwhatsapp"
+  },
+  {
+   "description": "Connect contact id from the event (matching is still by phone).",
+   "fieldname": "astra_contact_id",
+   "fieldtype": "Data",
+   "label": "Astra Contact ID"
   },
   {
    "fieldname": "ai_employee_id",

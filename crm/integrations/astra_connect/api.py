@@ -31,14 +31,21 @@ def receive() -> dict[str, Any]:
 	"""Inbound Astra Connect webhook.
 
 	Headers:
-	  X-Astra-Event-Id, X-Astra-Timestamp (unix seconds),
-	  X-Astra-Signature = hex HMAC-SHA256(secret, `${timestamp}.${raw_body}`)
+	  X-Astra-Delivery (dedupe; Replay reuses it) — fallback X-Astra-Event-Id
+	  X-Astra-Signature: ``sha256=<hex>`` (+ X-Astra-Timestamp) or ``t=<ts>,v1=<hex>``
 
-	Secret: site_config key ``astra_connect_webhook_secret`` (disabled if missing).
+	Secret: site_config ``astra_connect_webhook_secret`` (disabled / 503 if missing).
+
+	Status codes:
+	  2xx success or duplicate (and business failures recorded as Failed)
+	  400 malformed payload (final)
+	  401 bad signature or stale timestamp (final)
+	  5xx / 429 transient only (Connect outbox retries)
 	"""
 	try:
 		secret = require_webhook_secret()
 	except WebhookDisabledError as exc:
+		# Transient from Connect's POV — site may be configured later.
 		return _json_response({"status": "disabled", "error": str(exc)}, status_code=503)
 
 	raw_body = frappe.request.get_data() or b""
@@ -61,16 +68,17 @@ def receive() -> dict[str, Any]:
 	except Exception:
 		return _json_response({"status": "rejected", "error": _("Invalid JSON body")}, status_code=400)
 
-	event_id = (headers.get("event_id") or payload.get("event_id") or "").strip()
+	event_id = (headers.get("event_id") or "").strip()
 	event_type = (payload.get("type") or payload.get("event") or "").strip()
 	if not event_id:
 		return _json_response(
-			{"status": "rejected", "error": _("Missing X-Astra-Event-Id")}, status_code=400
+			{"status": "rejected", "error": _("Missing X-Astra-Delivery (or X-Astra-Event-Id)")},
+			status_code=400,
 		)
 	if not event_type:
 		return _json_response({"status": "rejected", "error": _("Missing event type")}, status_code=400)
 
-	# Idempotency: repeated event_id → 200 duplicate, no new records
+	# Idempotency on Delivery id → 200 duplicate, no new records
 	existing = frappe.db.get_value(
 		"Astra Connect Event",
 		{"event_id": event_id},
@@ -101,6 +109,7 @@ def receive() -> dict[str, Any]:
 	event.insert(ignore_permissions=True)
 	frappe.db.commit()
 
+	# Keep sync path fast (<10s). Heavy work can move to enqueue later if needed.
 	return _finalize_event(event)
 
 
@@ -136,9 +145,11 @@ def _finalize_event(event) -> dict[str, Any]:
 				"event_id": event.event_id,
 				"name": event.name,
 				"result": result,
-			}
+			},
+			status_code=200,
 		)
 	except ProcessingError as exc:
+		# Business failure is final for Connect's outbox — acknowledge with 2xx.
 		event.status = "Failed"
 		event.error = str(exc)
 		event.save(ignore_permissions=True)
@@ -150,12 +161,12 @@ def _finalize_event(event) -> dict[str, Any]:
 				"name": event.name,
 				"error": str(exc),
 			},
-			status_code=422,
+			status_code=200,
 		)
 	except Exception:
+		# Transient — Connect should retry (5xx).
 		traceback = frappe.get_traceback()
 		frappe.db.rollback()
-		# Re-apply failure state after rollback
 		frappe.db.set_value(
 			"Astra Connect Event",
 			event.name,
