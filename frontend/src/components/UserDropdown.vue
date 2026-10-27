@@ -79,9 +79,10 @@ const props = defineProps({
 
 const { settings, brand } = getSettings()
 const { logout } = sessionStore()
-const { getUser } = usersStore()
+const { getUser, isAdmin } = usersStore()
 
 const user = computed(() => getUser() || {})
+const userIsAdmin = computed(() => isAdmin())
 
 // Brand Settings upload wins; otherwise the Astra lockup tuned for the dark rail.
 const customBrandLogo = computed(() => settings.value?.brand_logo || '')
@@ -94,7 +95,6 @@ const apps = createResource({
   url: 'frappe.apps.get_apps',
   cache: 'apps',
   auto: true,
-  transform: (data) => [deskApp(), ...crmSiblingApps(data)],
 })
 
 const dropdownItems = computed(() => {
@@ -189,6 +189,8 @@ function getStandardItem(item) {
         icon: markRaw(AppsIcon),
         label: __(item.label),
         submenu: appMenuItems(),
+        // Non-admins get an empty switcher; hide the entry entirely.
+        condition: () => userIsAdmin.value && appMenuItems().length > 0,
       }
     case 'settings':
       return {
@@ -228,7 +230,7 @@ function getStandardItem(item) {
 }
 
 function appMenuItems() {
-  return (apps.data || []).map((app) => ({
+  return visibleApps(apps.data).map((app) => ({
     label: app.title,
     onClick: () => (window.location.href = app.route),
     slots: {
@@ -237,23 +239,24 @@ function appMenuItems() {
   }))
 }
 
-function deskApp() {
-  return {
-    name: 'frappe',
-    logo: '/assets/frappe/images/framework.png',
-    title: __('Desk'),
-    route: '/desk',
-  }
-}
-
-function crmSiblingApps(data) {
-  return data
-    .filter((app) => app.name !== 'crm')
-    .map((app) => ({
-      name: app.name,
-      logo: app.logo,
-      title: __(app.title),
-      route: app.route,
-    }))
+/** Non-admins: no Desk / WhatsApp / other apps. Admins: Desk → Admin. */
+function visibleApps(data) {
+  if (!userIsAdmin.value) return []
+  return [
+    {
+      name: 'frappe',
+      logo: '/assets/frappe/images/framework.png',
+      title: __('Admin'),
+      route: '/desk',
+    },
+    ...(data || [])
+      .filter((app) => app.name !== 'crm')
+      .map((app) => ({
+        name: app.name,
+        logo: app.logo,
+        title: __(app.title),
+        route: app.route,
+      })),
+  ]
 }
 </script>

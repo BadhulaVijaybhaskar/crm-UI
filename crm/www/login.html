@@ -1,0 +1,6 @@
+{% extends "frappe/www/login.html" %}
+
+{# Astra CRM owns this override so the website footer (and any powered-by
+   markup) is not part of the served login HTML. Vendor chrome is also
+   stripped via CRM footer templates + Website Settings on migrate. #}
+{% block footer %}{% endblock %}

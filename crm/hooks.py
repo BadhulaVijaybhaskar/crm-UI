@@ -30,8 +30,13 @@ web_include_css = ["/assets/crm/css/astra-login.css"]
 website_context = {
 	"splash_image": "/assets/crm/images/astra-crm-logo.png",
 	"brand_html": "Astra CRM",
+	"app_name": "Astra CRM",
 	"footer_address": "",
 	"copyright": "",
+	# Space (truthy) skips the framework footer_powered.html include; CRM also
+	# ships empty/override footer templates so no vendor text is in the HTML.
+	"footer_powered": " ",
+	"show_footer_on_login": 0,
 }
 
 update_website_context = ["crm.overrides.branding.update_website_context"]

@@ -1,0 +1,14 @@
+{# Astra CRM override: copyright and address only (vendor notice column removed). #}
+<div class="footer-info">
+	<div class="row">
+		<div class="footer-col-left col-sm-12 col-12">
+			{% if copyright %}
+			&copy; {{ copyright }}
+			{% endif %}
+			{% if footer_address %}
+			{% if copyright %}<br>{% endif %}
+			{{ footer_address }}
+			{% endif %}
+		</div>
+	</div>
+</div>

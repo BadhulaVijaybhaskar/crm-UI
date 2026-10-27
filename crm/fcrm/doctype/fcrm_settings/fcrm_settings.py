@@ -191,9 +191,15 @@ def get_standard_dropdown_items():
 
 def after_migrate():
 	sync_table("dropdown_items", "standard_dropdown_items")
-	from crm.overrides.branding import scrub_site_branding
+	from crm.overrides.branding import (
+		apply_doctype_label_overrides,
+		rename_crm_workspace,
+		scrub_site_branding,
+	)
 
 	scrub_site_branding()
+	rename_crm_workspace()
+	apply_doctype_label_overrides()
 
 
 def sync_table(key, hook):
