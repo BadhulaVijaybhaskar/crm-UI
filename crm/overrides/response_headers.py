@@ -47,13 +47,6 @@ _SECURITY_HEADERS = {
 def after_request(response):
 	"""Frappe after_request hook: drop vendor-leaking headers and HTML chrome."""
 	try:
-		from crm.overrides.branding import ensure_webmanifest_mime
-
-		ensure_webmanifest_mime()
-	except Exception:
-		pass
-
-	try:
 		headers = response.headers
 	except Exception:
 		return response
@@ -70,13 +63,8 @@ def after_request(response):
 		if name not in headers:
 			headers[name] = value
 
-	# Static .webmanifest is often served as octet-stream — force the PWA type.
-	try:
-		path = (getattr(frappe.local, "request", None) and frappe.request.path) or ""
-	except Exception:
-		path = ""
-	if str(path).endswith(".webmanifest") or str(path).endswith("/manifest.json"):
-		headers["Content-Type"] = "application/manifest+json"
+	# .webmanifest under /assets is served by nginx — set the type there
+	# (see docs/nginx-security-headers.md). Python after_request cannot fix it.
 
 	try:
 		content_type = (headers.get("Content-Type") or "").lower()

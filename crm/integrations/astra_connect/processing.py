@@ -162,7 +162,12 @@ def _process_call_completed_once(data: dict, *, employee_enriched: bool = False)
 
 	# employee.call.completed extras
 	started_at = data.get("startedAt") or data.get("started_at")
-	duration_s = _as_int(data.get("durationSec") if data.get("durationSec") is not None else data.get("duration_s"))
+	duration_raw = None
+	for key in ("durationSeconds", "durationSec", "duration_s", "duration"):
+		if data.get(key) is not None:
+			duration_raw = data.get(key)
+			break
+	duration_s = _as_int(duration_raw)
 	end_reason = _first_str(data, "endReason", "end_reason", "status")
 	recording_url = _first_str(data, "recordingUrl", "recording_url") or None
 	transcript = data.get("transcript")
@@ -186,7 +191,8 @@ def _process_call_completed_once(data: dict, *, employee_enriched: bool = False)
 
 	status = _map_call_status(end_reason) if end_reason else "Completed"
 	from_number, to_number = _call_numbers(direction, phone, data)
-	if not from_number or not to_number:
+	# Party phone is required; the agent/DID leg may be empty when Connect has none.
+	if not (from_number or to_number):
 		raise ProcessingError(_("call.completed requires a valid party phone number"))
 
 	if frappe.db.exists("CRM Call Log", call_id):
@@ -220,8 +226,9 @@ def _process_call_completed_once(data: dict, *, employee_enriched: bool = False)
 	elif end_dt and not call_log.end_time:
 		call_log.end_time = end_dt
 
-	call_log.set("from", from_number)
-	call_log.to = to_number
+	# Empty string (not None) keeps Phone Data fields clean when agent DID is absent.
+	call_log.set("from", from_number or "")
+	call_log.to = to_number or ""
 	if recording_url:
 		call_log.recording_url = recording_url
 
@@ -464,7 +471,12 @@ def _map_call_status(value: str | None) -> str:
 
 
 def _save_call_log(call_log):
-	"""Insert/save a call log. Deadlocks bubble to process_call_completed's outer retry."""
+	"""Insert/save a call log. Deadlocks bubble to process_call_completed's outer retry.
+
+	Ignore mandatory on from/to so Connect can leave the agent/DID leg empty
+	instead of fabricating a duplicate customer number.
+	"""
+	call_log.flags.ignore_mandatory = True
 	if call_log.is_new():
 		call_log.insert(ignore_permissions=True)
 	else:
@@ -524,14 +536,29 @@ def _naive_site_datetime(value):
 
 
 def _agent_number_from_payload(data: dict | None, direction: str) -> str | None:
-	"""Prefer an explicit agent/line number from the event over settings."""
+	"""Prefer an explicit agent/line/DID number from the event over settings."""
 	if not data:
 		return None
-	# Common Connect / employee payload keys for the agent leg.
+	# Common Connect / employee payload keys for the agent leg / Connect DID.
 	candidates = [
-		_first_str(data, "agentPhone", "agent_phone", "agentNumber", "agent_number", "linePhone", "line_phone"),
+		_first_str(
+			data,
+			"agentPhone",
+			"agent_phone",
+			"agentNumber",
+			"agent_number",
+			"linePhone",
+			"line_phone",
+			"did",
+			"connectDid",
+			"connect_did",
+			"connectNumber",
+			"connect_number",
+		),
 	]
-	# Directional from/to when the payload already split the legs.
+	# Directional from/to when the payload already split the legs — only if it
+	# differs from the party phone (avoid treating the customer as the agent).
+	party = _normalize_connect_phone(_first_str(data, "phone", "phoneNumber", "phone_number") or "")
 	if direction == "Incoming":
 		candidates.append(_first_str(data, "to", "toNumber", "to_number", "destination"))
 	else:
@@ -540,7 +567,7 @@ def _agent_number_from_payload(data: dict | None, direction: str) -> str | None:
 		if not raw:
 			continue
 		normalized = _normalize_connect_phone(raw)
-		if normalized:
+		if normalized and normalized != party:
 			return normalized
 	return None
 
@@ -554,10 +581,8 @@ def _call_numbers(
 	if not party_phone:
 		return None, None
 	agent = _connect_agent_number() or _agent_number_from_payload(data, direction)
-	# Required Phone fields on CRM Call Log — never invent a fake MSISDN. When no
-	# Connect line / payload agent is available, put the party number on both legs.
-	if not agent:
-		agent = party_phone
+	# Never fabricate the agent leg (that made Call Logs show customer → customer).
+	# Leave it empty when no Connect DID / agent number is configured or in payload.
 	if direction == "Incoming":
 		return party_phone, agent
 	return agent, party_phone
