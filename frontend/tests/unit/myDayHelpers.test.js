@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ONBOARDING_APP_NAME,
   filterUpcomingCalls,
   formatOnboardingProgressLabel,
   isUpcomingCall,
@@ -89,6 +90,10 @@ describe('wonDealsInPeriod', () => {
 })
 
 describe('Getting started empty / NaN guard', () => {
+  it('keeps the internal onboarding app name as frappecrm', () => {
+    expect(ONBOARDING_APP_NAME).toBe('frappecrm')
+  })
+
   it('returns null percent and hides banner when totalSteps is 0', () => {
     expect(onboardingProgressPercent(0, 0)).toBe(null)
     expect(onboardingProgressPercent(1, 0)).toBe(null)

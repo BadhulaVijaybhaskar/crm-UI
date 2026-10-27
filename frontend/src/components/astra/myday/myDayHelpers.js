@@ -44,6 +44,12 @@ export function wonDealsInPeriod(deals = [], { monthStart, statusTypeByName } = 
 }
 
 /**
+ * Internal onboarding storage key for useOnboarding / HelpModal appName.
+ * Never shown in user-visible UI copy (sidebar title stays "Astra CRM").
+ */
+export const ONBOARDING_APP_NAME = 'frappecrm'
+
+/**
  * Getting started progress. Guard 0/0 → null (hide), never NaN%.
  * @returns {number|null}
  */

@@ -160,12 +160,11 @@
        drawer does not unmount the modal. -->
   <template v-if="!mobile">
     <Settings />
-    <HelpModal
+    <OnboardingHelpModal
       v-if="showHelpModal"
       v-model="showHelpModal"
       v-model:articles="articles"
       title="Astra CRM"
-      appName="crm"
       docsLink=""
       :logo="CRMLogo"
       :afterSkip="(step) => capture('onboarding_step_skipped_' + step)"
@@ -196,9 +195,11 @@ import {
 } from '@/utils/navigation'
 import { openAstraConnect } from '@/utils/astraConnect'
 import {
+  ONBOARDING_APP_NAME,
   formatOnboardingProgressLabel,
   shouldShowGettingStartedBanner,
 } from '@/components/astra/myday/myDayHelpers'
+import OnboardingHelpModal from '@/components/Layouts/OnboardingHelpModal.vue'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
@@ -228,7 +229,6 @@ import { call, Sidebar, SidebarItem, SidebarLabel, Tooltip } from 'frappe-ui'
 import { SignupBanner } from '@framework/ui/components/SignupBanner'
 import { TrialBanner } from '@framework/ui/components/TrialBanner'
 import {
-  HelpModal,
   GettingStartedBanner,
   useOnboarding,
   showHelpModal,
@@ -422,7 +422,7 @@ function toggleHelpModal() {
 // onboarding
 const { user } = sessionStore()
 const { users, isManager } = usersStore()
-const onboarding = useOnboarding('frappecrm')
+const onboarding = useOnboarding(ONBOARDING_APP_NAME)
 const { isOnboardingStepsCompleted, setUp } = onboarding
 const { flushPendingSteps } = useCrmOnboarding()
 
@@ -467,7 +467,7 @@ const showGettingStarted = computed(
 //   - skip entirely once onboarding is finished, so a completed checklist is
 //     never rewritten or reopened.
 // It is idempotent: an already-reconciled list produces no change.
-const ONBOARDING_KEY = 'frappecrm_onboarding_status'
+const ONBOARDING_KEY = `${ONBOARDING_APP_NAME}_onboarding_status`
 
 async function reconcileOnboarding(currentSteps) {
   // `user` is the unwrapped session user id string (Pinia unwraps the ref on
@@ -511,7 +511,7 @@ async function reconcileOnboarding(currentSteps) {
     localStorage.setItem('onboardingStatus', JSON.stringify(store))
     await call('frappe.onboarding.update_user_onboarding_status', {
       steps: JSON.stringify(merged),
-      appName: 'frappecrm',
+      appName: ONBOARDING_APP_NAME,
     })
   } catch {
     return
