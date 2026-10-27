@@ -139,7 +139,11 @@ const routes = [
     name: 'Activities',
     component: () => import('@/pages/Activities.vue'),
   },
-  // Reports route lands with CRM-09 (no placeholder page).
+  {
+    path: '/reports',
+    name: 'Reports',
+    component: () => import('@/pages/Reports.vue'),
+  },
   // Dev-only mock login — production auth goes through /login (website).
   ...(import.meta.env.DEV
     ? [

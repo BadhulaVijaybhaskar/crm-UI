@@ -90,6 +90,8 @@ def get_core_chart_options():
 			{"label": _("Avg Deal Value"), "value": "average_deal_value"},
 			{"label": _("Avg Time to Close a Lead"), "value": "average_time_to_close_a_lead"},
 			{"label": _("Avg Time to Close a Deal"), "value": "average_time_to_close_a_deal"},
+			{"label": _("Lead → Deal rate"), "value": "lead_to_deal_rate"},
+			{"label": _("Qualified call rate"), "value": "qualified_call_rate"},
 		],
 		"axis_chart": [
 			{"label": _("Sales Trend"), "value": "sales_trend"},
@@ -99,11 +101,14 @@ def get_core_chart_options():
 			{"label": _("Lost Deal Reasons"), "value": "lost_deal_reasons"},
 			{"label": _("Deals by Territory"), "value": "deals_by_territory"},
 			{"label": _("Deals by Salesperson"), "value": "deals_by_salesperson"},
+			{"label": _("Calls per day"), "value": "calls_per_day"},
+			{"label": _("Calls per AI employee"), "value": "calls_per_ai_employee"},
 		],
 		"donut_chart": [
 			{"label": _("Deals by Stage"), "value": "deals_by_stage_donut"},
 			{"label": _("Leads by Source"), "value": "leads_by_source"},
 			{"label": _("Deals by Source"), "value": "deals_by_source"},
+			{"label": _("Call outcomes"), "value": "call_outcomes"},
 		],
 	}
 
@@ -1271,6 +1276,207 @@ def get_base_currency_symbol():
 	"""
 	base_currency = frappe.db.get_single_value("FCRM Settings", "currency") or "USD"
 	return frappe.db.get_value("Currency", base_currency, "symbol") or ""
+
+
+def _date_bounds(from_date, to_date):
+	if not from_date or not to_date:
+		from_date = frappe.utils.get_first_day(from_date or frappe.utils.nowdate())
+		to_date = frappe.utils.get_last_day(to_date or frappe.utils.nowdate())
+	return from_date, to_date
+
+
+def _call_log_user_clause(query, CallLog, user: str | None):
+	"""Sales users only see calls they made/received (or owned Connect events)."""
+	if not user:
+		return query
+	return query.where((CallLog.caller == user) | (CallLog.receiver == user) | (CallLog.owner == user))
+
+
+def get_lead_to_deal_rate(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
+	"""Lead → deal conversion rate for the selected range (permission-scoped)."""
+	from_date, to_date = _date_bounds(from_date, to_date)
+	CRMLead = DocType("CRM Lead")
+	CRMDeal = DocType("CRM Deal")
+
+	leads_q = (
+		frappe.qb.from_(CRMLead)
+		.select(Count("*").as_("count"))
+		.where(Date(CRMLead.creation).between(from_date, to_date))
+	)
+	deals_q = (
+		frappe.qb.from_(CRMDeal)
+		.select(Count("*").as_("count"))
+		.where(Date(CRMDeal.creation).between(from_date, to_date))
+		.where(CRMDeal.lead.isnotnull())
+		.where(CRMDeal.lead != "")
+	)
+	if user:
+		leads_q = leads_q.where(CRMLead.lead_owner == user)
+		deals_q = deals_q.where(CRMDeal.deal_owner == user)
+
+	leads = (leads_q.run(as_dict=True) or [{"count": 0}])[0]["count"] or 0
+	deals = (deals_q.run(as_dict=True) or [{"count": 0}])[0]["count"] or 0
+	rate = round((deals / leads) * 100, 1) if leads else 0
+	return {
+		"title": _("Lead → Deal rate"),
+		"value": rate,
+		"suffix": "%",
+		"tooltip": _("{0} converted deals from {1} leads").format(deals, leads),
+	}
+
+
+def get_calls_per_day(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
+	"""Calls per day split by Incoming / Outgoing."""
+	from_date, to_date = _date_bounds(from_date, to_date)
+	CallLog = DocType("CRM Call Log")
+	query = (
+		frappe.qb.from_(CallLog)
+		.select(
+			Date(CallLog.creation).as_("day"),
+			CallLog.type.as_("direction"),
+			Count("*").as_("count"),
+		)
+		.where(Date(CallLog.creation).between(from_date, to_date))
+		.groupby(Date(CallLog.creation), CallLog.type)
+		.orderby(Date(CallLog.creation))
+	)
+	query = _call_log_user_clause(query, CallLog, user)
+	rows = query.run(as_dict=True) or []
+
+	# Pivot into one row per day with incoming/outgoing columns
+	by_day: dict = {}
+	for row in rows:
+		day = str(row.get("day") or "")
+		bucket = by_day.setdefault(day, {"day": day, "incoming": 0, "outgoing": 0})
+		direction = (row.get("direction") or "").lower()
+		if direction == "incoming":
+			bucket["incoming"] = row.get("count") or 0
+		elif direction == "outgoing":
+			bucket["outgoing"] = row.get("count") or 0
+
+	return {
+		"data": list(by_day.values()),
+		"title": _("Calls per day"),
+		"subtitle": _("Incoming vs outgoing"),
+		"xAxis": {"title": _("Day"), "key": "day", "type": "category"},
+		"yAxis": {"title": _("Calls")},
+		"series": [
+			{"name": "incoming", "type": "bar"},
+			{"name": "outgoing", "type": "bar"},
+		],
+	}
+
+
+def get_call_outcomes(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
+	"""AI / Connect call outcome summary by disposition."""
+	from_date, to_date = _date_bounds(from_date, to_date)
+	CallLog = DocType("CRM Call Log")
+	query = (
+		frappe.qb.from_(CallLog)
+		.select(IfNull(CallLog.disposition, "Other").as_("disposition"), Count("*").as_("count"))
+		.where(Date(CallLog.creation).between(from_date, to_date))
+		.groupby(CallLog.disposition)
+		.orderby(Count("*"), order=frappe.qb.desc)
+	)
+	query = _call_log_user_clause(query, CallLog, user)
+	result = query.run(as_dict=True) or []
+	return {
+		"data": result,
+		"title": _("Call outcomes"),
+		"subtitle": _("Disposition from Astra Connect call logs"),
+		"categoryColumn": "disposition",
+		"valueColumn": "count",
+	}
+
+
+def get_qualified_call_rate(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
+	"""Share of calls whose disposition is Qualified (case-insensitive)."""
+	from_date, to_date = _date_bounds(from_date, to_date)
+	CallLog = DocType("CRM Call Log")
+
+	def _count(extra=None):
+		q = frappe.qb.from_(CallLog).select(Count("*").as_("count")).where(
+			Date(CallLog.creation).between(from_date, to_date)
+		)
+		q = _call_log_user_clause(q, CallLog, user)
+		if extra is not None:
+			q = q.where(extra)
+		return (q.run(as_dict=True) or [{"count": 0}])[0]["count"] or 0
+
+	total = _count()
+	qualified = _count(CallLog.disposition.like("%Qualified%"))
+	rate = round((qualified / total) * 100, 1) if total else 0
+	return {
+		"title": _("Qualified call rate"),
+		"value": rate,
+		"suffix": "%",
+		"tooltip": _("{0} qualified of {1} calls").format(qualified, total),
+	}
+
+
+def get_calls_per_ai_employee(
+	from_date: str | None = None, to_date: str | None = None, user: str | None = None
+):
+	"""Calls grouped by Astra Connect AI employee id."""
+	from_date, to_date = _date_bounds(from_date, to_date)
+	CallLog = DocType("CRM Call Log")
+	query = (
+		frappe.qb.from_(CallLog)
+		.select(CallLog.ai_employee_id.as_("ai_employee"), Count("*").as_("count"))
+		.where(Date(CallLog.creation).between(from_date, to_date))
+		.where(CallLog.ai_employee_id.isnotnull())
+		.where(CallLog.ai_employee_id != "")
+		.groupby(CallLog.ai_employee_id)
+		.orderby(Count("*"), order=frappe.qb.desc)
+	)
+	query = _call_log_user_clause(query, CallLog, user)
+	result = query.run(as_dict=True) or []
+	return {
+		"data": result,
+		"title": _("Calls per AI employee"),
+		"subtitle": _("Astra Connect AI agents"),
+		"xAxis": {"title": _("AI employee"), "key": "ai_employee", "type": "category"},
+		"yAxis": {"title": _("Calls")},
+		"series": [{"name": "count", "type": "bar"}],
+	}
+
+
+@frappe.whitelist()
+@sales_user_only
+def get_reports(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
+	"""Curated CRM-09 report pack — same permission rules as the dashboard."""
+	if not from_date or not to_date:
+		from_date = frappe.utils.add_days(frappe.utils.nowdate(), -30)
+		to_date = frappe.utils.nowdate()
+
+	roles = frappe.get_roles(frappe.session.user)
+	is_sales_manager = "Sales Manager" in roles or "System Manager" in roles
+	is_sales_user = "Sales User" in roles and not is_sales_manager
+	if is_sales_user:
+		user = frappe.session.user
+
+	charts = [
+		("donut_chart", "leads_by_source"),
+		("axis_chart", "funnel_conversion"),
+		("number_chart", "lead_to_deal_rate"),
+		("axis_chart", "calls_per_day"),
+		("donut_chart", "call_outcomes"),
+		("number_chart", "qualified_call_rate"),
+		("axis_chart", "calls_per_ai_employee"),
+	]
+	out = []
+	for chart_type, name in charts:
+		fn = globals().get(f"get_{name}")
+		if not fn:
+			continue
+		out.append(
+			{
+				"name": name,
+				"type": chart_type,
+				"data": fn(from_date, to_date, user),
+			}
+		)
+	return out
 
 
 def get_deal_status_change_counts(
