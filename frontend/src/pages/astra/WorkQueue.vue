@@ -147,20 +147,36 @@ usePageMeta(() => ({
 const router = useRouter()
 const { showModal } = useDoctypeModal()
 const { makeCall } = globalStore()
-const { typeFilter, items, counts, loading } = useWorkQueue()
+const { typeFilter, items, counts, showWhatsApp, loading } = useWorkQueue()
 
-const pills = [
-  { value: 'all', label: 'All' },
-  { value: 'calls', label: 'Calls' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'follow_ups', label: 'Follow-ups' },
-]
+const pills = computed(() => {
+  const list = [
+    { value: 'all', label: 'All' },
+    { value: 'calls', label: 'Calls' },
+  ]
+  if (showWhatsApp.value) list.push({ value: 'whatsapp', label: 'WhatsApp' })
+  list.push({ value: 'follow_ups', label: 'Follow-ups' })
+  return list
+})
 
-const typeRows = computed(() => [
-  { value: 'calls', label: 'Calls', count: counts.value.calls },
-  { value: 'whatsapp', label: 'WhatsApp', count: counts.value.whatsapp },
-  { value: 'follow_ups', label: 'Follow-ups', count: counts.value.follow_ups },
-])
+const typeRows = computed(() => {
+  const rows = [
+    { value: 'calls', label: 'Calls', count: counts.value.calls },
+  ]
+  if (showWhatsApp.value) {
+    rows.push({
+      value: 'whatsapp',
+      label: 'WhatsApp',
+      count: counts.value.whatsapp,
+    })
+  }
+  rows.push({
+    value: 'follow_ups',
+    label: 'Follow-ups',
+    count: counts.value.follow_ups,
+  })
+  return rows
+})
 
 function actionLabel(item) {
   if (item.action === 'call') return __('Call')
