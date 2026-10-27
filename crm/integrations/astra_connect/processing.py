@@ -26,6 +26,9 @@ SUPPORTED_EVENTS = PRIMARY_EVENTS + tuple(ALIAS_EVENTS.keys())
 TELEPHONY_MEDIUM = "Astra Connect"
 # Connect payloads normalize phones with IN as the default region.
 CONNECT_PHONE_REGION = "IN"
+# Valid E.164 placeholder for the Connect agent leg — never put non-phone strings
+# like "astra-connect" / "unknown" into CRM Call Log Phone fields.
+DEFAULT_AGENT_NUMBER = "+910000000000"
 
 
 class ProcessingError(frappe.ValidationError):
@@ -93,9 +96,10 @@ def process_lead_created(data: dict) -> dict[str, Any]:
 	if frappe.db.exists("CRM Lead Status", crm_status):
 		lead.status = crm_status
 
-	owner = frappe.db.get_single_value("Astra Connect Settings", "default_lead_owner")
-	if created and owner:
+	owner = get_connect_integration_user()
+	if created:
 		lead.lead_owner = owner
+		lead.owner = owner
 
 	lead.flags.ignore_permissions = True
 	if created:
@@ -160,6 +164,8 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 
 	status = _map_call_status(end_reason) if end_reason else "Completed"
 	from_number, to_number = _call_numbers(direction, phone)
+	if not from_number or not to_number:
+		raise ProcessingError(_("call.completed requires a valid party phone number"))
 
 	if frappe.db.exists("CRM Call Log", call_id):
 		call_log = frappe.get_doc("CRM Call Log", call_id)
@@ -167,28 +173,33 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 		call_log = frappe.new_doc("CRM Call Log")
 		call_log.id = call_id
 
+	owner = get_connect_integration_user()
+	call_log.owner = owner
 	call_log.type = direction
 	call_log.status = status
 	call_log.telephony_medium = TELEPHONY_MEDIUM
 	call_log.medium = channel or TELEPHONY_MEDIUM
 	if duration_s:
 		call_log.duration = duration_s
-	if started_at:
-		call_log.start_time = get_datetime(started_at)
-	elif ended_at and duration_s:
-		end_dt = get_datetime(ended_at)
+	start_dt = _naive_site_datetime(started_at)
+	end_dt = _naive_site_datetime(ended_at)
+	if start_dt:
+		call_log.start_time = start_dt
+	elif end_dt and duration_s:
 		call_log.end_time = end_dt
 		call_log.start_time = add_to_date(end_dt, seconds=-duration_s)
-	elif ended_at:
-		call_log.end_time = get_datetime(ended_at)
-		call_log.start_time = call_log.end_time
+	elif end_dt:
+		call_log.end_time = end_dt
+		call_log.start_time = end_dt
 	else:
 		call_log.start_time = call_log.start_time or now_datetime()
 	if duration_s and call_log.start_time and not call_log.end_time:
 		call_log.end_time = add_to_date(call_log.start_time, seconds=duration_s)
+	elif end_dt and not call_log.end_time:
+		call_log.end_time = end_dt
 
-	call_log.set("from", from_number or "unknown")
-	call_log.to = to_number or "unknown"
+	call_log.set("from", from_number)
+	call_log.to = to_number
 	if recording_url:
 		call_log.recording_url = recording_url
 
@@ -225,6 +236,7 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 				"content": f"<p>{frappe.utils.escape_html(call_log.call_summary)}</p>",
 				"reference_doctype": match["doctype"],
 				"reference_docname": match["name"],
+				"owner": owner,
 			}
 		).insert(ignore_permissions=True)
 		note_name = note.name
@@ -241,7 +253,7 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 				"description": call_log.call_summary or "",
 				"status": "Todo",
 				"priority": "Medium",
-				"due_date": get_datetime(next_action_at) if next_action_at else None,
+				"due_date": _naive_site_datetime(next_action_at) if next_action_at else None,
 				"reference_doctype": match["doctype"],
 				"reference_docname": match["name"],
 			}
@@ -426,9 +438,62 @@ def _map_call_status(value: str | None) -> str:
 	return mapping.get(v, "Completed")
 
 
-def _call_numbers(direction: str, phone: str) -> tuple[str, str]:
-	party_phone = phone or "unknown"
-	agent = "astra-connect"
+def get_connect_integration_user() -> str:
+	"""User that owns webhook-created docs (never Guest)."""
+	try:
+		configured = frappe.db.get_single_value("Astra Connect Settings", "default_lead_owner")
+		if configured and frappe.db.exists("User", configured):
+			return configured
+	except Exception:
+		pass
+	if frappe.session.user and frappe.session.user not in ("Guest", "Administrator"):
+		# Prefer a real signed-in operator when present (manual retries).
+		return frappe.session.user
+	if frappe.db.exists("User", "Administrator"):
+		return "Administrator"
+	return frappe.session.user or "Administrator"
+
+
+def _connect_agent_number() -> str:
+	try:
+		configured = frappe.db.get_single_value("Astra Connect Settings", "connect_agent_number")
+		if configured and str(configured).strip():
+			return str(configured).strip()
+	except Exception:
+		pass
+	return DEFAULT_AGENT_NUMBER
+
+
+def _naive_site_datetime(value):
+	"""Parse ISO timestamps (incl. trailing Z) to naive datetimes in the site tz.
+
+	MariaDB rejects tz-aware values (Incorrect datetime value). Connect sends
+	``endedAt`` like ``2026-10-27T10:05:00Z``.
+	"""
+	if value in (None, ""):
+		return None
+	dt = get_datetime(value)
+	if dt is None:
+		return None
+	tzinfo = getattr(dt, "tzinfo", None)
+	if tzinfo is None:
+		return dt
+	try:
+		from zoneinfo import ZoneInfo
+
+		from frappe.utils import get_system_timezone
+
+		local = dt.astimezone(ZoneInfo(get_system_timezone()))
+		return local.replace(tzinfo=None)
+	except Exception:
+		return dt.replace(tzinfo=None)
+
+
+def _call_numbers(direction: str, phone: str | None) -> tuple[str | None, str | None]:
+	party_phone = (phone or "").strip() or None
+	if not party_phone:
+		return None, None
+	agent = _connect_agent_number()
 	if direction == "Incoming":
 		return party_phone, agent
 	return agent, party_phone
