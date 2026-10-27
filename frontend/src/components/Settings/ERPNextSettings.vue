@@ -469,13 +469,14 @@ import Link from '../Controls/Link.vue'
 import { globalStore } from '@/stores/global'
 import { formatDate } from '@/utils'
 import { useTelemetry } from '@framework/ui/telemetry'
+import { ERP_CRM_SETTINGS_DOCTYPE } from '@/utils/erpSettingsDoctype'
 
 const { $dialog, $socket } = globalStore()
 const { capture } = useTelemetry()
 
 const erpnextCRMSettingsResource = createDocumentResource({
-  doctype: 'ERPNext CRM Settings',
-  name: 'ERPNext CRM Settings',
+  doctype: ERP_CRM_SETTINGS_DOCTYPE,
+  name: ERP_CRM_SETTINGS_DOCTYPE,
   whitelistedMethods: {
     isERPNextInstalled: 'is_erpnext_installed',
     getExternalCompanies: {
