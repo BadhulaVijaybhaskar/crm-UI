@@ -1,7 +1,7 @@
 <template>
-  <div class="flex gap-1.5">
+  <div v-if="configured" class="flex gap-1.5">
     <Button
-      :tooltip="callTooltip"
+      :tooltip="__('Call with AI')"
       :label="showLabels ? __('Call with AI') : undefined"
       :icon="showLabels ? undefined : LucidePhone"
       :iconLeft="showLabels ? LucidePhone : undefined"
@@ -9,7 +9,7 @@
       @click="openCall"
     />
     <Button
-      :tooltip="messageTooltip"
+      :tooltip="__('Message with AI')"
       :label="showLabels ? __('Message with AI') : undefined"
       :icon="showLabels ? undefined : LucideMessagesSquare"
       :iconLeft="showLabels ? LucideMessagesSquare : undefined"
@@ -24,7 +24,10 @@ import { computed } from 'vue'
 import { Button } from 'frappe-ui'
 import LucidePhone from '~icons/lucide/phone'
 import LucideMessagesSquare from '~icons/lucide/messages-square'
-import { openConnectCompose } from '@/utils/astraConnect'
+import {
+  isAstraConnectConfigured,
+  openConnectCompose,
+} from '@/utils/astraConnect'
 
 const props = defineProps({
   recordType: { type: String, required: true },
@@ -34,12 +37,7 @@ const props = defineProps({
   showLabels: { type: Boolean, default: false },
 })
 
-const callTooltip = computed(() =>
-  __('Call with AI (placeholder until Connect sign-in)'),
-)
-const messageTooltip = computed(() =>
-  __('Message with AI (placeholder until Connect sign-in)'),
-)
+const configured = computed(() => isAstraConnectConfigured())
 
 function openCall() {
   openConnectCompose('calls', {

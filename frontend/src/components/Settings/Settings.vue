@@ -99,6 +99,12 @@ import ShieldCheck from '~icons/lucide/shield-check'
 import LucideZap from '~icons/lucide/zap'
 import SlaConfig from './Sla/SlaConfig.vue'
 
+function isErpIntegrationAvailable() {
+  return Boolean(
+    window.erp_integration_available || window.boot?.erp_integration_available,
+  )
+}
+
 const { isManager, getUser } = usersStore()
 
 const user = computed(() => getUser() || {})
@@ -251,7 +257,8 @@ const tabs = computed(() => {
           label: __('ERP'),
           icon: ERPNextIcon,
           component: markRaw(ERPNextSettings),
-          condition: () => isManager(),
+          // Hide until ERPNext is installed or ERP integration was already enabled.
+          condition: () => isManager() && isErpIntegrationAvailable(),
         },
         {
           label: __('Lead Syncing'),

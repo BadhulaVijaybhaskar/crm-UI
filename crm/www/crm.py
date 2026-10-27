@@ -90,23 +90,58 @@ def get_boot():
 				or get_system_timezone(),
 			},
 			"state_options": get_state_options(),
-			# Public Connect base for sidebar / Call-Message with AI (no secrets).
-			"astra_connect_url": _get_astra_connect_url(),
+			"erp_integration_available": _erp_integration_available(),
+			**_astra_connect_boot(),
 		}
 	)
 
 
-def _get_astra_connect_url() -> str:
+def _astra_connect_boot() -> dict:
+	"""Expose Connect UI only when Astra Connect Settings is enabled and has a base URL.
+
+	Without the Settings DocType (or when disabled / URL blank), Connect nav and
+	Call/Message with AI stay hidden — no dead links.
+	"""
+	enabled = False
+	url = ""
 	try:
-		from crm.fcrm.doctype.astra_connect_settings.astra_connect_settings import (
-			get_connect_base_url,
+		if frappe.db.exists("DocType", "Astra Connect Settings"):
+			from crm.fcrm.doctype.astra_connect_settings.astra_connect_settings import (
+				get_connect_base_url,
+				is_connect_enabled,
+			)
+
+			enabled = bool(is_connect_enabled())
+			url = (get_connect_base_url() or "").strip().rstrip("/")
+			# get_connect_base_url falls back to conf; only surface when enabled.
+			if not enabled:
+				url = ""
+	except Exception:
+		enabled = False
+		url = ""
+
+	configured = bool(enabled and url)
+	return {
+		"astra_connect_enabled": configured,
+		"astra_connect_url": url if configured else "",
+	}
+
+
+def _erp_integration_available() -> bool:
+	"""True when ERPNext is installed locally or ERP CRM Settings is already on."""
+	try:
+		from crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings import (
+			_is_erpnext_installed,
 		)
 
-		return get_connect_base_url()
+		if _is_erpnext_installed():
+			return True
+		if frappe.db.exists("DocType", "ERPNext CRM Settings"):
+			return bool(cint(frappe.db.get_single_value("ERPNext CRM Settings", "enabled")))
 	except Exception:
-		return (frappe.conf.get("astra_connect_url") or "https://connect.astraconnect.io").rstrip(
-			"/"
-		)
+		return False
+	return False
+
 
 
 def get_state_options() -> dict[str, list[str]]:
