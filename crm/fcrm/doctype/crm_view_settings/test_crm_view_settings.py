@@ -149,12 +149,16 @@ class TestCRMViewSettings(IntegrationTestCase):
 
 		frappe.set_user(sales)
 		try:
+			# frappe.get_doc does not check permissions; exercise the real guard.
 			with self.assertRaises(frappe.PermissionError):
-				frappe.get_doc("CRM View Settings", admin_view.name)
+				frappe.get_doc("CRM View Settings", admin_view.name).check_permission("read")
+			with self.assertRaises(frappe.PermissionError):
+				frappe.has_permission("CRM View Settings", "read", admin_view.name, throw=True)
 		finally:
 			frappe.set_user("Administrator")
 
 	def test_sales_user_can_read_public_and_own_views(self):
+		sales = ensure_sales_user("view-sales@hier.test")
 		own = frappe.get_doc(
 			{
 				"doctype": "CRM View Settings",
@@ -162,7 +166,7 @@ class TestCRMViewSettings(IntegrationTestCase):
 				"label": "Sales Own View",
 				"dt": "CRM Lead",
 				"type": "list",
-				"user": "view-sales@hier.test",
+				"user": sales,
 			}
 		).insert(ignore_permissions=True)
 		public = frappe.get_doc(
@@ -176,12 +180,72 @@ class TestCRMViewSettings(IntegrationTestCase):
 				"public": 1,
 			}
 		).insert()
-		sales = ensure_sales_user("view-sales@hier.test")
 
 		self.assertTrue(has_permission(own, "read", sales))
 		self.assertTrue(has_permission(own, "write", sales))
 		self.assertTrue(has_permission(public, "read", sales))
 		self.assertFalse(has_permission(public, "write", sales))
+
+		# Other users' personal is_standard copies are not shared defaults.
+		other_standard = frappe.get_doc(
+			{
+				"doctype": "CRM View Settings",
+				"name": "Admin Standard",
+				"label": "Admin Standard",
+				"dt": "CRM Lead",
+				"type": "list",
+				"user": "Administrator",
+				"is_standard": 1,
+			}
+		).insert()
+		self.assertFalse(has_permission(other_standard, "read", sales))
+
+		# System-created standard (no user) is a shared default — readable.
+		system_standard = frappe.get_doc(
+			{
+				"doctype": "CRM View Settings",
+				"name": "System Standard",
+				"label": "System Standard",
+				"dt": "CRM Lead",
+				"type": "list",
+				"user": "",
+				"is_standard": 1,
+			}
+		).insert(ignore_permissions=True)
+		self.assertTrue(has_permission(system_standard, "read", sales))
+
+	def test_sales_user_rest_insert_cannot_forge_owner_or_public(self):
+		sales = ensure_sales_user("view-sales@hier.test")
+		frappe.set_user(sales)
+		try:
+			forged = frappe.get_doc(
+				{
+					"doctype": "CRM View Settings",
+					"name": "Forged Admin View",
+					"label": "Forged Admin View",
+					"dt": "CRM Lead",
+					"type": "list",
+					"user": "Administrator",
+					"is_default": 1,
+				}
+			)
+			forged.insert()
+			self.assertEqual(forged.user, sales)
+
+			with self.assertRaises(frappe.PermissionError):
+				frappe.get_doc(
+					{
+						"doctype": "CRM View Settings",
+						"name": "Forged Public",
+						"label": "Forged Public",
+						"dt": "CRM Lead",
+						"type": "list",
+						"user": sales,
+						"public": 1,
+					}
+				).insert()
+		finally:
+			frappe.set_user("Administrator")
 
 
 def ensure_sales_user(email):

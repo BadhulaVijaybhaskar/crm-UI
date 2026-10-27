@@ -5,7 +5,20 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document, get_controller
-from frappe.utils import parse_json
+from frappe.utils import cint, parse_json
+
+
+def _is_view_manager(user: str | None = None) -> bool:
+	user = user or frappe.session.user
+	if user == "Administrator":
+		return True
+	roles = frappe.get_roles(user)
+	return "System Manager" in roles or "Sales Manager" in roles
+
+
+def _is_system_manager(user: str | None = None) -> bool:
+	user = user or frappe.session.user
+	return user == "Administrator" or "System Manager" in frappe.get_roles(user)
 
 
 class CRMViewSettings(Document):
@@ -41,7 +54,28 @@ class CRMViewSettings(Document):
 		user: DF.Link | None
 	# end: auto-generated types
 
-	pass
+	def validate(self):
+		"""Close REST create/write holes Sales User had via unrestricted DocType write.
+
+		Non-managers always own their row. Public / shared (user-empty) standard views
+		are manager-only — matching `public()`. Personal is_standard copies for the
+		session user remain allowed so list/kanban defaults still work.
+		"""
+		session = frappe.session.user
+		if not _is_view_manager(session):
+			self.user = session
+			if cint(self.public):
+				frappe.throw(_("Not permitted to make views public"), frappe.PermissionError)
+			if cint(self.is_standard) and self.user != session:
+				frappe.throw(_("Not permitted to create standard views"), frappe.PermissionError)
+
+		# Default flag for someone else's private view
+		if cint(self.is_default) and self.user and self.user != session and not _is_system_manager(session):
+			frappe.throw(_("Not permitted to set another user's view as default"), frappe.PermissionError)
+
+		# Shared/system standard (no user) — managers only
+		if cint(self.is_standard) and not self.user and not _is_view_manager(session):
+			frappe.throw(_("Not permitted to create standard views"), frappe.PermissionError)
 
 
 @frappe.whitelist()
@@ -165,39 +199,57 @@ def check_permission(doc):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
+def _can_read_view(doc, user: str) -> bool:
+	"""Own views, public views, and system-created standards (shared defaults).
+
+	Decision: standard views are shared defaults, so reading is OK when they are
+	system-created (`user` empty). Another user's personal is_standard copy is not
+	readable — those are per-user defaults, not shared.
+	"""
+	if doc.user == user or cint(doc.public):
+		return True
+	if cint(doc.is_standard) and not doc.user:
+		return True
+	return False
+
+
 def get_permission_query_conditions(user=None):
-	"""Non-managers only list their own views plus public/standard ones."""
+	"""Non-managers only list own + public + system-created (user-empty) standards."""
 	if not user:
 		user = frappe.session.user
 
-	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+	if _is_system_manager(user):
 		return ""
 
 	escaped_user = frappe.db.escape(user)
 	return (
 		f"(`tabCRM View Settings`.`user` = {escaped_user}"
 		f" OR `tabCRM View Settings`.`public` = 1"
-		f" OR `tabCRM View Settings`.`is_standard` = 1)"
+		f" OR (`tabCRM View Settings`.`is_standard` = 1"
+		f" AND IFNULL(`tabCRM View Settings`.`user`, '') = ''))"
 	)
 
 
 def has_permission(doc, ptype, user):
-	"""Restrict REST/doc access: managers unrestricted; others own + public/standard for read,
-	and the same owner/public-manager rules as check_permission for writes."""
+	"""Restrict REST/doc access: System Managers unrestricted; others use owner rules.
+
+	Create is allowed at the DocType level; `validate` forces ownership and blocks
+	public/shared-standard forges for non-managers.
+	"""
 	if not user:
 		user = frappe.session.user
 
-	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+	if _is_system_manager(user):
 		return True
 
 	if ptype in ("read", "select", "export", "print", "email", "report", "share"):
-		return bool(doc.user == user or doc.public or doc.is_standard)
+		return _can_read_view(doc, user)
 
 	if ptype == "create":
 		return True
 
 	# write / delete / etc. — same owner rules as check_permission
-	if doc.public and "Sales Manager" in frappe.get_roles(user):
+	if cint(doc.public) and "Sales Manager" in frappe.get_roles(user):
 		return True
 	if doc.user and doc.user == user:
 		return True
