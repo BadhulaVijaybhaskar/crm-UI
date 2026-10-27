@@ -308,6 +308,7 @@ def create_or_update_standard_view(view: dict):
 @frappe.whitelist()
 def fetch_and_update_kanban_columns(name: str | int):
 	doc = frappe.get_doc("CRM View Settings", name)
+	doc.check_permission("write")
 	if doc.type != "kanban":
 		return
 
@@ -319,7 +320,7 @@ def fetch_and_update_kanban_columns(name: str | int):
 			existing_columns.append({"name": column.get("name"), "delete": True})
 
 	doc.kanban_columns = json.dumps(existing_columns)
-	doc.save(ignore_permissions=True)
+	doc.save()
 	return doc.kanban_columns
 
 
