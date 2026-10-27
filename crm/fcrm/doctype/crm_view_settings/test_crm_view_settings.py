@@ -282,3 +282,19 @@ def ensure_sales_user(email):
 		).insert(ignore_permissions=True)
 	user.add_roles("Sales User")
 	return email
+
+
+def ensure_sales_manager(email):
+	if frappe.db.exists("User", email):
+		user = frappe.get_doc("User", email)
+	else:
+		user = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": email.split("@")[0],
+				"send_welcome_email": 0,
+			}
+		).insert(ignore_permissions=True)
+	user.add_roles("Sales Manager")
+	return email
