@@ -5,6 +5,8 @@ from __future__ import annotations
 ASTRA_APP_NAME = "Astra CRM"
 ASTRA_SPLASH = "/assets/crm/images/astra-crm-logo.png"
 ASTRA_LOGO = "/assets/crm/images/astra-crm-logo.png"
+ASTRA_FAVICON = "/assets/crm/images/favicon-32.png"
+ASTRA_SUPPORT = "mailto:support@astraconnect.io"
 
 
 def update_website_context(context: dict) -> None:
@@ -19,84 +21,93 @@ def update_website_context(context: dict) -> None:
 	context["footer_powered"] = " "
 	context["powered_by"] = ""
 	context["splash_image"] = context.get("splash_image") or ASTRA_SPLASH
+	context["logo"] = context.get("logo") or ASTRA_LOGO
+	context["app_logo"] = context.get("app_logo") or ASTRA_LOGO
 	# Login page: do not reveal the website footer (JS would otherwise .show() it).
 	context["show_footer_on_login"] = 0
 
 
 def scrub_site_branding() -> None:
-	"""Persist Website / System Settings so login HTML and emails stay white-labelled."""
+	"""Persist Website / System Settings so login HTML and emails stay white-labelled.
+
+	Uses ``frappe.db.set_single_value`` so missing mandatory fields (language,
+	time zone, etc.) cannot abort the scrub the way ``Document.save()`` does.
+	"""
 	import frappe
 
 	_scrub_system_settings()
 	_scrub_website_settings()
+	frappe.db.commit()
 	frappe.clear_cache()
 
 
-def _set_if_present(doc, field: str, value) -> bool:
-	if not hasattr(doc, field):
-		return False
-	if doc.get(field) == value:
-		return False
-	doc.set(field, value)
-	return True
+def _set_single(doctype: str, field: str, value) -> None:
+	import frappe
+
+	try:
+		frappe.db.set_single_value(doctype, field, value)
+	except Exception:
+		# Field may not exist on this framework version
+		frappe.log_error(title=f"Astra branding: set {doctype}.{field}")
 
 
 def _scrub_system_settings() -> None:
 	import frappe
 
-	try:
-		if not frappe.db.exists("DocType", "System Settings"):
-			return
-		ss = frappe.get_single("System Settings")
-		changed = False
-		changed |= _set_if_present(ss, "app_name", ASTRA_APP_NAME)
-		changed |= _set_if_present(ss, "email_footer_address", "")
-		# Turns off the framework "Sent via …" / default_mail_footer block in emails.
-		changed |= _set_if_present(ss, "disable_standard_email_footer", 1)
-		if hasattr(ss, "hide_footer_in_auto_email_reports"):
-			changed |= _set_if_present(ss, "hide_footer_in_auto_email_reports", 1)
-		if changed:
-			ss.flags.ignore_permissions = True
-			ss.save()
-		# email_body.get_footer reads these via frappe.db.get_default
-		frappe.db.set_default("email_footer_address", "")
-		frappe.db.set_default("disable_standard_email_footer", "1")
-	except Exception:
-		frappe.log_error(title="Astra branding: System Settings")
+	if not frappe.db.exists("DocType", "System Settings"):
+		return
+
+	_set_single("System Settings", "app_name", ASTRA_APP_NAME)
+	_set_single("System Settings", "email_footer_address", "")
+	_set_single("System Settings", "disable_standard_email_footer", 1)
+	_set_single("System Settings", "hide_footer_in_auto_email_reports", 1)
+	# 2FA issuer shown in authenticator apps
+	_set_single("System Settings", "otp_issuer_name", ASTRA_APP_NAME)
+
+	# email_body.get_footer reads these via frappe.db.get_default
+	frappe.db.set_default("email_footer_address", "")
+	frappe.db.set_default("disable_standard_email_footer", "1")
 
 
 def _scrub_website_settings() -> None:
 	import frappe
 
-	try:
-		if not frappe.db.exists("DocType", "Website Settings"):
-			return
-		ws = frappe.get_single("Website Settings")
-		changed = False
-		for field, value in (
-			("app_name", ASTRA_APP_NAME),
-			("title_prefix", ASTRA_APP_NAME),
-			("brand_html", ASTRA_APP_NAME),
-			("copyright", ""),
-			("footer_powered", " "),
-			("address", ""),
-			("show_footer_on_login", 0),
-		):
-			changed |= _set_if_present(ws, field, value)
-		if hasattr(ws, "splash_image") and not ws.splash_image:
-			ws.splash_image = ASTRA_SPLASH
-			changed = True
-		if hasattr(ws, "app_logo") and not ws.app_logo:
-			ws.app_logo = ASTRA_LOGO
-			changed = True
-		if hasattr(ws, "favicon") and not ws.favicon:
-			ws.favicon = "/assets/crm/images/favicon-32.png"
-			changed = True
-		if changed:
-			ws.flags.ignore_permissions = True
-			ws.save()
-	except Exception:
-		frappe.log_error(title="Astra branding: Website Settings")
+	if not frappe.db.exists("DocType", "Website Settings"):
+		return
+
+	for field, value in (
+		("app_name", ASTRA_APP_NAME),
+		("title_prefix", ASTRA_APP_NAME),
+		("brand_html", ASTRA_APP_NAME),
+		("copyright", ""),
+		("footer_powered", " "),
+		("address", ""),
+		("show_footer_on_login", 0),
+		("splash_image", ASTRA_SPLASH),
+		("app_logo", ASTRA_LOGO),
+		("banner_image", ASTRA_LOGO),
+		("favicon", ASTRA_FAVICON),
+		# Brand in transactional / welcome emails
+		("brand_with", ASTRA_APP_NAME),
+		("email_footer_address", ""),
+	):
+		_set_single("Website Settings", field, value)
+
+	# Welcome email subject / heading (field names vary by framework version)
+	for field, value in (
+		("welcome_email_subject", f"Welcome to {ASTRA_APP_NAME}"),
+		("welcome_email_heading", f"Welcome to {ASTRA_APP_NAME}"),
+		("email_brand", ASTRA_APP_NAME),
+		("email_brand_name", ASTRA_APP_NAME),
+	):
+		_set_single("Website Settings", field, value)
+
+	# security.txt — point at Astra support or clear framework default
+	for field, value in (
+		("enable_security_txt", 0),
+		("security_txt", f"Contact: {ASTRA_SUPPORT}\n"),
+	):
+		_set_single("Website Settings", field, value)
 
 
 def apply_doctype_label_overrides() -> None:
@@ -114,11 +125,9 @@ def apply_doctype_label_overrides() -> None:
 		if not frappe.db.exists("DocType", doctype):
 			continue
 		if not frappe.db.exists("DocField", {"parent": doctype, "fieldname": fieldname}):
-			# Section breaks may lack DocField rows on some versions; still try.
 			pass
 		_ensure_property_setter(doctype, fieldname, "label", label, "Data")
 
-	# DocType titles shown via __(doctype) — seed English translations.
 	translations = {
 		"ERPNext CRM Settings": "ERP Settings",
 		"FCRM Settings": "CRM Settings",
@@ -139,7 +148,6 @@ def _ensure_property_setter(doctype: str, fieldname: str, prop: str, value: str,
 		if current != value:
 			frappe.db.set_value("Property Setter", existing, "value", value)
 		return
-	# Also match by filters in case naming differs
 	filters = {"doc_type": doctype, "field_name": fieldname, "property": prop}
 	if frappe.db.exists("Property Setter", filters):
 		frappe.db.set_value("Property Setter", filters, "value", value)
@@ -170,8 +178,8 @@ def _ensure_translation(source: str, translated: str, language: str = "en") -> N
 def relabel_crm_workspace() -> None:
 	"""Set Workspace label/title to Astra CRM without changing the document name or route.
 
-	If a prior scrub renamed the Workspace document itself, restore the original
-	document name so internal identifiers stay stable.
+	Uses ``frappe.db.set_value`` so a partial Workspace row (missing mandatory
+	``type``) cannot fail migrate via ``Document.save()``.
 	"""
 	import frappe
 	from frappe.model.rename_doc import rename_doc
@@ -188,17 +196,21 @@ def relabel_crm_workspace() -> None:
 	if not frappe.db.exists("Workspace", doc_name):
 		return
 
-	ws = frappe.get_doc("Workspace", doc_name)
-	changed = False
-	if getattr(ws, "title", None) != visible:
-		ws.title = visible
-		changed = True
-	if getattr(ws, "label", None) != visible:
-		ws.label = visible
-		changed = True
-	if changed:
-		ws.flags.ignore_permissions = True
-		ws.save()
+	# Ensure mandatory type is present before any future full saves.
+	if frappe.db.has_column("tabWorkspace", "type"):
+		current_type = frappe.db.get_value("Workspace", doc_name, "type")
+		if not current_type:
+			frappe.db.set_value("Workspace", doc_name, "type", "Workspace", update_modified=False)
+
+	updates = {}
+	current_title = frappe.db.get_value("Workspace", doc_name, "title")
+	current_label = frappe.db.get_value("Workspace", doc_name, "label")
+	if current_title != visible:
+		updates["title"] = visible
+	if current_label != visible:
+		updates["label"] = visible
+	if updates:
+		frappe.db.set_value("Workspace", doc_name, updates, update_modified=False)
 
 
 # Back-compat alias for older patch imports

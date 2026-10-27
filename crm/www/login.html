@@ -3,4 +3,24 @@
 {# Astra CRM owns this override so the website footer (and any powered-by
    markup) is not part of the served login HTML. Vendor chrome is also
    stripped via CRM footer templates + Website Settings on migrate. #}
+
+{% block head %}
+{{ super() }}
+<script>
+  // Apply theme before first paint so dark login CSS matches user preference.
+  (function () {
+    try {
+      var t = localStorage.getItem('theme') || localStorage.getItem('frappeTheme');
+      if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        t = 'dark';
+      }
+      if (t === 'dark' || t === 'light') {
+        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.classList.toggle('dark', t === 'dark');
+      }
+    } catch (e) {}
+  })();
+</script>
+{% endblock %}
+
 {% block footer %}{% endblock %}
