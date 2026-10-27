@@ -69,16 +69,24 @@ def get_context_for_dev():
 
 
 def get_boot():
+	from crm.overrides.branding import ASTRA_APP_NAME
+
+	sysdefaults = frappe.defaults.get_defaults() or {}
+	# Boot JSON is user-visible — never ship upstream product names or framework version.
+	sysdefaults = dict(sysdefaults)
+	sysdefaults["app_name"] = ASTRA_APP_NAME
+	sysdefaults["otp_issuer_name"] = ASTRA_APP_NAME
+
 	return frappe._dict(
 		{
-			"frappe_version": frappe.__version__,
 			"default_route": get_default_route(),
 			"site_name": frappe.local.site,
 			"socketio_port": frappe.conf.socketio_port,
 			"read_only_mode": frappe.flags.read_only,
 			"csrf_token": frappe.sessions.get_csrf_token(),
 			"setup_complete": cint(frappe.get_system_settings("setup_complete")),
-			"sysdefaults": frappe.defaults.get_defaults(),
+			"sysdefaults": sysdefaults,
+			"app_name": ASTRA_APP_NAME,
 			"is_demo_site": frappe.conf.get("is_demo_site"),
 			"demo_data_created": frappe.db.get_default("crm_demo_data_created") == "1",
 			"is_fc_site": is_fc_site(),
