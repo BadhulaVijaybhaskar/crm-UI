@@ -122,7 +122,28 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 
 	Matching is by phone (contactId is Connect's id — not a CRM leadId). Ambiguous
 	phone matches fail the event with a clear error.
+
+	Deadlock retry wraps the whole unit of work — a mid-flight rollback must not
+	leave a half-saved call log that then fails DoesNotExistError on retry.
 	"""
+	import time as _time
+
+	last_exc = None
+	for attempt in range(3):
+		try:
+			return _process_call_completed_once(data, employee_enriched=employee_enriched)
+		except Exception as exc:
+			last_exc = exc
+			msg = str(exc).lower()
+			if "deadlock" not in msg and "1213" not in msg and "lock wait" not in msg:
+				raise
+			frappe.db.rollback()
+			_time.sleep(0.05 * (attempt + 1))
+	raise last_exc
+
+
+def _process_call_completed_once(data: dict, *, employee_enriched: bool = False) -> dict[str, Any]:
+	"""Single attempt of call.completed processing (may raise on deadlock)."""
 	call_id = _first_str(data, "callId", "call_id")
 	if not call_id:
 		raise ProcessingError(_("call.completed requires callId"))
@@ -164,7 +185,7 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 		)
 
 	status = _map_call_status(end_reason) if end_reason else "Completed"
-	from_number, to_number = _call_numbers(direction, phone)
+	from_number, to_number = _call_numbers(direction, phone, data)
 	if not from_number or not to_number:
 		raise ProcessingError(_("call.completed requires a valid party phone number"))
 
@@ -442,51 +463,13 @@ def _map_call_status(value: str | None) -> str:
 	return mapping.get(v, "Completed")
 
 
-def _save_call_log(call_log, *, attempts: int = 3):
-	"""Insert/save with deadlock retry (parallel Connect bursts hit MariaDB 1213)."""
-	import time as _time
-
-	last_exc = None
-	for attempt in range(attempts):
-		try:
-			if call_log.is_new():
-				call_log.insert(ignore_permissions=True)
-			else:
-				call_log.save(ignore_permissions=True)
-			return call_log
-		except Exception as exc:
-			last_exc = exc
-			msg = str(exc).lower()
-			# MySQL/MariaDB deadlock (1213) or lock wait timeout
-			if "deadlock" not in msg and "1213" not in msg and "lock wait" not in msg:
-				raise
-			frappe.db.rollback()
-			# Reload if the row may already exist after a partial commit by a peer
-			if call_log.name and frappe.db.exists("CRM Call Log", call_log.name):
-				fresh = frappe.get_doc("CRM Call Log", call_log.name)
-				for field in (
-					"type",
-					"status",
-					"duration",
-					"start_time",
-					"end_time",
-					"from",
-					"to",
-					"outcome",
-					"disposition",
-					"qualified",
-					"call_summary",
-					"recording_url",
-					"transcript",
-					"reference_doctype",
-					"reference_docname",
-					"note",
-				):
-					if call_log.get(field) not in (None, ""):
-						fresh.set(field, call_log.get(field))
-				call_log = fresh
-			_time.sleep(0.05 * (attempt + 1))
-	raise last_exc
+def _save_call_log(call_log):
+	"""Insert/save a call log. Deadlocks bubble to process_call_completed's outer retry."""
+	if call_log.is_new():
+		call_log.insert(ignore_permissions=True)
+	else:
+		call_log.save(ignore_permissions=True)
+	return call_log
 
 
 def get_connect_integration_user() -> str:
@@ -540,12 +523,41 @@ def _naive_site_datetime(value):
 		return dt.replace(tzinfo=None)
 
 
-def _call_numbers(direction: str, phone: str | None) -> tuple[str | None, str | None]:
+def _agent_number_from_payload(data: dict | None, direction: str) -> str | None:
+	"""Prefer an explicit agent/line number from the event over settings."""
+	if not data:
+		return None
+	# Common Connect / employee payload keys for the agent leg.
+	candidates = [
+		_first_str(data, "agentPhone", "agent_phone", "agentNumber", "agent_number", "linePhone", "line_phone"),
+	]
+	# Directional from/to when the payload already split the legs.
+	if direction == "Incoming":
+		candidates.append(_first_str(data, "to", "toNumber", "to_number", "destination"))
+	else:
+		candidates.append(_first_str(data, "from", "fromNumber", "from_number", "source"))
+	for raw in candidates:
+		if not raw:
+			continue
+		normalized = _normalize_connect_phone(raw)
+		if normalized:
+			return normalized
+	return None
+
+
+def _call_numbers(
+	direction: str, phone: str | None, data: dict | None = None
+) -> tuple[str | None, str | None]:
 	party_phone = (phone or "").strip() or None
 	if not party_phone:
+		party_phone = _normalize_connect_phone(phone) if phone else None
+	if not party_phone:
 		return None, None
-	agent = _connect_agent_number()
-	# When no Connect line is configured, only record the party number — never a fake agent MSISDN.
+	agent = _connect_agent_number() or _agent_number_from_payload(data, direction)
+	# Required Phone fields on CRM Call Log — never invent a fake MSISDN. When no
+	# Connect line / payload agent is available, put the party number on both legs.
+	if not agent:
+		agent = party_phone
 	if direction == "Incoming":
 		return party_phone, agent
 	return agent, party_phone
