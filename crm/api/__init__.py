@@ -10,7 +10,7 @@ from crm.utils import is_frappe_version
 
 
 @frappe.whitelist(allow_guest=True)
-@rate_limit(limit=60, seconds=60)
+@rate_limit(limit=60, seconds=60, ip_based=True)
 def get_translations():
 	if frappe.session.user != "Guest":
 		language = frappe.db.get_value("User", frappe.session.user, "language")
@@ -99,7 +99,7 @@ def check_app_permission():
 
 
 @frappe.whitelist(allow_guest=True)
-@rate_limit(limit=10, seconds=60 * 60)
+@rate_limit(limit=10, seconds=60 * 60, ip_based=True)
 def accept_invitation(key: str | None = None):
 	if not key:
 		frappe.throw(_("Invalid or expired key"))

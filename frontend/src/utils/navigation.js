@@ -36,7 +36,6 @@ export const navigationItems = [
     label: 'Dashboard',
     icon: LucideLayoutDashboard,
     route: 'Dashboard',
-    desktopOnly: true,
   },
   { label: 'Leads', icon: LeadsIcon, route: 'Leads' },
   { label: 'Contacts', icon: ContactsIcon, route: 'Contacts' },
