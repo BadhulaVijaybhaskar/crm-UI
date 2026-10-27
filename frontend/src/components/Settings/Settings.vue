@@ -8,10 +8,12 @@
   >
     <template #default>
       <Dialog.Title class="sr-only">{{ __('Settings') }}</Dialog.Title>
-      <div class="flex h-[calc(100vh_-_8rem)] bg-surface-gray-1">
+      <div
+        class="flex h-[calc(100vh_-_8rem)] flex-col bg-surface-gray-1 sm:flex-row"
+      >
         <div
           ref="sidebarContainer"
-          class="flex flex-col m-1 rounded-l-6 w-56 shrink-0 bg-surface-gray-1 overflow-y-auto"
+          class="flex max-h-40 w-full shrink-0 flex-col overflow-y-auto bg-surface-gray-1 m-1 rounded-t-6 sm:max-h-none sm:w-56 sm:rounded-l-6 sm:rounded-tr-none"
         >
           <template v-for="(tab, i) in tabs" :key="tab.label">
             <div v-if="!tab.hideLabel && i != 0" class="mx-1 mb-0.5 mt-[5px]" />
