@@ -140,8 +140,8 @@ def apply_default_record_owner(doc, method=None):
 
 	- Prefer an open ToDo assignee (round-robin / availability).
 	- Never call assign_agent here — that creates a ToDo and skips Assignment Rule.
-	- Logged-in creates keep the owner field empty; visibility uses document.owner.
-	- Guest/webhook creates fall back to the integration / Administrator user.
+	- Logged-in creates with no rule fall back to the creator (session user).
+	- Guest/webhook creates fall back to configured default_lead_owner / Administrator.
 	"""
 	owner_field = _OWNER_FIELD.get(doc.doctype)
 	if not owner_field or owner_field == "owner":
@@ -160,8 +160,8 @@ def apply_default_record_owner(doc, method=None):
 
 	user = frappe.session.user
 	if user not in (None, "", "Guest"):
-		# Leave blank so Assignment Rule / tests can set ownership later.
-		# Sales Users still see the row via document.owner in hierarchy filters.
+		# No Assignment Rule assignee — record belongs to its creator.
+		doc.db_set(owner_field, user, update_modified=False)
 		return
 
 	fallback = _fallback_integration_owner()
