@@ -122,6 +122,140 @@ def has_contact_permission(doc, ptype, user):
 	return _has_permission(doc, ptype, user, "Contact")
 
 
+# --------------------------------------------------------------------------- #
+# Child docs (Call Log / Note / Task) — inherit access from parent Lead/Deal/
+# Contact. Managers/admins keep team-wide (or unrestricted) visibility.
+# --------------------------------------------------------------------------- #
+
+_CHILD_REF_PARENTS = ("CRM Lead", "CRM Deal", "Contact")
+
+
+def _is_unrestricted_user(user: str) -> bool:
+	if user == "Administrator":
+		return True
+	roles = frappe.get_roles(user)
+	if "System Manager" in roles:
+		return True
+	in_tree = hierarchy_enabled() and _in_hierarchy(user)
+	# Sales Manager outside the tree sees everything (same as parent doctypes).
+	if "Sales Manager" in roles and not in_tree:
+		return True
+	return False
+
+
+def _accessible_parent_names(user: str, parent_doctype: str):
+	"""Subquery of parent names ``user`` may read under hierarchy rules."""
+	Parent = frappe.qb.DocType(parent_doctype)
+	pcond = _permission_query_conditions(user, parent_doctype)
+	if pcond:
+		return frappe.qb.from_(Parent).select(Parent.name).where(pcond)
+	return frappe.qb.from_(Parent).select(Parent.name)
+
+
+def _child_permission_query_conditions(user: str | None, doctype: str):
+	"""Scope Call Log / Note / Task rows to parents the user can read (+ own/assignee)."""
+	if not user:
+		user = frappe.session.user
+
+	if _is_unrestricted_user(user):
+		return ""
+
+	DT = frappe.qb.DocType(doctype)
+	in_tree = hierarchy_enabled() and _in_hierarchy(user)
+
+	own = DT.owner == user
+	if in_tree:
+		own = own | DT.owner.isin(_team_mem_query(user))
+
+	parent_access = None
+	for parent_doctype in _CHILD_REF_PARENTS:
+		accessible = _accessible_parent_names(user, parent_doctype)
+		q = (DT.reference_doctype == parent_doctype) & DT.reference_docname.isin(accessible)
+		parent_access = q if parent_access is None else (parent_access | q)
+
+	combined = own | parent_access
+
+	if doctype == "CRM Task":
+		assigned = DT.assigned_to == user
+		if in_tree:
+			assigned = assigned | DT.assigned_to.isin(_team_mem_query(user))
+		combined = combined | assigned
+
+	if doctype == "CRM Call Log":
+		on_call = (DT.caller == user) | (DT.receiver == user)
+		if in_tree:
+			on_call = (
+				on_call
+				| DT.caller.isin(_team_mem_query(user))
+				| DT.receiver.isin(_team_mem_query(user))
+			)
+		combined = combined | on_call
+
+		# Calls may link a Lead/Deal only via Dynamic Link (no reference_* set).
+		Link = frappe.qb.DocType("Dynamic Link")
+		for parent_doctype in ("CRM Lead", "CRM Deal"):
+			accessible = _accessible_parent_names(user, parent_doctype)
+			via_link = DT.name.isin(
+				frappe.qb.from_(Link)
+				.select(Link.parent)
+				.where(
+					(Link.parenttype == doctype)
+					& (Link.link_doctype == parent_doctype)
+					& Link.link_name.isin(accessible)
+				)
+			)
+			combined = combined | via_link
+
+	return combined
+
+
+def _cond_sql(cond) -> str:
+	return cond.get_sql(with_namespace=True, quote_char="`", secondary_quote_char="'") if cond else ""
+
+
+def get_call_log_permission_query_conditions(user=None):
+	return _cond_sql(_child_permission_query_conditions(user, "CRM Call Log"))
+
+
+def get_note_permission_query_conditions(user=None):
+	return _cond_sql(_child_permission_query_conditions(user, "FCRM Note"))
+
+
+def get_task_permission_query_conditions(user=None):
+	return _cond_sql(_child_permission_query_conditions(user, "CRM Task"))
+
+
+def _has_child_permission(doc, ptype, user, doctype: str) -> bool | None:
+	if not user:
+		user = frappe.session.user
+
+	if _is_unrestricted_user(user):
+		return True
+
+	if ptype == "create" or not doc.name:
+		return True
+
+	conditions = _child_permission_query_conditions(user, doctype)
+	if not conditions:
+		return True
+	DT = frappe.qb.DocType(doctype)
+	return bool(
+		frappe.qb.from_(DT).select(DT.name).where(DT.name == doc.name).where(conditions).limit(1).run()
+	)
+
+
+def has_call_log_permission(doc, ptype, user):
+	return _has_child_permission(doc, ptype, user, "CRM Call Log")
+
+
+def has_note_permission(doc, ptype, user):
+	return _has_child_permission(doc, ptype, user, "FCRM Note")
+
+
+def has_task_permission(doc, ptype, user):
+	return _has_child_permission(doc, ptype, user, "CRM Task")
+
+
 def _fallback_integration_owner() -> str | None:
 	"""Owner for Guest/webhook creates when no Assignment Rule assignee exists."""
 	try:
