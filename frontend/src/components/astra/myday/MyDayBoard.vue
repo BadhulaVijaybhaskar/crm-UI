@@ -1,8 +1,10 @@
 <template>
-  <div class="astra-bento flex flex-col gap-4">
-    <header class="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 class="text-[1.75rem] font-bold tracking-tight text-[var(--astra-text)] sm:text-[2rem]">
+  <div class="astra-bento flex min-w-0 flex-col gap-4 overflow-x-hidden">
+    <header class="flex min-w-0 flex-wrap items-end justify-between gap-3">
+      <div class="min-w-0">
+        <h1
+          class="truncate text-[1.75rem] font-bold tracking-tight text-[var(--astra-text)] sm:text-[2rem]"
+        >
           {{ greeting }}, {{ firstName }}
         </h1>
         <p class="astra-muted mt-1 text-sm">{{ dateLabel }}</p>
@@ -14,10 +16,10 @@
       Row 2 fills width: Upcoming calls | Hot leads
       No row-span holes at lg/xl; single column at mobile.
     -->
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+    <div class="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">
       <!-- Today tasks -->
       <AstraCard
-        class="lg:col-span-3"
+        class="min-w-0 lg:col-span-3"
         :title="__('Today')"
       >
         <div v-if="myDayLoading" class="astra-muted text-sm">
@@ -72,7 +74,7 @@
       </AstraCard>
 
       <!-- Target -->
-      <AstraCard class="lg:col-span-3" :title="__('Target')">
+      <AstraCard class="min-w-0 lg:col-span-3" :title="__('Target')">
         <AstraGauge
           v-if="target"
           :percent="target.percent"
@@ -89,21 +91,23 @@
       </AstraCard>
 
       <!-- KPI strip -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-6">
+      <div class="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-6">
         <AstraCard
           v-for="kpi in kpis"
           :key="kpi.key"
-          class="!p-4"
+          class="min-w-0 !p-4"
         >
           <p class="astra-label">{{ __(kpi.label) }}</p>
-          <p class="astra-value mt-1">
+          <p class="astra-value mt-1 truncate">
             <span v-if="kpi.loading" class="astra-muted text-base font-medium">{{
               __('Loading…')
             }}</span>
             <span v-else>{{ kpi.value }}</span>
           </p>
-          <div class="mt-3 flex items-end justify-between gap-2">
-            <AstraSparkline :values="kpi.spark" />
+          <div class="mt-3 flex min-w-0 items-end justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <AstraSparkline :values="kpi.spark" />
+            </div>
             <span
               v-if="kpi.delta"
               class="astra-badge astra-badge--success shrink-0"
@@ -114,7 +118,7 @@
 
       <!-- Upcoming calls -->
       <AstraCard
-        class="lg:col-span-5"
+        class="min-w-0 lg:col-span-5"
         :title="__('Upcoming calls')"
       >
         <div v-if="myDayLoading" class="astra-muted text-sm">
@@ -122,14 +126,16 @@
         </div>
         <AstraEmptyState
           v-else-if="!calls.length"
-          :title="__('No calls today')"
-          :body="__('Call logs for today will show here. Use Call on a lead or deal to log one.')"
+          :title="__('No upcoming calls scheduled')"
+          :body="__(
+            'Future scheduled calls will appear here. Completed call logs stay in the feed below.',
+          )"
         />
         <ul v-else class="divide-y divide-[var(--astra-border)]" role="list">
           <li
             v-for="call in calls"
             :key="call.name"
-            class="flex flex-wrap items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+            class="flex min-w-0 flex-wrap items-center gap-3 py-2.5 first:pt-0 last:pb-0"
           >
             <AstraAvatar
               :name="callLabel(call)"
@@ -137,11 +143,11 @@
               size="sm"
             />
             <div class="min-w-0 flex-1">
-              <p class="text-sm font-semibold text-[var(--astra-text)]">
+              <p class="truncate text-sm font-semibold text-[var(--astra-text)]">
                 {{ formatTime(call.creation) }}
                 <span class="font-medium">· {{ callLabel(call) }}</span>
               </p>
-              <p class="astra-muted text-xs">
+              <p class="astra-muted truncate text-xs">
                 {{ call.type }} · {{ call.status }}
                 <template v-if="call.outcome"> · {{ call.outcome }}</template>
               </p>
@@ -149,7 +155,7 @@
             <button
               v-if="callEnabled"
               type="button"
-              class="astra-btn astra-btn--primary"
+              class="astra-btn astra-btn--primary shrink-0"
               :aria-label="__('Open call log')"
               @click="openCall(call)"
             >
@@ -158,7 +164,7 @@
             <button
               v-else
               type="button"
-              class="astra-btn astra-btn--outline"
+              class="astra-btn astra-btn--outline shrink-0"
               :aria-label="__('Open call log')"
               @click="openCall(call)"
             >
@@ -169,7 +175,7 @@
       </AstraCard>
 
       <!-- Hot leads -->
-      <AstraCard class="lg:col-span-7" :title="__('Hot leads')">
+      <AstraCard class="min-w-0 lg:col-span-7" :title="__('Hot leads')">
         <div v-if="hotLeads.loading" class="astra-muted text-sm">
           {{ __('Loading…') }}
         </div>
@@ -184,7 +190,7 @@
           <li
             v-for="lead in hotLeadRows"
             :key="lead.name"
-            class="astra-row"
+            class="astra-row min-w-0"
           >
             <AstraAvatar
               :name="lead.organization || lead.lead_name || lead.name"
@@ -201,11 +207,11 @@
             </div>
             <span
               v-if="lead.lead_score != null"
-              class="tabular-nums text-sm font-bold text-[var(--astra-text)]"
+              class="shrink-0 tabular-nums text-sm font-bold text-[var(--astra-text)]"
             >{{ lead.lead_score }}</span>
             <button
               type="button"
-              class="astra-btn astra-btn--outline"
+              class="astra-btn astra-btn--outline shrink-0"
               :aria-label="__('Open lead')"
               @click="openLead(lead)"
             >
