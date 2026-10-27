@@ -27,6 +27,16 @@ function scrubText(text) {
     .replace(/\/\/# sourceMappingURL=.*$/gm, '')
     .replace(/\/\*# sourceMappingURL=.*?\*\//gs, '')
     .replace(FORBIDDEN_URL, '')
+    // Signup / onboarding vendor strings that leak into guest-visible bundles
+    .replace(/https?:\/\/(?:www\.)?frappecloud\.com[^\s"'`]*/gi, '')
+    .replace(/frappecloud\.com/gi, '')
+    .replace(/pulse\.m\.frappe\.cloud/gi, '')
+    .replace(/Welcome to Frappe CRM/g, 'Welcome to Astra CRM')
+    .replace(/Welcome to Frappe/g, 'Welcome to Astra CRM')
+    .replace(/"Frappe CRM"/g, '"Astra CRM"')
+    .replace(/'Frappe CRM'/g, "'Astra CRM'")
+    .replace(/https:\/\/docs\.frappe\.io\/crm/gi, '')
+    .replace(/erpnext\.example\.com/gi, 'erp.example.com')
 }
 
 function walkFiles(dir, out = []) {

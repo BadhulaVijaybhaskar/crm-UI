@@ -2,7 +2,42 @@
    Dark mode uses [data-theme="dark"] (frappe-ui). Login card follows the theme
    (unlike Connect console's white-on-dark login bug). */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* Self-hosted Plus Jakarta Sans (no Google Fonts) */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/PlusJakartaSans-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/fonts/PlusJakartaSans-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/fonts/PlusJakartaSans-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/PlusJakartaSans-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./assets/fonts/PlusJakartaSans-800.woff2') format('woff2');
+}
 
 :root {
   --ac: #145cf6;
@@ -277,6 +312,46 @@ button[class*='bg-surface-gray-7'] {
 .astra-shell__sidebar .text-ink-gray-5,
 .astra-shell__sidebar .text-ink-gray-4 {
   color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Active nav item: tinted pill on dark rail (never a white pill with white text) */
+.astra-shell__sidebar [aria-current='page'],
+.astra-shell__sidebar [data-active='true'],
+.astra-shell__sidebar .bg-surface-white,
+.astra-shell__sidebar .bg-surface-selected,
+.astra-shell__sidebar .bg-surface-gray-1,
+.astra-shell__sidebar button.bg-surface-white,
+.astra-shell__sidebar a.bg-surface-white {
+  background: color-mix(in srgb, #145cf6 28%, #0a1426) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #145cf6 35%, transparent);
+}
+
+.astra-shell__sidebar [aria-current='page'] .text-ink-gray-9,
+.astra-shell__sidebar [data-active='true'] .text-ink-gray-9,
+.astra-shell__sidebar .bg-surface-white .text-ink-gray-9,
+.astra-shell__sidebar .bg-surface-selected .text-ink-gray-9,
+.astra-shell__sidebar .bg-surface-white .text-ink-gray-8,
+.astra-shell__sidebar .bg-surface-white .text-ink-gray-7 {
+  color: #ffffff !important;
+}
+
+/* Getting started / onboarding card on the dark rail */
+.astra-shell__sidebar .bg-surface-cards,
+.astra-shell__sidebar .bg-surface-menu,
+.astra-shell__sidebar .bg-surface-elevation-1,
+.astra-shell__sidebar .bg-surface-elevation-2 {
+  background: color-mix(in srgb, #145cf6 14%, #0f1626) !important;
+  color: #e8edf5 !important;
+  border-color: color-mix(in srgb, #145cf6 28%, transparent) !important;
+}
+
+.astra-shell__sidebar .bg-surface-cards .text-ink-gray-9,
+.astra-shell__sidebar .bg-surface-cards .text-ink-gray-8,
+.astra-shell__sidebar .bg-surface-elevation-2 .text-ink-gray-9,
+.astra-shell__sidebar .bg-surface-elevation-2 .text-ink-gray-8,
+.astra-shell__sidebar .bg-surface-elevation-2 .text-ink-gray-7 {
+  color: #e8edf5 !important;
 }
 
 .astra-placeholder-banner {
