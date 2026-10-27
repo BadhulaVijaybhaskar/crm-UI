@@ -194,6 +194,7 @@ class ERPNextCRMSettings(Document):
 
 	@frappe.whitelist()
 	def reset_erpnext_form_script(self):
+		frappe.only_for("System Manager", True)
 		try:
 			if frappe.db.exists("CRM Form Script", "Create Quotation from CRM Deal"):
 				script = get_crm_form_script()
@@ -217,6 +218,7 @@ class ERPNextCRMSettings(Document):
 
 	@frappe.whitelist()
 	def run_product_sync(self):
+		frappe.only_for("System Manager", True)
 		if not self.enabled or self.is_erpnext_in_different_site:
 			frappe.throw(_("ERP integration must be enabled on the same site"))
 		from crm.fcrm.doctype.crm_product.reconcile_job import enqueue_reconciliation

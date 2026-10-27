@@ -6,13 +6,6 @@ from frappe.tests import IntegrationTestCase
 
 
 class TestDemoData(IntegrationTestCase):
-	@classmethod
-	def setUpClass(cls):
-		super().setUpClass()
-		from crm.demo.api import clear_demo_data
-
-		clear_demo_data()
-
 	def _check_demo_records_exist(self, doctype, record_names):
 		"""Helper method to check if specific demo records exist"""
 		if not record_names:
@@ -33,6 +26,12 @@ class TestDemoData(IntegrationTestCase):
 		DEMO_CALL_LOGS_KEY = "crm_demo_call_logs"
 		DEMO_ACTIVITIES_KEY = "crm_demo_activities"
 		DEMO_DEALS_KEY = "crm_demo_deals"
+
+		# Self-contained: create_demo_data() returns early once DEMO_STATE_KEY is set,
+		# so clear at the start (and not only in setUpClass) for fresh-site + re-run.
+		frappe.set_user("Administrator")
+		clear_demo_data()
+		frappe.db.set_default(DEMO_STATE_KEY, None)
 
 		# 1. Before creation: nothing should exist
 		for user in DEMO_USERS:
