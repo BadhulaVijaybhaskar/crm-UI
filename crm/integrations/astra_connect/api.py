@@ -115,6 +115,7 @@ def receive() -> dict[str, Any]:
 		)
 
 	def _create_event():
+		owner = get_connect_integration_user()
 		event = frappe.get_doc(
 			{
 				"doctype": "Astra Connect Event",
@@ -123,9 +124,12 @@ def receive() -> dict[str, Any]:
 				"payload": payload,
 				"status": "Received",
 				"attempts": 0,
+				"owner": owner,
 			}
 		)
 		event.insert(ignore_permissions=True)
+		if event.owner != owner:
+			event.db_set("owner", owner, update_modified=False)
 		frappe.db.commit()
 		return event
 
