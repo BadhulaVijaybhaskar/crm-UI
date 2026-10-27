@@ -118,19 +118,26 @@ def process_lead_created(data: dict) -> dict[str, Any]:
 
 
 def _is_retryable_call_write(exc: BaseException) -> bool:
-	"""True for deadlock / lock-wait / duplicate call-log insert under parallel load."""
+	"""True for deadlock / lock-wait / duplicate / 1020 under parallel load."""
 	msg = str(exc).lower()
 	if "deadlock" in msg or "1213" in msg or "lock wait" in msg or "1205" in msg:
+		return True
+	if "1020" in msg or "record has changed" in msg:
 		return True
 	if "duplicate" in msg or "1062" in msg:
 		return True
 	errno = getattr(exc, "errno", None)
 	if errno is None and getattr(exc, "args", None):
 		errno = exc.args[0]
-	if errno in (1213, 1205, 1062):
+	if errno in (1213, 1205, 1062, 1020):
 		return True
 	name = type(exc).__name__.lower()
 	return "deadlock" in name or "lockwait" in name or "duplicate" in name
+
+
+def _call_id_lock_name(call_id: str) -> str:
+	# MySQL GET_LOCK name max 64 chars
+	return f"astra_call_{(call_id or '')[:48]}"
 
 
 def process_call_completed(data: dict, *, employee_enriched: bool = False) -> dict[str, Any]:
@@ -140,22 +147,42 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 	phone matches fail the event with a clear error.
 
 	Deadlock/duplicate retry wraps the whole unit of work — including call-log
-	insert/save at `_save_call_log` — so a mid-flight rollback must not leave a
-	half-saved call log. Parent row is locked first for a stable lock order.
+	insert/save at `_save_call_log` — using a savepoint so only this attempt is
+	rolled back (fixtures / outer txn stay intact). Concurrent deliveries of the
+	same callId are serialised with GET_LOCK; retries use backoff + jitter.
 	"""
+	import random as _random
 	import time as _time
 
-	last_exc = None
-	for attempt in range(3):
+	call_id = _first_str(data, "callId", "call_id") or ""
+	lock_name = _call_id_lock_name(call_id) if call_id else None
+	got_lock = False
+	if lock_name:
 		try:
-			return _process_call_completed_once(data, employee_enriched=employee_enriched)
-		except Exception as exc:
-			last_exc = exc
-			if not _is_retryable_call_write(exc):
-				raise
-			frappe.db.rollback()
-			_time.sleep(0.05 * (attempt + 1))
-	raise last_exc
+			got_lock = bool(frappe.db.sql("SELECT GET_LOCK(%s, %s)", (lock_name, 8))[0][0])
+		except Exception:
+			got_lock = False
+
+	last_exc = None
+	try:
+		for attempt in range(5):
+			sp = f"astra_call_{attempt}"
+			frappe.db.savepoint(sp)
+			try:
+				return _process_call_completed_once(data, employee_enriched=employee_enriched)
+			except Exception as exc:
+				last_exc = exc
+				if not _is_retryable_call_write(exc):
+					raise
+				frappe.db.rollback(save_point=sp)
+				_time.sleep(0.05 * (attempt + 1) + _random.uniform(0, 0.08))
+		raise last_exc
+	finally:
+		if lock_name and got_lock:
+			try:
+				frappe.db.sql("SELECT RELEASE_LOCK(%s)", (lock_name,))
+			except Exception:
+				pass
 
 
 def _process_call_completed_once(data: dict, *, employee_enriched: bool = False) -> dict[str, Any]:
@@ -275,20 +302,20 @@ def _process_call_completed_once(data: dict, *, employee_enriched: bool = False)
 
 	note_name = None
 	if call_log.call_summary:
-		note = frappe.get_doc(
-			{
-				"doctype": "FCRM Note",
-				"title": _("Call summary ({0})").format(call_id),
-				"content": f"<p>{frappe.utils.escape_html(call_log.call_summary)}</p>",
-				"reference_doctype": match["doctype"],
-				"reference_docname": match["name"],
-				"owner": owner,
-			}
-		).insert(ignore_permissions=True)
+		note = _upsert_call_summary_note(
+			call_log,
+			call_id=call_id,
+			match=match,
+			owner=owner,
+			summary=call_log.call_summary,
+		)
 		note_name = note.name
-		call_log.note = note.name
-		call_log.link_with_reference_doc("FCRM Note", note.name)
-		_save_call_log(call_log)
+		if call_log.note != note.name:
+			call_log.note = note.name
+			call_log.link_with_reference_doc("FCRM Note", note.name)
+			_save_call_log(call_log)
+		elif note.name:
+			call_log.link_with_reference_doc("FCRM Note", note.name)
 
 	task_name = None
 	if next_action:
@@ -485,13 +512,62 @@ def _map_call_status(value: str | None) -> str:
 	return mapping.get(v, "Completed")
 
 
+def _upsert_call_summary_note(call_log, *, call_id: str, match: dict, owner: str, summary: str):
+	"""One summary note per call log — update in place when the text changes."""
+	title = _("Call summary ({0})").format(call_id)
+	content = f"<p>{frappe.utils.escape_html(summary)}</p>"
+
+	note_name = call_log.note
+	if not note_name:
+		note_name = frappe.db.get_value(
+			"FCRM Note",
+			{
+				"title": title,
+				"reference_doctype": match["doctype"],
+				"reference_docname": match["name"],
+			},
+			"name",
+		)
+
+	if note_name and frappe.db.exists("FCRM Note", note_name):
+		note = frappe.get_doc("FCRM Note", note_name)
+		changed = False
+		if note.content != content:
+			note.content = content
+			changed = True
+		if note.title != title:
+			note.title = title
+			changed = True
+		if note.reference_doctype != match["doctype"] or note.reference_docname != match["name"]:
+			note.reference_doctype = match["doctype"]
+			note.reference_docname = match["name"]
+			changed = True
+		if changed:
+			note.flags.ignore_permissions = True
+			note.save(ignore_permissions=True)
+		return note
+
+	note = frappe.get_doc(
+		{
+			"doctype": "FCRM Note",
+			"title": title,
+			"content": content,
+			"reference_doctype": match["doctype"],
+			"reference_docname": match["name"],
+			"owner": owner,
+		}
+	)
+	note.insert(ignore_permissions=True)
+	return note
+
+
 def _save_call_log(call_log):
 	"""Insert/save a call log inside process_call_completed's retry loop.
 
 	Ignore mandatory on from/to so Connect can leave the agent/DID leg empty
 	instead of fabricating a duplicate customer number. Deadlocks and duplicate
-	primary keys bubble to process_call_completed, which rolls back and retries
-	idempotently (exists → for_update → update).
+	primary keys bubble to process_call_completed, which rolls back the savepoint
+	and retries idempotently (exists → for_update → update).
 	"""
 	call_log.flags.ignore_mandatory = True
 	call_log.flags.ignore_permissions = True
