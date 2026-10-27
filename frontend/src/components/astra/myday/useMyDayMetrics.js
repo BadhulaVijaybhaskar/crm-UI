@@ -1,14 +1,26 @@
 import { computed } from 'vue'
-import { createListResource } from 'frappe-ui'
+import { createListResource, getConfig } from 'frappe-ui'
 import { formatCompactCurrency } from '@/components/astra/format'
+import { getSiteTimezone, siteDayBounds } from '@/components/astra/siteTime'
+import { wonDealsInPeriod } from '@/components/astra/myday/myDayHelpers'
+import { sessionStore } from '@/stores/session'
+import { usersStore } from '@/stores/users'
+import { buildOwnerScope } from '@/components/astra/workqueue/queueHelpers'
 
 /**
  * Extra My day metrics from existing list/API resources (no new backend).
  * Target gauge is omitted unless a sales-target field is discoverable on boot/meta.
  */
 export function useMyDayMetrics() {
-  const monthStart = firstOfMonth()
-  const today = isoDate()
+  const { user } = sessionStore()
+  const { isManager } = usersStore()
+  const manager = isManager()
+
+  const tz = getSiteTimezone(getConfig)
+  const bounds = siteDayBounds(new Date(), tz)
+  const monthStart = bounds.monthStart
+  const dayStart = bounds.start
+  const dayEnd = bounds.end
 
   const openDeals = createListResource({
     doctype: 'CRM Deal',
@@ -37,11 +49,19 @@ export function useMyDayMetrics() {
 
   const wonDeals = createListResource({
     doctype: 'CRM Deal',
-    fields: ['name', 'deal_value', 'exchange_rate', 'closed_date', 'modified', 'status'],
+    fields: [
+      'name',
+      'deal_value',
+      'exchange_rate',
+      'closed_date',
+      'modified',
+      'status',
+    ],
     filters: {
-      modified: ['>=', monthStart],
+      // Won KPI keys off close date, not modified.
+      closed_date: ['>=', monthStart],
     },
-    orderBy: 'modified desc',
+    orderBy: 'closed_date desc',
     pageLength: 200,
     auto: true,
     cache: 'astra-myday-won-deals',
@@ -68,12 +88,38 @@ export function useMyDayMetrics() {
     cache: 'astra-myday-hot-leads',
   })
 
+  const callScope = buildOwnerScope({
+    isManager: manager,
+    user,
+    doctype: 'CRM Call Log',
+    ownerField: 'owner',
+  })
+  // Calls KPI: non-managers see only their calls (caller / receiver / owner).
+  const callOrFilters = manager
+    ? undefined
+    : [
+        ['CRM Call Log', 'caller', '=', user],
+        ['CRM Call Log', 'receiver', '=', user],
+        ['CRM Call Log', 'owner', '=', user],
+      ]
+
   const todayCalls = createListResource({
     doctype: 'CRM Call Log',
-    fields: ['name', 'creation', 'type', 'status', 'duration'],
+    fields: [
+      'name',
+      'creation',
+      'type',
+      'status',
+      'duration',
+      'caller',
+      'receiver',
+      'owner',
+    ],
     filters: {
-      creation: ['>=', `${today} 00:00:00`],
+      creation: ['between', [dayStart, dayEnd]],
+      ...callScope.filters,
     },
+    orFilters: callOrFilters,
     orderBy: 'creation desc',
     pageLength: 100,
     auto: true,
@@ -102,10 +148,12 @@ export function useMyDayMetrics() {
     pipelineDeals.value.reduce((sum, d) => sum + dealAmount(d), 0),
   )
 
-  const wonThisMonth = computed(() => {
-    const types = statusTypeByName.value
-    return (wonDeals.data || []).filter((d) => types[d.status] === 'Won')
-  })
+  const wonThisMonth = computed(() =>
+    wonDealsInPeriod(wonDeals.data || [], {
+      monthStart,
+      statusTypeByName: statusTypeByName.value,
+    }),
+  )
 
   const wonValue = computed(() =>
     wonThisMonth.value.reduce((sum, d) => sum + dealAmount(d), 0),
@@ -114,7 +162,7 @@ export function useMyDayMetrics() {
   const callsCount = computed(() => (todayCalls.data || []).length)
 
   const pipelineSpark = computed(() => sparkFromDeals(pipelineDeals.value))
-  const wonSpark = computed(() => sparkFromDeals(wonThisMonth.value))
+  const wonSpark = computed(() => sparkFromDeals(wonThisMonth.value, 'closed_date'))
   const callsSpark = computed(() =>
     (todayCalls.data || [])
       .slice()
@@ -179,22 +227,16 @@ function dealAmount(d) {
   return value * rate
 }
 
-function sparkFromDeals(deals) {
+function sparkFromDeals(deals, dateField = 'modified') {
   if (!deals?.length) return []
   const sorted = [...deals].sort((a, b) =>
-    String(a.modified).localeCompare(String(b.modified)),
+    String(a[dateField] || a.modified).localeCompare(
+      String(b[dateField] || b.modified),
+    ),
   )
   let running = 0
   return sorted.map((d) => {
     running += dealAmount(d)
     return running
   })
-}
-
-function isoDate(d = new Date()) {
-  return d.toISOString().slice(0, 10)
-}
-
-function firstOfMonth(d = new Date()) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
 }

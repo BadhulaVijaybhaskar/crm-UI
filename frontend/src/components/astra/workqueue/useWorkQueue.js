@@ -1,9 +1,18 @@
 import { computed, ref, watch } from 'vue'
-import { createListResource } from 'frappe-ui'
-import { isWhatsAppInstalled } from '@/composables/whatsapp'
+import { createListResource, getConfig } from 'frappe-ui'
+import { callEnabled } from '@/composables/telephony'
+import { sessionStore } from '@/stores/session'
+import { usersStore } from '@/stores/users'
+import { siteDayBounds, getSiteTimezone } from '@/components/astra/siteTime'
+import {
+  buildOwnerScope,
+  buildTaskAssigneeScope,
+  isTaskOverdue,
+  queueCallAction,
+  taskDueReason,
+} from '@/components/astra/workqueue/queueHelpers'
 import {
   classifyQueueType,
-  shouldShowWhatsAppFilter,
   summarizeWorkQueue,
 } from '@/components/astra/workqueue/queueSummary'
 
@@ -16,9 +25,31 @@ const QUIET_DAYS = 14
  */
 export function useWorkQueue() {
   const typeFilter = ref('all')
-  const today = isoDate()
-  const quietBefore = daysAgo(QUIET_DAYS)
-  const stuckBefore = daysAgo(STUCK_DAYS)
+  const { user } = sessionStore()
+  const { isManager } = usersStore()
+  const manager = isManager()
+
+  const tz = getSiteTimezone(getConfig)
+  const bounds = siteDayBounds(new Date(), tz)
+  const today = bounds.date
+  const dayStart = bounds.start
+  const dayEnd = bounds.end
+  const quietBefore = daysAgoInTz(QUIET_DAYS, tz)
+  const stuckBefore = daysAgoInTz(STUCK_DAYS, tz)
+
+  const taskScope = buildTaskAssigneeScope({ isManager: manager, user })
+  const leadScope = buildOwnerScope({
+    isManager: manager,
+    user,
+    doctype: 'CRM Lead',
+    ownerField: 'lead_owner',
+  })
+  const dealScope = buildOwnerScope({
+    isManager: manager,
+    user,
+    doctype: 'CRM Deal',
+    ownerField: 'deal_owner',
+  })
 
   const tasks = createListResource({
     doctype: 'CRM Task',
@@ -35,8 +66,11 @@ export function useWorkQueue() {
     ],
     filters: {
       status: ['not in', ['Done', 'Canceled', 'Cancelled']],
-      due_date: ['<=', today],
+      // Whole-day upper bound so datetime dues later today are included.
+      due_date: ['<=', dayEnd],
+      ...taskScope.filters,
     },
+    orFilters: taskScope.orFilters,
     orderBy: 'due_date asc',
     pageLength: 50,
     auto: true,
@@ -58,7 +92,9 @@ export function useWorkQueue() {
     filters: {
       converted: 0,
       modified: ['<', quietBefore],
+      ...leadScope.filters,
     },
+    orFilters: leadScope.orFilters,
     orderBy: 'modified asc',
     pageLength: 30,
     auto: true,
@@ -78,7 +114,9 @@ export function useWorkQueue() {
     ],
     filters: {
       modified: ['<', stuckBefore],
+      ...dealScope.filters,
     },
+    orFilters: dealScope.orFilters,
     orderBy: 'modified asc',
     pageLength: 30,
     auto: true,
@@ -101,9 +139,10 @@ export function useWorkQueue() {
 
   const items = computed(() => {
     const rows = []
+    const telephony = callEnabled.value
 
     for (const t of tasks.data || []) {
-      const overdue = t.due_date && t.due_date < today
+      const overdue = isTaskOverdue(t.due_date, dayStart)
       rows.push({
         id: `task-${t.name}`,
         type: 'follow_up',
@@ -112,7 +151,9 @@ export function useWorkQueue() {
         subtitle: t.reference_docname
           ? `${t.reference_doctype || ''} · ${t.reference_docname}`.trim()
           : '',
-        reason: overdue ? __('Missed deadline') : __('Due today'),
+        reason: __(
+          taskDueReason(t.due_date, { dayStart, todayDate: today }),
+        ),
         action: 'follow_up',
         reference_doctype: t.reference_doctype || 'CRM Task',
         reference_docname: t.reference_docname || t.name,
@@ -132,7 +173,10 @@ export function useWorkQueue() {
           lead.name,
         subtitle: lead.status || '',
         reason: __('No recent activity'),
-        action: lead.mobile_no ? 'call' : 'open',
+        action: queueCallAction({
+          phone: lead.mobile_no,
+          telephonyEnabled: telephony,
+        }),
         reference_doctype: 'CRM Lead',
         reference_docname: lead.name,
         phone: lead.mobile_no || null,
@@ -164,21 +208,9 @@ export function useWorkQueue() {
     return rows
   })
 
-  // WhatsApp actions are Connect-owned; only surface the chip when queue items
-  // of that type exist and the WhatsApp app is installed (never a zero chip).
-  const whatsappItemCount = computed(
-    () => items.value.filter((i) => classifyQueueType(i) === 'whatsapp').length,
-  )
-  const showWhatsApp = computed(() =>
-    shouldShowWhatsAppFilter({
-      installed: isWhatsAppInstalled.value,
-      hasDataSource: isWhatsAppInstalled.value,
-      count: whatsappItemCount.value,
-    }),
-  )
-
+  // Work queue never produces WhatsApp rows — no WhatsApp chip here.
   const summary = computed(() =>
-    summarizeWorkQueue(items.value, { showWhatsApp: showWhatsApp.value }),
+    summarizeWorkQueue(items.value, { showWhatsApp: false }),
   )
 
   const counts = computed(() => {
@@ -187,7 +219,6 @@ export function useWorkQueue() {
       all: s.total,
       calls: s.byType.calls,
       follow_ups: s.byType.follow_ups,
-      whatsapp: showWhatsApp.value ? s.byType.whatsapp || 0 : 0,
       high: s.byPriority.high,
       med: s.byPriority.med,
       low: s.byPriority.low,
@@ -195,21 +226,19 @@ export function useWorkQueue() {
   })
 
   const filtered = computed(() => {
-    const list = showWhatsApp.value
-      ? items.value
-      : items.value.filter((i) => classifyQueueType(i) !== 'whatsapp')
+    const list = items.value.filter(
+      (i) => classifyQueueType(i) !== 'whatsapp',
+    )
     if (typeFilter.value === 'all') return list
     if (typeFilter.value === 'calls')
       return list.filter((i) => classifyQueueType(i) === 'calls')
     if (typeFilter.value === 'follow_ups')
       return list.filter((i) => classifyQueueType(i) === 'follow_ups')
-    if (typeFilter.value === 'whatsapp')
-      return list.filter((i) => classifyQueueType(i) === 'whatsapp')
     return list
   })
 
-  watch(showWhatsApp, (show) => {
-    if (!show && typeFilter.value === 'whatsapp') typeFilter.value = 'all'
+  watch(typeFilter, (value) => {
+    if (value === 'whatsapp') typeFilter.value = 'all'
   })
 
   const loading = computed(
@@ -225,7 +254,7 @@ export function useWorkQueue() {
     items: filtered,
     counts,
     summary,
-    showWhatsApp,
+    showWhatsApp: computed(() => false),
     loading,
     resources: { tasks, quietLeads, stuckDeals, dealStatuses },
     reload() {
@@ -245,12 +274,9 @@ function normalizePriority(priority, fallback = 'Med') {
   return fallback === 'High' ? 'High' : fallback === 'Low' ? 'Low' : 'Med'
 }
 
-function isoDate(d = new Date()) {
-  return d.toISOString().slice(0, 10)
-}
-
-function daysAgo(n) {
+function daysAgoInTz(n, timeZone) {
   const d = new Date()
   d.setDate(d.getDate() - n)
-  return d.toISOString().slice(0, 10)
+  const { date } = siteDayBounds(d, timeZone)
+  return date
 }

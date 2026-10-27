@@ -68,13 +68,6 @@
         <section class="lg:col-span-9">
           <div v-if="loading" class="astra-muted text-sm">{{ __('Loading…') }}</div>
           <AstraEmptyState
-            v-else-if="typeFilter === 'whatsapp'"
-            :title="__('WhatsApp actions open in Astra Connect')"
-            :body="__(
-              'Message follow-ups are handled in Astra Connect. Use Messages in the sidebar when Connect is configured.',
-            )"
-          />
-          <AstraEmptyState
             v-else-if="!items.length"
             :title="__('Queue is clear')"
             :body="__(
@@ -135,8 +128,8 @@ import AstraAvatar from '@/components/astra/AstraAvatar.vue'
 import { useWorkQueue } from '@/components/astra/workqueue/useWorkQueue'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { globalStore } from '@/stores/global'
+import { callEnabled } from '@/composables/telephony'
 import { routeForReference } from '@/components/astra/format'
-import { isAstraConnectConfigured, openAstraConnect } from '@/utils/astraConnect'
 import '@/components/astra/astra-bento.css'
 
 usePageMeta(() => ({
@@ -147,51 +140,37 @@ usePageMeta(() => ({
 const router = useRouter()
 const { showModal } = useDoctypeModal()
 const { makeCall } = globalStore()
-const { typeFilter, items, counts, showWhatsApp, loading } = useWorkQueue()
+const { typeFilter, items, counts, loading } = useWorkQueue()
 
-const pills = computed(() => {
-  const list = [
-    { value: 'all', label: 'All' },
-    { value: 'calls', label: 'Calls' },
-  ]
-  if (showWhatsApp.value) list.push({ value: 'whatsapp', label: 'WhatsApp' })
-  list.push({ value: 'follow_ups', label: 'Follow-ups' })
-  return list
-})
+const pills = computed(() => [
+  { value: 'all', label: 'All' },
+  { value: 'calls', label: 'Calls' },
+  { value: 'follow_ups', label: 'Follow-ups' },
+])
 
-const typeRows = computed(() => {
-  const rows = [
-    { value: 'calls', label: 'Calls', count: counts.value.calls },
-  ]
-  if (showWhatsApp.value) {
-    rows.push({
-      value: 'whatsapp',
-      label: 'WhatsApp',
-      count: counts.value.whatsapp,
-    })
-  }
-  rows.push({
+const typeRows = computed(() => [
+  { value: 'calls', label: 'Calls', count: counts.value.calls },
+  {
     value: 'follow_ups',
     label: 'Follow-ups',
     count: counts.value.follow_ups,
-  })
-  return rows
-})
+  },
+])
 
 function actionLabel(item) {
-  if (item.action === 'call') return __('Call')
+  if (item.action === 'call' && callEnabled.value) return __('Call')
   if (item.action === 'follow_up') return __('Follow up')
   return __('Open')
 }
 
 function actionClass(item) {
-  if (item.action === 'call') return 'astra-btn--primary'
+  if (item.action === 'call' && callEnabled.value) return 'astra-btn--primary'
   if (item.action === 'follow_up') return 'astra-btn--outline'
   return 'astra-btn--primary'
 }
 
 function runAction(item) {
-  if (item.action === 'call' && item.phone) {
+  if (item.action === 'call' && item.phone && callEnabled.value) {
     makeCall(item.phone)
     return
   }
@@ -215,10 +194,6 @@ function runAction(item) {
         title: `Follow up: ${item.title}`,
       },
     })
-    return
-  }
-  if (typeFilter.value === 'whatsapp' && isAstraConnectConfigured()) {
-    openAstraConnect('messages')
     return
   }
   const route = routeForReference(item.reference_doctype, item.reference_docname)
