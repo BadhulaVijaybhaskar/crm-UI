@@ -551,14 +551,92 @@ class TestOrgHierarchy(IntegrationTestCase):
 		"""Owning a note does not allow moving its reference onto an unreadable parent."""
 		own_lead = make_lead("rep1@hier.test")
 		other_lead = make_lead("outsider@hier.test")
-		note = make_note(own_lead.name, owner="rep1@hier.test")
+		note_name = make_note(own_lead.name, owner="rep1@hier.test").name
 
 		frappe.set_user("rep1@hier.test")
 		try:
+			# Re-fetch after set_user so insert()'s ignore_permissions flag cannot leak.
+			note = frappe.get_doc("FCRM Note", note_name)
 			note.reference_docname = other_lead.name
 			self.assertFalse(has_note_permission(note, "write", "rep1@hier.test"))
 			with self.assertRaises(frappe.PermissionError):
 				note.save()
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_delete_child_on_unreadable_parent_is_refused(self):
+		other_lead = make_lead("rep1@hier.test")
+		note = make_note(other_lead.name, owner="outsider@hier.test")
+		frappe.set_user("outsider@hier.test")
+		try:
+			self.assertFalse(has_note_permission(note, "delete", "outsider@hier.test"))
+			with self.assertRaises(frappe.PermissionError):
+				frappe.delete_doc("FCRM Note", note.name)
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_task_create_on_unreadable_parent_is_refused(self):
+		other_lead = make_lead("rep1@hier.test")
+		frappe.set_user("outsider@hier.test")
+		try:
+			task = frappe.get_doc(
+				{
+					"doctype": "CRM Task",
+					"title": "Should fail",
+					"status": "Todo",
+					"priority": "Medium",
+					"reference_doctype": "CRM Lead",
+					"reference_docname": other_lead.name,
+				}
+			)
+			self.assertFalse(has_task_permission(task, "create", "outsider@hier.test"))
+			with self.assertRaises(frappe.PermissionError):
+				task.insert()
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_call_log_link_to_unreadable_parent_is_refused(self):
+		"""Appending a Dynamic Link to an unreadable Lead must fail on save."""
+		own_lead = make_lead("rep1@hier.test")
+		other_lead = make_lead("outsider@hier.test")
+		call = make_call_log(own_lead.name, owner="rep1@hier.test")
+
+		frappe.set_user("rep1@hier.test")
+		try:
+			call = frappe.get_doc("CRM Call Log", call.name)
+			call.append(
+				"links",
+				{"link_doctype": "CRM Lead", "link_name": other_lead.name},
+			)
+			self.assertFalse(has_call_log_permission(call, "write", "rep1@hier.test"))
+			with self.assertRaises(frappe.PermissionError):
+				call.save()
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_add_task_to_call_log_cannot_overwrite_foreign_task(self):
+		from crm.integrations.api import add_task_to_call_log
+
+		own_lead = make_lead("rep1@hier.test")
+		other_lead = make_lead("outsider@hier.test")
+		call = make_call_log(own_lead.name, owner="rep1@hier.test")
+		foreign_task = make_task(other_lead.name, owner="outsider@hier.test")
+
+		frappe.set_user("rep1@hier.test")
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				add_task_to_call_log(
+					call.name,
+					{
+						"name": foreign_task.name,
+						"title": "Hacked",
+						"status": "Done",
+						"priority": "High",
+					},
+				)
+			foreign_task.reload()
+			self.assertNotEqual(foreign_task.title, "Hacked")
+			self.assertNotEqual(foreign_task.status, "Done")
 		finally:
 			frappe.set_user("Administrator")
 
@@ -576,12 +654,11 @@ def make_call_log(lead_name, owner):
 			"reference_docname": lead_name,
 		}
 	)
-	doc.flags.ignore_permissions = True
 	doc.flags.ignore_mandatory = True
 	doc.insert(ignore_permissions=True)
 	frappe.db.set_value("CRM Call Log", doc.name, "owner", owner, update_modified=False)
-	doc.reload()
-	return doc
+	# Fresh fetch so ignore_permissions from insert cannot leak into callers.
+	return frappe.get_doc("CRM Call Log", doc.name)
 
 
 def make_note(lead_name, owner):
@@ -595,8 +672,7 @@ def make_note(lead_name, owner):
 		}
 	).insert(ignore_permissions=True)
 	frappe.db.set_value("FCRM Note", doc.name, "owner", owner, update_modified=False)
-	doc.reload()
-	return doc
+	return frappe.get_doc("FCRM Note", doc.name)
 
 
 def make_task(lead_name, owner, assigned_to=None):
@@ -612,8 +688,7 @@ def make_task(lead_name, owner, assigned_to=None):
 		}
 	).insert(ignore_permissions=True)
 	frappe.db.set_value("CRM Task", doc.name, "owner", owner, update_modified=False)
-	doc.reload()
-	return doc
+	return frappe.get_doc("CRM Task", doc.name)
 
 
 def make_user(email, roles=None):
