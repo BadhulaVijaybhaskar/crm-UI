@@ -6,7 +6,7 @@ import {
 } from '@/components/astra/workqueue/queueSummary'
 
 const fixture = [
-  { type: 'call', action: 'call', priority: 'High' },
+  { type: 'quiet_lead', action: 'open', priority: 'High' },
   { type: 'follow_up', action: 'follow_up', priority: 'Med' },
   { type: 'follow_up', action: 'follow_up', priority: 'High' },
   { type: 'follow_up', action: 'open', priority: 'Low' },
@@ -16,13 +16,14 @@ describe('summarizeWorkQueue', () => {
   it('keeps total === sum(type groups) === sum(priority groups)', () => {
     const s = summarizeWorkQueue(fixture, { showWhatsApp: false })
     expect(s.total).toBe(4)
-    expect(s.byType.calls).toBe(1)
+    expect(s.byType.quiet_leads).toBe(1)
     expect(s.byType.follow_ups).toBe(3)
+    expect(s.byType.calls).toBeUndefined()
     expect(s.byType.whatsapp).toBeUndefined()
     expect(s.typeTotal).toBe(s.total)
     expect(s.priorityTotal).toBe(s.total)
     expect(s.byPriority.high + s.byPriority.med + s.byPriority.low).toBe(s.total)
-    expect(s.byType.calls + s.byType.follow_ups).toBe(s.total)
+    expect(s.byType.quiet_leads + s.byType.follow_ups).toBe(s.total)
   })
 
   it('includes WhatsApp in type partitions only when shown', () => {
@@ -42,8 +43,11 @@ describe('summarizeWorkQueue', () => {
     expect(shown.priorityTotal).toBe(shown.total)
   })
 
-  it('classifies call vs follow_up', () => {
-    expect(classifyQueueType({ type: 'call', action: 'call' })).toBe('calls')
+  it('classifies quiet leads vs follow_up (not Calls)', () => {
+    expect(classifyQueueType({ type: 'quiet_lead' })).toBe('quiet_leads')
+    expect(classifyQueueType({ type: 'call', action: 'call' })).toBe(
+      'quiet_leads',
+    )
     expect(classifyQueueType({ type: 'follow_up', action: 'open' })).toBe(
       'follow_ups',
     )

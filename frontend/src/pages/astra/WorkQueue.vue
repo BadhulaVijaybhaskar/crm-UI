@@ -144,12 +144,16 @@ const { typeFilter, items, counts, loading } = useWorkQueue()
 
 const pills = computed(() => [
   { value: 'all', label: 'All' },
-  { value: 'calls', label: 'Calls' },
+  { value: 'quiet_leads', label: 'Quiet leads' },
   { value: 'follow_ups', label: 'Follow-ups' },
 ])
 
 const typeRows = computed(() => [
-  { value: 'calls', label: 'Calls', count: counts.value.calls },
+  {
+    value: 'quiet_leads',
+    label: 'Quiet leads',
+    count: counts.value.quiet_leads,
+  },
   {
     value: 'follow_ups',
     label: 'Follow-ups',

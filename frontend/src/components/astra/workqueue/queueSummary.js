@@ -5,7 +5,10 @@
 export function classifyQueueType(item) {
   if (!item) return 'follow_ups'
   if (item.type === 'whatsapp') return 'whatsapp'
-  if (item.type === 'call' || item.action === 'call') return 'calls'
+  // Quiet leads (no recent activity) — not telephony "calls".
+  if (item.type === 'quiet_lead') return 'quiet_leads'
+  // Legacy: older rows used type/action "call" for quiet leads.
+  if (item.type === 'call' || item.action === 'call') return 'quiet_leads'
   return 'follow_ups'
 }
 
@@ -21,7 +24,7 @@ export function summarizeWorkQueue(items = [], { showWhatsApp = false } = {}) {
     ? items
     : items.filter((i) => classifyQueueType(i) !== 'whatsapp')
 
-  const byType = { calls: 0, follow_ups: 0 }
+  const byType = { quiet_leads: 0, follow_ups: 0 }
   if (showWhatsApp) byType.whatsapp = 0
 
   const byPriority = { high: 0, med: 0, low: 0 }
@@ -29,7 +32,7 @@ export function summarizeWorkQueue(items = [], { showWhatsApp = false } = {}) {
   for (const item of visible) {
     const t = classifyQueueType(item)
     if (t === 'whatsapp') byType.whatsapp += 1
-    else if (t === 'calls') byType.calls += 1
+    else if (t === 'quiet_leads') byType.quiet_leads += 1
     else byType.follow_ups += 1
 
     if (item.priority === 'High') byPriority.high += 1

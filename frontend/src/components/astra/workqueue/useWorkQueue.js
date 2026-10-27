@@ -166,7 +166,7 @@ export function useWorkQueue() {
     for (const lead of quietLeads.data || []) {
       rows.push({
         id: `lead-${lead.name}`,
-        type: 'call',
+        type: 'quiet_lead',
         priority: 'Med',
         title:
           [lead.lead_name, lead.organization].filter(Boolean).join(' - ') ||
@@ -217,7 +217,7 @@ export function useWorkQueue() {
     const s = summary.value
     return {
       all: s.total,
-      calls: s.byType.calls,
+      quiet_leads: s.byType.quiet_leads,
       follow_ups: s.byType.follow_ups,
       high: s.byPriority.high,
       med: s.byPriority.med,
@@ -230,15 +230,19 @@ export function useWorkQueue() {
       (i) => classifyQueueType(i) !== 'whatsapp',
     )
     if (typeFilter.value === 'all') return list
-    if (typeFilter.value === 'calls')
-      return list.filter((i) => classifyQueueType(i) === 'calls')
+    if (typeFilter.value === 'quiet_leads')
+      return list.filter((i) => classifyQueueType(i) === 'quiet_leads')
     if (typeFilter.value === 'follow_ups')
       return list.filter((i) => classifyQueueType(i) === 'follow_ups')
+    // Legacy filter id from older UI / bookmarks
+    if (typeFilter.value === 'calls')
+      return list.filter((i) => classifyQueueType(i) === 'quiet_leads')
     return list
   })
 
   watch(typeFilter, (value) => {
     if (value === 'whatsapp') typeFilter.value = 'all'
+    if (value === 'calls') typeFilter.value = 'quiet_leads'
   })
 
   const loading = computed(
