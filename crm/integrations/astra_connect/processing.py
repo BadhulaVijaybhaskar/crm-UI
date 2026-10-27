@@ -28,7 +28,8 @@ TELEPHONY_MEDIUM = "Astra Connect"
 CONNECT_PHONE_REGION = "IN"
 # Valid E.164 placeholder for the Connect agent leg — never put non-phone strings
 # like "astra-connect" / "unknown" into CRM Call Log Phone fields.
-DEFAULT_AGENT_NUMBER = "+910000000000"
+# No fake placeholder number — unset Connect line leaves the agent side blank.
+DEFAULT_AGENT_NUMBER = None
 
 
 class ProcessingError(frappe.ValidationError):
@@ -504,7 +505,7 @@ def get_connect_integration_user() -> str:
 	return frappe.session.user or "Administrator"
 
 
-def _connect_agent_number() -> str:
+def _connect_agent_number() -> str | None:
 	try:
 		configured = frappe.db.get_single_value("Astra Connect Settings", "connect_agent_number")
 		if configured and str(configured).strip():
@@ -544,6 +545,7 @@ def _call_numbers(direction: str, phone: str | None) -> tuple[str | None, str | 
 	if not party_phone:
 		return None, None
 	agent = _connect_agent_number()
+	# When no Connect line is configured, only record the party number — never a fake agent MSISDN.
 	if direction == "Incoming":
 		return party_phone, agent
 	return agent, party_phone
