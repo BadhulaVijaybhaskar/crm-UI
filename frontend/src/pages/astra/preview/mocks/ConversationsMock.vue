@@ -2,11 +2,10 @@
   <div class="grid min-h-[70vh] grid-cols-1 gap-3 lg:grid-cols-12">
     <AstraCard class="flex flex-col lg:col-span-3" flush>
       <div class="border-b border-[var(--astra-border)] px-4 pb-3 pt-4">
-        <h2 class="astra-card__title">Inbox</h2>
+        <h2 class="astra-card__title">Conversations</h2>
         <div class="mt-3 flex flex-wrap gap-1.5">
           <button class="astra-pill astra-pill--active">All</button>
           <button class="astra-pill">Calls</button>
-          <button class="astra-pill">WhatsApp</button>
           <button class="astra-pill">Email</button>
         </div>
       </div>

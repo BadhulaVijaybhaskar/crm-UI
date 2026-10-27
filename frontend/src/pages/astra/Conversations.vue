@@ -1,18 +1,18 @@
 <template>
   <div class="astra-bento flex h-full min-h-0 flex-col overflow-hidden">
     <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden p-3 lg:grid-cols-12">
-      <!-- Inbox -->
+      <!-- Conversations list -->
       <AstraCard
         class="flex min-h-0 flex-col overflow-hidden lg:col-span-3"
-        :title="__('Inbox')"
+        :title="__('Conversations')"
         flush
       >
         <div class="border-b border-[var(--astra-border)] px-4 pb-3 pt-4">
-          <h2 class="astra-card__title">{{ __('Inbox') }}</h2>
+          <h2 class="astra-card__title">{{ __('Conversations') }}</h2>
           <div
             class="mt-3 flex flex-wrap gap-1.5"
             role="tablist"
-            :aria-label="__('Channel filters')"
+            :aria-label="__('Conversation channel filters')"
           >
             <button
               v-for="pill in channelPills"
@@ -33,23 +33,6 @@
           <div v-if="loading" class="astra-muted px-2 py-3 text-sm">
             {{ __('Loading…') }}
           </div>
-          <AstraEmptyState
-            v-else-if="channel === 'whatsapp'"
-            class="px-2 py-3"
-            :title="__('WhatsApp lives in Astra Connect')"
-            :body="__(
-              'This inbox is read-only for calls, emails and notes. Open Messages in Connect to chat on WhatsApp.',
-            )"
-          >
-            <button
-              v-if="connectConfigured"
-              type="button"
-              class="astra-btn astra-btn--teal"
-              @click="openConnectMessages"
-            >
-              {{ __('Open in Astra Connect') }}
-            </button>
-          </AstraEmptyState>
           <AstraEmptyState
             v-else-if="!threads.length"
             class="px-2 py-3"
@@ -110,7 +93,7 @@
           <AstraEmptyState
             v-if="!selected"
             :title="__('Select a conversation')"
-            :body="__('Choose a thread from the inbox to review the history.')"
+            :body="__('Choose a thread from Conversations to review the history.')"
           />
           <template v-else>
             <div
@@ -311,15 +294,19 @@ const {
   conversationMessages,
   panelDoc,
   contactPanel,
+  showWhatsApp,
   loading,
 } = useConversations()
 
-const channelPills = [
-  { value: 'all', label: 'All' },
-  { value: 'calls', label: 'Calls' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'emails', label: 'Email' },
-]
+const channelPills = computed(() => {
+  const pills = [
+    { value: 'all', label: 'All' },
+    { value: 'calls', label: 'Calls' },
+  ]
+  if (showWhatsApp.value) pills.push({ value: 'whatsapp', label: 'WhatsApp' })
+  pills.push({ value: 'emails', label: 'Email' })
+  return pills
+})
 
 const conversationTitle = computed(() => {
   if (!selected.value) return __('Conversation')
@@ -374,6 +361,7 @@ function channelLabel(ch) {
   if (ch === 'calls') return __('Call')
   if (ch === 'emails') return __('Email')
   if (ch === 'notes') return __('Note')
+  if (ch === 'whatsapp') return __('WhatsApp')
   return __('Activity')
 }
 
