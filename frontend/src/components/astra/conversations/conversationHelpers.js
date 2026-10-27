@@ -1,5 +1,5 @@
 /**
- * Pure Conversations helpers — WA field name, titles, permission filtering.
+ * Pure Conversations helpers — WA field name, titles, pagination fill.
  */
 
 /** WA Message uses reference_docname (not reference_name). */
@@ -33,31 +33,6 @@ export function buildParentTitleMap({
   return map
 }
 
-export function buildReadableParentSets({
-  leads = [],
-  deals = [],
-  contacts = [],
-} = {}) {
-  return {
-    'CRM Lead': new Set(leads.map((r) => r.name).filter(Boolean)),
-    'CRM Deal': new Set(deals.map((r) => r.name).filter(Boolean)),
-    Contact: new Set(contacts.map((r) => r.name).filter(Boolean)),
-  }
-}
-
-/**
- * Keep threads whose parent the user can read (or that have no parent).
- * Never list a parent that would 403 on get / get_activities.
- */
-export function filterThreadsByReadableParents(threads = [], readableSets = {}) {
-  return threads.filter((t) => {
-    if (!t?.reference_doctype || !t?.reference_docname) return true
-    const set = readableSets[t.reference_doctype]
-    if (!set) return false
-    return set.has(t.reference_docname)
-  })
-}
-
 export function threadDisplayTitle(
   { reference_doctype, reference_docname, fallback } = {},
   titleMap = {},
@@ -67,4 +42,52 @@ export function threadDisplayTitle(
     if (titleMap[key]) return titleMap[key]
   }
   return fallback || reference_docname || ''
+}
+
+/** Default page size / fill target for the conversations thread list. */
+export const CONVERSATIONS_TARGET_VISIBLE = 40
+/** Cap how many list pages we pull while filling the visible list. */
+export const CONVERSATIONS_MAX_PAGES = 5
+
+/**
+ * Whether another list page should be fetched while filling the inbox.
+ * Pure — used by useConversations and unit tests.
+ */
+export function shouldFetchNextConversationPage({
+  visibleCount = 0,
+  targetCount = CONVERSATIONS_TARGET_VISIBLE,
+  hasNextPage = false,
+  pagesFetched = 0,
+  maxPages = CONVERSATIONS_MAX_PAGES,
+  loading = false,
+} = {}) {
+  if (loading) return false
+  if (visibleCount >= targetCount) return false
+  if (!hasNextPage) return false
+  if (pagesFetched >= maxPages) return false
+  return true
+}
+
+/**
+ * Pick which list resources still need another page to grow the visible list.
+ * @returns {string[]} resource keys to advance
+ */
+export function conversationSourcesToAdvance(
+  sources = [],
+  {
+    visibleCount = 0,
+    targetCount = CONVERSATIONS_TARGET_VISIBLE,
+    maxPages = CONVERSATIONS_MAX_PAGES,
+  } = {},
+) {
+  if (visibleCount >= targetCount) return []
+  return sources
+    .filter(
+      (s) =>
+        s &&
+        s.hasNextPage &&
+        !s.loading &&
+        (s.pagesFetched || 0) < maxPages,
+    )
+    .map((s) => s.key)
 }

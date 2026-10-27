@@ -3,9 +3,11 @@ import { createListResource, createResource } from 'frappe-ui'
 import { isWhatsAppInstalled } from '@/composables/whatsapp'
 import { shouldShowWhatsAppFilter } from '@/components/astra/workqueue/queueSummary'
 import {
+  CONVERSATIONS_MAX_PAGES,
+  CONVERSATIONS_TARGET_VISIBLE,
   buildParentTitleMap,
-  buildReadableParentSets,
-  filterThreadsByReadableParents,
+  conversationSourcesToAdvance,
+  shouldFetchNextConversationPage,
   threadDisplayTitle,
   waMessageReference,
 } from '@/components/astra/conversations/conversationHelpers'
@@ -13,13 +15,24 @@ import {
 /**
  * Read-only conversations from Call Log + Communication (+ notes via feed).
  * No WhatsApp compose — Connect handles messaging.
- * Threads are limited to parents the current user can read (no post-list 403s).
+ *
+ * List results are server-permission-scoped (get_list). We do NOT filter by
+ * parent readability in the browser — that emptied the inbox for sales users
+ * when the newest rows pointed at unreadable parents. Instead we page until
+ * the visible thread list hits a target size (or pages run out).
  */
 export function useConversations() {
   const channel = ref('all')
   const selectedId = ref(null)
+  const filling = ref(false)
+  const pagesFetched = ref({
+    calls: 1,
+    emails: 1,
+    notes: 1,
+    wa: 0,
+  })
 
-  // Permission-aware parent lists (get_list already scopes to readable docs).
+  // Optional title enrichment (also permission-scoped). Not used to drop rows.
   const readableLeads = createListResource({
     doctype: 'CRM Lead',
     fields: ['name', 'lead_name', 'organization'],
@@ -48,21 +61,6 @@ export function useConversations() {
       deals: readableDeals.data || [],
       contacts: readableContacts.data || [],
     }),
-  )
-
-  const readableSets = computed(() =>
-    buildReadableParentSets({
-      leads: readableLeads.data || [],
-      deals: readableDeals.data || [],
-      contacts: readableContacts.data || [],
-    }),
-  )
-
-  const parentsReady = computed(
-    () =>
-      !readableLeads.loading &&
-      !readableDeals.loading &&
-      !readableContacts.loading,
   )
 
   const callLogs = createListResource({
@@ -158,7 +156,10 @@ export function useConversations() {
   watch(
     isWhatsAppInstalled,
     (installed) => {
-      if (installed) waMessages.reload()
+      if (installed) {
+        pagesFetched.value.wa = Math.max(pagesFetched.value.wa, 1)
+        waMessages.reload()
+      }
     },
     { immediate: true },
   )
@@ -277,10 +278,7 @@ export function useConversations() {
     }
 
     rows.sort((a, b) => String(b.creation).localeCompare(String(a.creation)))
-
-    // Wait until readable parent sets have loaded so we never flash 403 rows.
-    if (!parentsReady.value) return []
-    return filterThreadsByReadableParents(rows, readableSets.value)
+    return rows
   })
 
   const filteredThreads = computed(() => {
@@ -299,6 +297,120 @@ export function useConversations() {
         : []
     return threads.value
   })
+
+  function listLoading(resource) {
+    return Boolean(resource?.loading || resource?.list?.loading)
+  }
+
+  async function advanceResource(resource, key) {
+    if (!resource?.hasNextPage) return
+    if (pagesFetched.value[key] >= CONVERSATIONS_MAX_PAGES) return
+    pagesFetched.value[key] += 1
+    resource.start = (resource.start || 0) + (resource.pageLength || 40)
+    if (resource.list?.fetch) {
+      await resource.list.fetch()
+    } else {
+      resource.next?.()
+    }
+  }
+
+  async function fillVisibleThreads() {
+    if (filling.value) return
+    filling.value = true
+    try {
+      for (let i = 0; i < CONVERSATIONS_MAX_PAGES; i++) {
+        const visibleCount = filteredThreads.value.length
+        if (visibleCount >= CONVERSATIONS_TARGET_VISIBLE) break
+
+        const sources = [
+          {
+            key: 'calls',
+            hasNextPage: callLogs.hasNextPage,
+            loading: listLoading(callLogs),
+            pagesFetched: pagesFetched.value.calls,
+          },
+          {
+            key: 'emails',
+            hasNextPage: emails.hasNextPage,
+            loading: listLoading(emails),
+            pagesFetched: pagesFetched.value.emails,
+          },
+          {
+            key: 'notes',
+            hasNextPage: notes.hasNextPage,
+            loading: listLoading(notes),
+            pagesFetched: pagesFetched.value.notes,
+          },
+        ]
+        if (showWhatsApp.value) {
+          sources.push({
+            key: 'wa',
+            hasNextPage: waMessages.hasNextPage,
+            loading: listLoading(waMessages),
+            pagesFetched: pagesFetched.value.wa || 0,
+          })
+        }
+
+        const keys = conversationSourcesToAdvance(sources, {
+          visibleCount,
+          targetCount: CONVERSATIONS_TARGET_VISIBLE,
+          maxPages: CONVERSATIONS_MAX_PAGES,
+        }).filter((key) =>
+          shouldFetchNextConversationPage({
+            visibleCount,
+            targetCount: CONVERSATIONS_TARGET_VISIBLE,
+            hasNextPage: true,
+            pagesFetched: pagesFetched.value[key] || 0,
+            maxPages: CONVERSATIONS_MAX_PAGES,
+            loading: false,
+          }),
+        )
+
+        if (!keys.length) break
+
+        const map = {
+          calls: callLogs,
+          emails,
+          notes,
+          wa: waMessages,
+        }
+        await Promise.all(keys.map((key) => advanceResource(map[key], key)))
+      }
+    } finally {
+      filling.value = false
+    }
+  }
+
+  watch(
+    () => [
+      (callLogs.data || []).length,
+      (emails.data || []).length,
+      (notes.data || []).length,
+      (waMessages.data || []).length,
+      callLogs.hasNextPage,
+      emails.hasNextPage,
+      notes.hasNextPage,
+      waMessages.hasNextPage,
+      listLoading(callLogs),
+      listLoading(emails),
+      listLoading(notes),
+      channel.value,
+      showWhatsApp.value,
+    ],
+    () => {
+      if (
+        listLoading(callLogs) ||
+        listLoading(emails) ||
+        listLoading(notes) ||
+        (showWhatsApp.value && listLoading(waMessages))
+      ) {
+        return
+      }
+      if (filteredThreads.value.length >= CONVERSATIONS_TARGET_VISIBLE) return
+      fillVisibleThreads()
+    },
+    { flush: 'post' },
+  )
 
   const selected = computed(
     () =>
@@ -457,11 +569,11 @@ export function useConversations() {
 
   const loading = computed(
     () =>
-      !parentsReady.value ||
-      callLogs.loading ||
-      emails.loading ||
-      notes.loading ||
-      (showWhatsApp.value && waMessages.loading),
+      filling.value ||
+      listLoading(callLogs) ||
+      listLoading(emails) ||
+      listLoading(notes) ||
+      (showWhatsApp.value && listLoading(waMessages)),
   )
 
   return {
@@ -475,6 +587,7 @@ export function useConversations() {
     recordActivities,
     showWhatsApp,
     loading,
+    filling,
     resources: {
       callLogs,
       emails,
