@@ -7,6 +7,8 @@ from frappe.utils.caching import request_cache
 _OWNER_FIELD = {
 	"CRM Lead": "lead_owner",
 	"CRM Deal": "deal_owner",
+	# Standard Contact has no contact_owner; document owner is the ownership signal.
+	"Contact": "owner",
 }
 
 
@@ -70,6 +72,11 @@ def get_deal_permission_query_conditions(user=None):
 	return cond.get_sql(with_namespace=True, quote_char="`", secondary_quote_char="'") if cond else ""
 
 
+def get_contact_permission_query_conditions(user=None):
+	cond = _permission_query_conditions(user, "Contact")
+	return cond.get_sql(with_namespace=True, quote_char="`", secondary_quote_char="'") if cond else ""
+
+
 def _has_permission(doc, ptype, user, doctype: str) -> bool | None:
 	if not user:
 		user = frappe.session.user
@@ -101,6 +108,10 @@ def has_lead_permission(doc, ptype, user):
 
 def has_deal_permission(doc, ptype, user):
 	return _has_permission(doc, ptype, user, "CRM Deal")
+
+
+def has_contact_permission(doc, ptype, user):
+	return _has_permission(doc, ptype, user, "Contact")
 
 
 def _in_hierarchy(user: str) -> bool:

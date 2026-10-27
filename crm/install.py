@@ -37,7 +37,31 @@ def after_install(force=False):
 	create_assignment_rule_custom_fields()
 	add_assignment_rule_property_setters()
 	seed_default_rules_and_mappings()
+	ensure_contact_sales_permissions()
 	frappe.db.commit()
+
+
+def ensure_contact_sales_permissions():
+	"""Grant Sales User / Sales Manager DocPerms on Contact so hierarchy hooks can scope them.
+
+	Record-level visibility is enforced by crm.permissions.org_hierarchy (owner + ToDo +
+	sales hierarchy). Without these DocPerm rows, Sales roles cannot open Contacts at all.
+	"""
+	from frappe.permissions import add_permission, update_permission_property
+
+	for role in ("Sales User", "Sales Manager"):
+		if not frappe.db.exists("Custom DocPerm", {"parent": "Contact", "role": role, "permlevel": 0}):
+			# Fall back to standard DocPerm if Contact already ships the role (contacts module).
+			if frappe.db.exists("DocPerm", {"parent": "Contact", "role": role, "permlevel": 0}):
+				continue
+			add_permission("Contact", role, 0)
+
+		for ptype in ("read", "write", "create", "delete", "email", "export", "print", "report", "share"):
+			try:
+				update_permission_property("Contact", role, 0, ptype, 1)
+			except Exception:
+				# Standard DocPerm rows are not mutated via Custom DocPerm helpers on all sites.
+				pass
 
 
 def add_default_lead_statuses():
