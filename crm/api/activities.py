@@ -580,11 +580,19 @@ _CALL_LOG_FIELDS = [
 	"ai_employee_id",
 ]
 
+# Standard DocType columns are not always reported by Meta.has_field — keep them
+# when listed so date-range filters (creation) and ownership work.
+_STANDARD_LIST_FIELDS = frozenset({"name", "creation", "modified", "owner", "modified_by"})
+
+
+def _call_log_list_fields(meta=None):
+	meta = meta or frappe.get_meta("CRM Call Log")
+	return [f for f in _CALL_LOG_FIELDS if meta.has_field(f) or f in _STANDARD_LIST_FIELDS]
+
 
 def get_linked_calls(name: str):
 	# Only request fields that exist (older sites may not have Astra Connect columns yet)
-	meta = frappe.get_meta("CRM Call Log")
-	fields = [f for f in _CALL_LOG_FIELDS if meta.has_field(f) or f == "name"]
+	fields = _call_log_list_fields()
 	calls = frappe.db.get_all(
 		"CRM Call Log",
 		filters={"reference_docname": name},
@@ -809,7 +817,13 @@ def get_activity_feed(
 	items: list[dict] = []
 
 	type_filter = (activity_type or "").strip().lower() or None
-	owner_filter = (owner or "").strip() or None
+	# Non-managers cannot probe other owners via the owner= query arg.
+	roles = frappe.get_roles(user)
+	is_manager = user == "Administrator" or "System Manager" in roles or "Sales Manager" in roles
+	if is_manager:
+		owner_filter = (owner or "").strip() or None
+	else:
+		owner_filter = user
 
 	def in_range(ts) -> bool:
 		if not ts:
@@ -826,8 +840,7 @@ def get_activity_feed(
 		call_filters: dict = {}
 		if owner_filter:
 			call_filters["owner"] = owner_filter
-		meta = frappe.get_meta("CRM Call Log")
-		fields = [f for f in _CALL_LOG_FIELDS if meta.has_field(f) or f == "name"]
+		fields = _call_log_list_fields()
 		calls = frappe.get_list(
 			"CRM Call Log",
 			filters=call_filters or None,
@@ -838,15 +851,19 @@ def get_activity_feed(
 		for call in calls:
 			if not in_range(call.get("creation")):
 				continue
+			ref_dt = call.get("reference_doctype")
+			ref_dn = call.get("reference_docname")
+			if ref_dt and ref_dn and not frappe.has_permission(ref_dt, "read", ref_dn):
+				continue
 			parsed = parse_call_log(dict(call))
 			items.append(
 				{
 					"name": parsed.get("name"),
 					"activity_type": parsed.get("activity_type") or "outgoing_call",
-					"creation": parsed.get("creation"),
+					"creation": parsed.get("creation") or call.get("creation"),
 					"owner": parsed.get("owner") or call.get("owner") or "",
-					"reference_doctype": parsed.get("reference_doctype"),
-					"reference_docname": parsed.get("reference_docname"),
+					"reference_doctype": parsed.get("reference_doctype") or ref_dt,
+					"reference_docname": parsed.get("reference_docname") or ref_dn,
 					"data": {
 						"outcome": parsed.get("outcome"),
 						"call_summary": parsed.get("call_summary"),
@@ -968,6 +985,10 @@ def get_activity_feed(
 		)
 		for n in notes:
 			if not in_range(n.creation):
+				continue
+			if not n.reference_doctype or not n.reference_docname:
+				continue
+			if not frappe.has_permission(n.reference_doctype, "read", n.reference_docname):
 				continue
 			items.append(
 				{
