@@ -250,7 +250,16 @@ def ensure_starter_whatsapp_templates():
 	except Exception:
 		frappe.log_error(title="Astra India WhatsApp starters default")
 
-	# Prefer native WhatsApp Message Template when present
+	# Prefer native WhatsApp Message Template when present — requires a WhatsApp Account.
+	has_wa_account = False
+	for account_dt in ("WhatsApp Account", "WhatsApp Business Account"):
+		if frappe.db.exists("DocType", account_dt) and frappe.db.exists(account_dt, {"name": ["is", "set"]}):
+			has_wa_account = True
+			break
+	if not has_wa_account:
+		# Starters stay in defaults; skip DocType seed cleanly when no account exists.
+		return
+
 	for doctype in ("WhatsApp Templates", "WA Template", "WhatsApp Message Template"):
 		if not frappe.db.exists("DocType", doctype):
 			continue
@@ -297,15 +306,21 @@ def ensure_lead_round_robin_rule():
 		return
 	name = "Astra Lead Round Robin"
 	if frappe.db.exists("Assignment Rule", name):
-		# Backfill assignment_days on older seeds that omitted the child table.
+		# Backfill assignment_days / condition on older seeds.
 		existing = frappe.get_doc("Assignment Rule", name)
+		changed = False
 		if not existing.get("assignment_days"):
 			for day in _ALL_WEEKDAYS:
 				existing.append("assignment_days", {"day": day})
+			changed = True
+		if "doc.status" in (existing.assign_condition or ""):
+			existing.assign_condition = 'status == "New"'
+			changed = True
+		if changed:
 			try:
 				existing.save(ignore_permissions=True)
 			except Exception:
-				frappe.log_error(title="Astra India assignment rule days backfill")
+				frappe.log_error(title="Astra India assignment rule backfill")
 		return
 	doc = frappe.get_doc(
 		{
@@ -316,7 +331,9 @@ def ensure_lead_round_robin_rule():
 			"priority": 1,
 			"disabled": 1,
 			"description": "Round-robin new leads across Sales Users (disabled by default)",
-			"assign_condition": 'doc.status == "New"',
+			# Assignment Rule evaluates condition against the doc as `doc` is NOT in scope —
+			# use bare field names (same as Desk UI / test_availability).
+			"assign_condition": 'status == "New"',
 			"assignment_days": [{"day": day} for day in _ALL_WEEKDAYS],
 		}
 	)
@@ -325,3 +342,18 @@ def ensure_lead_round_robin_rule():
 	except Exception:
 		# Older sites may require users before insert — leave disabled stub via db
 		frappe.log_error(title="Astra India assignment rule seed")
+
+	# Backfill condition on older seeds that used the invalid `doc.status` form.
+	try:
+		if frappe.db.exists("Assignment Rule", name):
+			current = frappe.db.get_value("Assignment Rule", name, "assign_condition") or ""
+			if "doc.status" in current:
+				frappe.db.set_value(
+					"Assignment Rule",
+					name,
+					"assign_condition",
+					'status == "New"',
+					update_modified=False,
+				)
+	except Exception:
+		frappe.log_error(title="Astra India assignment rule condition backfill")
