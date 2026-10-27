@@ -134,16 +134,7 @@ const routes = [
     name: 'Welcome',
     component: () => import('@/pages/Welcome.vue'),
   },
-  {
-    path: '/activities',
-    name: 'Activities',
-    component: () => import('@/pages/Activities.vue'),
-  },
-  {
-    path: '/reports',
-    name: 'Reports',
-    component: () => import('@/pages/Reports.vue'),
-  },
+  // Activities + Reports routes land with CRM-08 / CRM-09 (no placeholder pages).
   {
     path: '/login',
     name: 'Login',
