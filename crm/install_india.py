@@ -262,6 +262,11 @@ def ensure_starter_whatsapp_templates():
 			doc = frappe.new_doc(doctype)
 			if meta.has_field("template_name"):
 				doc.template_name = row["name"]
+			# WA Template.validate calls normalize_string(template_label) — never leave None.
+			if meta.has_field("template_label"):
+				doc.template_label = row["label"]
+			if meta.has_field("label"):
+				doc.label = row["label"]
 			if meta.has_field("template"):
 				doc.template = row["body"]
 			if meta.has_field("message"):
@@ -275,12 +280,32 @@ def ensure_starter_whatsapp_templates():
 		break
 
 
+_ALL_WEEKDAYS = (
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday",
+	"Sunday",
+)
+
+
 def ensure_lead_round_robin_rule():
 	"""Create a disabled round-robin Assignment Rule for CRM Lead."""
 	if not frappe.db.exists("DocType", "Assignment Rule"):
 		return
 	name = "Astra Lead Round Robin"
 	if frappe.db.exists("Assignment Rule", name):
+		# Backfill assignment_days on older seeds that omitted the child table.
+		existing = frappe.get_doc("Assignment Rule", name)
+		if not existing.get("assignment_days"):
+			for day in _ALL_WEEKDAYS:
+				existing.append("assignment_days", {"day": day})
+			try:
+				existing.save(ignore_permissions=True)
+			except Exception:
+				frappe.log_error(title="Astra India assignment rule days backfill")
 		return
 	doc = frappe.get_doc(
 		{
@@ -292,11 +317,9 @@ def ensure_lead_round_robin_rule():
 			"disabled": 1,
 			"description": "Round-robin new leads across Sales Users (disabled by default)",
 			"assign_condition": 'doc.status == "New"',
+			"assignment_days": [{"day": day} for day in _ALL_WEEKDAYS],
 		}
 	)
-	# Field names vary slightly across framework versions
-	if hasattr(doc, "assignment_rule_users") or True:
-		pass
 	try:
 		doc.insert(ignore_permissions=True)
 	except Exception:
