@@ -98,6 +98,8 @@ import { ASTRA_FAVICON } from '@/assets/brand'
 import MyDayBoard from '@/components/astra/myday/MyDayBoard.vue'
 import AstraCard from '@/components/astra/AstraCard.vue'
 import AstraEmptyState from '@/components/astra/AstraEmptyState.vue'
+import { sessionStore } from '@/stores/session'
+import { usersStore } from '@/stores/users'
 import '@/components/astra/astra-bento.css'
 
 usePageMeta(() => ({
@@ -106,6 +108,8 @@ usePageMeta(() => ({
 }))
 
 const router = useRouter()
+const { user } = sessionStore()
+const { isManager } = usersStore()
 const feedFilter = ref('all')
 const feedStart = ref(0)
 
@@ -119,12 +123,16 @@ const myDay = createResource({
   cache: 'activities-my-day',
 })
 
+// Backend get_activity_feed supports optional `owner` (crm/api/activities.py ~812).
+// Non-managers must pass the current user or they see every readable Call Log
+// (including Administrator notes). Managers keep the unscoped team feed.
 const feed = createResource({
   url: 'crm.api.activities.get_activity_feed',
   auto: true,
   cache: ['activities-feed', feedFilter],
   makeParams: () => ({
     activity_type: feedFilter.value === 'all' ? null : feedFilter.value,
+    owner: isManager() ? null : user,
     limit: 40,
     start: feedStart.value,
   }),
