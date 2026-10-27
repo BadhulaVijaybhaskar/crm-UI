@@ -78,13 +78,14 @@ describe('navigationItems', () => {
     expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('omits desktop-only destinations on mobile', () => {
+  it('includes Dashboard on mobile (settings drawer + mobile menu)', () => {
     const mobileLabels = getNavigationItems({ mobile: true }).map(
       (item) => item.label,
     )
-    expect(mobileLabels).not.toContain('Dashboard')
+    expect(mobileLabels).toContain('Dashboard')
     expect(mobileLabels).toContain('Leads')
     expect(mobileLabels).toContain('Companies')
+    expect(mobileLabels).toContain('Settings')
   })
 
   it('rejects placeholder and not-ready items via isNavItemAvailable', () => {
