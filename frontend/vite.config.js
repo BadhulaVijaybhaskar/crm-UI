@@ -21,11 +21,11 @@ export default defineConfig(() => {
         },
         manifest: {
           display: 'standalone',
-          name: 'Frappe CRM',
-          short_name: 'Frappe CRM',
+          name: 'Astra CRM',
+          short_name: 'Astra CRM',
           start_url: '/crm',
           description:
-            'Modern & 100% Open-source CRM tool to supercharge your sales operations',
+            'Astra CRM — sales workspace for Astra Connect teams',
           icons: [
             {
               src: '/assets/crm/manifest/manifest-icon-192.maskable.png',
