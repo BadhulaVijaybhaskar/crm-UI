@@ -117,14 +117,31 @@ def process_lead_created(data: dict) -> dict[str, Any]:
 	}
 
 
+def _is_retryable_call_write(exc: BaseException) -> bool:
+	"""True for deadlock / lock-wait / duplicate call-log insert under parallel load."""
+	msg = str(exc).lower()
+	if "deadlock" in msg or "1213" in msg or "lock wait" in msg or "1205" in msg:
+		return True
+	if "duplicate" in msg or "1062" in msg:
+		return True
+	errno = getattr(exc, "errno", None)
+	if errno is None and getattr(exc, "args", None):
+		errno = exc.args[0]
+	if errno in (1213, 1205, 1062):
+		return True
+	name = type(exc).__name__.lower()
+	return "deadlock" in name or "lockwait" in name or "duplicate" in name
+
+
 def process_call_completed(data: dict, *, employee_enriched: bool = False) -> dict[str, Any]:
 	"""Create/update CRM Call Log from call.completed / employee.call.completed.
 
 	Matching is by phone (contactId is Connect's id — not a CRM leadId). Ambiguous
 	phone matches fail the event with a clear error.
 
-	Deadlock retry wraps the whole unit of work — a mid-flight rollback must not
-	leave a half-saved call log that then fails DoesNotExistError on retry.
+	Deadlock/duplicate retry wraps the whole unit of work — including call-log
+	insert/save at `_save_call_log` — so a mid-flight rollback must not leave a
+	half-saved call log. Parent row is locked first for a stable lock order.
 	"""
 	import time as _time
 
@@ -134,8 +151,7 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 			return _process_call_completed_once(data, employee_enriched=employee_enriched)
 		except Exception as exc:
 			last_exc = exc
-			msg = str(exc).lower()
-			if "deadlock" not in msg and "1213" not in msg and "lock wait" not in msg:
+			if not _is_retryable_call_write(exc):
 				raise
 			frappe.db.rollback()
 			_time.sleep(0.05 * (attempt + 1))
@@ -195,7 +211,11 @@ def _process_call_completed_once(data: dict, *, employee_enriched: bool = False)
 	if not (from_number or to_number):
 		raise ProcessingError(_("call.completed requires a valid party phone number"))
 
+	# Lock parent before call-log so concurrent call.completed share one lock order.
+	frappe.db.get_value(match["doctype"], match["name"], "name", for_update=True)
+
 	if frappe.db.exists("CRM Call Log", call_id):
+		frappe.db.get_value("CRM Call Log", call_id, "name", for_update=True)
 		call_log = frappe.get_doc("CRM Call Log", call_id)
 	else:
 		call_log = frappe.new_doc("CRM Call Log")
@@ -471,12 +491,15 @@ def _map_call_status(value: str | None) -> str:
 
 
 def _save_call_log(call_log):
-	"""Insert/save a call log. Deadlocks bubble to process_call_completed's outer retry.
+	"""Insert/save a call log inside process_call_completed's retry loop.
 
 	Ignore mandatory on from/to so Connect can leave the agent/DID leg empty
-	instead of fabricating a duplicate customer number.
+	instead of fabricating a duplicate customer number. Deadlocks and duplicate
+	primary keys bubble to process_call_completed, which rolls back and retries
+	idempotently (exists → for_update → update).
 	"""
 	call_log.flags.ignore_mandatory = True
+	call_log.flags.ignore_permissions = True
 	if call_log.is_new():
 		call_log.insert(ignore_permissions=True)
 	else:

@@ -39,7 +39,9 @@ def validate_twilio_request(args, require_application_sid: bool = False):
 
 	params = dict(args or {})
 	params.pop("cmd", None)
-	url = frappe.request.url if frappe.request else ""
+	from crm.integrations.twilio.utils import get_twilio_webhook_url
+
+	url = get_twilio_webhook_url()
 	validator = RequestValidator(auth_token)
 	if not validator.validate(url, params, signature):
 		frappe.throw(_("Invalid Twilio signature"), frappe.PermissionError)
