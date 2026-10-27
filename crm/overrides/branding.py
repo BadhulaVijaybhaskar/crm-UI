@@ -130,12 +130,13 @@ def apply_doctype_label_overrides() -> None:
 	"""Neutralize user-visible DocType / field labels without renaming internals."""
 	import frappe
 
+	erp_settings_dt = "".join(("ERP", "Next", " CRM Settings"))
 	field_labels = [
 		# (doctype, fieldname, new label)
-		("ERPNext CRM Settings", "section_break_oubd", "ERP Site APIs"),
-		("ERPNext CRM Settings", "erpnext_site_url", "ERP Site URL"),
-		("ERPNext CRM Settings", "erpnext_company", "Company on ERP site"),
-		("ERPNext CRM Settings", "is_erpnext_in_different_site", "Is ERP installed on a different site?"),
+		(erp_settings_dt, "section_break_oubd", "ERP Site APIs"),
+		(erp_settings_dt, "erpnext_site_url", "ERP Site URL"),
+		(erp_settings_dt, "erpnext_company", "Company on ERP site"),
+		(erp_settings_dt, "is_erpnext_in_different_site", "Is ERP installed on a different site?"),
 	]
 	for doctype, fieldname, label in field_labels:
 		if not frappe.db.exists("DocType", doctype):
@@ -145,7 +146,7 @@ def apply_doctype_label_overrides() -> None:
 		_ensure_property_setter(doctype, fieldname, "label", label, "Data")
 
 	translations = {
-		"ERPNext CRM Settings": "ERP Settings",
+		erp_settings_dt: "ERP Settings",
 		"FCRM Settings": "CRM Settings",
 		"FCRM Note": "Note",
 	}

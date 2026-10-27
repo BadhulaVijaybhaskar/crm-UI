@@ -41,6 +41,8 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 
 	def setUp(self):
 		frappe.set_user("Administrator")
+		# @rate_limit(ip_based=True) requires a request IP; tests have no WSGI environ.
+		frappe.local.request_ip = "127.0.0.1"
 		settings = frappe.get_single("Astra Connect Settings")
 		settings.enabled = 1
 		settings.connect_base_url = "https://connect.example.test"
