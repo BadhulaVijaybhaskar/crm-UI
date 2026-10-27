@@ -326,6 +326,7 @@ function parseView(views) {
 
 function onNavClick(event, link) {
   if (link.connect) {
+    // External Connect destinations must not steal the active nav highlight.
     openAstraConnect(link.connect)
     if (props.mobile) mobileSidebarOpened.value = false
     return
@@ -360,8 +361,17 @@ function getIcon(routeName, icon) {
 }
 
 // A saved view's key is its name; a plain nav item's key is its route name.
+// Unmapped routes (Legal notices, etc.) clear the highlight.
 function currentRouteKey() {
-  return route.query.view || route.name
+  const key = route.query.view || route.name
+  const known = links.some(
+    (link) => link.route === key || link.route === route.name,
+  )
+  const knownView = allViews.value
+    ?.flatMap((s) => s.views || [])
+    .some((v) => v.key === key)
+  if (!known && !knownView && key !== 'Notifications') return null
+  return key
 }
 
 // Set the highlight on click rather than waiting for the route, since route

@@ -63,10 +63,21 @@ def _scrub_system_settings() -> None:
 	_set_single("System Settings", "hide_footer_in_auto_email_reports", 1)
 	# 2FA issuer shown in authenticator apps
 	_set_single("System Settings", "otp_issuer_name", ASTRA_APP_NAME)
+	# Skip the upstream setup wizard on first login
+	_set_single("System Settings", "setup_complete", 1)
+	_set_single("System Settings", "language", "en")
+	_set_single("System Settings", "time_zone", "Asia/Kolkata")
+	_set_single("System Settings", "currency", "INR")
+	_set_single("System Settings", "number_format", "#,##,###.##")
 
 	# email_body.get_footer reads these via frappe.db.get_default
 	frappe.db.set_default("email_footer_address", "")
 	frappe.db.set_default("disable_standard_email_footer", "1")
+	frappe.db.set_default("currency", "INR")
+	frappe.db.set_default("number_format", "#,##,###.##")
+
+	if frappe.db.exists("DocType", "FCRM Settings"):
+		_set_single("FCRM Settings", "setup_completed", 1)
 
 
 def _scrub_website_settings() -> None:
@@ -209,6 +220,11 @@ def relabel_crm_workspace() -> None:
 		updates["title"] = visible
 	if current_label != visible:
 		updates["label"] = visible
+	# Public route slug only — document name stays "Frappe CRM".
+	if frappe.db.has_column("tabWorkspace", "route"):
+		current_route = frappe.db.get_value("Workspace", doc_name, "route")
+		if current_route != "astra-crm":
+			updates["route"] = "astra-crm"
 	if updates:
 		frappe.db.set_value("Workspace", doc_name, updates, update_modified=False)
 

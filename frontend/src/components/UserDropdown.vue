@@ -5,7 +5,7 @@
         class="flex h-12 items-center rounded-5 py-2 duration-300 ease-in-out"
         :class="
           isCollapsed
-            ? 'w-auto px-0'
+            ? 'w-auto bg-transparent px-0'
             : open
               ? 'w-full px-2 bg-surface-elevation-3 shadow-sm'
               : 'w-full px-2 hover:bg-surface-gray-2'
@@ -15,7 +15,11 @@
           :src="sidebarLogo"
           :alt="brand.name || 'Astra CRM'"
           class="flex-shrink-0 object-contain"
-          :class="isCollapsed ? 'size-8' : 'h-9 max-w-[168px]'"
+          :class="
+            isCollapsed
+              ? 'astra-brand-mark size-7 bg-transparent'
+              : 'h-9 max-w-[168px]'
+          "
         />
         <div
           class="flex flex-1 flex-col text-left duration-300 ease-in-out truncate"
@@ -57,21 +61,16 @@
 </template>
 
 <script setup>
-import FrappeCloudIcon from '@/components/Icons/FrappeCloudIcon.vue'
 import AppsIcon from '@/components/Icons/AppsIcon.vue'
 import { sessionStore } from '@/stores/session'
 import { usersStore } from '@/stores/users'
 import { getSettings } from '@/stores/settings'
 import { showSettings, isMobileView } from '@/composables/settings'
 import { showAboutModal } from '@/composables/modals'
-import { confirmLoginToFrappeCloud } from '@/composables/frappecloud'
 import { spriteIcon } from '@/utils/spriteIcon'
 import { createResource, Dropdown } from 'frappe-ui'
 import { computed, h, markRaw } from 'vue'
-import { useRouter } from 'vue-router'
 import { ASTRA_LOGO_ON_DARK, ASTRA_MARK } from '@/assets/brand'
-
-const router = useRouter()
 
 const props = defineProps({
   isCollapsed: { type: Boolean, default: false },
@@ -125,42 +124,8 @@ const dropdownItems = computed(() => {
     }
   })
 
-  // Always expose Legal notices after About (post sign-in only — this menu is auth-gated).
-  ensureLegalNoticesLink(_dropdownItems)
-
   return _dropdownItems
 })
-
-function ensureLegalNoticesLink(groups) {
-  const hasLegal = groups.some((g) =>
-    (g.options || []).some(
-      (opt) => opt.label === __('Legal notices') || opt._name1 === 'legal_notices',
-    ),
-  )
-  if (hasLegal) return
-
-  const legalItem = {
-    icon: spriteIcon('file-text'),
-    label: __('Legal notices'),
-    onClick: () => router.push({ name: 'Legal Notices' }),
-  }
-
-  for (const group of groups) {
-    const opts = group.options || []
-    const aboutIdx = opts.findIndex(
-      (opt) => opt.label === __('About') || opt._name1 === 'about',
-    )
-    if (aboutIdx !== -1) {
-      opts.splice(aboutIdx + 1, 0, legalItem)
-      return
-    }
-  }
-
-  if (groups.length) {
-    groups[0].options = groups[0].options || []
-    groups[0].options.push(legalItem)
-  }
-}
 
 function dropdownItemObj(item) {
   let _item = JSON.parse(JSON.stringify(item))
@@ -199,26 +164,12 @@ function getStandardItem(item) {
         onClick: () => (showSettings.value = true),
         condition: () => !isMobileView.value,
       }
-    case 'login_to_fc':
-      return {
-        icon: h(FrappeCloudIcon),
-        label: __(item.label),
-        onClick: () => confirmLoginToFrappeCloud(),
-        condition: () => !isMobileView.value && window.is_fc_site,
-      }
     case 'about':
       return {
         _name1: 'about',
         icon: item.icon,
         label: __(item.label),
         onClick: () => (showAboutModal.value = true),
-      }
-    case 'legal_notices':
-      return {
-        _name1: 'legal_notices',
-        icon: item.icon,
-        label: __(item.label),
-        onClick: () => router.push({ name: 'Legal Notices' }),
       }
     case 'logout':
       return {
@@ -239,21 +190,37 @@ function appMenuItems() {
   }))
 }
 
-/** Non-admins: no Desk / WhatsApp / other apps. Admins: Desk → Admin. */
+const VENDOR_APP_NAMES = new Set([
+  'frappe',
+  'erpnext',
+  'insights',
+  'hrms',
+  'lms',
+  'wiki',
+  'builder',
+  'helpdesk',
+  'telephony',
+])
+
+/** Non-admins: no Desk / other apps. Admins: Desk → Admin with Astra mark. */
 function visibleApps(data) {
   if (!userIsAdmin.value) return []
   return [
     {
-      name: 'frappe',
-      logo: '/assets/frappe/images/framework.png',
+      name: 'admin',
+      logo: ASTRA_MARK,
       title: __('Admin'),
       route: '/desk',
     },
     ...(data || [])
-      .filter((app) => app.name !== 'crm')
+      .filter((app) => app.name !== 'crm' && !VENDOR_APP_NAMES.has(app.name))
+      .filter((app) => {
+        const blob = `${app.name || ''} ${app.title || ''} ${app.logo || ''}`
+        return !/frappe|erpnext|framework\.png/i.test(blob)
+      })
       .map((app) => ({
         name: app.name,
-        logo: app.logo,
+        logo: ASTRA_MARK,
         title: __(app.title),
         route: app.route,
       })),
