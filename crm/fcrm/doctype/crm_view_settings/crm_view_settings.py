@@ -60,6 +60,7 @@ class CRMViewSettings(Document):
 		Non-managers always own their row. Public / shared (user-empty) standard views
 		are manager-only — matching `public()`. Personal is_standard copies for the
 		session user remain allowed so list/kanban defaults still work.
+		Only System Manager may create/assign a view owned by another user.
 		"""
 		session = frappe.session.user
 		if not _is_view_manager(session):
@@ -68,6 +69,10 @@ class CRMViewSettings(Document):
 				frappe.throw(_("Not permitted to make views public"), frappe.PermissionError)
 			if cint(self.is_standard) and self.user != session:
 				frappe.throw(_("Not permitted to create standard views"), frappe.PermissionError)
+
+		# Sales Manager (and below) cannot create a view for someone else.
+		if self.user and self.user != session and not _is_system_manager(session):
+			frappe.throw(_("Not permitted to create views for another user"), frappe.PermissionError)
 
 		# Default flag for someone else's private view
 		if cint(self.is_default) and self.user and self.user != session and not _is_system_manager(session):
