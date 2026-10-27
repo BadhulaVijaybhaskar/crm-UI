@@ -14,9 +14,44 @@ import LucideChartColumn from '~icons/lucide/chart-column'
 import LucideSettings from '~icons/lucide/settings'
 import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
-import { navItemKey, resolveActiveNavKey } from '@/utils/navActive'
 
-export { navItemKey, resolveActiveNavKey }
+/**
+ * Sidebar item key (mirrors AppSidebar navLinkFromItem).
+ * One selectable item → one key; Astra routes never share a key.
+ */
+export function navItemKey(item) {
+  if (!item) return null
+  if (item.connect) return `connect:${item.connect}`
+  if (item.action) return String(item.action)
+  if (item.route) return item.route
+  return null
+}
+
+/**
+ * Active sidebar key for a vue-router location — same rules as AppSidebar.
+ * Saved views use the view id; plain pages use the route name.
+ * Unmapped routes clear the highlight.
+ *
+ * @param {{ name?: string, query?: { view?: string } }} route
+ * @param {Array<{ route?: string }>} items  nav items with a route
+ * @param {string[]} [viewKeys]  saved/public/pinned view keys
+ */
+export function resolveActiveNavKey(route, items = [], viewKeys = []) {
+  if (!route?.name) return null
+  const key = route.query?.view || route.name
+  const known = items.some(
+    (link) => link.route === key || link.route === route.name,
+  )
+  const knownView = viewKeys.includes(key)
+  if (!known && !knownView && key !== 'Notifications') return null
+  return key
+}
+
+/** True when exactly one of `keys` equals `active`. */
+export function isExclusiveActive(active, keys) {
+  if (active == null) return false
+  return keys.filter((k) => k === active).length === 1
+}
 
 /**
  * Flip these when the real page ships (CRM-08 Activities, CRM-09 Reports).

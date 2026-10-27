@@ -115,7 +115,7 @@
               :afterUpgrade="() => capture('upgrade_plan_from_trial_banner')"
             />
             <GettingStartedBanner
-              v-if="!isOnboardingStepsCompleted"
+              v-if="showGettingStarted"
               :isSidebarCollapsed="isCollapsed"
             />
           </div>
@@ -189,8 +189,12 @@ import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import Icon from '@/components/Icon.vue'
 import PinIcon from '@/components/Icons/PinIcon.vue'
 import UserDropdown from '@/components/UserDropdown.vue'
-import { getNavigationItems } from '@/utils/navigation'
+import {
+  getNavigationItems,
+  resolveActiveNavKey,
+} from '@/utils/navigation'
 import { openAstraConnect } from '@/utils/astraConnect'
+import { shouldShowGettingStartedBanner } from '@/components/astra/myday/myDayHelpers'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
@@ -362,18 +366,11 @@ function getIcon(routeName, icon) {
   }
 }
 
-// A saved view's key is its name; a plain nav item's key is its route name.
-// Unmapped routes (Legal notices, etc.) clear the highlight.
+// Shared with navigation.js — tests cover this exact active-key logic.
 function currentRouteKey() {
-  const key = route.query.view || route.name
-  const known = links.some(
-    (link) => link.route === key || link.route === route.name,
-  )
-  const knownView = allViews.value
-    ?.flatMap((s) => s.views || [])
-    .some((v) => v.key === key)
-  if (!known && !knownView && key !== 'Notifications') return null
-  return key
+  const viewKeys =
+    allViews.value?.flatMap((s) => (s.views || []).map((v) => v.key)) || []
+  return resolveActiveNavKey(route, links, viewKeys)
 }
 
 // Set the highlight on click rather than waiting for the route, since route
@@ -421,8 +418,19 @@ function toggleHelpModal() {
 // onboarding
 const { user } = sessionStore()
 const { users, isManager } = usersStore()
-const { isOnboardingStepsCompleted, setUp } = useOnboarding('frappecrm')
+const onboarding = useOnboarding('frappecrm')
+const { isOnboardingStepsCompleted, setUp } = onboarding
 const { flushPendingSteps } = useCrmOnboarding()
+
+// Hide Getting started when there are zero steps (avoids NaN% 0/0).
+const showGettingStarted = computed(() =>
+  shouldShowGettingStartedBanner({
+    completed: Boolean(isOnboardingStepsCompleted?.value ?? isOnboardingStepsCompleted),
+    totalSteps: Number(
+      onboarding.totalSteps?.value ?? onboarding.totalSteps ?? 0,
+    ),
+  }),
+)
 
 // The onboarding composable persists the checklist as a positional
 // [{name, completed}] list, seeds it from the current steps ONLY when empty,

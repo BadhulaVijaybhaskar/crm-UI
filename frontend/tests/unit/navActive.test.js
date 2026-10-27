@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import {
   getNavigationItems,
+  isExclusiveActive,
   NAV_FEATURE_READY,
   navigationItems,
   navItemKey,
   resolveActiveNavKey,
 } from '@/utils/navigation'
-import { isExclusiveActive } from '@/utils/navActive'
 import router from '@/router'
 
 const ASTRA_ROUTES = ['Activities', 'Work Queue', 'Conversations']
 
-describe('Astra nav routes and exclusive active state', () => {
+describe('Astra nav routes and exclusive active state (sidebar logic)', () => {
   it('registers Work Queue and Conversations routes that resolve', () => {
     expect(NAV_FEATURE_READY.WorkQueue).toBe(true)
     expect(NAV_FEATURE_READY.Conversations).toBe(true)
@@ -54,5 +54,17 @@ describe('Astra nav routes and exclusive active state', () => {
     expect(workQueue).toBe('Work Queue')
     expect(conversations).toBe('Conversations')
     expect(leads).toBe('Leads')
+  })
+
+  it('clears highlight on unmapped routes and honors saved view keys', () => {
+    const items = getNavigationItems()
+    expect(resolveActiveNavKey({ name: 'Legal Notices' }, items)).toBe(null)
+    expect(
+      resolveActiveNavKey(
+        { name: 'Leads', query: { view: 'my-hot-leads' } },
+        items,
+        ['my-hot-leads'],
+      ),
+    ).toBe('my-hot-leads')
   })
 })
