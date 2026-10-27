@@ -122,12 +122,26 @@ def has_contact_permission(doc, ptype, user):
 	return _has_permission(doc, ptype, user, "Contact")
 
 
-def apply_default_record_owner(doc, method=None):
-	"""After Assignment Rule: set lead_owner/deal_owner only if still empty.
+def _fallback_integration_owner() -> str | None:
+	"""Owner for Guest/webhook creates when no Assignment Rule assignee exists."""
+	try:
+		configured = frappe.db.get_single_value("Astra Connect Settings", "default_lead_owner")
+		if configured and frappe.db.exists("User", configured):
+			return configured
+	except Exception:
+		pass
+	if frappe.db.exists("User", "Administrator"):
+		return "Administrator"
+	return None
 
-	Prefers an open ToDo assignee from round-robin / availability; otherwise the
-	creating user (never Guest). Document-method after_insert must not set the
-	owner earlier or assignment is skipped.
+
+def apply_default_record_owner(doc, method=None):
+	"""Set lead_owner/deal_owner only when still empty, without preempting Assignment Rule.
+
+	- Prefer an open ToDo assignee (round-robin / availability).
+	- Never call assign_agent here — that creates a ToDo and skips Assignment Rule.
+	- Logged-in creates keep the owner field empty; visibility uses document.owner.
+	- Guest/webhook creates fall back to the integration / Administrator user.
 	"""
 	owner_field = _OWNER_FIELD.get(doc.doctype)
 	if not owner_field or owner_field == "owner":
@@ -145,14 +159,19 @@ def apply_default_record_owner(doc, method=None):
 		return
 
 	user = frappe.session.user
-	if user in (None, "", "Guest"):
+	if user not in (None, "", "Guest"):
+		# Leave blank so Assignment Rule / tests can set ownership later.
+		# Sales Users still see the row via document.owner in hierarchy filters.
 		return
-	doc.db_set(owner_field, user, update_modified=False)
-	if hasattr(doc, "assign_agent"):
-		try:
-			doc.assign_agent(user)
-		except Exception:
-			frappe.log_error(title=f"CRM default owner assign {doc.doctype}")
+
+	fallback = _fallback_integration_owner()
+	if not fallback:
+		return
+	doc.db_set(owner_field, fallback, update_modified=False)
+	try:
+		frappe.db.set_value(doc.doctype, doc.name, "owner", fallback, update_modified=False)
+	except Exception:
+		pass
 
 
 def _in_hierarchy(user: str) -> bool:

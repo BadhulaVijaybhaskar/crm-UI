@@ -322,13 +322,15 @@ doc_events = {
 	},
 	"CRM Deal": {
 		"after_insert": [
-			# Runs after Assignment Rule (frappe) so we only default when still empty.
+			# Do not assign here — only sync owner after Assignment Rule / for Guest.
 			"crm.permissions.org_hierarchy.apply_default_record_owner",
 		],
 		"on_update": [
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext",
 			"crm.automation.events.on_deal_update",
 			"crm.integrations.astra_connect.outbound.on_deal_update",
+			# After Frappe Assignment Rule on_update: copy ToDo assignee → deal_owner.
+			"crm.permissions.org_hierarchy.apply_default_record_owner",
 		],
 	},
 	"CRM Lead": {
@@ -338,6 +340,7 @@ doc_events = {
 		"on_update": [
 			"crm.automation.events.on_lead_update",
 			"crm.integrations.astra_connect.outbound.on_lead_update",
+			"crm.permissions.org_hierarchy.apply_default_record_owner",
 		],
 	},
 	"Sales Order": {
