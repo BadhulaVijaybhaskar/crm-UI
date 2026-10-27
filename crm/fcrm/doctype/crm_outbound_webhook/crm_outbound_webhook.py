@@ -38,6 +38,11 @@ class CRMOutboundWebhook(Document):
 		self.events = ",".join(events)
 		if self.endpoint_url and not str(self.endpoint_url).startswith(("http://", "https://")):
 			frappe.throw(frappe._("Endpoint URL must start with http:// or https://"))
+		if self.endpoint_url:
+			try:
+				_assert_webhook_url_safe(str(self.endpoint_url).strip())
+			except ValueError as exc:
+				frappe.throw(frappe._(str(exc)))
 
 
 def _normalize_events(raw) -> list[str]:
