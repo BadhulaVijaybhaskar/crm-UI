@@ -338,9 +338,11 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertEqual(call_log.channel, "voice")
 		self.assertEqual(call_log.astra_contact_id, "ctc-55")
 		self.assertEqual(call_log.qualified, 1)
-		# Phone fields must stay E.164 — never "astra-connect" / "unknown".
-		self.assertTrue(str(call_log.get("from") or "").startswith("+"))
-		self.assertTrue(str(call_log.to or "").startswith("+"))
+		self.assertEqual(call_log.ai_employee_id, "emp-9")
+		# Outbound: party on `to`; agent/DID leg stays empty when unset (never
+		# duplicate the customer onto both legs or invent astra-connect/unknown).
+		self.assertEqual(call_log.to, "+919876543210")
+		self.assertFalse(call_log.get("from"))
 		self.assertNotIn("astra-connect", str(call_log.get("from") or "").lower())
 		self.assertNotIn("unknown", str(call_log.to or "").lower())
 		# Zulu endedAt must land as a naive datetime MariaDB accepts.
@@ -399,7 +401,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"summary": "Done",
 			"endedAt": "2026-10-27T10:05:00Z",
 			"startedAt": "2026-10-27T10:03:00Z",
-			"durationSec": 120,
+			"durationSeconds": 120,
 			"endReason": "cancelled",
 			"recordingUrl": "https://connect.example/r/1",
 			"transcript": [{"role": "agent", "text": "Hi"}],
@@ -413,6 +415,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertTrue(call_log.recording_url)
 		self.assertIn("agent", call_log.transcript or "")
 		self.assertEqual(call_log.disposition, "Appointment Booked")
+		# Inbound: party on `from`; empty agent leg when no Connect DID.
+		self.assertTrue(str(call_log.get("from") or "").endswith("9876543211"))
+		self.assertFalse(call_log.to)
+		self.assertEqual(call_log.ai_employee_id, "emp-3")
 
 	def test_call_unmatched_returns_200_failed(self):
 		payload = {
