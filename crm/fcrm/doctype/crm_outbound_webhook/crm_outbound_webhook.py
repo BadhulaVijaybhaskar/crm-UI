@@ -202,6 +202,104 @@ def _assert_webhook_url_safe(url: str) -> None:
 		)
 
 
+def _resolve_safe_webhook_ip(hostname: str) -> str:
+	"""Resolve ``hostname`` once and return a single IP that passes the SSRF check.
+
+	The caller must connect to this exact address (see ``_pinned_webhook_post``) so a
+	DNS rebind between validation and connect cannot reach a private host.
+	"""
+	import ipaddress
+	import socket
+
+	host = (hostname or "").strip().lower().rstrip(".")
+	if not host:
+		raise ValueError("webhook host is empty")
+	# Literal IP in the URL — validate and return as-is.
+	literal = None
+	try:
+		literal = ipaddress.ip_address(host)
+	except ValueError:
+		literal = None
+	if literal is not None:
+		if (
+			literal.is_private or literal.is_loopback or literal.is_link_local or literal.is_reserved
+		) and not _allow_private_webhook_hosts():
+			raise ValueError("webhook host is private/loopback")
+		return host
+
+	try:
+		infos = socket.getaddrinfo(host, None)
+	except Exception as exc:
+		raise ValueError(f"webhook host could not be resolved: {host}") from exc
+
+	candidates: list[str] = []
+	for info in infos:
+		ip_str = info[4][0]
+		try:
+			addr = ipaddress.ip_address(ip_str)
+		except ValueError:
+			continue
+		blocked = addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved
+		if blocked and not _allow_private_webhook_hosts():
+			continue
+		if ip_str not in candidates:
+			candidates.append(ip_str)
+	if not candidates:
+		raise ValueError(
+			"webhook host is private/loopback; set site_config "
+			"crm_outbound_webhook_allow_private_hosts for local testing"
+		)
+	return candidates[0]
+
+
+class _PinnedIPAdapter(requests.adapters.HTTPAdapter):
+	"""Connect to a pre-validated IP while keeping TLS SNI/verify on the hostname."""
+
+	def __init__(self, hostname: str, **kwargs):
+		self._server_hostname = hostname
+		super().__init__(**kwargs)
+
+	def init_poolmanager(self, *args, **kwargs):
+		kwargs["server_hostname"] = self._server_hostname
+		super().init_poolmanager(*args, **kwargs)
+
+
+def _pinned_webhook_post(url: str, *, data: bytes, headers: dict, timeout: int):
+	"""POST ``url`` with redirects disabled and the socket pinned to a safe IP.
+
+	Host header and TLS SNI stay on the original hostname; only the TCP peer is the
+	IP returned by ``_resolve_safe_webhook_ip`` at call time.
+	"""
+	from urllib.parse import urlparse
+
+	parsed = urlparse(url)
+	host = parsed.hostname or ""
+	pinned_ip = _resolve_safe_webhook_ip(host)
+	ip_netloc = f"[{pinned_ip}]" if ":" in pinned_ip else pinned_ip
+	if parsed.port:
+		ip_netloc = f"{ip_netloc}:{parsed.port}"
+	host_header = f"{host}:{parsed.port}" if parsed.port else host
+
+	req_headers = dict(headers or {})
+	req_headers["Host"] = host_header
+	pinned_url = parsed._replace(netloc=ip_netloc).geturl()
+
+	session = requests.Session()
+	adapter = _PinnedIPAdapter(host)
+	session.mount("https://", adapter)
+	session.mount("http://", adapter)
+	try:
+		return session.post(
+			pinned_url,
+			data=data,
+			headers=req_headers,
+			timeout=timeout,
+			allow_redirects=False,
+		)
+	finally:
+		session.close()
+
+
 def deliver_custom_webhooks(event_type: str, payload: dict, delivery_id: str, max_attempts: int = 3):
 	"""POST to enabled CRM Outbound Webhook endpoints that subscribe to this event."""
 	if not frappe.db.exists("DocType", "CRM Outbound Webhook"):
@@ -242,7 +340,8 @@ def deliver_custom_webhooks(event_type: str, payload: dict, delivery_id: str, ma
 			if secret:
 				headers["X-Astra-Signature"] = f"sha256={sign_payload(secret, ts, body)}"
 			try:
-				resp = requests.post(
+				# Re-resolve + pin on every attempt (no redirect following).
+				resp = _pinned_webhook_post(
 					hook.endpoint_url,
 					data=body,
 					headers=headers,
@@ -253,6 +352,7 @@ def deliver_custom_webhooks(event_type: str, payload: dict, delivery_id: str, ma
 					break
 				last_error = f"HTTP {resp.status_code}: {(resp.text or '')[:500]}"
 				# Permanent client errors — do not retry (except 429).
+				# 3xx is also terminal: we never follow redirects into a private host.
 				if resp.status_code < 500 and resp.status_code != 429:
 					break
 			except Exception as exc:
