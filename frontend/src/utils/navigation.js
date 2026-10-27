@@ -14,6 +14,9 @@ import LucideChartColumn from '~icons/lucide/chart-column'
 import LucideSettings from '~icons/lucide/settings'
 import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
+import { navItemKey, resolveActiveNavKey } from '@/utils/navActive'
+
+export { navItemKey, resolveActiveNavKey }
 
 /**
  * Flip these when the real page ships (CRM-08 Activities, CRM-09 Reports).
