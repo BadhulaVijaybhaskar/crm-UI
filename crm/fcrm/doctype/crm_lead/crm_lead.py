@@ -84,6 +84,10 @@ class CRMLead(Document):
 		from crm.api.form import enrich_form_submission
 
 		enrich_form_submission(self)
+		# API/CSV/webhook creates without lead_owner are invisible to Sales Users
+		# under hierarchy scoping — default to the creating user (never Guest).
+		if not self.lead_owner and frappe.session.user not in (None, "", "Guest"):
+			self.lead_owner = frappe.session.user
 
 	def before_validate(self):
 		self.set_sla()
