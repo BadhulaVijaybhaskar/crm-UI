@@ -72,27 +72,48 @@ def set_default_calling_medium(medium: str):
 	return get_user_default_calling_medium()
 
 
+def _call_log_parent_refs(call_log) -> tuple[str | None, str | None]:
+	"""Lead/Deal/Contact the call log points at, if any."""
+	ref_dt = call_log.get("reference_doctype")
+	ref_dn = call_log.get("reference_docname")
+	if ref_dt and ref_dn:
+		return ref_dt, ref_dn
+	for link in call_log.get("links") or []:
+		if link.get("link_doctype") in ("CRM Lead", "CRM Deal", "Contact") and link.get("link_name"):
+			return link.get("link_doctype"), link.get("link_name")
+	return None, None
+
+
 @frappe.whitelist()
 def add_note_to_call_log(call_sid: str, note: dict):
 	"""Add/Update note to call log based on call sid."""
 	if not frappe.has_permission("CRM Call Log", "write", call_sid):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-	_note = None
+	call_log = frappe.get_doc("CRM Call Log", call_sid)
+	ref_dt, ref_dn = _call_log_parent_refs(call_log)
+
 	if not note.get("name"):
 		_note = frappe.get_doc(
 			{
 				"doctype": "FCRM Note",
 				"title": note.get("title", "Call Note"),
 				"content": note.get("content"),
+				"reference_doctype": ref_dt,
+				"reference_docname": ref_dn,
 			}
-		).insert(ignore_permissions=True)
+		)
+		# Respect Note create + parent-read rules (no ignore_permissions).
+		_note.insert()
 	else:
-		_note = frappe.set_value("FCRM Note", note.get("name"), "content", note.get("content"))
+		if not frappe.has_permission("FCRM Note", "write", note.get("name")):
+			frappe.throw(_("Not permitted"), frappe.PermissionError)
+		_note = frappe.get_doc("FCRM Note", note.get("name"))
+		_note.content = note.get("content")
+		_note.save()
 
-	call_log = frappe.get_cached_doc("CRM Call Log", call_sid)
 	call_log.link_with_reference_doc("FCRM Note", _note.name)
-	call_log.save(ignore_permissions=True)
+	call_log.save()
 
 	return _note
 
@@ -103,7 +124,9 @@ def add_task_to_call_log(call_sid: str, task: dict):
 	if not frappe.has_permission("CRM Call Log", "write", call_sid):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-	_task = None
+	call_log = frappe.get_doc("CRM Call Log", call_sid)
+	ref_dt, ref_dn = _call_log_parent_refs(call_log)
+
 	if not task.get("name"):
 		_task = frappe.get_doc(
 			{
@@ -114,10 +137,17 @@ def add_task_to_call_log(call_sid: str, task: dict):
 				"due_date": task.get("due_date"),
 				"status": task.get("status"),
 				"priority": task.get("priority"),
+				"reference_doctype": ref_dt,
+				"reference_docname": ref_dn,
 			}
-		).insert(ignore_permissions=True)
+		)
+		# Respect Task create + parent-read rules (no ignore_permissions).
+		_task.insert()
 	else:
+		if not frappe.has_permission("CRM Task", "write", task.get("name")):
+			frappe.throw(_("Not permitted"), frappe.PermissionError)
 		_task = frappe.get_doc("CRM Task", task.get("name"))
+		# Parent-read is enforced by has_task_permission on write.
 		_task.update(
 			{
 				"title": task.get("title"),
@@ -128,11 +158,10 @@ def add_task_to_call_log(call_sid: str, task: dict):
 				"priority": task.get("priority"),
 			}
 		)
-		_task.save(ignore_permissions=True)
+		_task.save()
 
-	call_log = frappe.get_doc("CRM Call Log", call_sid)
 	call_log.link_with_reference_doc("CRM Task", _task.name)
-	call_log.save(ignore_permissions=True)
+	call_log.save()
 
 	return _task
 
