@@ -218,10 +218,7 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 	call_log.reference_docname = match["name"]
 
 	call_log.flags.ignore_permissions = True
-	if call_log.is_new():
-		call_log.insert(ignore_permissions=True)
-	else:
-		call_log.save(ignore_permissions=True)
+	_save_call_log(call_log)
 
 	call_log.link_with_reference_doc(match["doctype"], match["name"])
 	if match.get("contact"):
@@ -242,7 +239,7 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 		note_name = note.name
 		call_log.note = note.name
 		call_log.link_with_reference_doc("FCRM Note", note.name)
-		call_log.save(ignore_permissions=True)
+		_save_call_log(call_log)
 
 	task_name = None
 	if next_action:
@@ -256,11 +253,12 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 				"due_date": _naive_site_datetime(next_action_at) if next_action_at else None,
 				"reference_doctype": match["doctype"],
 				"reference_docname": match["name"],
+				"owner": owner,
 			}
 		).insert(ignore_permissions=True)
 		task_name = task.name
 		call_log.link_with_reference_doc("CRM Task", task.name)
-		call_log.save(ignore_permissions=True)
+		_save_call_log(call_log)
 
 	if ai_employee_id and match["doctype"] in ("CRM Lead", "CRM Deal"):
 		frappe.db.set_value(match["doctype"], match["name"], "ai_employee_id", ai_employee_id)
@@ -436,6 +434,53 @@ def _map_call_status(value: str | None) -> str:
 		"initiated": "Initiated",
 	}
 	return mapping.get(v, "Completed")
+
+
+def _save_call_log(call_log, *, attempts: int = 3):
+	"""Insert/save with deadlock retry (parallel Connect bursts hit MariaDB 1213)."""
+	import time as _time
+
+	last_exc = None
+	for attempt in range(attempts):
+		try:
+			if call_log.is_new():
+				call_log.insert(ignore_permissions=True)
+			else:
+				call_log.save(ignore_permissions=True)
+			return call_log
+		except Exception as exc:
+			last_exc = exc
+			msg = str(exc).lower()
+			# MySQL/MariaDB deadlock (1213) or lock wait timeout
+			if "deadlock" not in msg and "1213" not in msg and "lock wait" not in msg:
+				raise
+			frappe.db.rollback()
+			# Reload if the row may already exist after a partial commit by a peer
+			if call_log.name and frappe.db.exists("CRM Call Log", call_log.name):
+				fresh = frappe.get_doc("CRM Call Log", call_log.name)
+				for field in (
+					"type",
+					"status",
+					"duration",
+					"start_time",
+					"end_time",
+					"from",
+					"to",
+					"outcome",
+					"disposition",
+					"qualified",
+					"call_summary",
+					"recording_url",
+					"transcript",
+					"reference_doctype",
+					"reference_docname",
+					"note",
+				):
+					if call_log.get(field) not in (None, ""):
+						fresh.set(field, call_log.get(field))
+				call_log = fresh
+			_time.sleep(0.05 * (attempt + 1))
+	raise last_exc
 
 
 def get_connect_integration_user() -> str:
