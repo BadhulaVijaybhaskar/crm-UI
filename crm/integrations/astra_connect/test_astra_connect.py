@@ -15,6 +15,8 @@ from crm.integrations.astra_connect.auth import sign_payload
 from crm.integrations.astra_connect.mapping import DEFAULT_DISPOSITION, map_disposition
 from crm.integrations.astra_connect.processing import (
 	ProcessingError,
+	_is_retryable_call_write,
+	process_call_completed,
 	process_lead_created,
 	resolve_party_by_phone,
 )
@@ -491,3 +493,51 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertEqual(status, 200)
 		self.assertEqual(result["status"], "failed")
 		self.assertIn("Ambiguous", result["error"])
+
+	def test_call_completed_retries_deadlock_on_save(self):
+		"""_save_call_log deadlocks must retry inside process_call_completed."""
+		from unittest.mock import patch
+
+		process_lead_created(
+			{
+				"leadId": "lead-deadlock-1",
+				"name": "Deadlock Lead",
+				"phone": "+919811112222",
+				"status": "new",
+			}
+		)
+		data = {
+			"callId": "call-deadlock-1",
+			"contactId": "ctc-dl",
+			"employeeId": "emp-dl",
+			"direction": "outbound",
+			"phone": "+919811112222",
+			"outcome": "interested",
+			"qualified": False,
+			"summary": "Retry me",
+			"endedAt": "2026-10-27T12:00:00Z",
+			"channel": "voice",
+		}
+
+		self.assertTrue(_is_retryable_call_write(Exception("Deadlock found when trying to get lock")))
+		self.assertTrue(_is_retryable_call_write(Exception("(1213, 'Deadlock')")))
+
+		real_save = None
+		calls = {"n": 0}
+
+		import crm.integrations.astra_connect.processing as processing
+
+		real_save = processing._save_call_log
+
+		def flaky_save(call_log):
+			calls["n"] += 1
+			if calls["n"] == 1:
+				raise Exception("Deadlock found when trying to get lock; try restarting transaction")
+			return real_save(call_log)
+
+		with patch.object(processing, "_save_call_log", side_effect=flaky_save):
+			result = process_call_completed(data)
+
+		self.assertEqual(result["name"], "call-deadlock-1")
+		self.assertGreaterEqual(calls["n"], 2)
+		self.assertTrue(frappe.db.exists("CRM Call Log", "call-deadlock-1"))
