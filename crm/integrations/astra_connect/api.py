@@ -92,13 +92,17 @@ def receive() -> dict[str, Any]:
 	)
 	if existing:
 		if existing.status in ("Failed", "Received"):
-			event = frappe.get_doc("Astra Connect Event", existing.name)
-			event.event_type = event_type or event.event_type
-			event.payload = payload
-			event.status = "Received"
-			event.error = ""
-			event.save(ignore_permissions=True)
-			frappe.db.commit()
+			def _reuse_failed():
+				event = frappe.get_doc("Astra Connect Event", existing.name)
+				event.event_type = event_type or event.event_type
+				event.payload = payload
+				event.status = "Received"
+				event.error = ""
+				event.save(ignore_permissions=True)
+				frappe.db.commit()
+				return event
+
+			event = _run_as_integration_user(_reuse_failed)
 			return _finalize_event(event)
 		return _json_response(
 			{
@@ -110,20 +114,23 @@ def receive() -> dict[str, Any]:
 			status_code=200,
 		)
 
-	event = frappe.get_doc(
-		{
-			"doctype": "Astra Connect Event",
-			"event_id": event_id,
-			"event_type": event_type,
-			"payload": payload,
-			"status": "Received",
-			"attempts": 0,
-		}
-	)
-	event.insert(ignore_permissions=True)
-	frappe.db.commit()
+	def _create_event():
+		event = frappe.get_doc(
+			{
+				"doctype": "Astra Connect Event",
+				"event_id": event_id,
+				"event_type": event_type,
+				"payload": payload,
+				"status": "Received",
+				"attempts": 0,
+			}
+		)
+		event.insert(ignore_permissions=True)
+		frappe.db.commit()
+		return event
 
-	# Keep sync path fast (<10s). Heavy work can move to enqueue later if needed.
+	# Keep sync path fast (<10s). Event + processing run as integration user (not Guest).
+	event = _run_as_integration_user(_create_event)
 	return _finalize_event(event)
 
 
