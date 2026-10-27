@@ -35,6 +35,7 @@
           :data="organization.doc"
           doctype="CRM Organization"
         />
+        <DuplicateMatchWarning :matches="duplicateMatches" />
         <ErrorMessage v-if="error" class="mt-8" :message="__(error)" />
       </div>
       <div class="px-4 pt-4 pb-7 sm:px-6">
@@ -55,9 +56,11 @@
 <script setup>
 import FieldLayout from '@/components/FieldLayout/FieldLayout.vue'
 import EditIcon from '@/components/Icons/EditIcon.vue'
+import DuplicateMatchWarning from '@/components/DuplicateMatchWarning.vue'
 import { usersStore } from '@/stores/users'
 import { isMobileView } from '@/composables/settings'
 import { showQuickEntryModal, quickEntryProps } from '@/composables/modals'
+import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useDocument } from '@/data/document'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { useTelemetry } from '@framework/ui/telemetry'
@@ -84,6 +87,12 @@ const error = ref(null)
 
 const { document: organization, triggerOnBeforeCreate } =
   useDocument('CRM Organization')
+
+const {
+  matches: duplicateMatches,
+  bind: bindDuplicateCheck,
+} = useDuplicateCheck('CRM Organization', () => organization.doc)
+bindDuplicateCheck(() => organization.doc)
 
 async function createOrganization() {
   loading.value = true

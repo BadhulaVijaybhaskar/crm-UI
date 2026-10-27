@@ -245,11 +245,19 @@
                 {
                   label: __('Import'),
                   icon: () => h(ImportIcon, { class: 'h-4 w-4' }),
-                  onClick: () =>
+                  onClick: () => {
+                    if (
+                      doctype === 'CRM Lead' ||
+                      doctype === 'Contact'
+                    ) {
+                      showCrmCsvImport.value = true
+                      return
+                    }
                     router.push({
                       name: 'NewDataImport',
                       params: { doctype: doctype },
-                    }),
+                    })
+                  },
                   condition: () =>
                     !options.hideColumnsButton &&
                     doctype !== 'Data Import' &&
@@ -342,6 +350,11 @@
       </div>
     </template>
   </Dialog>
+  <CrmCsvImportModal
+    v-if="showCrmCsvImport"
+    v-model="showCrmCsvImport"
+    :doctype="props.doctype"
+  />
   <LostReasonModal
     v-if="showKanbanLostReasonModal"
     v-model="showKanbanLostReasonModal"
@@ -376,6 +389,11 @@ import FadedScrollableDiv from '@/components/FadedScrollableDiv.vue'
 import ColumnSettings from '@/components/ColumnSettings.vue'
 import KanbanSettings from '@/components/Kanban/KanbanSettings.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
+import CrmCsvImportModal from '@/components/Modals/CrmCsvImportModal.vue'
+import {
+  canUseCrmCsvExport,
+  crmCsvExportUrl,
+} from '@/utils/csvExport'
 import { getSettings } from '@/stores/settings'
 import { globalStore } from '@/stores/global'
 import { viewsStore } from '@/stores/views'
@@ -742,6 +760,7 @@ function reload() {
 }
 
 const showExportDialog = ref(false)
+const showCrmCsvImport = ref(false)
 const export_type = ref('Excel')
 const export_all = ref(false)
 const selectedRows = ref([])
@@ -781,6 +800,29 @@ const currentFilters = computed(() =>
 
 async function exportRows() {
   let filters = JSON.stringify(currentFilters.value)
+
+  // Formula-safe CSV path for CRM doctypes (guards = + - @ cells).
+  if (
+    export_type.value === 'CSV' &&
+    canUseCrmCsvExport(props.doctype) &&
+    !groupSummary.value
+  ) {
+    const fields = list.value.data.columns.map((f) => f.key)
+    let page_length = list.value.params.page_length
+    if (export_all.value) page_length = list.value.data.total_count
+    window.location.href = crmCsvExportUrl({
+      doctype: props.doctype,
+      fields,
+      filters: currentFilters.value,
+      orderBy: list.value.params.order_by,
+      limit: page_length,
+      title: props.doctype,
+    })
+    showExportDialog.value = false
+    export_all.value = false
+    export_type.value = 'Excel'
+    return
+  }
 
   // a grouped list exports what it shows: one row per group, every group
   window.location.href = groupSummary.value

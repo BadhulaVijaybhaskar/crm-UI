@@ -35,6 +35,7 @@
           :data="_contact.doc"
           doctype="Contact"
         />
+        <DuplicateMatchWarning :matches="duplicateMatches" />
         <ErrorMessage v-if="error" class="mt-6" :message="__(error)" />
       </div>
       <div class="px-4 pb-7 pt-4 sm:px-6">
@@ -55,9 +56,11 @@
 <script setup>
 import FieldLayout from '@/components/FieldLayout/FieldLayout.vue'
 import EditIcon from '@/components/Icons/EditIcon.vue'
+import DuplicateMatchWarning from '@/components/DuplicateMatchWarning.vue'
 import { usersStore } from '@/stores/users'
 import { isMobileView } from '@/composables/settings'
 import { showQuickEntryModal, quickEntryProps } from '@/composables/modals'
+import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useDocument } from '@/data/document'
 import { evaluateDependsOnValue } from '@/utils'
 import { useDoctypeModal } from '@/composables/doctypeModal'
@@ -83,6 +86,12 @@ const show = defineModel({ type: Boolean })
 const error = ref(null)
 
 const { document: _contact, triggerOnBeforeCreate } = useDocument('Contact')
+
+const {
+  matches: duplicateMatches,
+  bind: bindDuplicateCheck,
+} = useDuplicateCheck('Contact', () => _contact.doc)
+bindDuplicateCheck(() => _contact.doc)
 
 function validateRequiredFields() {
   if (!tabs.data) return null
