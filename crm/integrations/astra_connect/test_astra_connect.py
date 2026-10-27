@@ -312,6 +312,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 				"status": "new",
 			}
 		)
+		# Real Connect payload shape (flat camelCase + ISO Z timestamp).
 		payload = {
 			"type": "call.completed",
 			"callId": "call-100",
@@ -335,7 +336,46 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertEqual(call_log.channel, "voice")
 		self.assertEqual(call_log.astra_contact_id, "ctc-55")
 		self.assertEqual(call_log.qualified, 1)
+		# Phone fields must stay E.164 — never "astra-connect" / "unknown".
+		self.assertTrue(str(call_log.get("from") or "").startswith("+"))
+		self.assertTrue(str(call_log.to or "").startswith("+"))
+		self.assertNotIn("astra-connect", str(call_log.get("from") or "").lower())
+		self.assertNotIn("unknown", str(call_log.to or "").lower())
+		# Zulu endedAt must land as a naive datetime MariaDB accepts.
+		self.assertIsNotNone(call_log.end_time or call_log.start_time)
+		self.assertIsNone(getattr(call_log.end_time or call_log.start_time, "tzinfo", None))
+		self.assertEqual(call_log.owner, "Administrator")
 		self.assertEqual(map_disposition("appointment_booked"), "Appointment Booked")
+
+	def test_failed_delivery_is_retryable(self):
+		"""A 5xx / Failed event with the same X-Astra-Delivery must reprocess."""
+		payload = {
+			"type": "call.completed",
+			"callId": "call-retry-1",
+			"contactId": "ctc-retry",
+			"employeeId": "emp-1",
+			"direction": "outbound",
+			"phone": "+919999998888",
+			"outcome": "no_answer",
+			"qualified": False,
+			"summary": "No match yet",
+			"endedAt": "2026-10-27T11:00:00Z",
+		}
+		r1, s1, eid = self._post(payload, delivery_id="dlv-retry-1")
+		self.assertEqual(s1, 200)
+		self.assertEqual(r1["status"], "failed")
+		# Seed the party, then replay the same delivery id.
+		process_lead_created(
+			{
+				"leadId": "lead-retry-1",
+				"name": "Retry Lead",
+				"phone": "+919999998888",
+			}
+		)
+		r2, s2, _ = self._post(payload, delivery_id="dlv-retry-1")
+		self.assertEqual(s2, 200)
+		self.assertEqual(r2["status"], "processed")
+		self.assertTrue(frappe.db.exists("CRM Call Log", "call-retry-1"))
 
 	def test_employee_call_completed_extras(self):
 		process_lead_created(
