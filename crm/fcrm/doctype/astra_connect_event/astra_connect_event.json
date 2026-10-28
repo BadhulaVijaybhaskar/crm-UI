@@ -12,7 +12,9 @@
   "status",
   "column_break_meta",
   "attempts",
+  "claimed_at",
   "processed_at",
+  "source_timestamp",
   "section_payload",
   "payload",
   "section_error",
@@ -58,9 +60,22 @@
    "non_negative": 1
   },
   {
+   "fieldname": "claimed_at",
+   "fieldtype": "Datetime",
+   "label": "Claimed At",
+   "read_only": 1
+  },
+  {
    "fieldname": "processed_at",
    "fieldtype": "Datetime",
    "label": "Processed At",
+   "read_only": 1
+  },
+  {
+   "description": "occurredAt/endedAt/createdAt from payload, else the signed request timestamp",
+   "fieldname": "source_timestamp",
+   "fieldtype": "Datetime",
+   "label": "Source Timestamp",
    "read_only": 1
   },
   {
@@ -86,7 +101,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-28 00:30:00.000000",
+ "modified": "2026-10-28 01:30:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "Astra Connect Event",
