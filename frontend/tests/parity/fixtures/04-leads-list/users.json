@@ -1,0 +1,33 @@
+{
+  "message": [
+    {
+      "name": "priya.nair@example.com",
+      "email": "priya.nair@example.com",
+      "full_name": "Priya Nair",
+      "user_image": "",
+      "enabled": 1,
+      "user_type": "System User",
+      "roles": ["System Manager", "Sales Manager"],
+      "role_profile_name": "Sales manager · Admin",
+      "is_manager": true
+    },
+    {
+      "name": "rahul.mehta@example.com",
+      "email": "rahul.mehta@example.com",
+      "full_name": "Rahul Mehta",
+      "user_image": "",
+      "enabled": 1,
+      "roles": ["Sales User"],
+      "role_profile_name": "Sales user"
+    },
+    {
+      "name": "sara.khan@example.com",
+      "email": "sara.khan@example.com",
+      "full_name": "Sara Khan",
+      "user_image": "",
+      "enabled": 1,
+      "roles": ["Sales User"],
+      "role_profile_name": "Sales user"
+    }
+  ]
+}

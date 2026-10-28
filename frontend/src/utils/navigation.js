@@ -1,135 +1,139 @@
-import LucideHouse from '~icons/lucide/house'
-import LucideListTodo from '~icons/lucide/list-todo'
-import LucideMessagesSquare from '~icons/lucide/messages-square'
-import LucideUsers from '~icons/lucide/users'
-import LucideHandshake from '~icons/lucide/handshake'
-import LucideContact from '~icons/lucide/contact'
-import LucideBuilding2 from '~icons/lucide/building-2'
-import LucideSquareCheckBig from '~icons/lucide/square-check-big'
-import LucideStickyNote from '~icons/lucide/sticky-note'
-import LucidePhone from '~icons/lucide/phone'
-import LucidePhoneCall from '~icons/lucide/phone-call'
-import LucideBot from '~icons/lucide/bot'
-import LucideChartColumn from '~icons/lucide/chart-column'
-import LucideSettings from '~icons/lucide/settings'
+import {
+  FigmaHomeIcon,
+  FigmaWorkQueueIcon,
+  FigmaConversationsIcon,
+  FigmaLeadsIcon,
+  FigmaDealsIcon,
+  FigmaContactsIcon,
+  FigmaCompaniesIcon,
+  FigmaTasksIcon,
+  FigmaNotesIcon,
+  FigmaCallLogsIcon,
+  FigmaReportsIcon,
+  FigmaAICallingIcon,
+  FigmaMessagesIcon,
+  FigmaAIEmployeesIcon,
+  FigmaSettingsIcon,
+} from '@/components/Icons/FigmaNavIcons'
 import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
 
 /**
- * Sidebar registry. Each item is one of:
- * - { route } — in-app vue-router name (must exist; hidden otherwise)
- * - { connect, requiresConnect: true } — Astra Connect path (only when configured)
- * - { action: 'settings' } — opens the settings modal
+ * Sidebar registry — labels/order/icons match Figma CRM v1 (p-*.html / crm.css).
+ * Counts come from `crm.api.nav.get_nav_counts` via `countKey` (never hard-coded).
+ * Items whose `route` is not registered are hidden.
  *
- * `section` groups the rail to match SHELL_SPEC / Figma v1. Settings stays in
- * the footer. Rules: every selectable item must work. No placeholder/Soon entries.
- * Work queue / Conversations hide until their routes are registered.
+ * Work queue currently lands on Activities until the dedicated Work Queue route
+ * ships; Conversations is registered on this branch.
  */
 export const navigationItems = [
   {
     label: 'Home',
-    icon: LucideHouse,
+    icon: FigmaHomeIcon,
     route: 'Dashboard',
     section: 'main',
     countKey: null,
   },
   {
     label: 'Work queue',
-    icon: LucideListTodo,
-    route: 'Work Queue',
+    icon: FigmaWorkQueueIcon,
+    route: 'Activities',
     section: 'main',
     countKey: 'work_queue',
   },
   {
     label: 'Conversations',
-    icon: LucideMessagesSquare,
+    icon: FigmaConversationsIcon,
     route: 'Conversations',
     section: 'main',
     countKey: null,
   },
   {
     label: 'Leads',
-    icon: LucideUsers,
+    icon: FigmaLeadsIcon,
     route: 'Leads',
     section: 'records',
     countKey: 'leads',
   },
   {
     label: 'Deals',
-    icon: LucideHandshake,
+    icon: FigmaDealsIcon,
     route: 'Deals',
     section: 'records',
     countKey: 'deals',
   },
   {
     label: 'Contacts',
-    icon: LucideContact,
+    icon: FigmaContactsIcon,
     route: 'Contacts',
     section: 'records',
     countKey: null,
   },
   {
     label: 'Companies',
-    icon: LucideBuilding2,
+    icon: FigmaCompaniesIcon,
     route: 'Organizations',
     section: 'records',
     countKey: null,
   },
   {
     label: 'Tasks',
-    icon: LucideSquareCheckBig,
+    icon: FigmaTasksIcon,
     route: 'Tasks',
     section: 'activity',
     countKey: 'tasks',
   },
   {
     label: 'Notes',
-    icon: LucideStickyNote,
+    icon: FigmaNotesIcon,
     route: 'Notes',
     section: 'activity',
     countKey: null,
   },
   {
     label: 'Call logs',
-    icon: LucidePhone,
+    icon: FigmaCallLogsIcon,
     route: 'Call Logs',
     section: 'activity',
     countKey: null,
   },
   {
     label: 'Reports',
-    icon: LucideChartColumn,
+    icon: FigmaReportsIcon,
     route: 'Reports',
     section: 'insights',
     countKey: null,
   },
   {
     label: 'AI Calling',
-    icon: LucidePhoneCall,
+    icon: FigmaAICallingIcon,
     connect: 'calls',
     requiresConnect: true,
     section: 'connect',
+    external: true,
     countKey: null,
   },
   {
     label: 'Messages',
-    icon: LucideMessagesSquare,
+    icon: FigmaMessagesIcon,
     connect: 'messages',
     requiresConnect: true,
     section: 'connect',
+    external: true,
     countKey: null,
   },
   {
     label: 'AI Employees',
-    icon: LucideBot,
+    icon: FigmaAIEmployeesIcon,
     connect: 'employees',
     requiresConnect: true,
     section: 'connect',
+    external: true,
     countKey: null,
   },
   {
     label: 'Settings',
-    icon: LucideSettings,
+    icon: FigmaSettingsIcon,
     action: 'settings',
     section: 'footer',
     countKey: null,

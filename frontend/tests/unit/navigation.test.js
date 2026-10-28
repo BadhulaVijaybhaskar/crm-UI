@@ -8,6 +8,8 @@ import {
 vi.mock('@/router', () => {
   const routes = new Set([
     'Dashboard',
+    'Activities',
+    'Conversations',
     'Leads',
     'Deals',
     'Contacts',
@@ -31,7 +33,7 @@ describe('navigationItems', () => {
     delete window.boot
   })
 
-  it('keeps the Astra CRM sidebar registry order (SHELL_SPEC)', () => {
+  it('keeps the Astra CRM sidebar registry order (SHELL_SPEC / Figma v1)', () => {
     const labels = navigationItems.map((item) => item.label)
     expect(labels).toEqual([
       'Home',
@@ -57,6 +59,12 @@ describe('navigationItems', () => {
     expect(home.route).toBe('Dashboard')
   })
 
+  it('does not hard-code Figma example counts', () => {
+    for (const item of navigationItems) {
+      expect(item.count, `${item.label} must not ship a static count`).toBeUndefined()
+    }
+  })
+
   it('does not surface WhatsApp inbox in the sidebar registry', () => {
     const labels = navigationItems.map((item) => item.label.toLowerCase())
     expect(labels.some((l) => l.includes('whatsapp'))).toBe(false)
@@ -73,10 +81,10 @@ describe('navigationItems', () => {
     }
   })
 
-  it('hides Work queue and Conversations until their routes exist', () => {
+  it('shows Work queue and Conversations when their routes exist', () => {
     const labels = getNavigationItems().map((item) => item.label)
-    expect(labels).not.toContain('Work queue')
-    expect(labels).not.toContain('Conversations')
+    expect(labels).toContain('Work queue')
+    expect(labels).toContain('Conversations')
     expect(labels).toContain('Home')
     expect(labels).toContain('Notes')
     expect(labels).toContain('Call logs')
@@ -122,12 +130,12 @@ describe('navigationItems', () => {
       false,
     )
     expect(isNavItemAvailable({ label: 'Leads', route: 'Leads' })).toBe(true)
-    expect(isNavItemAvailable({ label: 'Work queue', route: 'Work Queue' })).toBe(
-      false,
-    )
+    expect(
+      isNavItemAvailable({ label: 'Missing', route: 'DoesNotExist' }),
+    ).toBe(false)
   })
 
-  it('uses lucide icon components (no unicode glyph icons)', () => {
+  it('uses icon components (no unicode glyph icons)', () => {
     for (const item of navigationItems) {
       expect(item.icon, `${item.label} needs an icon`).toBeTruthy()
       expect(typeof item.icon).not.toBe('string')

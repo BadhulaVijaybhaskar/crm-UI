@@ -1,7 +1,7 @@
 <template>
   <button
     type="button"
-    class="inline-flex items-center justify-center gap-1.5 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55"
+    class="inline-flex items-center justify-center font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55"
     :class="[variantClass, sizeClass, { 'w-full': block }]"
     :disabled="disabled || loading"
     v-bind="$attrs"
@@ -31,14 +31,15 @@ const props = defineProps({
 })
 
 const sizeClass = computed(() => {
+  // app.css .btn gap:7px; .btn.sm padding:0 10px / radius 7
   if (props.size === 'sm') {
     return props.iconOnly
       ? 'size-crm-control-sm rounded-crm-control-sm text-crm-label'
-      : 'h-crm-control-sm rounded-crm-control-sm px-[10px] text-crm-label'
+      : 'h-crm-control-sm gap-[7px] rounded-crm-control-sm px-[10px] text-crm-label'
   }
   return props.iconOnly
     ? 'size-crm-control rounded-crm-control text-crm-body'
-    : 'h-crm-control rounded-crm-control px-[13px] text-crm-body'
+    : 'h-crm-control gap-[7px] rounded-crm-control px-[13px] text-crm-body'
 })
 
 const variantClass = computed(() => {

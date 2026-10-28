@@ -7,6 +7,8 @@ import {
 vi.mock('@/router', () => {
   const routes = new Set([
     'Dashboard',
+    'Activities',
+    'Conversations',
     'Leads',
     'Deals',
     'Contacts',
@@ -36,7 +38,11 @@ describe('navigation sections', () => {
       expect.arrayContaining(['main', 'records', 'activity', 'insights']),
     )
     const main = sections.find((s) => s.id === 'main')
-    expect(main.views.map((v) => v.label)).toEqual(['Home'])
+    expect(main.views.map((v) => v.label)).toEqual([
+      'Home',
+      'Work queue',
+      'Conversations',
+    ])
     const records = sections.find((s) => s.id === 'records')
     expect(records.views.map((v) => v.label)).toEqual([
       'Leads',

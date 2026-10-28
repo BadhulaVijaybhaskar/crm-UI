@@ -1,49 +1,42 @@
 /* Astra CRM theme shell — fonts + layout.
    Colour tokens live in astra-crm-tokens.css (--crm-*). Do not enable the
-   optional frappe-ui remapping block there; shell chrome uses --crm-* directly. */
+   optional frappe-ui remapping block there; shell chrome uses --crm-* directly.
+
+   Font: self-hosted Inter (OFL) 400/500/600 — matches app.css / Figma captures.
+   Licence: src/assets/fonts/Inter-OFL.txt (not shown in UI). */
 
 @font-face {
-  font-family: 'Plus Jakarta Sans';
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-400.woff2') format('woff2');
+  src: url('./assets/fonts/Inter-400.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Plus Jakarta Sans';
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-500.woff2') format('woff2');
+  src: url('./assets/fonts/Inter-500.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Plus Jakarta Sans';
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-600.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-700.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-800.woff2') format('woff2');
+  src: url('./assets/fonts/Inter-600.woff2') format('woff2');
 }
 
 :root {
-  --font-sans: 'Plus Jakarta Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari',
-    ui-sans-serif, system-ui, sans-serif;
+  /* app.css: Inter, system-ui, sans-serif — keep Indic fallbacks for CRM locales */
+  --font-sans: 'Inter', 'Noto Sans Telugu', 'Noto Sans Devanagari', ui-sans-serif,
+    system-ui, sans-serif;
+  /* crm.css shell metrics (override older app.css 232/64 values) */
   --astra-nav-w: 240px;
   --astra-nav-w-collapsed: 64px;
   --astra-topbar-h: 52px;
+  --astra-brand-h: 56px;
+  --astra-nav-item-h: 32px;
 }
 
 html,
@@ -58,8 +51,10 @@ body {
   font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.45;
-  background-color: var(--crm-bg, #f3f6f8);
   color: var(--crm-fg, #0b1324);
+  background-color: var(--crm-bg, #f3f6f8);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 /* Shell: fixed full-height left nav; only the content column scrolls */
@@ -95,6 +90,35 @@ body {
   border: 0;
 }
 
+/* crm.css: .nav li { height:32px; border-radius:6px; padding:0 10px; font-weight:500 }
+   Kill frappe-ui SidebarItem surface/ink utilities — they paint light-theme greys on the ink nav. */
+.astra-shell__sidebar [data-slot='sidebar-item'] {
+  height: var(--astra-nav-item-h) !important;
+  min-height: var(--astra-nav-item-h);
+  border-radius: 6px;
+  font-weight: 500;
+  color: var(--crm-nav-fg) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.astra-shell__sidebar [data-slot='sidebar-item']:hover {
+  background: rgba(15, 42, 54, 0.55) !important;
+  color: #ffffff !important;
+}
+
+.astra-shell__sidebar [data-slot='sidebar-item'] > a,
+.astra-shell__sidebar [data-slot='sidebar-item'] > button {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  gap: 10px;
+  color: inherit !important;
+}
+
+.astra-shell__sidebar [data-slot='sidebar-item'] .astra-nav-icon {
+  color: var(--crm-nav-faint) !important;
+}
+
 .astra-shell__main {
   flex: 1;
   min-width: 0;
@@ -106,6 +130,7 @@ body {
   background: var(--crm-bg);
 }
 
+/* crm.css: .abar { height:52px; gap:10px; padding:0 24px } */
 .astra-shell__topbar {
   flex: 0 0 var(--astra-topbar-h);
   height: var(--astra-topbar-h);
@@ -132,8 +157,70 @@ body {
   overflow-y: auto;
   max-width: 100%;
   background: var(--crm-bg);
-  -webkit-overflow-scrolling: touch;
 }
+
+.astra-shell__content .list-view,
+.astra-shell__content [data-list-view],
+.astra-shell__content table {
+  max-width: 100%;
+}
+
+/* Active nav — exactly one item, inset teal indicator (crm.css .nav li.on) */
+.astra-shell__sidebar [aria-current='page'],
+.astra-shell__sidebar [data-active='true'],
+.astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] {
+  background: var(--crm-nav-active) !important;
+  box-shadow: inset 3px 0 0 var(--crm-nav-indicator) !important;
+  color: #ffffff !important;
+  border-radius: 6px;
+}
+
+.astra-shell__sidebar [aria-current='page'] *,
+.astra-shell__sidebar [data-active='true'] *,
+.astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] * {
+  color: inherit;
+}
+
+.astra-shell__sidebar [aria-current='page'] .astra-nav-icon,
+.astra-shell__sidebar [data-active='true'] .astra-nav-icon,
+.astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] .astra-nav-icon {
+  color: var(--crm-nav-indicator) !important;
+}
+
+.astra-shell__sidebar[data-collapsed='true'] img[alt],
+.astra-shell__sidebar .astra-brand-mark {
+  background: transparent !important;
+  box-shadow: none !important;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* Nav count badge — crm.css .nav li .cnt */
+.astra-shell__nav-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--crm-nav-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.astra-shell__sidebar [aria-current='page'] .astra-shell__nav-count,
+.astra-shell__sidebar [data-active='true'] .astra-shell__nav-count,
+.astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] .astra-shell__nav-count {
+  color: #c4d2da;
+}
+
+/* External-link glyph on Connect items — crm.css .nav li .ext */
+.astra-shell__nav-ext {
+  margin-left: auto;
+  width: 12px;
+  height: 12px;
+  color: var(--crm-nav-faint);
+  flex: none;
+}
+
+/* Login chrome lives in Login.vue + website astra-login.css (shared tokens). */
 
 /* Mobile / tablet drawer shell — only the content column scrolls */
 .astra-shell--mobile {
@@ -161,51 +248,9 @@ body {
   min-width: 0;
 }
 
-/* Lucide line icons in shell chrome: 16px / 1.5 stroke (SHELL_SPEC) */
-.astra-shell__sidebar .astra-nav-icon,
-.astra-shell__sidebar .astra-nav-icon svg,
-.astra-shell__topbar svg,
-.astra-shell--mobile .astra-shell__topbar svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 1.5;
+.astra-shell__content {
+  -webkit-overflow-scrolling: touch;
 }
-
-.astra-shell__content .list-view,
-.astra-shell__content [data-list-view],
-.astra-shell__content table {
-  max-width: 100%;
-}
-
-/* Active nav — exactly one item, inset teal indicator */
-.astra-shell__sidebar [aria-current='page'],
-.astra-shell__sidebar [data-active='true'] {
-  background: var(--crm-nav-active);
-  box-shadow: inset 3px 0 0 var(--crm-nav-indicator);
-  color: #ffffff;
-  border-radius: 6px;
-}
-
-.astra-shell__sidebar [aria-current='page'] *,
-.astra-shell__sidebar [data-active='true'] * {
-  color: inherit;
-}
-
-.astra-shell__sidebar [aria-current='page'] .astra-nav-icon,
-.astra-shell__sidebar [data-active='true'] .astra-nav-icon {
-  color: var(--crm-nav-indicator);
-}
-
-.astra-shell__sidebar[data-collapsed='true'] img[alt],
-.astra-shell__sidebar .astra-brand-mark {
-  background: transparent !important;
-  box-shadow: none !important;
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-/* Login chrome lives in Login.vue + website astra-login.css (shared tokens). */
 
 :focus-visible {
   outline: none;
