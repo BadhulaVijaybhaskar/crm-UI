@@ -3,6 +3,8 @@
     v-if="organization.doc"
     class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg"
   >
+    <div class="grid min-h-0 flex-1 grid-cols-1 overflow-hidden xl:grid-cols-crm-record">
+    <div class="flex min-h-0 min-w-0 flex-col overflow-hidden">
     <nav
       class="flex items-center gap-1.5 px-crm-page-x pt-3 text-crm-meta text-crm-muted-fg"
       aria-label="Breadcrumb"
@@ -84,7 +86,6 @@
       </template>
     </AstraRecordHeader>
 
-    <div class="flex min-h-0 flex-1 overflow-hidden">
       <Tabs
         v-model="activeTab"
         as="div"
@@ -127,24 +128,17 @@
           />
         </template>
       </Tabs>
-      <Resizer
-        side="right"
-        :defaultWidth="340"
-        class="flex h-full flex-col overflow-hidden border-l border-crm-border bg-crm-card"
-      >
-        <div
+      </div>
+      <AstraSidePanel stacked>
+        <SidePanelLayout
           v-if="sections.data"
-          class="flex flex-1 flex-col justify-between overflow-hidden"
-        >
-          <SidePanelLayout
-            :sections="sections.data"
-            doctype="CRM Organization"
-            :docname="organization.doc.name"
-            @reload="sections.reload"
-            @beforeFieldChange="beforeFieldChange"
-          />
-        </div>
-      </Resizer>
+          :sections="sections.data"
+          doctype="CRM Organization"
+          :docname="organization.doc.name"
+          @reload="sections.reload"
+          @beforeFieldChange="beforeFieldChange"
+        />
+      </AstraSidePanel>
     </div>
   </div>
   <ErrorPage
@@ -174,7 +168,7 @@
 
 <script setup>
 import ErrorPage from '@/components/ErrorPage.vue'
-import Resizer from '@/components/Resizer.vue'
+import AstraSidePanel from '@/components/astra/AstraSidePanel.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
 import ContactsListView from '@/components/ListViews/ContactsListView.vue'
