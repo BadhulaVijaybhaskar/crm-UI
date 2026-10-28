@@ -1,16 +1,24 @@
 <template>
-  <div class="astra-shell__topbar">
+  <div class="astra-shell__topbar relative">
     <button
       type="button"
-      class="flex h-[34px] w-crm-search items-center gap-2 rounded-crm-control bg-crm-muted px-2.5 text-left text-crm-label text-crm-faint shadow-[inset_0_0_0_1px_var(--crm-border)] hover:text-crm-muted-fg"
+      class="flex h-[34px] w-crm-search items-center gap-2 rounded-crm-control border border-crm-border bg-crm-muted px-2.5 text-left text-crm-label text-crm-faint hover:text-crm-muted-fg"
       @click="openCommandPalette"
     >
       <FigmaSearchIcon class="size-3.5 shrink-0" />
       <span class="min-w-0 flex-1 truncate">
         {{ __('Search leads, deals, contacts, companies') }}
       </span>
+      <!-- crm.css .gsearch kbd — Inter 600/11px (override Tailwind kbd mono preflight) -->
       <kbd
-        class="rounded-crm-mini border border-crm-border-strong bg-crm-card px-[5px] py-px text-[11px] font-semibold text-crm-muted-fg"
+        class="ml-auto rounded-[4px] border border-crm-border-strong bg-crm-card px-[5px] py-px text-[11px] font-semibold text-crm-muted-fg"
+        style="
+          font-family: Inter, var(--font-sans);
+          font-weight: 600;
+          font-size: 11px;
+          line-height: normal;
+          font-feature-settings: normal;
+        "
       >
         Ctrl K
       </kbd>
@@ -18,28 +26,33 @@
 
     <div class="flex-1" />
 
+    <!-- crm.css .abar gap:10px — CallUI is out-of-flow so it cannot shift New/bell -->
     <div class="flex items-center gap-2.5">
       <Dropdown :options="newOptions">
         <AstraButton variant="primary" size="sm" :label="__('New')">
           <template #prefix>
-            <FigmaPlusIcon class="size-3.5" />
+            <FigmaPlusIcon class="size-3.5 shrink-0" />
           </template>
         </AstraButton>
       </Dropdown>
 
       <button
         type="button"
-        class="relative inline-flex size-[34px] items-center justify-center rounded-crm-control bg-crm-card text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border)] hover:text-crm-fg"
+        class="relative inline-flex size-[34px] shrink-0 items-center justify-center rounded-crm-control border border-crm-border bg-crm-card text-crm-muted-fg hover:text-crm-fg"
         :aria-label="__('Notifications')"
         @click="toggleNotifications"
       >
         <FigmaBellIcon class="size-3.5" />
+        <!-- crm.css .ibtn .dotn — 7×7 incl. 2px card border (border-box) -->
         <span
           v-if="unreadNotificationsCount"
-          class="absolute right-[7px] top-1.5 size-[7px] rounded-full bg-crm-danger ring-2 ring-crm-card"
+          class="pointer-events-none absolute right-[7px] top-[6px] box-border size-[7px] rounded-full border-2 border-crm-card bg-crm-danger"
         />
       </button>
+    </div>
 
+    <!-- zero-size host: telephony popups are fixed/absolute and must not shift abar -->
+    <div class="absolute left-0 top-0 h-0 w-0 overflow-visible">
       <CallUI />
     </div>
   </div>
