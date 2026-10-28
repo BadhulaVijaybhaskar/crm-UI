@@ -187,11 +187,16 @@ def sync_default_columns(view):
 	if view.type == "kanban" and view.column_field:
 		field_meta = frappe.get_meta(doctype).get_field(view.column_field)
 		if field_meta.fieldtype == "Link":
-			columns = frappe.get_all(
-				field_meta.options,
-				fields=["name"],
-				order_by="modified asc",
-			)
+			from crm.utils.pipeline import get_status_pipeline_columns
+
+			if view.column_field == "status" and doctype in ("CRM Lead", "CRM Deal"):
+				columns = get_status_pipeline_columns(doctype)
+			else:
+				columns = frappe.get_all(
+					field_meta.options,
+					fields=["name"],
+					order_by="modified asc",
+				)
 		elif field_meta.fieldtype == "Select":
 			columns = [{"name": option} for option in field_meta.options.split("\n")]
 	elif hasattr(list, "default_list_data"):

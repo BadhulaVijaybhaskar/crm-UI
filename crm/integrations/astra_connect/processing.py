@@ -323,7 +323,12 @@ def process_call_completed(
 		frappe.db.set_value(match["doctype"], match["name"], "ai_employee_id", ai_employee_id)
 
 	if qualified and match["doctype"] == "CRM Lead" and frappe.db.exists("CRM Lead Status", "Qualified"):
-		frappe.db.set_value("CRM Lead", match["name"], "status", "Qualified")
+		# Document.save so CRM Status Change Log / validate hooks run
+		from crm.fcrm.doctype.crm_status_change_log.crm_status_change_log import (
+			set_status_with_history,
+		)
+
+		set_status_with_history("CRM Lead", match["name"], "Qualified", ignore_permissions=True)
 
 	return {
 		"doctype": "CRM Call Log",

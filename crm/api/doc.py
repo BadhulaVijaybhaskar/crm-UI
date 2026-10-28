@@ -426,11 +426,17 @@ def get_data(
 		if not kanban_columns and column_field:
 			field_meta = frappe.get_meta(doctype).get_field(column_field)
 			if field_meta.fieldtype == "Link":
-				kanban_columns = frappe.get_all(
-					field_meta.options,
-					fields=["name"],
-					order_by="modified asc",
-				)
+				from crm.utils.pipeline import get_status_pipeline_columns
+
+				# Prefer position + colour from CRM Lead/Deal Status when column is status
+				if column_field == "status" and doctype in ("CRM Lead", "CRM Deal"):
+					kanban_columns = get_status_pipeline_columns(doctype)
+				else:
+					kanban_columns = frappe.get_all(
+						field_meta.options,
+						fields=["name"],
+						order_by="modified asc",
+					)
 			elif field_meta.fieldtype == "Select":
 				kanban_columns = [{"name": option} for option in field_meta.options.split("\n")]
 
