@@ -37,7 +37,8 @@ import { screenshotSourceHtml } from './lib/sourceShot.js'
 /** Hard PNG budget. HTML target is ~0 when HTML agrees with PNG. */
 const PNG_BUDGET = 0.75
 const EPS_HTML = 0.05
-const EPS_PNG = 0.05
+/** No PNG slack — user bar is strict ≤0.75% light and dark. */
+const EPS_PNG = 0
 
 function usage() {
   console.error(`Usage: yarn parity <screen-id>

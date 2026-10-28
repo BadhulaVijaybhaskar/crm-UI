@@ -29,11 +29,10 @@
               :src="row.lead_name?.image"
               size="md"
             />
-            <!-- PNG name/org baseline sits ~1px lower; slight negative tracking
-                 matches Inter capture ink density better than default 600. -->
+            <!-- PNG name/org baseline sits ~1px lower than default flex mid. -->
             <div class="tx flex min-w-0 translate-y-px flex-col leading-[1.3]">
               <span
-                class="truncate text-[12.5px] font-semibold leading-[1.3] tracking-[-0.005em] text-crm-fg"
+                class="truncate text-[12.5px] font-semibold leading-[1.3] text-crm-fg"
               >
                 {{ row.lead_name?.label || row.lead_name }}
               </span>
@@ -434,8 +433,8 @@ defineExpose({
 .astra-leads-table :deep(th:nth-child(9)),
 .astra-leads-table :deep(td:nth-child(9)) {
   width: 158px;
-  /* Activity: +8 was best; +1 more closes remaining 2px */
-  padding-left: 17px;
+  /* Activity: shift-sim still ~1–2px left of PNG at 17px */
+  padding-left: 18px;
 }
 .astra-leads-table :deep(th:nth-child(10)),
 .astra-leads-table :deep(td:nth-child(10)) {
