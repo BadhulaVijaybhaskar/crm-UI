@@ -28,60 +28,81 @@ export const NAV_FEATURE_READY = Object.freeze({
  * - { connect, requiresConnect: true } — Astra Connect path (only when configured)
  * - { action: 'settings' } — opens the settings modal
  *
+ * `section` groups the rail to match Figma v1. Settings stays in the footer.
  * Rules: every selectable item must work. No placeholder/Soon entries.
- * WhatsApp inbox is intentionally omitted (app stays installed).
  */
 export const navigationItems = [
   {
     label: 'Dashboard',
     icon: LucideLayoutDashboard,
     route: 'Dashboard',
+    section: 'main',
   },
-  { label: 'Leads', icon: LeadsIcon, route: 'Leads' },
-  { label: 'Contacts', icon: ContactsIcon, route: 'Contacts' },
+  { label: 'Leads', icon: LeadsIcon, route: 'Leads', section: 'records' },
+  {
+    label: 'Contacts',
+    icon: ContactsIcon,
+    route: 'Contacts',
+    section: 'records',
+  },
   {
     label: 'Companies',
     icon: OrganizationsIcon,
     route: 'Organizations',
+    section: 'records',
   },
-  { label: 'Deals', icon: DealsIcon, route: 'Deals' },
-  { label: 'Tasks', icon: TaskIcon, route: 'Tasks' },
+  { label: 'Deals', icon: DealsIcon, route: 'Deals', section: 'records' },
+  { label: 'Tasks', icon: TaskIcon, route: 'Tasks', section: 'activity' },
   {
     label: 'AI Calling',
     icon: LucidePhone,
     connect: 'calls',
     requiresConnect: true,
+    section: 'connect',
   },
   {
     label: 'Messages',
     icon: LucideMessagesSquare,
     connect: 'messages',
     requiresConnect: true,
+    section: 'connect',
   },
   {
     label: 'AI Employees',
     icon: LucideBot,
     connect: 'employees',
     requiresConnect: true,
+    section: 'connect',
   },
   {
     label: 'Activities',
     icon: LucideActivity,
     route: 'Activities',
     ready: NAV_FEATURE_READY.Activities,
+    section: 'activity',
   },
   {
     label: 'Reports',
     icon: LucideChartColumn,
     route: 'Reports',
     ready: NAV_FEATURE_READY.Reports,
+    section: 'insights',
   },
   {
     label: 'Settings',
     icon: LucideSettings,
     action: 'settings',
+    section: 'footer',
   },
 ]
+
+export const NAV_SECTION_ORDER = Object.freeze([
+  { id: 'main', label: '', hideLabel: true },
+  { id: 'records', label: 'Records' },
+  { id: 'activity', label: 'Activity' },
+  { id: 'insights', label: 'Insights' },
+  { id: 'connect', label: 'Astra Connect' },
+])
 
 export function isNavItemAvailable(item, { mobile = false } = {}) {
   if (!item) return false
@@ -95,4 +116,20 @@ export function isNavItemAvailable(item, { mobile = false } = {}) {
 
 export function getNavigationItems({ mobile = false } = {}) {
   return navigationItems.filter((item) => isNavItemAvailable(item, { mobile }))
+}
+
+export function getNavigationSections({ mobile = false } = {}) {
+  const items = getNavigationItems({ mobile }).filter(
+    (item) => item.section !== 'footer',
+  )
+  return NAV_SECTION_ORDER.map((section) => ({
+    ...section,
+    views: items.filter((item) => (item.section || 'main') === section.id),
+  })).filter((section) => section.views.length > 0)
+}
+
+export function getFooterNavItems({ mobile = false } = {}) {
+  return getNavigationItems({ mobile }).filter(
+    (item) => item.section === 'footer',
+  )
 }

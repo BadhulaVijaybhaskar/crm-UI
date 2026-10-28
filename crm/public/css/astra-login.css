@@ -39,35 +39,43 @@
 }
 
 :root {
-  --ac: #145cf6;
-  --acm: #0e8bd6;
-  --ac2: #09b5a4;
-  --astra-grad: linear-gradient(135deg, #145cf6 0%, #0e8bd6 55%, #09b5a4 100%);
-  --astra-bg: #f3f6fa;
+  --ac: #0a7393;
+  --acm: #0d8aad;
+  --ac2: #14b8a6;
+  --astra-grad: linear-gradient(135deg, #0a7393 0%, #0d8aad 55%, #14b8a6 100%);
+  --astra-bg: #f3f6f8;
   --astra-surface: #ffffff;
   --astra-text: #0b1324;
   --astra-muted: #64748b;
-  --astra-border: #e3e9f1;
+  --astra-border: #e1e7ec;
 }
 
 html.dark,
 [data-theme="dark"],
 body.dark {
-  --astra-bg: #070b14;
-  --astra-surface: #0f1626;
-  --astra-text: #e8edf5;
+  --ac: #3fbad9;
+  --acm: #2aa8c9;
+  --ac2: #14b8a6;
+  --astra-grad: linear-gradient(135deg, #3fbad9 0%, #2aa8c9 55%, #14b8a6 100%);
+  --astra-bg: #081218;
+  --astra-surface: #0d1a22;
+  --astra-text: #e6eef2;
   --astra-muted: #98a3b8;
-  --astra-border: #232f47;
+  --astra-border: #1a2c37;
 }
 
 /* Fallback when data-theme was not set yet (no localStorage / first visit) */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
-    --astra-bg: #070b14;
-    --astra-surface: #0f1626;
-    --astra-text: #e8edf5;
+    --ac: #3fbad9;
+    --acm: #2aa8c9;
+    --ac2: #14b8a6;
+    --astra-grad: linear-gradient(135deg, #3fbad9 0%, #2aa8c9 55%, #14b8a6 100%);
+    --astra-bg: #081218;
+    --astra-surface: #0d1a22;
+    --astra-text: #e6eef2;
     --astra-muted: #98a3b8;
-    --astra-border: #232f47;
+    --astra-border: #1a2c37;
   }
 }
 
@@ -120,7 +128,7 @@ form.form-login button[type="submit"],
   min-height: 44px !important;
   background-image: var(--astra-grad) !important;
   background-color: transparent !important;
-  box-shadow: 0 8px 24px -8px color-mix(in srgb, #145cf6 70%, transparent);
+  box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--ac) 55%, transparent);
 }
 
 .for-login label,
