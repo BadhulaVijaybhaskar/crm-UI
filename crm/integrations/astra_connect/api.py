@@ -1,8 +1,18 @@
-"""Whitelisted Astra Connect webhook endpoints."""
+"""Whitelisted Astra Connect webhook endpoints.
+
+Design (inbox + worker):
+  receive()  — verify HMAC, INSERT durable inbox row (unique event_id), commit,
+               enqueue worker, return 2xx accepted. Duplicate key → 200 duplicate
+               with no other writes.
+  worker     — claim via conditional UPDATE, upsert call log / note under unique
+               indexes, commit data, then conditional status UPDATE. No GET_LOCK,
+               no savepoints, never rewrite another request's inbox row.
+"""
 
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 import frappe
@@ -22,6 +32,9 @@ from crm.integrations.astra_connect.processing import (
 	process_event,
 )
 
+MAX_WORKER_ATTEMPTS = 5
+WORKER_PATH = "crm.integrations.astra_connect.api.process_inbox_event"
+
 
 def _json_response(payload: dict[str, Any], status_code: int = 200):
 	frappe.local.response["http_status_code"] = status_code
@@ -30,26 +43,65 @@ def _json_response(payload: dict[str, Any], status_code: int = 200):
 	return payload
 
 
+def _is_duplicate_key(exc: BaseException) -> bool:
+	msg = str(exc).lower()
+	if "duplicate" in msg or "1062" in msg:
+		return True
+	errno = getattr(exc, "errno", None)
+	if errno is None and getattr(exc, "args", None):
+		errno = exc.args[0]
+	return errno == 1062 or isinstance(exc, frappe.DuplicateEntryError)
+
+
+def _is_retryable_db(exc: BaseException) -> bool:
+	msg = str(exc).lower()
+	if "deadlock" in msg or "1213" in msg or "lock wait" in msg or "1205" in msg:
+		return True
+	if "1020" in msg or "record has changed" in msg:
+		return True
+	if _is_duplicate_key(exc):
+		return True
+	errno = getattr(exc, "errno", None)
+	if errno is None and getattr(exc, "args", None):
+		errno = exc.args[0]
+	return errno in (1213, 1205, 1020, 1062)
+
+
+def _enqueue_processing(event_name: str, event_id: str) -> None:
+	"""Enqueue (or run sync in tests). job_id dedupes concurrent accepts of one delivery."""
+	job_id = f"astra-connect-{event_id}"
+	if getattr(frappe.flags, "in_test", False) or frappe.conf.get("astra_connect_sync_processing"):
+		process_inbox_event(event_name)
+		return
+	frappe.enqueue(
+		WORKER_PATH,
+		event_name=event_name,
+		queue="short",
+		timeout=300,
+		job_id=job_id,
+		deduplicate=True,
+		enqueue_after_commit=True,
+	)
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def receive() -> dict[str, Any]:
-	"""Inbound Astra Connect webhook.
+	"""Inbound Astra Connect webhook — durable inbox insert only, then enqueue.
 
 	Headers:
 	  X-Astra-Delivery (dedupe; Replay reuses it) — fallback X-Astra-Event-Id
 	  X-Astra-Signature: ``sha256=<hex>`` (+ X-Astra-Timestamp) or ``t=<ts>,v1=<hex>``
 
-	Secret: site_config ``astra_connect_webhook_secret`` (disabled / 503 if missing).
-
 	Status codes:
-	  2xx success or duplicate (and business failures recorded as Failed)
+	  200/202 accepted (inbox durable; worker will process)
+	  200 duplicate (unique delivery already stored)
 	  400 malformed payload (final)
 	  401 bad signature or stale timestamp (final)
-	  5xx / 429 transient only (Connect outbox retries)
+	  503 webhook disabled
 	"""
 	try:
 		secret = require_webhook_secret()
 	except WebhookDisabledError as exc:
-		# Transient from Connect's POV — site may be configured later.
 		return _json_response({"status": "disabled", "error": str(exc)}, status_code=503)
 
 	raw_body = frappe.request.get_data() or b""
@@ -82,278 +134,200 @@ def receive() -> dict[str, Any]:
 	if not event_type:
 		return _json_response({"status": "rejected", "error": _("Missing event type")}, status_code=400)
 
-	# Claim the delivery id first (unique event_id). Concurrent senders: one INSERT
-	# wins; others see duplicate and return 200 without reprocessing a success.
-	claimed = _run_as_integration_user(lambda: _claim_delivery(event_id, event_type, payload))
-	if claimed["status"] == "duplicate":
-		return _json_response(
-			{
-				"status": "duplicate",
-				"event_id": event_id,
-				"name": claimed["name"],
-				"previous_status": claimed.get("previous_status"),
-			},
-			status_code=200,
-		)
-
-	event = frappe.get_doc("Astra Connect Event", claimed["name"])
-	return _finalize_event(event)
-
-
-def _is_retryable_event_save(exc: BaseException) -> bool:
-	msg = str(exc).lower()
-	if "deadlock" in msg or "1213" in msg or "lock wait" in msg or "1205" in msg:
-		return True
-	if "1020" in msg or "record has changed" in msg:
-		return True
-	errno = getattr(exc, "errno", None)
-	if errno is None and getattr(exc, "args", None):
-		errno = exc.args[0]
-	return errno in (1213, 1205, 1020)
-
-
-def _claim_delivery(event_id: str, event_type: str, payload: dict) -> dict[str, Any]:
-	"""Insert-or-lock the Astra Connect Event for this X-Astra-Delivery.
-
-	Returns ``{"status": "claimed"|"retry"|"duplicate", "name": ...}``.
-	"""
-	import time as _time
-
 	owner = get_connect_integration_user()
-
-	# Fast path: unique INSERT claims the delivery.
+	prev_user = frappe.session.user
 	try:
-		event = frappe.get_doc(
-			{
-				"doctype": "Astra Connect Event",
-				"event_id": event_id,
-				"event_type": event_type,
-				"payload": payload,
-				"status": "Received",
-				"attempts": 0,
-				"owner": owner,
-			}
-		)
-		event.insert(ignore_permissions=True)
-		if event.owner != owner:
-			event.db_set("owner", owner, update_modified=False)
-		frappe.db.commit()
-		return {"status": "claimed", "name": event.name}
-	except Exception as exc:
-		msg = str(exc).lower()
-		if "duplicate" not in msg and "1062" not in msg and not isinstance(exc, frappe.DuplicateEntryError):
-			raise
-		frappe.db.rollback()
-
-	# Another worker holds/held the row — lock it and decide.
-	for attempt in range(5):
+		frappe.set_user(owner)
 		try:
-			rows = frappe.db.sql(
-				"""
-				SELECT name, status FROM `tabAstra Connect Event`
-				WHERE event_id = %s
-				FOR UPDATE
-				""",
-				(event_id,),
+			event = frappe.get_doc(
+				{
+					"doctype": "Astra Connect Event",
+					"event_id": event_id,
+					"event_type": event_type,
+					"payload": payload,
+					"status": "Received",
+					"attempts": 0,
+					"owner": owner,
+				}
+			)
+			event.insert(ignore_permissions=True)
+			if event.owner != owner:
+				frappe.db.set_value(
+					"Astra Connect Event", event.name, "owner", owner, update_modified=False
+				)
+			frappe.db.commit()
+		except Exception as exc:
+			frappe.db.rollback()
+			if not _is_duplicate_key(exc):
+				raise
+			existing = frappe.db.get_value(
+				"Astra Connect Event",
+				{"event_id": event_id},
+				["name", "status"],
 				as_dict=True,
 			)
-			if not rows:
-				# Lost the race mid-delete; retry insert once more next loop.
-				frappe.db.rollback()
-				_time.sleep(0.02 * (attempt + 1))
-				continue
+			# Never rewrite another request's row — duplicate is terminal for this POST.
+			return _json_response(
+				{
+					"status": "duplicate",
+					"event_id": event_id,
+					"name": existing.name if existing else None,
+					"previous_status": existing.status if existing else None,
+				},
+				status_code=200,
+			)
 
-			row = rows[0]
-			if row.status in ("Failed", "Received"):
-				event = frappe.get_doc("Astra Connect Event", row.name)
-				event.event_type = event_type or event.event_type
-				event.payload = payload
-				event.status = "Received"
-				event.error = ""
-				event.save(ignore_permissions=True)
-				frappe.db.commit()
-				return {"status": "retry", "name": event.name}
-
-			frappe.db.commit()
-			return {
-				"status": "duplicate",
-				"name": row.name,
-				"previous_status": row.status,
-			}
-		except Exception as exc:
-			if not _is_retryable_event_save(exc):
-				raise
-			frappe.db.rollback()
-			_time.sleep(0.05 * (attempt + 1))
-
-	frappe.throw(_("Could not claim Connect delivery"))
-
-
-def _run_as_integration_user(fn):
-	"""Guest webhooks must not leave owner=Guest on created docs."""
-	prev = frappe.session.user
-	try:
-		frappe.set_user(get_connect_integration_user())
-		return fn()
+		_enqueue_processing(event.name, event_id)
+		return _json_response(
+			{
+				"status": "accepted",
+				"event_id": event_id,
+				"name": event.name,
+			},
+			status_code=202,
+		)
 	finally:
-		frappe.set_user(prev)
+		frappe.set_user(prev_user)
 
 
 @frappe.whitelist()
 def retry_event(event_id: str) -> dict[str, Any]:
-	"""Admin-only reprocessing of a failed Astra Connect Event."""
+	"""Admin-only re-enqueue of a Failed / Received Astra Connect Event."""
 	if "System Manager" not in frappe.get_roles():
 		frappe.throw(_("Only System Managers can retry Connect events"), frappe.PermissionError)
 
-	name = frappe.db.get_value("Astra Connect Event", {"event_id": event_id}, "name")
-	if not name:
+	row = frappe.db.get_value(
+		"Astra Connect Event", {"event_id": event_id}, ["name", "status"], as_dict=True
+	)
+	if not row:
 		frappe.throw(_("Event not found: {0}").format(event_id), frappe.DoesNotExistError)
-
-	event = frappe.get_doc("Astra Connect Event", name)
-	if event.status not in ("Failed", "Received"):
+	if row.status not in ("Failed", "Received"):
 		frappe.throw(_("Only failed or received events can be retried"))
 
-	return _finalize_event(event)
+	# Reset to Received so the worker's claim UPDATE can take it.
+	frappe.db.sql(
+		"""
+		UPDATE `tabAstra Connect Event`
+		SET status = 'Received', error = '', modified = %s, modified_by = %s
+		WHERE name = %s AND status IN ('Failed', 'Received')
+		""",
+		(now_datetime(), frappe.session.user, row.name),
+	)
+	frappe.db.commit()
+	_enqueue_processing(row.name, event_id)
+	return _json_response(
+		{"status": "accepted", "event_id": event_id, "name": row.name},
+		status_code=202,
+	)
 
 
-def _save_event_with_retry(event) -> None:
-	"""Persist event status; retry MariaDB 1020 / deadlock on concurrent writers."""
-	import time as _time
+def process_inbox_event(event_name: str) -> dict[str, Any] | None:
+	"""Background worker: claim one inbox row, upsert CRM docs, mark Processed/Failed.
 
-	last_exc = None
-	for attempt in range(5):
+	Claim is committed first so attempts stick. Data writes retry on deadlock /
+	duplicate-key with a full rollback of the data transaction (claim stays
+	Processing). Failed only after MAX_WORKER_ATTEMPTS; Failed stays redeliverable
+	via retry_event (or a new delivery id).
+	"""
+	if not _claim_event(event_name):
+		status = frappe.db.get_value("Astra Connect Event", event_name, "status")
+		return {"status": "skipped", "event_status": status}
+	frappe.db.commit()
+
+	last_exc: BaseException | None = None
+	for attempt in range(MAX_WORKER_ATTEMPTS):
 		try:
-			event.save(ignore_permissions=True)
+			return _process_claimed_event(event_name)
+		except ProcessingError as exc:
+			frappe.db.rollback()
+			_mark_event_status(event_name, "Failed", error=str(exc))
 			frappe.db.commit()
-			return
+			return {"status": "failed", "error": str(exc)}
 		except Exception as exc:
 			last_exc = exc
-			if not _is_retryable_event_save(exc):
-				raise
 			frappe.db.rollback()
-			# Reload so we don't write a stale timestamp against a changed row.
-			fresh = frappe.get_doc("Astra Connect Event", event.name)
-			fresh.status = event.status
-			fresh.error = event.error
-			fresh.attempts = event.attempts
-			fresh.processed_at = event.processed_at
-			fresh.payload = event.payload
-			fresh.event_type = event.event_type
-			event = fresh
-			_time.sleep(0.05 * (attempt + 1))
-	raise last_exc
-
-
-def _finalize_event(event) -> dict[str, Any]:
-	# Serialise concurrent senders of the same X-Astra-Delivery.
-	lock_name = f"astra_evt_{(event.event_id or '')[:48]}"
-	got_lock = False
-	try:
-		got_lock = bool(frappe.db.sql("SELECT GET_LOCK(%s, %s)", (lock_name, 30))[0][0])
-	except Exception:
-		got_lock = False
-
-	try:
-		event.reload()
-		if event.status == "Processed":
-			return _json_response(
-				{
-					"status": "duplicate",
-					"event_id": event.event_id,
-					"name": event.name,
-					"previous_status": event.status,
-				},
-				status_code=200,
-			)
-
-		event.attempts = int(event.attempts or 0) + 1
-
-		def _process():
-			return process_event(event)
-
-		try:
-			result = _run_as_integration_user(_process)
-			event.status = "Processed"
-			event.error = ""
-			event.processed_at = now_datetime()
-			_save_event_with_retry(event)
-			return _json_response(
-				{
-					"status": "processed",
-					"event_id": event.event_id,
-					"name": event.name,
-					"result": result,
-				},
-				status_code=200,
-			)
-		except ProcessingError as exc:
-			# Business failure is final for Connect's outbox — acknowledge with 2xx.
-			event.status = "Failed"
-			event.error = str(exc)
-			_save_event_with_retry(event)
-			return _json_response(
-				{
-					"status": "failed",
-					"event_id": event.event_id,
-					"name": event.name,
-					"error": str(exc),
-				},
-				status_code=200,
-			)
-		except Exception:
-			# Transient — Connect should retry (5xx). Keep status Failed so the same
-			# X-Astra-Delivery can be reprocessed (not counted as a successful duplicate).
-			traceback = frappe.get_traceback()
-			frappe.db.rollback()
-			try:
-				frappe.db.set_value(
-					"Astra Connect Event",
-					event.name,
-					{
-						"status": "Failed",
-						"error": traceback,
-						"attempts": event.attempts,
-					},
-					update_modified=True,
-				)
+			if not _is_retryable_db(exc) or attempt >= MAX_WORKER_ATTEMPTS - 1:
+				_mark_event_status(event_name, "Failed", error=frappe.get_traceback())
 				frappe.db.commit()
-			except Exception as save_exc:
-				if _is_retryable_event_save(save_exc):
-					frappe.db.rollback()
-					for attempt in range(4):
-						try:
-							frappe.db.set_value(
-								"Astra Connect Event",
-								event.name,
-								{
-									"status": "Failed",
-									"error": traceback,
-									"attempts": event.attempts,
-								},
-								update_modified=True,
-							)
-							frappe.db.commit()
-							break
-						except Exception:
-							frappe.db.rollback()
-							import time as _time
+				frappe.log_error(title="Astra Connect inbox worker failed")
+				return {"status": "failed", "error": _("Internal processing error")}
+			time.sleep(0.05 * (attempt + 1))
 
-							_time.sleep(0.05 * (attempt + 1))
-				else:
-					raise
-			frappe.log_error(title="Astra Connect webhook processing failed")
-			return _json_response(
-				{
-					"status": "failed",
-					"event_id": event.event_id,
-					"name": event.name,
-					"error": _("Internal processing error"),
-				},
-				status_code=500,
-			)
+	if last_exc:
+		_mark_event_status(event_name, "Failed", error=frappe.get_traceback())
+		frappe.db.commit()
+		raise last_exc
+	return None
+
+
+def _process_claimed_event(event_name: str) -> dict[str, Any]:
+	event = frappe.get_doc("Astra Connect Event", event_name)
+	owner = get_connect_integration_user()
+	prev = frappe.session.user
+	try:
+		frappe.set_user(owner)
+		result = process_event(event)
 	finally:
-		if got_lock:
-			try:
-				frappe.db.sql("SELECT RELEASE_LOCK(%s)", (lock_name,))
-			except Exception:
-				pass
+		frappe.set_user(prev)
+
+	frappe.db.commit()
+	_mark_event_status(event_name, "Processed", clear_error=True)
+	frappe.db.commit()
+	return {"status": "processed", "result": result}
+
+
+def _claim_event(event_name: str) -> bool:
+	"""Conditional claim: only one worker proceeds (rowcount == 1)."""
+	now = now_datetime()
+	user = get_connect_integration_user()
+	frappe.db.sql(
+		"""
+		UPDATE `tabAstra Connect Event`
+		SET status = 'Processing',
+			attempts = IFNULL(attempts, 0) + 1,
+			error = '',
+			modified = %s,
+			modified_by = %s
+		WHERE name = %s AND status IN ('Received', 'Failed')
+		""",
+		(now, user, event_name),
+	)
+	return int(frappe.db.sql("SELECT ROW_COUNT()")[0][0] or 0) == 1
+
+
+def _mark_event_status(
+	event_name: str,
+	status: str,
+	*,
+	error: str | None = None,
+	clear_error: bool = False,
+) -> None:
+	now = now_datetime()
+	user = get_connect_integration_user()
+	if status == "Processed":
+		frappe.db.sql(
+			"""
+			UPDATE `tabAstra Connect Event`
+			SET status = 'Processed',
+				error = '',
+				processed_at = %s,
+				modified = %s,
+				modified_by = %s
+			WHERE name = %s AND status = 'Processing'
+			""",
+			(now, now, user, event_name),
+		)
+	elif status == "Failed":
+		frappe.db.sql(
+			"""
+			UPDATE `tabAstra Connect Event`
+			SET status = 'Failed',
+				error = %s,
+				modified = %s,
+				modified_by = %s
+			WHERE name = %s AND status IN ('Processing', 'Received', 'Failed')
+			""",
+			(error or "", now, user, event_name),
+		)
+	elif clear_error:
+		frappe.db.set_value("Astra Connect Event", event_name, "error", "")
