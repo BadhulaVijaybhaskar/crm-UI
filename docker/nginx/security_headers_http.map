@@ -1,0 +1,10 @@
+# Include from http{} (not server{}). Paired with security_headers.conf.
+map $http_x_forwarded_proto $astra_hsts_value {
+    default "";
+    https   "max-age=31536000; includeSubDomains";
+}
+# Fallback when the edge terminates TLS and $scheme is already https.
+map $scheme $astra_hsts_scheme {
+    default "";
+    https   "max-age=31536000; includeSubDomains";
+}

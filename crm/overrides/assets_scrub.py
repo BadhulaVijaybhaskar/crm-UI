@@ -48,7 +48,8 @@ def strip_sourcemaps(extra_roots: list[str | os.PathLike] | None = None) -> int:
 		if root in seen or not root.is_dir():
 			continue
 		seen.add(root)
-		for dirpath, _dirnames, filenames in os.walk(root):
+		# followlinks=True: frappe/dist is often a symlink under sites/assets.
+		for dirpath, _dirnames, filenames in os.walk(root, followlinks=True):
 			for name in filenames:
 				if not name.endswith(".map"):
 					continue

@@ -1,0 +1,21 @@
+# Layer on top of a Frappe/CRM backend image: strip all *.map from sites/assets
+# (follows symlinks into frappe/dist). Used by CI / image bake — not only at runtime.
+#
+#   docker build -f docker/Dockerfile.backend-assets \
+#     --build-arg BASE_IMAGE=ghcr.io/example/crm:latest \
+#     -t crm-backend:nosourcemaps .
+ARG BASE_IMAGE=frappe/erpnext:v15
+FROM ${BASE_IMAGE}
+
+USER root
+COPY scripts/strip-sourcemaps.sh /usr/local/bin/strip-sourcemaps.sh
+RUN chmod +x /usr/local/bin/strip-sourcemaps.sh \
+ && for candidate in /home/frappe/frappe-bench /workspace/frappe-bench /home/frappe/bench; do \
+      if [ -d "$candidate/sites/assets" ]; then \
+        BENCH_PATH="$candidate" /usr/local/bin/strip-sourcemaps.sh; \
+      fi; \
+    done \
+ && find -L /home/frappe /workspace /assets -type f -name '*.map' -delete 2>/dev/null || true
+
+# Prefer non-root if the base image expects it.
+USER frappe
