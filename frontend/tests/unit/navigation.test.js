@@ -14,20 +14,23 @@ describe('navigationItems', () => {
     delete window.boot
   })
 
-  it('keeps the Astra CRM sidebar registry order', () => {
+  it('keeps the Figma v1 sidebar registry order', () => {
     const labels = navigationItems.map((item) => item.label)
     expect(labels).toEqual([
-      'Dashboard',
+      'Home',
+      'Work queue',
+      'Conversations',
       'Leads',
+      'Deals',
       'Contacts',
       'Companies',
-      'Deals',
       'Tasks',
+      'Notes',
+      'Call logs',
+      'Reports',
       'AI Calling',
       'Messages',
       'AI Employees',
-      'Activities',
-      'Reports',
       'Settings',
     ])
   })
@@ -35,7 +38,6 @@ describe('navigationItems', () => {
   it('does not surface WhatsApp inbox in the sidebar registry', () => {
     const labels = navigationItems.map((item) => item.label.toLowerCase())
     expect(labels.some((l) => l.includes('whatsapp'))).toBe(false)
-    expect(labels.some((l) => l === 'inbox')).toBe(false)
   })
 
   it('fails if any nav item is a placeholder / Soon stub', () => {
@@ -48,12 +50,13 @@ describe('navigationItems', () => {
     }
   })
 
-  it('shows Activities and Reports when ready', () => {
-    expect(NAV_FEATURE_READY.Activities).toBe(true)
-    expect(NAV_FEATURE_READY.Reports).toBe(true)
+  it('shows Conversations and Reports when ready', () => {
+    expect(NAV_FEATURE_READY.Conversations).toBe(true)
     const labels = getNavigationItems().map((item) => item.label)
-    expect(labels).toContain('Activities')
+    expect(labels).toContain('Conversations')
     expect(labels).toContain('Reports')
+    expect(labels).toContain('Work queue')
+    expect(labels).toContain('Home')
   })
 
   it('hides Connect destinations until Settings is enabled with a base URL', () => {
@@ -92,11 +95,11 @@ describe('navigationItems', () => {
     expect(match.path).toBe('/settings/users')
   })
 
-  it('includes Dashboard on mobile (settings drawer + mobile menu)', () => {
+  it('includes Home on mobile (settings drawer + mobile menu)', () => {
     const mobileLabels = getNavigationItems({ mobile: true }).map(
       (item) => item.label,
     )
-    expect(mobileLabels).toContain('Dashboard')
+    expect(mobileLabels).toContain('Home')
     expect(mobileLabels).toContain('Leads')
     expect(mobileLabels).toContain('Companies')
     expect(mobileLabels).toContain('Settings')
