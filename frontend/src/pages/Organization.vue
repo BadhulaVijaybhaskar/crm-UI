@@ -84,118 +84,21 @@
       </template>
     </AstraRecordHeader>
 
-    <div ref="parentRef" class="flex min-h-0 flex-1 overflow-hidden">
-      <Resizer
-        :parent="$refs.parentRef"
-        class="flex h-full flex-col overflow-hidden border-r border-crm-border bg-crm-card"
-      >
-        <div class="border-b border-crm-border">
-          <FileUploader
-            :validateFile="validateIsImageFile"
-            @success="changeOrganizationImage"
-          >
-            <template #default="{ openFileSelector, error }">
-              <div class="flex flex-col items-start justify-start gap-4 p-5">
-                <div class="flex gap-4 items-center">
-                  <div class="group relative h-15.5 w-15.5">
-                    <Avatar
-                      size="3xl"
-                      class="h-15.5 w-15.5"
-                      :label="organization.doc.organization_name"
-                      :image="organization.doc.organization_logo"
-                    />
-                    <component
-                      :is="
-                        organization.doc.organization_logo ? Dropdown : 'div'
-                      "
-                      v-bind="
-                        organization.doc.organization_logo
-                          ? {
-                              options: [
-                                {
-                                  icon: 'lucide-upload',
-                                  label: organization.doc.organization_logo
-                                    ? __('Change Image')
-                                    : __('Upload Image'),
-                                  onClick: openFileSelector,
-                                },
-                                {
-                                  icon: 'lucide-trash-2',
-                                  label: __('Remove Image'),
-                                  onClick: () => changeOrganizationImage(''),
-                                },
-                              ],
-                            }
-                          : { onClick: openFileSelector }
-                      "
-                      class="!absolute bottom-0 left-0 right-0"
-                    >
-                      <div
-                        class="z-1 absolute bottom-0 left-0 right-0 flex h-14 cursor-pointer items-center justify-center rounded-b-full bg-black bg-opacity-40 pt-5 opacity-0 duration-300 ease-in-out group-hover:opacity-100"
-                        style="
-                          -webkit-clip-path: inset(22px 0 0 0);
-                          clip-path: inset(22px 0 0 0);
-                        "
-                      >
-                        <CameraIcon class="h-6 w-6 cursor-pointer text-white" />
-                      </div>
-                    </component>
-                  </div>
-                  <div class="flex flex-col gap-2 truncate">
-                    <div class="truncate text-3xl-medium text-ink-gray-9">
-                      <span>{{ organization.doc.name }}</span>
-                    </div>
-                    <div
-                      v-if="organization.doc.website"
-                      class="flex items-center gap-1.5 text-base text-ink-gray-8"
-                    >
-                      <WebsiteIcon class="size-4" />
-                      <span>{{ website(organization.doc.website) }}</span>
-                    </div>
-                    <ErrorMessage :message="__(error)" />
-                  </div>
-                </div>
-                <div class="flex gap-1.5">
-                  <AstraButton
-                    variant="secondary"
-                    size="sm"
-                    :label="__('Open Website')"
-                    @click="openWebsite"
-                  />
-                </div>
-              </div>
-            </template>
-          </FileUploader>
-        </div>
-        <div
-          v-if="sections.data"
-          class="flex flex-1 flex-col justify-between overflow-hidden"
-        >
-          <SidePanelLayout
-            :sections="sections.data"
-            doctype="CRM Organization"
-            :docname="organization.doc.name"
-            @reload="sections.reload"
-            @beforeFieldChange="beforeFieldChange"
-          />
-        </div>
-      </Resizer>
+    <div class="flex min-h-0 flex-1 overflow-hidden">
       <Tabs
         v-model="activeTab"
         as="div"
         :tabs="tabs"
-        class="flex flex-1 flex-col overflow-hidden [&_[role='tab']]:px-2.5 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:bg-crm-card [&_[role='tablist']]:border-b [&_[role='tablist']]:border-crm-border [&_[role='tablist']]:px-crm-page-x [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-10 [&_[role='tablist']]:gap-0.5 [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+        :class="recordTabsClass()"
       >
         <template #tab-label="{ tab }">{{ __(tab.label) }}</template>
-        <template #tab-suffix="{ tab, active }">
-          <Badge
-            :class="[active ? 'bg-surface-gray-10' : 'bg-gray-600']"
-            variant="solid"
-            theme="gray"
-            size="sm"
+        <template #tab-suffix="{ tab }">
+          <span
+            v-if="tab.count != null && tab.value !== 'details'"
+            class="rounded bg-crm-neutral-soft px-1 text-crm-micro font-semibold text-crm-muted-fg"
           >
             {{ tab.count }}
-          </Badge>
+          </span>
         </template>
         <template #tab-panel="{ tab }">
           <DealsListView
@@ -224,6 +127,24 @@
           />
         </template>
       </Tabs>
+      <Resizer
+        side="right"
+        :defaultWidth="340"
+        class="flex h-full flex-col overflow-hidden border-l border-crm-border bg-crm-card"
+      >
+        <div
+          v-if="sections.data"
+          class="flex flex-1 flex-col justify-between overflow-hidden"
+        >
+          <SidePanelLayout
+            :sections="sections.data"
+            doctype="CRM Organization"
+            :docname="organization.doc.name"
+            @reload="sections.reload"
+            @beforeFieldChange="beforeFieldChange"
+          />
+        </div>
+      </Resizer>
     </div>
   </div>
   <ErrorPage
@@ -258,8 +179,6 @@ import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
 import ContactsListView from '@/components/ListViews/ContactsListView.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
-import WebsiteIcon from '@/components/Icons/WebsiteIcon.vue'
-import CameraIcon from '@/components/Icons/CameraIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
@@ -269,6 +188,8 @@ import Link from '@/components/Controls/Link.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
 import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
+import RecordAvatar from '@/components/Pipeline/RecordAvatar.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
 import AstraButton from '@/components/astra/AstraButton.vue'
 import { useDocument } from '@/data/document'
 import { getSettings } from '@/stores/settings'
@@ -277,15 +198,11 @@ import { getMeta } from '@/stores/meta'
 import { usersStore } from '@/stores/users'
 import { statusesStore } from '@/stores/statuses'
 import {
-  validateIsImageFile,
   setupCustomizations,
   openWebsite as openExternalWebsite,
 } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
 import {
-  Avatar,
-  FileUploader,
-  Dropdown,
   Tabs,
   createListResource,
   usePageMeta,
