@@ -1,0 +1,114 @@
+{
+  "CRM Deal::DEAL-LL": {
+    "message": {
+      "reference_doctype": "CRM Deal",
+      "reference_docname": "DEAL-LL",
+      "meta": {
+        "title": "Arjun Kapoor",
+        "subtitle": "Head of Operations · Lumen Logistics",
+        "job_title": "Head of Operations",
+        "organization": "Lumen Logistics",
+        "deal_title": "Fleet telematics rollout",
+        "status": "Negotiation",
+        "value": 1240000,
+        "value_label": "₹12,40,000",
+        "next_step": "Send revised quote",
+        "next_step_label": "Next step · Send revised quote · due today",
+        "email": "arjun.k@example.in",
+        "mobile_no": "+91 97•• ••• 208",
+        "owner": "rohan.mehta@example.com",
+        "owner_name": "Rohan Mehta",
+        "route": {
+          "name": "Deal",
+          "params": {
+            "dealId": "DEAL-LL"
+          }
+        }
+      },
+      "events": [
+        {
+          "channel": "whatsapp",
+          "name": "WA-1",
+          "creation": "2026-10-27 18:40:00",
+          "reference_doctype": "CRM Deal",
+          "reference_docname": "DEAL-LL",
+          "preview": "Sharing the vehicle list now.",
+          "data": {
+            "message": "Sharing the vehicle list now. 120 trucks in phase 1, the rest after April.",
+            "direction": "Incoming",
+            "status": "Received",
+            "owner": "arjun.k@example.in",
+            "sender_name": "Arjun"
+          }
+        },
+        {
+          "channel": "whatsapp",
+          "name": "WA-2",
+          "creation": "2026-10-27 18:52:00",
+          "reference_doctype": "CRM Deal",
+          "reference_docname": "DEAL-LL",
+          "preview": "Got it, thanks Arjun.",
+          "data": {
+            "message": "Got it, thanks Arjun. I will send the revised quote tomorrow morning.",
+            "direction": "Outgoing",
+            "status": "Sent",
+            "owner": "rohan.mehta@example.com",
+            "sender_name": "Rohan"
+          }
+        },
+        {
+          "channel": "call",
+          "name": "CALL-AK1",
+          "creation": "2026-10-28 09:14:00",
+          "reference_doctype": "CRM Deal",
+          "reference_docname": "DEAL-LL",
+          "preview": "Interested — send revised quote",
+          "data": {
+            "name": "CALL-AK1",
+            "type": "Outgoing",
+            "status": "Completed",
+            "duration": 372,
+            "duration_label": "6 m 12 s",
+            "start_time": "2026-10-28 09:14:00",
+            "outcome": "Interested — send revised quote",
+            "call_summary": "Agreed on 120 vehicles in phase 1. Wants 3-year pricing and a 30-day pilot clause. Decision with CFO by 5 Nov.",
+            "caller": {
+              "name": "rohan.mehta@example.com",
+              "label": "Rohan"
+            },
+            "has_recording": true,
+            "recording_label": "Recording & transcript in Astra Connect"
+          }
+        },
+        {
+          "channel": "note",
+          "name": "NOTE-1",
+          "creation": "2026-10-28 09:30:00",
+          "reference_doctype": "CRM Deal",
+          "reference_docname": "DEAL-LL",
+          "preview": "Quote to split hardware and subscription lines (CFO ask).",
+          "data": {
+            "title": "Quote structure",
+            "content": "Quote to split hardware and subscription lines (CFO ask).",
+            "owner": "rohan.mehta@example.com",
+            "owner_name": "Rohan"
+          }
+        }
+      ],
+      "channel_counts": {
+        "call": 4,
+        "email": 9,
+        "note": 3,
+        "whatsapp": 12
+      },
+      "next_task": {
+        "name": "TASK-WQ2",
+        "title": "Send revised quote",
+        "due_date": "2026-10-28 00:00:00",
+        "status": "Todo",
+        "priority": "High"
+      },
+      "read_only": true
+    }
+  }
+}

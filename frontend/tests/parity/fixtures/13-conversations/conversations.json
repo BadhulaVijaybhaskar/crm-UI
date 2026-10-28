@@ -1,0 +1,152 @@
+{
+  "message": {
+    "items": [
+      {
+        "id": "CRM Deal::DEAL-LL",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-LL",
+        "title": "Arjun Kapoor",
+        "subtitle": "Lumen Logistics · Deal",
+        "organization": "Lumen Logistics",
+        "latest_preview": "Interested — send revised quote",
+        "latest_channel": "call",
+        "latest_at": "2026-10-28 09:14:00",
+        "latest_label": "09:14",
+        "channels": [
+          "call",
+          "whatsapp",
+          "email"
+        ],
+        "channel_counts": {
+          "call": 4,
+          "whatsapp": 12,
+          "email": 9
+        }
+      },
+      {
+        "id": "CRM Deal::DEAL-LL2",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-LL2",
+        "title": "Sana Qureshi",
+        "subtitle": "Lumen Logistics · Deal",
+        "organization": "Lumen Logistics",
+        "latest_preview": "Re: Revised proposal for fleet...",
+        "latest_channel": "email",
+        "latest_at": "2026-10-28 08:52:00",
+        "latest_label": "08:52",
+        "channels": [
+          "email"
+        ],
+        "channel_counts": {
+          "email": 3
+        }
+      },
+      {
+        "id": "CRM Lead::LEAD-MI",
+        "reference_doctype": "CRM Lead",
+        "reference_docname": "LEAD-MI",
+        "title": "Meera Iyer",
+        "subtitle": "Brightpath Schools · Lead",
+        "organization": "Brightpath Schools",
+        "latest_preview": "Callback requested",
+        "latest_channel": "call",
+        "latest_at": "2026-10-26 16:20:00",
+        "latest_label": "26 Oct",
+        "channels": [
+          "call",
+          "email"
+        ],
+        "channel_counts": {
+          "call": 2,
+          "email": 1
+        }
+      },
+      {
+        "id": "CRM Deal::DEAL-KF",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-KF",
+        "title": "Karthik Rao",
+        "subtitle": "Kaveri Foods · Deal",
+        "organization": "Kaveri Foods",
+        "latest_preview": "Demo agenda shared with team",
+        "latest_channel": "note",
+        "latest_at": "2026-10-27 15:00:00",
+        "latest_label": "Yesterday",
+        "channels": [
+          "note",
+          "call",
+          "whatsapp"
+        ],
+        "channel_counts": {
+          "note": 1,
+          "call": 1,
+          "whatsapp": 2
+        }
+      },
+      {
+        "id": "CRM Deal::DEAL-PH",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-PH",
+        "title": "Tarun Bhatia",
+        "subtitle": "Pinecrest Hotels · Deal",
+        "organization": "Pinecrest Hotels",
+        "latest_preview": "PO will be raised Thursday",
+        "latest_channel": "email",
+        "latest_at": "2026-10-28 00:30:00",
+        "latest_label": "Today",
+        "channels": [
+          "email"
+        ],
+        "channel_counts": {
+          "email": 2
+        }
+      },
+      {
+        "id": "CRM Lead::LEAD-VS",
+        "reference_doctype": "CRM Lead",
+        "reference_docname": "LEAD-VS",
+        "title": "Vikram Sethi",
+        "subtitle": "Orbit Pharma · Lead",
+        "organization": "Orbit Pharma",
+        "latest_preview": "Opened: Field force app overview",
+        "latest_channel": "email",
+        "latest_at": "2026-10-19 10:00:00",
+        "latest_label": "19 Oct",
+        "channels": [
+          "email"
+        ],
+        "channel_counts": {
+          "email": 1
+        }
+      },
+      {
+        "id": "CRM Deal::DEAL-NR",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-NR",
+        "title": "Neha Agarwal",
+        "subtitle": "Northwind Retail · Deal",
+        "organization": "Northwind Retail",
+        "latest_preview": "IT security review pending",
+        "latest_channel": "note",
+        "latest_at": "2026-10-22 12:00:00",
+        "latest_label": "22 Oct",
+        "channels": [
+          "note",
+          "email"
+        ],
+        "channel_counts": {
+          "note": 1,
+          "email": 1
+        }
+      }
+    ],
+    "available_channels": [
+      "call",
+      "email",
+      "note",
+      "whatsapp"
+    ],
+    "whatsapp_available": true,
+    "selected": "CRM Deal::DEAL-LL"
+  }
+}

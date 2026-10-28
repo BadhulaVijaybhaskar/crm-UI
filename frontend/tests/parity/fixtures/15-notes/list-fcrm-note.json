@@ -1,0 +1,132 @@
+{
+  "doctype": "FCRM Note",
+  "total_count": 6,
+  "title_field": "title",
+  "columns": [
+    {
+      "label": "Title",
+      "type": "Data",
+      "key": "title",
+      "width": "16rem"
+    },
+    {
+      "label": "Last Modified",
+      "type": "Datetime",
+      "key": "modified",
+      "width": "8rem"
+    }
+  ],
+  "rows": [
+    {
+      "name": "NOTE-N1",
+      "title": "Hold price, offer pilot clause",
+      "preview": "Competitor quoted 8% lower. Hold price; offer the pilot clause i...",
+      "content": "<p>Competitor quoted 8% lower on hardware. We hold price.</p><p>Offer instead:</p><ul><li>30-day pilot clause on 20 vehicles, exit without penalty</li><li>Hardware and subscription as separate lines (CFO ask)</li><li>Free onboarding for depot managers</li></ul><p>Next: Rohan sends revised quote today; CFO review call 05 Nov.</p>",
+      "reference_doctype": "CRM Deal",
+      "reference_docname": "DEAL-LL",
+      "record_label": "Lumen Logistics · Deal",
+      "owner": "priya.nair@example.com",
+      "owner_name": "Priya Nair",
+      "creation": "2026-10-22 11:30:00",
+      "modified": "2026-10-22 11:30:00",
+      "time_label": "22 Oct",
+      "pinned": 1,
+      "pinned_by": "Priya",
+      "pinned_on": "2026-10-22",
+      "linked_title": "Lumen Logistics · Fleet telematics rollout",
+      "selected": true
+    },
+    {
+      "name": "NOTE-N2",
+      "title": "Referral context",
+      "preview": "Referred by Cedar Clinics. Decision maker; budget approved fo...",
+      "content": "<p>Referred by Cedar Clinics. Decision maker; budget approved for this quarter.</p>",
+      "reference_doctype": "CRM Lead",
+      "reference_docname": "LEAD-MI",
+      "record_label": "Meera Iyer · Lead",
+      "owner": "priya.nair@example.com",
+      "owner_name": "Priya Nair",
+      "creation": "2026-10-24 10:00:00",
+      "modified": "2026-10-24 10:00:00",
+      "time_label": "24 Oct",
+      "pinned": 1,
+      "pinned_by": "Priya",
+      "pinned_on": "2026-10-24",
+      "linked_title": "Meera Iyer · Brightpath Schools"
+    },
+    {
+      "name": "NOTE-N3",
+      "title": "Quote structure",
+      "preview": "Split hardware and subscription lines (CFO ask).",
+      "content": "<p>Split hardware and subscription lines (CFO ask).</p>",
+      "reference_doctype": "CRM Deal",
+      "reference_docname": "DEAL-LL",
+      "record_label": "Lumen Logistics · Deal",
+      "owner": "rohan.mehta@example.com",
+      "owner_name": "Rohan Mehta",
+      "creation": "2026-10-28 09:30:00",
+      "modified": "2026-10-28 09:30:00",
+      "time_label": "Today",
+      "pinned": 0,
+      "linked_title": "Lumen Logistics · Fleet telematics rollout"
+    },
+    {
+      "name": "NOTE-N4",
+      "title": "Demo agenda",
+      "preview": "Distributor login, order tracking, credit limits. Karthik bringing fi...",
+      "content": "<p>Distributor login, order tracking, credit limits. Karthik bringing finance.</p>",
+      "reference_doctype": "CRM Deal",
+      "reference_docname": "DEAL-KF",
+      "record_label": "Kaveri Foods · Deal",
+      "owner": "rohan.mehta@example.com",
+      "owner_name": "Rohan Mehta",
+      "creation": "2026-10-27 15:00:00",
+      "modified": "2026-10-27 15:00:00",
+      "time_label": "Yesterday",
+      "pinned": 0,
+      "linked_title": "Kaveri Foods · Demo/Making"
+    },
+    {
+      "name": "NOTE-N5",
+      "title": "Budget next quarter",
+      "preview": "No spend before January. Re-engage first week of Jan with ca...",
+      "content": "<p>No spend before January. Re-engage first week of Jan with case studies.</p>",
+      "reference_doctype": "CRM Lead",
+      "reference_docname": "LEAD-RG",
+      "record_label": "Rahul Gupta · Lead",
+      "owner": "rohan.mehta@example.com",
+      "owner_name": "Rohan Mehta",
+      "creation": "2026-10-21 12:00:00",
+      "modified": "2026-10-21 12:00:00",
+      "time_label": "21 Oct",
+      "pinned": 0,
+      "linked_title": "Rahul Gupta · Harbor Freight Co"
+    },
+    {
+      "name": "NOTE-N6",
+      "title": "IT security review",
+      "preview": "Needs SOC report and data residency answer before pilot.",
+      "content": "<p>Needs SOC report and data residency answer before pilot.</p>",
+      "reference_doctype": "CRM Deal",
+      "reference_docname": "DEAL-NR",
+      "record_label": "Northwind Retail · Deal",
+      "owner": "rohan.mehta@example.com",
+      "owner_name": "Rohan Mehta",
+      "creation": "2026-10-22 14:00:00",
+      "modified": "2026-10-22 14:00:00",
+      "time_label": "22 Oct",
+      "pinned": 0,
+      "linked_title": "Northwind Retail · Proposal/Quotation"
+    }
+  ],
+  "sections": [
+    {
+      "id": "pinned",
+      "label": "Pinned"
+    },
+    {
+      "id": "recent",
+      "label": "Recent"
+    }
+  ]
+}

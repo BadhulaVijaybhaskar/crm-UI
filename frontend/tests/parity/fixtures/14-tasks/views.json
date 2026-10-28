@@ -1,0 +1,69 @@
+{
+  "message": [
+    {
+      "name": "my-tasks",
+      "label": "My tasks",
+      "route_name": "Tasks",
+      "doctype": "CRM Task",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com",
+      "is_default": 1,
+      "count": 9
+    },
+    {
+      "name": "due-today",
+      "label": "Due today",
+      "route_name": "Tasks",
+      "doctype": "CRM Task",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com",
+      "count": 4
+    },
+    {
+      "name": "overdue",
+      "label": "Overdue",
+      "route_name": "Tasks",
+      "doctype": "CRM Task",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com",
+      "count": 1
+    },
+    {
+      "name": "team",
+      "label": "Team",
+      "route_name": "Tasks",
+      "doctype": "CRM Task",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com",
+      "count": 38
+    }
+  ]
+}

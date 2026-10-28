@@ -1,0 +1,308 @@
+{
+  "message": {
+    "greeting": "Good morning, Rohan",
+    "date": "2026-10-28",
+    "now": "2026-10-28 11:42:00",
+    "period": "today",
+    "kpis": [
+      {
+        "id": "open_leads",
+        "label": "Open leads",
+        "value": 42,
+        "subtitle": "6 new since yesterday",
+        "subtitle_tone": "success",
+        "delta": 6
+      },
+      {
+        "id": "open_pipeline",
+        "label": "Open pipeline",
+        "value": 3840000,
+        "value_is_currency": true,
+        "subtitle": null,
+        "deal_count": 14,
+        "weighted_value": 1790000
+      },
+      {
+        "id": "due_today",
+        "label": "Due today",
+        "value": 7,
+        "value_suffix": " tasks",
+        "subtitle": "2 overdue",
+        "subtitle_tone": "danger",
+        "overdue": 2
+      },
+      {
+        "id": "calls_today",
+        "label": "Calls today",
+        "value": 5,
+        "subtitle": "3 connected · via Astra Connect",
+        "connected": 3
+      }
+    ],
+    "pipeline": [
+      {
+        "id": "lead",
+        "label": "Lead",
+        "count": 42,
+        "stages": [
+          {
+            "name": "New",
+            "count": 11
+          },
+          {
+            "name": "Contacted",
+            "count": 19
+          },
+          {
+            "name": "Nurture",
+            "count": 12
+          }
+        ]
+      },
+      {
+        "id": "qualified",
+        "label": "Qualified",
+        "count": 8,
+        "stages": [
+          {
+            "name": "Qualified",
+            "count": 8
+          }
+        ]
+      },
+      {
+        "id": "deal",
+        "label": "Deal",
+        "count": 14,
+        "current": true,
+        "stages": [
+          {
+            "name": "Qualification",
+            "count": 3
+          },
+          {
+            "name": "Demo/Making",
+            "count": 4
+          },
+          {
+            "name": "Proposal",
+            "count": 3
+          },
+          {
+            "name": "Negotiation",
+            "count": 2
+          },
+          {
+            "name": "Ready to Close",
+            "count": 2
+          }
+        ]
+      },
+      {
+        "id": "closed",
+        "label": "Closed · October",
+        "count": 6,
+        "stages": [
+          {
+            "name": "Won",
+            "count": 4
+          },
+          {
+            "name": "Lost",
+            "count": 2
+          }
+        ],
+        "won": 4,
+        "lost": 2
+      }
+    ],
+    "today": [
+      {
+        "name": "TASK-0001",
+        "title": "Send revised quote",
+        "time_label": "09:30",
+        "sub_label": "Done",
+        "badge": "Done",
+        "badge_tone": "success",
+        "done": true,
+        "status": "Done",
+        "due_date": "2026-10-28 09:30:00",
+        "record_label": "Lumen Logistics · Deal",
+        "kind": "task"
+      },
+      {
+        "name": "TASK-0002",
+        "title": "Call back Meera Iyer",
+        "time_label": "11:00",
+        "sub_label": "Overdue",
+        "badge": "Overdue",
+        "badge_tone": "bad",
+        "overdue": true,
+        "status": "Todo",
+        "due_date": "2026-10-28 11:00:00",
+        "record_label": "Brightpath Schools · Lead · asked for pricing",
+        "kind": "task"
+      },
+      {
+        "name": "TASK-0003",
+        "title": "Demo follow-up email",
+        "time_label": "12:30",
+        "sub_label": "30 min",
+        "badge": "Due 12:30",
+        "badge_tone": "info",
+        "status": "Todo",
+        "due_date": "2026-10-28 12:30:00",
+        "record_label": "Kaveri Foods · Deal · Demo/Making",
+        "kind": "task"
+      },
+      {
+        "name": "EVT-0001",
+        "title": "Negotiation call · Lumen Logistics",
+        "time_label": "14:00",
+        "sub_label": "45 min",
+        "badge": "Meeting",
+        "badge_tone": "blue",
+        "kind": "meeting",
+        "due_date": "2026-10-28 14:00:00",
+        "starts_on": "2026-10-28 14:00:00",
+        "record_label": "Arjun Kapoor, Sana Qureshi"
+      },
+      {
+        "name": "TASK-0004",
+        "title": "First call · Tarun Bhatia",
+        "time_label": "16:00",
+        "sub_label": "15 min",
+        "badge": "Response due",
+        "badge_tone": "warning",
+        "status": "Todo",
+        "due_date": "2026-10-28 16:00:00",
+        "record_label": "New lead · Website · Hot",
+        "kind": "task"
+      },
+      {
+        "name": "TASK-0005",
+        "title": "Update next step on Northwind Retail",
+        "time_label": "17:30",
+        "sub_label": "",
+        "badge": "Today",
+        "badge_tone": "mute",
+        "status": "Todo",
+        "due_date": "2026-10-28 17:30:00",
+        "record_label": "Deal · Proposal/Quotation",
+        "kind": "task"
+      }
+    ],
+    "response_deadlines": [
+      {
+        "name": "LEAD-MI",
+        "title": "Meera Iyer",
+        "organization": "Brightpath Schools",
+        "status": "Contacted",
+        "source": "Referral",
+        "sla_status": "Rolling Response Due",
+        "response_by": "2026-10-28 11:00:00",
+        "label": "overdue 42 min",
+        "label_short": "overdue 42 min",
+        "state": "overdue",
+        "kind": "Rolling response",
+        "mobile_no": "+91 98•• ••• 412",
+        "temperature": "Hot",
+        "sub_label": "Brightpath Schools · Rolling response",
+        "route": {
+          "name": "Lead",
+          "params": {
+            "leadId": "LEAD-MI"
+          }
+        }
+      },
+      {
+        "name": "LEAD-TB",
+        "title": "Tarun Bhatia",
+        "organization": "Pinecrest Hotels",
+        "status": "New",
+        "source": "Website",
+        "sla_status": "First Response Due",
+        "response_by": "2026-10-28 12:00:00",
+        "label": "due in 18 min",
+        "label_short": "in 18 min",
+        "state": "due",
+        "kind": "First response",
+        "mobile_no": "+91 99•• ••• 130",
+        "temperature": "Hot",
+        "sub_label": "Website form · 09:58 · First response",
+        "route": {
+          "name": "Lead",
+          "params": {
+            "leadId": "LEAD-TB"
+          }
+        }
+      },
+      {
+        "name": "LEAD-FS",
+        "title": "Farah Shaikh",
+        "organization": "Saffron Studio",
+        "status": "New",
+        "source": "Referral",
+        "sla_status": "First Response Due",
+        "response_by": "2026-10-28 12:47:00",
+        "label": "due in 1 h 05 m",
+        "label_short": "in 1 h 05 m",
+        "state": "due",
+        "kind": "First response",
+        "mobile_no": "+91 98•• ••• 877",
+        "temperature": "Warm",
+        "sub_label": "Referral · First response",
+        "route": {
+          "name": "Lead",
+          "params": {
+            "leadId": "LEAD-FS"
+          }
+        }
+      }
+    ],
+    "recent": [
+      {
+        "name": "ACT-0001",
+        "activity_type": "call",
+        "creation": "2026-10-28 09:14:00",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-LL",
+        "data": {
+          "outcome": "Interested — send revised quote",
+          "duration": 372
+        },
+        "title": "Call · Arjun Kapoor",
+        "body": "Outcome: Interested — send revised quote · 6 m 12 s",
+        "time_label": "09:14"
+      },
+      {
+        "name": "ACT-0002",
+        "activity_type": "communication",
+        "creation": "2026-10-28 08:52:00",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-LL",
+        "data": {
+          "subject": "Re: Revised proposal for fleet telematics",
+          "sender_full_name": "Sana Qureshi"
+        },
+        "title": "Email from Sana Qureshi",
+        "body": "Re: Revised proposal for fleet telematics",
+        "time_label": "08:52"
+      },
+      {
+        "name": "ACT-0003",
+        "activity_type": "stage_change",
+        "creation": "2026-10-27 16:20:00",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-KF",
+        "data": {
+          "from": "Qualification",
+          "to": "Demo/Making"
+        },
+        "title": "Kaveri Foods moved to Demo/Making",
+        "body": "by you",
+        "time_label": "Yesterday"
+      }
+    ]
+  }
+}

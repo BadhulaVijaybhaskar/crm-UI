@@ -1,0 +1,36 @@
+{
+  "CRM Lead::LEAD-MI": {
+    "message": {
+      "doctype": "CRM Lead",
+      "name": "LEAD-MI",
+      "title": "Meera Iyer",
+      "status": "Contacted",
+      "temperature": "Hot",
+      "organization": "Brightpath Schools",
+      "source": "Referral",
+      "mobile_no": "+91 98•• ••• 412",
+      "email": "meera.iyer@example.in",
+      "lead_score": 78,
+      "response_by": "2026-10-28 11:00:00",
+      "sla_status": "Rolling Response Due",
+      "sla_label": "Rolling response overdue 42 min",
+      "owner": "rohan.mehta@example.com",
+      "last_call": {
+        "name": "CALL-MI1",
+        "creation": "2026-10-26 16:20:00",
+        "start_time": "2026-10-26 16:20:00",
+        "outcome": "Callback requested. \"Send per-school pricing before Thursday.\"",
+        "call_summary": "Callback requested. \"Send per-school pricing before Thursday.\"",
+        "status": "Completed",
+        "type": "Outgoing"
+      },
+      "shortcuts": "J / K move · C call · N note · E open",
+      "route": {
+        "name": "Lead",
+        "params": {
+          "leadId": "LEAD-MI"
+        }
+      }
+    }
+  }
+}

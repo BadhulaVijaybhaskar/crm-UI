@@ -15,6 +15,100 @@ function ok(message) {
   return { message }
 }
 
+function slugify(doctype) {
+  return String(doctype || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+function parseBody(req) {
+  if (req.method() !== 'POST') return {}
+  const raw = req.postData() || ''
+  if (!raw) return {}
+  try {
+    return JSON.parse(raw)
+  } catch {
+    try {
+      return Object.fromEntries(new URLSearchParams(raw))
+    } catch {
+      return {}
+    }
+  }
+}
+
+function pick(obj, ...keys) {
+  for (const k of keys) {
+    if (obj?.[k] != null) return obj[k]
+  }
+  return undefined
+}
+
+/** CRM Lead fixture 04 stores reportview-style keys/values; expand to dict rows. */
+function leadRows(leads) {
+  const payload = leads?.message ?? leads
+  if (!payload?.keys || !payload?.values) return []
+  return payload.values.map((vals) =>
+    Object.fromEntries(payload.keys.map((k, i) => [k, vals[i]])),
+  )
+}
+
+/**
+ * Rows + metadata for a doctype list, from fixtures/<id>/list-<slug>.json
+ * (activity screens) or leads.json (04).
+ */
+function loadList(fixtureDir, doctype, leads) {
+  const fromFile = readJson(fixtureDir, `list-${slugify(doctype)}.json`, null)
+  if (fromFile) return fromFile
+  if (doctype === 'CRM Lead' && leads) {
+    const rows = leadRows(leads)
+    const payload = leads?.message ?? leads
+    return {
+      doctype,
+      rows,
+      total_count: payload?.total_count ?? rows.length,
+      columns: [
+        { label: 'Name', type: 'Data', key: 'lead_name', width: '12rem' },
+        { label: 'Organization', type: 'Data', key: 'organization', width: '12rem' },
+        { label: 'Status', type: 'Select', key: 'status', width: '9rem' },
+        { label: 'Temperature', type: 'Select', key: 'temperature', width: '8rem' },
+        { label: 'Score', type: 'Int', key: 'score', width: '6rem' },
+        { label: 'Source', type: 'Link', key: 'source', width: '8rem' },
+        { label: 'Owner', type: 'Link', key: 'lead_owner', width: '8rem' },
+        { label: 'Created', type: 'Datetime', key: 'creation', width: '8rem' },
+      ],
+    }
+  }
+  return null
+}
+
+function getDataResponse(list, views) {
+  const rows = list.rows || []
+  const keys = [...new Set(rows.flatMap((r) => Object.keys(r)))]
+  return ok({
+    data: rows,
+    columns: list.columns || [],
+    rows: keys,
+    fields: [],
+    column_field: null,
+    title_field: list.title_field || null,
+    kanban_columns: [],
+    kanban_fields: [],
+    group_by_field: null,
+    page_length: 20,
+    page_length_count: 20,
+    is_default: true,
+    views: views?.message ?? views ?? [],
+    total_count: list.total_count ?? rows.length,
+    row_count: rows.length,
+    form_script: null,
+    list_script: null,
+    view_type: 'list',
+    ...(list.extra || {}),
+  })
+}
+
 function methodFromUrl(url) {
   // /api/method/foo.bar.baz?…  or  /api/resource/…
   try {
@@ -42,6 +136,12 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
   const views = readJson(fixture, 'views.json', { message: [] })
   const leads = readJson(fixture, 'leads.json', { message: { data: [], total_count: 0 } })
   const meta = readJson(fixture, 'meta-lead.json', null)
+  const home = readJson(fixture, 'home.json', null)
+  const workQueue = readJson(fixture, 'work-queue.json', null)
+  const workQueueDetail = readJson(fixture, 'work-queue-detail.json', {})
+  const conversations = readJson(fixture, 'conversations.json', null)
+  const conversationThreads = readJson(fixture, 'conversation-thread.json', {})
+  const hasLeads = fs.existsSync(path.join(PATHS.fixtures, fixture, 'leads.json'))
 
   const userList = users.message || users
   const priya = Array.isArray(userList)
@@ -70,6 +170,15 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
     }
 
     const parsed = methodFromUrl(url)
+    const postBody = parseBody(req)
+    const listDoctype =
+      pick(postBody, 'doctype') ||
+      new URL(url).searchParams.get('doctype') ||
+      parsed.doctype ||
+      ''
+    const list = listDoctype
+      ? loadList(fixture, listDoctype, hasLeads ? leads : null)
+      : null
     let body = ok(null)
 
     // POST body may carry method name for /api/method
@@ -83,7 +192,39 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       }
     }
 
-    if (
+    if (home && url.includes('crm.api.home.get_home_summary')) {
+      body = home
+    } else if (workQueue && url.includes('work_queue.get_work_queue_count')) {
+      const c = workQueue.message.counts || {}
+      body = ok({
+        count: c.all ?? 0,
+        follow_ups: c.follow_ups ?? 0,
+        quiet_leads: c.quiet_leads ?? 0,
+        updated_at: workQueue.message.updated_at,
+      })
+    } else if (workQueue && url.includes('work_queue.get_work_queue_detail')) {
+      const key = `${postBody.reference_doctype}::${postBody.reference_docname}`
+      body = workQueueDetail[key] || ok(null)
+    } else if (workQueue && url.includes('work_queue.get_work_queue')) {
+      body = workQueue
+    } else if (
+      conversations &&
+      url.includes('conversations.get_conversation_thread')
+    ) {
+      const key = `${postBody.reference_doctype}::${postBody.reference_docname}`
+      body = conversationThreads[key] || ok(null)
+    } else if (conversations && url.includes('conversations.get_conversations')) {
+      body = conversations
+    } else if (list && url.includes('crm.api.doc.get_data')) {
+      body = getDataResponse(list, views)
+    } else if (
+      list &&
+      (method.includes('frappe.client.get_list') ||
+        method.includes('frappe.desk.reportview.get') ||
+        url.includes(`/api/resource/${listDoctype}`))
+    ) {
+      body = ok(list.rows || [])
+    } else if (
       method.includes('get_users') ||
       url.includes('crm.api.session.get_users')
     ) {
@@ -131,6 +272,9 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       return route.continue()
     }
 
+    if (process.env.PARITY_DEBUG_API) {
+      console.log('[parity:api]', req.method(), url.replace(/^https?:\/\/[^/]+/, ''))
+    }
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -142,12 +286,12 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
   return { priya }
 }
 
-export function sessionInitScript(email) {
+export function sessionInitScript(email, fullName = 'Priya Nair') {
   return `
 (() => {
   document.cookie = 'user_id=${email}; path=/';
   document.cookie = 'system_user=yes; path=/';
-  document.cookie = 'full_name=Priya%20Nair; path=/';
+  document.cookie = 'full_name=${encodeURIComponent(fullName)}; path=/';
   document.cookie = 'user_image=; path=/';
   try {
     localStorage.setItem('isSidebarCollapsed', 'false');
@@ -164,13 +308,15 @@ export function themeInitScript(theme) {
   return `
 (() => {
   const t = ${JSON.stringify(theme)};
-  document.documentElement.setAttribute('data-theme', t);
-  if (t === 'dark') document.documentElement.classList.add('dark');
-  else document.documentElement.classList.remove('dark');
-  try {
-    localStorage.setItem('color-scheme', t);
-    localStorage.setItem('frappe-ui:color-scheme', t);
-  } catch (e) {}
+  try { localStorage.setItem('theme', t); } catch (e) {}
+  const apply = () => {
+    const root = document.documentElement;
+    if (!root) return;
+    root.setAttribute('data-theme', t);
+    root.classList.toggle('dark', t === 'dark');
+  };
+  apply();
+  document.addEventListener('DOMContentLoaded', apply);
 })();
 `
 }

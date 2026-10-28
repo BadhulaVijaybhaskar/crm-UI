@@ -133,12 +133,67 @@ function stitchTriplet(built, figma, diff) {
   return out
 }
 
+/**
+ * Real-difference bitmap: 1 where a pixel fails the 1px / threshold rule.
+ */
+function realDiffMap(a, b, width, height, threshold = 0.1) {
+  const map = new Uint8Array(width * height)
+  const raw = new Uint8Array(width * height)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (width * y + x) << 2
+      if (colorDist(a.data, b.data, i, i) > threshold) raw[width * y + x] = 1
+    }
+  }
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!raw[width * y + x]) continue
+      const bi = (width * y + x) << 2
+      let near = false
+      for (let dy = -1; dy <= 1 && !near; dy++) {
+        for (let dx = -1; dx <= 1 && !near; dx++) {
+          const nx = x + dx
+          const ny = y + dy
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
+          const fi = (width * ny + nx) << 2
+          if (colorDist(a.data, b.data, bi, fi) <= threshold) near = true
+        }
+      }
+      if (!near) map[width * y + x] = 1
+    }
+  }
+  return map
+}
+
+/**
+ * Paint magenta over pixels where `refA` and `refB` have a real difference so
+ * those locations drop out of a subsequent compare (HTML↔PNG layout quarrels;
+ * PNG is the approved design; refs stay read-only on disk).
+ */
+export function applyDisagreementMask(img, refA, refB, width, height) {
+  const out = PNG.sync.read(PNG.sync.write(img))
+  const map = realDiffMap(refA, refB, width, height, 0.1)
+  let count = 0
+  for (let i = 0; i < map.length; i++) {
+    if (!map[i]) continue
+    count++
+    const p = i << 2
+    out.data[p] = 255
+    out.data[p + 1] = 0
+    out.data[p + 2] = 255
+    out.data[p + 3] = 255
+  }
+  return { img: out, disagreePx: count }
+}
+
 export function compareImages({
   builtPath,
   figmaPath,
   outTripletPath,
   masks = [],
   shellRegions = [],
+  /** Optional { aPath, bPath } — mask real diffs between those refs before scoring. */
+  excludeDisagreement = null,
 }) {
   let built = loadPng(builtPath)
   let figma = loadPng(figmaPath)
@@ -146,8 +201,18 @@ export function compareImages({
   const height = figma.height
   built = ensureSize(built, width, height)
 
-  const builtM = applyMasks(built, masks)
-  const figmaM = applyMasks(figma, masks)
+  let builtM = applyMasks(built, masks)
+  let figmaM = applyMasks(figma, masks)
+  let disagreePx = 0
+  if (excludeDisagreement?.aPath && excludeDisagreement?.bPath) {
+    const a = ensureSize(loadPng(excludeDisagreement.aPath), width, height)
+    const b = ensureSize(loadPng(excludeDisagreement.bPath), width, height)
+    const left = applyDisagreementMask(builtM, a, b, width, height)
+    const right = applyDisagreementMask(figmaM, a, b, width, height)
+    builtM = left.img
+    figmaM = right.img
+    disagreePx = left.disagreePx
+  }
 
   const diff = new PNG({ width, height })
   const mismatch = pixelmatch(builtM.data, figmaM.data, diff.data, width, height, {
@@ -159,15 +224,17 @@ export function compareImages({
   const real = realDifferenceCount(builtM, figmaM, width, height, 0.1)
   const realPct = (real / total) * 100
 
-  fs.mkdirSync(path.dirname(outTripletPath), { recursive: true })
-  const triplet = stitchTriplet(builtM, figmaM, diff)
-  fs.writeFileSync(outTripletPath, PNG.sync.write(triplet))
+  if (outTripletPath) {
+    fs.mkdirSync(path.dirname(outTripletPath), { recursive: true })
+    const triplet = stitchTriplet(builtM, figmaM, diff)
+    fs.writeFileSync(outTripletPath, PNG.sync.write(triplet))
 
-  // Also write individual panels next to triplet
-  const base = outTripletPath.replace(/\.png$/, '')
-  fs.writeFileSync(`${base}-built.png`, PNG.sync.write(builtM))
-  fs.writeFileSync(`${base}-figma.png`, PNG.sync.write(figmaM))
-  fs.writeFileSync(`${base}-diff.png`, PNG.sync.write(diff))
+    // Also write individual panels next to triplet
+    const base = outTripletPath.replace(/\.png$/, '')
+    fs.writeFileSync(`${base}-built.png`, PNG.sync.write(builtM))
+    fs.writeFileSync(`${base}-figma.png`, PNG.sync.write(figmaM))
+    fs.writeFileSync(`${base}-diff.png`, PNG.sync.write(diff))
+  }
 
   const shell = []
   for (const region of shellRegions) {
@@ -207,6 +274,7 @@ export function compareImages({
     rawPct,
     real,
     realPct,
+    disagreePx,
     masks: masks.map((m) => m.name || 'mask'),
     shell,
     shellRawPct: shellTotal ? (shellRaw / shellTotal) * 100 : 0,

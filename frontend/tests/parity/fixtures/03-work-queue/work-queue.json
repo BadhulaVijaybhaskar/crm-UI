@@ -1,0 +1,195 @@
+{
+  "message": {
+    "tab": "all",
+    "sections": [
+      {
+        "id": "follow_ups",
+        "label": "Follow-ups",
+        "count": 7,
+        "description": "Tasks and next steps due today or overdue",
+        "items": [
+          {
+            "id": "task:TASK-WQ1",
+            "kind": "follow_up",
+            "task": "TASK-WQ1",
+            "title": "Call back about pricing",
+            "person_name": "Meera Iyer",
+            "priority": "High",
+            "status": "Todo",
+            "due_label": "42 m late",
+            "late_minutes": 42,
+            "description": "Share per-school pricing for 6 schools and a reference customer before Thursday.",
+            "meta_label": "Task · due 11:00 · asked for per-school pricing",
+            "action": "call",
+            "reference_doctype": "CRM Lead",
+            "reference_docname": "LEAD-MI",
+            "reference_title": "Meera Iyer",
+            "record_label": "Brightpath Schools · Lead"
+          },
+          {
+            "id": "task:TASK-WQ2",
+            "kind": "follow_up",
+            "task": "TASK-WQ2",
+            "title": "Send revised quote",
+            "person_name": "Sana Qureshi",
+            "priority": "High",
+            "status": "Todo",
+            "due_label": "Today",
+            "late_minutes": null,
+            "description": "",
+            "meta_label": "Next step · Negotiation · ₹12,40,000",
+            "action": "email",
+            "reference_doctype": "CRM Deal",
+            "reference_docname": "DEAL-LL",
+            "reference_title": "Sana Qureshi",
+            "record_label": "Lumen Logistics · Deal"
+          },
+          {
+            "id": "task:TASK-WQ3",
+            "kind": "follow_up",
+            "task": "TASK-WQ3",
+            "title": "Demo follow-up email",
+            "person_name": "Karthik Rao",
+            "priority": "Medium",
+            "status": "Todo",
+            "due_label": "12:30",
+            "late_minutes": null,
+            "description": "",
+            "meta_label": "Task · Demo/Making",
+            "action": "email",
+            "reference_doctype": "CRM Deal",
+            "reference_docname": "DEAL-KF",
+            "reference_title": "Karthik Rao",
+            "record_label": "Kaveri Foods · Deal"
+          },
+          {
+            "id": "task:TASK-WQ4",
+            "kind": "follow_up",
+            "task": "TASK-WQ4",
+            "title": "Update next step",
+            "person_name": "Neha Agarwal",
+            "priority": "Medium",
+            "status": "Todo",
+            "due_label": "Today",
+            "late_minutes": null,
+            "description": "",
+            "meta_label": "Proposal/Quotation · no next step set",
+            "action": "note",
+            "reference_doctype": "CRM Deal",
+            "reference_docname": "DEAL-NR",
+            "reference_title": "Neha Agarwal",
+            "record_label": "Northwind Retail · Deal"
+          }
+        ]
+      },
+      {
+        "id": "quiet_leads",
+        "label": "Quiet leads",
+        "count": 5,
+        "description": "Open leads with no call, email or note in 7+ days",
+        "items": [
+          {
+            "id": "lead:LEAD-VS",
+            "kind": "quiet_lead",
+            "title": "No touch in 9 days",
+            "person_name": "Vikram Sethi",
+            "priority": "High",
+            "due_label": "9 d",
+            "days_quiet": 9,
+            "description": "Last: email opened 19 Oct · Warm",
+            "meta_label": "Last: email opened 19 Oct · Warm",
+            "action": "call",
+            "reference_doctype": "CRM Lead",
+            "reference_docname": "LEAD-VS",
+            "reference_title": "Vikram Sethi",
+            "record_label": "Orbit Pharma · Nurture",
+            "organization": "Orbit Pharma",
+            "status": "Nurture"
+          },
+          {
+            "id": "lead:LEAD-AD",
+            "kind": "quiet_lead",
+            "title": "No touch in 8 days",
+            "person_name": "Ayesha Dsouza",
+            "priority": "Medium",
+            "due_label": "8 d",
+            "days_quiet": 8,
+            "description": "Last: call · no answer · 20 Oct",
+            "meta_label": "Last: call · no answer · 20 Oct",
+            "action": "call",
+            "reference_doctype": "CRM Lead",
+            "reference_docname": "LEAD-AD",
+            "reference_title": "Ayesha Dsouza",
+            "record_label": "Cedar Clinics · Contacted",
+            "organization": "Cedar Clinics",
+            "status": "Contacted"
+          },
+          {
+            "id": "lead:LEAD-RG",
+            "kind": "quiet_lead",
+            "title": "No touch in 7 days",
+            "person_name": "Rahul Gupta",
+            "priority": "Medium",
+            "due_label": "7 d",
+            "days_quiet": 7,
+            "description": "Last: note · budget next quarter",
+            "meta_label": "Last: note · budget next quarter",
+            "action": "note",
+            "reference_doctype": "CRM Lead",
+            "reference_docname": "LEAD-RG",
+            "reference_title": "Rahul Gupta",
+            "record_label": "Harbor Freight Co · Nurture",
+            "organization": "Harbor Freight Co",
+            "status": "Nurture"
+          }
+        ]
+      }
+    ],
+    "counts": {
+      "all": 12,
+      "follow_ups": 7,
+      "quiet_leads": 5,
+      "cleared_today": 4
+    },
+    "cleared_today": [
+      {
+        "id": "cleared:TASK-C1",
+        "kind": "cleared",
+        "task": "TASK-C1",
+        "title": "Send revised quote",
+        "modified": "2026-10-28 09:30:00",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-LL"
+      },
+      {
+        "id": "cleared:TASK-C2",
+        "kind": "cleared",
+        "task": "TASK-C2",
+        "title": "Call logged · Arjun Kapoor",
+        "modified": "2026-10-28 09:14:00",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-LL"
+      },
+      {
+        "id": "cleared:TASK-C3",
+        "kind": "cleared",
+        "task": "TASK-C3",
+        "title": "Call logged · Tarun Bhatia",
+        "modified": "2026-10-28 08:30:00",
+        "reference_doctype": "CRM Lead",
+        "reference_docname": "LEAD-TB"
+      },
+      {
+        "id": "cleared:TASK-C4",
+        "kind": "cleared",
+        "task": "TASK-C4",
+        "title": "Note · Quote structure",
+        "modified": "2026-10-28 09:30:00",
+        "reference_doctype": "CRM Deal",
+        "reference_docname": "DEAL-LL"
+      }
+    ],
+    "cleared_summary": "Send revised quote, 2 calls logged, 1 note",
+    "updated_at": "2026-10-28 11:40:00"
+  }
+}

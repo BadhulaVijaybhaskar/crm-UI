@@ -1,0 +1,69 @@
+{
+  "message": [
+    {
+      "name": "all-calls",
+      "label": "All calls",
+      "route_name": "Call Logs",
+      "doctype": "CRM Call Log",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com",
+      "is_default": 1,
+      "count": 214
+    },
+    {
+      "name": "mine",
+      "label": "Mine",
+      "route_name": "Call Logs",
+      "doctype": "CRM Call Log",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com",
+      "count": 46
+    },
+    {
+      "name": "missed",
+      "label": "Missed",
+      "route_name": "Call Logs",
+      "doctype": "CRM Call Log",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com",
+      "count": 9
+    },
+    {
+      "name": "qualified",
+      "label": "Qualified",
+      "route_name": "Call Logs",
+      "doctype": "CRM Call Log",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com",
+      "count": 31
+    }
+  ]
+}

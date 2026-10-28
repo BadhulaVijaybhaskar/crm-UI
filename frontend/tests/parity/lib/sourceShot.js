@@ -55,17 +55,18 @@ export async function screenshotSourceHtml({
     colorScheme: theme === 'dark' ? 'dark' : 'light',
   })
   const page = await context.newPage()
-  await page.addStyleTag({
-    content: `
-@font-face{font-family:Inter;font-weight:400;src:url(data:font/woff2;base64,${inter(400)}) format('woff2')}
-@font-face{font-family:Inter;font-weight:500;src:url(data:font/woff2;base64,${inter(500)}) format('woff2')}
-@font-face{font-family:Inter;font-weight:600;src:url(data:font/woff2;base64,${inter(600)}) format('woff2')}
-`,
-  })
   await page.goto(`http://127.0.0.1:${port}/${htmlFile}`, {
     waitUntil: 'networkidle',
     timeout: 30000,
   })
+  await page.addStyleTag({
+      content: `
+  @font-face{font-family:Inter;font-weight:400;src:url(data:font/woff2;base64,${inter(400)}) format('woff2')}
+  @font-face{font-family:Inter;font-weight:500;src:url(data:font/woff2;base64,${inter(500)}) format('woff2')}
+  @font-face{font-family:Inter;font-weight:600;src:url(data:font/woff2;base64,${inter(600)}) format('woff2')}
+  `,
+    })
+  await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(400)
   fs.mkdirSync(path.dirname(outPath), { recursive: true })
   await page.screenshot({
