@@ -236,6 +236,51 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertEqual(status, 401)
 		self.assertEqual(result["status"], "rejected")
 
+	def test_oversized_body_413_before_hmac(self):
+		"""Bodies over MAX_WEBHOOK_BODY_BYTES must 413 without verifying the signature."""
+		from crm.integrations.astra_connect import api as connect_api
+
+		oversized = b"x" * (connect_api.MAX_WEBHOOK_BODY_BYTES + 1)
+		headers = _Headers(
+			{
+				"Content-Length": str(len(oversized)),
+				"X-Astra-Delivery": "dlv-too-big",
+				"X-Astra-Timestamp": str(int(time.time())),
+				"X-Astra-Signature": "sha256=" + ("ab" * 32),
+			}
+		)
+
+		class _Request:
+			def get_data(self):
+				return oversized
+
+			@property
+			def headers(self):
+				return headers
+
+		verify_calls = {"n": 0}
+
+		def boom_verify(**_kwargs):
+			verify_calls["n"] += 1
+			raise AssertionError("HMAC must not run for oversized bodies")
+
+		frappe.local.request = _Request()
+		frappe.local.response = frappe._dict()
+		prev = getattr(frappe.conf, "astra_connect_webhook_secret", None)
+		frappe.conf.astra_connect_webhook_secret = TEST_SECRET
+		try:
+			with patch.object(connect_api, "verify_signature", side_effect=boom_verify):
+				result = connect_api.receive()
+			status = frappe.local.response.get("http_status_code", 200)
+			self.assertEqual(status, 413)
+			self.assertEqual(result["status"], "rejected")
+			self.assertEqual(verify_calls["n"], 0)
+		finally:
+			if prev is None:
+				frappe.conf.pop("astra_connect_webhook_secret", None)
+			else:
+				frappe.conf.astra_connect_webhook_secret = prev
+
 	def test_stale_timestamp_401(self):
 		payload = {
 			"type": "lead.created",
@@ -1171,7 +1216,8 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			return jid
 
 		# Force the async enqueue path (bypass in_test sync shortcut).
-		with patch.object(connect_api.frappe.flags, "in_test", False):
+		# frappe.flags is a _dict — use patch.dict, not patch.object.
+		with patch.dict(connect_api.frappe.flags, {"in_test": False}):
 			with patch.dict(connect_api.frappe.conf, {"astra_connect_sync_processing": 0}, clear=False):
 				with patch.object(connect_api.frappe, "enqueue", side_effect=fake_enqueue):
 					# Direct recovery enqueue (retry_event / sweeper path).
@@ -1203,7 +1249,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		frappe.db.commit()
 
 		seen_job_ids.clear()
-		with patch.object(connect_api.frappe.flags, "in_test", False):
+		with patch.dict(connect_api.frappe.flags, {"in_test": False}):
 			with patch.dict(connect_api.frappe.conf, {"astra_connect_sync_processing": 0}, clear=False):
 				with patch.object(connect_api.frappe, "enqueue", side_effect=fake_enqueue):
 					result = connect_api.sweep_stale_processing()
@@ -1233,7 +1279,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			self.assertEqual(connect_api._resolve_connect_queue(), "astra_connect")
 
 		# Even if resolve prefers astra_connect, enqueue must fall back on error.
-		with patch.object(connect_api.frappe.flags, "in_test", False):
+		with patch.dict(connect_api.frappe.flags, {"in_test": False}):
 			with patch.dict(connect_api.frappe.conf, {"astra_connect_sync_processing": 0}, clear=False):
 				with patch.object(connect_api, "_resolve_connect_queue", return_value="astra_connect"):
 					with patch.object(connect_api.frappe, "enqueue", side_effect=boom_then_ok):

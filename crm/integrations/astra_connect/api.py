@@ -43,6 +43,20 @@ CONNECT_QUEUE = "astra_connect"
 FALLBACK_QUEUE = "default"
 WORKER_PATH = "crm.integrations.astra_connect.api.process_inbox_event"
 DEFAULT_STALE_MINUTES = 5
+# Reject oversized bodies before HMAC work (DoS / CPU on signature verify).
+MAX_WEBHOOK_BODY_BYTES = 256 * 1024
+
+
+def _webhook_body_too_large() -> bool:
+	"""True when Content-Length exceeds the webhook body cap (before reading body)."""
+	try:
+		request = frappe.request
+		cl = request.headers.get("Content-Length") if request is not None else None
+		if cl is None or cl == "":
+			return False
+		return int(cl) > MAX_WEBHOOK_BODY_BYTES
+	except (TypeError, ValueError, AttributeError):
+		return False
 
 
 def _json_response(payload: dict[str, Any], status_code: int = 200):
@@ -234,6 +248,7 @@ def receive() -> dict[str, Any]:
 	  200 duplicate (unique delivery already stored — including Failed redelivery)
 	  400 malformed payload (final)
 	  401 bad signature or stale timestamp (final)
+	  413 body too large (final; checked before HMAC)
 	  503 webhook disabled
 	"""
 	try:
@@ -241,7 +256,20 @@ def receive() -> dict[str, Any]:
 	except WebhookDisabledError as exc:
 		return _json_response({"status": "disabled", "error": str(exc)}, status_code=503)
 
+	# Cap body size before reading / HMAC — Content-Length when present, else len(body).
+	if _webhook_body_too_large():
+		return _json_response(
+			{"status": "rejected", "error": _("Payload too large")},
+			status_code=413,
+		)
+
 	raw_body = frappe.request.get_data() or b""
+	if len(raw_body) > MAX_WEBHOOK_BODY_BYTES:
+		return _json_response(
+			{"status": "rejected", "error": _("Payload too large")},
+			status_code=413,
+		)
+
 	headers = read_request_headers()
 
 	try:
