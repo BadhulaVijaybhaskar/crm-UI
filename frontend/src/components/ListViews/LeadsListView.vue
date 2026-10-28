@@ -367,7 +367,7 @@ defineExpose({
 .astra-leads-table :deep(th) {
   height: 34px;
   padding: 0 10px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   font-size: 11.5px;
   font-weight: 600;
 }
