@@ -16,8 +16,27 @@ const base = {
 }
 
 function icon(name, children) {
-  const Comp = (props, { attrs }) =>
-    h('svg', { ...base, class: ['astra-nav-icon', 'size-4', attrs.class], ...attrs }, children)
+  const Comp = (props, { attrs }) => {
+    const { class: attrClass, ...rest } = attrs
+    // Default 16×16 via size-4 only when the caller does not set a size-*.
+    // Never combine size-4 + size-3.5 — Tailwind order is stylesheet-order, not
+    // class-list order, and the larger icon made the New button 2px too wide.
+    const hasSize =
+      typeof attrClass === 'string'
+        ? /\bsize-/.test(attrClass)
+        : Array.isArray(attrClass)
+          ? attrClass.some((c) => typeof c === 'string' && /\bsize-/.test(c))
+          : false
+    return h(
+      'svg',
+      {
+        ...base,
+        ...rest,
+        class: ['astra-nav-icon', hasSize ? null : 'size-4', attrClass],
+      },
+      children,
+    )
+  }
   Comp.displayName = name
   return Comp
 }
@@ -128,3 +147,11 @@ export const FigmaMoonIcon = icon(
   'FigmaMoonIcon',
   path('M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'),
 )
+
+/** Dark-theme .tbtn glyph from p-*-dark.html */
+export const FigmaSunIcon = icon('FigmaSunIcon', [
+  circle({ cx: '12', cy: '12', r: '4' }),
+  h('path', {
+    d: 'M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4',
+  }),
+])

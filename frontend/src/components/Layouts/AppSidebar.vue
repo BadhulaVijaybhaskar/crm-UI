@@ -29,7 +29,7 @@
             v-else
             :src="brandLogo"
             :alt="brand.name || 'Astra CRM'"
-            class="h-6 max-w-[168px] object-contain"
+            class="block h-6 w-auto max-w-[168px]"
           />
         </div>
 
@@ -65,38 +65,24 @@
               {{ __(section.label) }}
             </div>
             <nav class="flex flex-col gap-px px-2.5 py-1.5">
-              <SidebarItem
+              <AstraNavItem
                 v-for="link in section.views"
                 :key="link.key"
-                :route="link.to"
+                :to="link.external || link.connect ? null : link.to"
                 :label="__(link.label)"
                 :active="!link.external && activeItem === link.key"
+                :count="isCollapsed ? null : link.count"
+                :external="!!link.external && !isCollapsed"
                 @click="onNavClick($event, link)"
               >
                 <template #prefix>
-                  <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
+                  <Icon :icon="link.icon" />
                 </template>
-                <Tooltip
-                  :text="__(link.label)"
-                  side="right"
-                  :hoverDelay="1500"
-                  :disabled="isCollapsed"
-                >
-                  <span class="flex min-w-0 flex-1 items-center gap-2 truncate text-[13px] font-medium">
-                    <span class="truncate">{{ __(link.label) }}</span>
-                    <span
-                      v-if="link.count != null && !isCollapsed"
-                      class="astra-shell__nav-count"
-                    >
-                      {{ link.count }}
-                    </span>
-                    <FigmaExternalIcon
-                      v-if="link.external && !isCollapsed"
-                      class="astra-shell__nav-ext !size-3"
-                    />
-                  </span>
-                </Tooltip>
-              </SidebarItem>
+                <template v-if="link.external && !isCollapsed" #ext>
+                  <FigmaExternalIcon />
+                </template>
+                {{ __(link.label) }}
+              </AstraNavItem>
             </nav>
           </section>
 
@@ -174,7 +160,7 @@
           </SidebarItem>
 
           <nav class="flex flex-col gap-px px-2.5 py-1.5">
-            <SidebarItem
+            <AstraNavItem
               v-for="link in footerLinks"
               :key="link.key"
               :route="link.to"
@@ -183,14 +169,15 @@
               @click="onNavClick($event, link)"
             >
               <template #prefix>
-                <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
+                <Icon :icon="link.icon" />
               </template>
-              <span class="truncate text-[13px] font-medium">{{ __(link.label) }}</span>
-            </SidebarItem>
+              {{ __(link.label) }}
+            </AstraNavItem>
           </nav>
 
+          <!-- app.css .nav .foot — padding 14×16; who uses body line-height 1.45 -->
           <div
-            class="flex items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-4 py-3.5"
+            class="flex items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-4 py-[14px]"
             :class="isCollapsed && 'justify-center px-0'"
           >
             <AstraAvatar
@@ -198,12 +185,12 @@
               size="foot"
               nav-foot
             />
-            <div v-if="!isCollapsed" class="min-w-0 flex-1">
-              <div class="truncate text-[12.5px] font-semibold leading-tight text-[#E8EDF5]">
+            <div v-if="!isCollapsed" class="who min-w-0 flex-1 leading-[1.45]">
+              <div class="truncate text-[12.5px] font-semibold text-[#E8EDF5]">
                 {{ currentUser.full_name || currentUser.email }}
               </div>
               <div
-                class="whitespace-nowrap text-[11.5px] leading-tight text-[color:var(--crm-nav-faint)]"
+                class="whitespace-nowrap text-[11.5px] text-[color:var(--crm-nav-faint)]"
                 :title="userRole"
               >
                 {{ userRole }}
@@ -258,6 +245,7 @@ import NotificationsIcon from '@/components/Icons/NotificationsIcon.vue'
 import HelpIcon from '@/components/Icons/HelpIcon.vue'
 import Notifications from '@/components/Notifications.vue'
 import AstraAvatar from '@/components/astra/AstraAvatar.vue'
+import AstraNavItem from '@/components/astra/AstraNavItem.vue'
 import AstraThemeToggle from '@/components/astra/AstraThemeToggle.vue'
 import { FigmaExternalIcon } from '@/components/Icons/FigmaNavIcons'
 import {
@@ -276,7 +264,7 @@ import { sessionStore } from '@/stores/session'
 import { getSettings } from '@/stores/settings'
 import { mobileSidebarOpened, openSettings } from '@/composables/settings'
 import { useBroadcast } from '@/composables/useBroadcast.js'
-import { call, Sidebar, SidebarItem, Tooltip, Badge } from 'frappe-ui'
+import { call, Sidebar, SidebarItem, Badge } from 'frappe-ui'
 import { SignupBanner } from '@framework/ui/components/SignupBanner'
 import { TrialBanner } from '@framework/ui/components/TrialBanner'
 import {
