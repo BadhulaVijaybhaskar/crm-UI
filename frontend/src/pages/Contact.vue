@@ -61,9 +61,7 @@
       </template>
     </AstraRecordHeader>
 
-    <div class="empty:hidden">
-      <ConnectCallSummary doctype="Contact" :name="contactId" />
-    </div>
+    <ConnectCallSummary doctype="Contact" :name="contactId" />
 
       <Tabs
         v-model="activeTab"

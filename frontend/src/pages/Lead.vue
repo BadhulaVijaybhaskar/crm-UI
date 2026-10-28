@@ -1,14 +1,24 @@
 <template>
   <div v-if="doc.name" class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
+    <div class="grid min-h-0 flex-1 grid-cols-1 overflow-hidden xl:grid-cols-crm-record">
+    <div class="flex min-h-0 min-w-0 flex-col overflow-hidden">
     <nav
-      class="flex items-center px-crm-page-x py-2 text-crm-label text-crm-muted-fg"
+      class="flex min-w-0 items-center gap-1.5 px-crm-page-x pt-3 text-crm-meta text-crm-muted-fg"
       aria-label="Breadcrumb"
     >
-      <Breadcrumbs :items="breadcrumbs">
-        <template #prefix="{ item }">
-          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
-        </template>
-      </Breadcrumbs>
+      <template v-for="(item, index) in breadcrumbs" :key="item.label + index">
+        <span v-if="index" aria-hidden="true">›</span>
+        <router-link
+          v-if="item.route && index < breadcrumbs.length - 1"
+          :to="item.route"
+          class="truncate hover:text-crm-fg"
+        >
+          {{ item.label }}
+        </router-link>
+        <span v-else class="truncate" :class="index ? 'text-crm-fg' : ''">
+          {{ item.label }}
+        </span>
+      </template>
     </nav>
 
     <AstraRecordHeader :title="title" :meta="leadMeta" squared-avatar>
@@ -116,18 +126,11 @@
           :summary="stageSummary"
           @select="triggerStatusChange"
         />
-        <StageHistory
-          v-if="doc.status_change_log?.length"
-          :rows="doc.status_change_log"
-        />
       </template>
     </AstraRecordHeader>
 
-    <div v-if="doc.name" class="border-b border-crm-border px-crm-page-x py-2">
-      <ConnectCallSummary doctype="CRM Lead" :name="leadId" />
-    </div>
+    <ConnectCallSummary doctype="CRM Lead" :name="leadId" />
 
-    <div class="flex min-h-0 flex-1 overflow-hidden">
       <Tabs
         v-model="activeTab"
         :tabs="tabs"
@@ -146,36 +149,33 @@
           />
         </template>
       </Tabs>
-
-      <Resizer
-        class="flex w-crm-side flex-col justify-between border-l border-crm-border bg-crm-card"
-        side="right"
+    </div>
+    <AstraSidePanel stacked>
+      <button
+        type="button"
+        class="w-full border-b border-crm-border px-4 py-2.5 text-left text-crm-label text-crm-muted-fg hover:text-crm-fg"
+        @click="copyToClipboard(leadId)"
       >
-        <div
-          class="flex h-11 cursor-copy items-center border-b border-crm-border px-4 text-crm-label font-medium text-crm-muted-fg"
-          @click="copyToClipboard(leadId)"
-        >
-          {{ __(leadId) }}
-        </div>
-        <SLASection
-          v-if="doc.sla_status"
-          v-model="doc"
-          @updateField="updateField"
-        />
-        <div
-          v-if="sections.data"
-          class="flex flex-1 flex-col justify-between overflow-hidden"
-        >
-          <SidePanelLayout
-            :sections="sections.data"
-            doctype="CRM Lead"
-            :docname="leadId"
-            @reload="sections.reload"
-            @beforeFieldChange="beforeStatusChange"
-            @afterFieldChange="reloadResources"
-          />
-        </div>
-      </Resizer>
+        {{ leadId }}
+      </button>
+      <div class="border-b border-crm-border">
+        <StageHistory :rows="doc.status_change_log || []" />
+      </div>
+      <SLASection
+        v-if="doc.sla_status"
+        v-model="doc"
+        @updateField="updateField"
+      />
+      <SidePanelLayout
+        v-if="sections.data"
+        :sections="sections.data"
+        doctype="CRM Lead"
+        :docname="leadId"
+        @reload="sections.reload"
+        @beforeFieldChange="beforeStatusChange"
+        @afterFieldChange="reloadResources"
+      />
+    </AstraSidePanel>
     </div>
   </div>
   <ErrorPage
@@ -217,8 +217,7 @@
 <script setup>
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
-import Icon from '@/components/Icon.vue'
-import Resizer from '@/components/Resizer.vue'
+import AstraSidePanel from '@/components/astra/AstraSidePanel.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
 import EmailIcon from '@/components/Icons/EmailIcon.vue'
 import CommentIcon from '@/components/Icons/CommentIcon.vue'
@@ -278,7 +277,6 @@ import {
   Dropdown,
   Tooltip,
   Tabs,
-  Breadcrumbs,
   call,
   usePageMeta,
   toast,
