@@ -10,7 +10,7 @@ export function formatKpiValue(value, format = 'number', currency = '₹') {
     return `${trimNum(n)}%`
   }
 
-  if (format === 'currency') {
+  if (format === 'currency' || format === 'currency_lakh') {
     const abs = Math.abs(n)
     if (abs >= 10_000_000) return `${currency}${trimNum(n / 10_000_000)} Cr`
     if (abs >= 100_000) return `${currency}${trimNum(n / 100_000)} L`

@@ -42,6 +42,9 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
   const views = readJson(fixture, 'views.json', { message: [] })
   const leads = readJson(fixture, 'leads.json', { message: { data: [], total_count: 0 } })
   const meta = readJson(fixture, 'meta-lead.json', null)
+  const dashboards = readJson(fixture, 'dashboards.json', null)
+  const dashboard = readJson(fixture, 'dashboard.json', null)
+  const reportsMeta = readJson(fixture, 'meta.json', null)
 
   const userList = users.message || users
   const priya = Array.isArray(userList)
@@ -112,6 +115,27 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       url.includes('get_single_value')
     ) {
       body = ok(1) // setup_completed
+    } else if (
+      method.includes('crm.api.reports.list_dashboards') ||
+      url.includes('crm.api.reports.list_dashboards')
+    ) {
+      body = dashboards || ok({ personal: [], team: [], all: [] })
+    } else if (
+      method.includes('crm.api.reports.get_dashboard') ||
+      url.includes('crm.api.reports.get_dashboard')
+    ) {
+      body = dashboard || ok(null)
+    } else if (
+      method.includes('crm.api.reports.get_builder_meta') ||
+      url.includes('crm.api.reports.get_builder_meta')
+    ) {
+      body = reportsMeta || ok({ modules: [], fields_by_doctype: {} })
+    } else if (
+      method.includes('crm.api.reports.') ||
+      url.includes('crm.api.reports.')
+    ) {
+      // save / create / rename / reset — acknowledge without mutating fixtures
+      body = dashboard || ok({ ok: true })
     } else if (
       method.includes('frappe.client.get_list') ||
       method.includes('frappe.desk.reportview.get')

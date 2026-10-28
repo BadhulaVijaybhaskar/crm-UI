@@ -1,0 +1,40 @@
+{
+  "message": {
+    "personal": [
+      {
+        "name": "sales-overview",
+        "title": "Sales overview",
+        "dashboard_type": "Personal",
+        "is_default": 1,
+        "shared_role": "West team"
+      },
+      {
+        "name": "my-pipeline",
+        "title": "My pipeline",
+        "dashboard_type": "Personal",
+        "is_default": 0
+      },
+      {
+        "name": "weekly-pulse",
+        "title": "Weekly pulse",
+        "dashboard_type": "Personal",
+        "is_default": 0
+      }
+    ],
+    "team": [
+      {
+        "name": "west-team",
+        "title": "West team",
+        "dashboard_type": "Team",
+        "is_default": 0,
+        "shared_role": "West team"
+      },
+      {
+        "name": "all-india",
+        "title": "All India",
+        "dashboard_type": "Team",
+        "is_default": 0
+      }
+    ]
+  }
+}

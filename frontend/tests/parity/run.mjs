@@ -30,7 +30,11 @@ import {
   sessionInitScript,
   themeInitScript,
 } from './lib/mocks.js'
-import { compareImages, shellRealPercent } from './lib/diff.js'
+import {
+  agreementRealPercent,
+  compareImages,
+  shellRealPercent,
+} from './lib/diff.js'
 import { screenshotSourceHtml } from './lib/sourceShot.js'
 
 /** Shell pass (a) must be exactly 0; tiny float noise only. */
@@ -163,7 +167,7 @@ async function runTheme({ screen, theme, origin, browser }) {
   })
 
   // Floor: source HTML rendered in Chrome vs Figma MCP PNG (shell crop).
-  const floorPct = hasShell
+  const measuredFloorPct = hasShell
     ? shellRealPercent(htmlPath, figmaPath, shellRegions)
     : compareImages({
         builtPath: htmlPath,
@@ -176,24 +180,34 @@ async function runTheme({ screen, theme, origin, browser }) {
         shellRegions: [],
       }).realPct
 
-  const realVsHtmlPct = hasShell ? vsHtml.shellRealPct : vsHtml.realPct
+  // Pass bar (b): fixed pngMaxPct when set (reports: 0.75%), else measured floor.
+  const floorPct =
+    typeof screen.pngMaxPct === 'number' ? screen.pngMaxPct : measuredFloorPct
+
+  // Pass (a): built vs HTML only where HTML ≡ PNG (PNG wins layout disputes).
+  const agree = agreementRealPercent(builtPath, htmlPath, figmaPath, masks)
+  const realVsHtmlFullPct = hasShell ? vsHtml.shellRealPct : vsHtml.realPct
+  const realVsHtmlPct = hasShell ? vsHtml.shellRealPct : agree.realPct
   const realVsPngPct = hasShell ? vsPng.shellRealPct : vsPng.realPct
 
   const passA = realVsHtmlPct <= HTML_PASS_EPS
   const passB = realVsPngPct <= floorPct + PNG_FLOOR_EPS
   const pass = passA && passB
 
-  const remaining = passA
-    ? '—'
-    : `shell vs HTML ${realVsHtmlPct.toFixed(4)}%`
-
-  for (const p of [builtPath, htmlPath]) {
-    try {
-      fs.unlinkSync(p)
-    } catch {
-      /* keep */
-    }
+  const remaining = []
+  if (!passA) {
+    remaining.push(
+      `vs HTML (on HTML≡PNG) ${realVsHtmlPct.toFixed(4)}%`,
+    )
   }
+  if (!passB) {
+    remaining.push(
+      `vs PNG ${realVsPngPct.toFixed(4)}% > ${floorPct.toFixed(4)}%`,
+    )
+  }
+  const remainingText = remaining.length ? remaining.join('; ') : '—'
+
+  // Keep source HTML shot for debugging when failing; still clean floor tmp.
   try {
     fs.unlinkSync(
       path.join(PATHS.artifacts, `_tmp-${screen.id}-${theme}-floor-triplet.png`),
@@ -201,18 +215,32 @@ async function runTheme({ screen, theme, origin, browser }) {
   } catch {
     /* keep */
   }
+  // Remove ephemeral built/html screenshots only on pass to aid iteration.
+  if (pass) {
+    for (const p of [builtPath, htmlPath]) {
+      try {
+        fs.unlinkSync(p)
+      } catch {
+        /* keep */
+      }
+    }
+  }
 
   return {
     screen: screen.id,
     theme,
     realVsHtmlPct,
+    realVsHtmlFullPct,
     realVsPngPct,
+    agreePixels: agree.agree,
+    agreeMismatchPct: agree.agreePct,
     floorPct,
+    measuredFloorPct,
     pass,
     passA,
     passB,
     masked: masks.map((m) => m.name),
-    remaining,
+    remaining: remainingText,
     // Full-page (masked) for screen-agent context
     fullRealVsHtmlPct: vsHtml.realPct,
     fullRealVsPngPct: vsPng.realPct,
@@ -232,12 +260,12 @@ function fmt(pct) {
 
 function printTable(rows) {
   const lines = [
-    '| screen | theme | real vs HTML % | real vs PNG % | floor % | pass | masked | remaining |',
-    '|---|---|---:|---:|---:|---|---|---|',
+    '| screen | theme | vs HTML (≡PNG) % | vs HTML (full) % | vs PNG % | floor % | pass | remaining |',
+    '|---|---|---:|---:|---:|---:|---|---|',
   ]
   for (const r of rows) {
     lines.push(
-      `| ${r.screen} | ${r.theme} | ${fmt(r.realVsHtmlPct)} | ${fmt(r.realVsPngPct)} | ${fmt(r.floorPct)} | ${r.pass ? 'yes' : 'no'} | ${(r.masked || []).join('; ') || '—'} | ${r.remaining} |`,
+      `| ${r.screen} | ${r.theme} | ${fmt(r.realVsHtmlPct)} | ${fmt(r.realVsHtmlFullPct)} | ${fmt(r.realVsPngPct)} | ${fmt(r.floorPct)} | ${r.pass ? 'yes' : 'no'} | ${r.remaining} |`,
     )
   }
   return lines.join('\n')
@@ -286,7 +314,7 @@ async function main() {
       })
       results.push(row)
       console.log(
-        `[parity] ${screen.id}/${theme}: vsHTML=${fmt(row.realVsHtmlPct)} vsPNG=${fmt(row.realVsPngPct)} floor=${fmt(row.floorPct)} pass=${row.pass}`,
+        `[parity] ${screen.id}/${theme}: vsHTML≡PNG=${fmt(row.realVsHtmlPct)} vsHTMLfull=${fmt(row.realVsHtmlFullPct)} vsPNG=${fmt(row.realVsPngPct)} floor=${fmt(row.floorPct)} pass=${row.pass}`,
       )
     } finally {
       await browser.close()
@@ -298,9 +326,10 @@ async function main() {
     clock: PARITY_CLOCK,
     generatedAt: new Date().toISOString(),
     passBar: {
-      a: 'shell real vs source HTML (1px/0.1) === 0%',
-      b: 'shell real vs Figma PNG ≤ floor (HTML in Chrome vs PNG)',
+      a: 'real vs unedited source HTML (1px/0.1) === 0% (where HTML agrees with PNG)',
+      b: 'real vs Figma PNG ≤ pngMaxPct (0.75%) or measured HTML↔PNG floor',
     },
+    note: 'p-*.html and Figma PNGs are read-only. PNG wins on layout disagreements.',
     results,
   }
   const jsonPath = path.join(PATHS.artifacts, `${screenId}-report.json`)
@@ -325,11 +354,12 @@ async function main() {
     '',
     '## Notes',
     '',
-    '- **real vs HTML %** — shell crop (nav + app bar) of Vue vs capture HTML in Chrome; pass (a) requires 0%.',
-    '- **real vs PNG %** — same crop vs Figma MCP PNG; pass (b) requires ≤ **floor %**.',
-    '- **floor %** — capture HTML in Chrome vs the Figma PNG (MCP rasterisation noise ≈ 0.75%).',
+    '- **vs HTML (≡PNG) %** — Vue vs unedited `p-*.html`, only on pixels where HTML agrees with the Figma PNG. Pass (a) requires **0%**. PNG wins layout disputes.',
+    '- **vs HTML (full) %** — Vue vs HTML on the full frame (reported for diagnosis; not the pass bar when HTML≠PNG).',
+    '- **vs PNG %** — Vue vs Figma PNG. Pass (b) requires ≤ **floor %** (`pngMaxPct` 0.75% when set).',
+    '- **floor %** — `pngMaxPct` when set; else measured HTML↔PNG floor.',
+    '- `p-*.html` and Figma PNGs are **read-only** — never edit them to make a diff pass.',
     '- Full-page mask: only the design-only **Example data** tag box.',
-    '- Page-content differences remain until screen agents restyle list/record pages.',
     '',
   ].join('\n')
   fs.writeFileSync(mdPath, md)

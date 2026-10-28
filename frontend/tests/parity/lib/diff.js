@@ -215,6 +215,85 @@ export function compareImages({
   }
 }
 
+/**
+ * Real-difference % of built vs HTML, counted only on pixels where HTML agrees
+ * with the Figma PNG (1px / 0.1). PNG wins layout disputes — HTML-only pixels
+ * are excluded from pass (a). Returns percent of the full frame.
+ */
+export function agreementRealPercent(
+  builtPath,
+  htmlPath,
+  pngPath,
+  masks = [],
+  threshold = 0.1,
+) {
+  let built = loadPng(builtPath)
+  let html = loadPng(htmlPath)
+  let png = loadPng(pngPath)
+  const width = png.width
+  const height = png.height
+  built = ensureSize(built, width, height)
+  html = ensureSize(html, width, height)
+
+  const builtM = applyMasks(built, masks)
+  const htmlM = applyMasks(html, masks)
+  const pngM = applyMasks(png, masks)
+
+  let agree = 0
+  let disagree = 0
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (width * y + x) << 2
+      // HTML ≡ PNG? (exact or 1px neighbour)
+      let htmlMatchesPng = colorDist(htmlM.data, pngM.data, i, i) <= threshold
+      if (!htmlMatchesPng) {
+        outer: for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue
+            const nx = x + dx
+            const ny = y + dy
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
+            const ni = (width * ny + nx) << 2
+            if (colorDist(htmlM.data, pngM.data, i, ni) <= threshold) {
+              htmlMatchesPng = true
+              break outer
+            }
+          }
+        }
+      }
+      if (!htmlMatchesPng) continue
+      agree++
+      // Built must match HTML on agreement pixels
+      let builtMatches = colorDist(builtM.data, htmlM.data, i, i) <= threshold
+      if (!builtMatches) {
+        outer2: for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue
+            const nx = x + dx
+            const ny = y + dy
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
+            const ni = (width * ny + nx) << 2
+            if (colorDist(builtM.data, htmlM.data, i, ni) <= threshold) {
+              builtMatches = true
+              break outer2
+            }
+          }
+        }
+      }
+      if (!builtMatches) disagree++
+    }
+  }
+  const total = width * height
+  return {
+    agree,
+    disagree,
+    /** Mismatches on agreement pixels as % of full frame (pass (a) → 0). */
+    realPct: total ? (disagree / total) * 100 : 0,
+    /** Mismatches as % of agreement pixels only. */
+    agreePct: agree ? (disagree / agree) * 100 : 0,
+  }
+}
+
 /** Shell-only real % (nav + app bar), same 1px / 0.1 rule as full-page real %. */
 export function shellRealPercent(builtPath, figmaPath, shellRegions = []) {
   const built = loadPng(builtPath)

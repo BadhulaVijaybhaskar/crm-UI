@@ -4,29 +4,34 @@
     :options="{ title: chartTitle, size: '4xl' }"
   >
     <template #body-content>
-      <p class="mb-3 text-[12px] text-[color:var(--crm-muted-fg,#64748b)]">
+      <div class="-mt-1 mb-3 text-[12px] font-medium text-[color:var(--crm-muted-fg,#5b6478)]">
         {{ __('Step 2 of 2 · data') }}
-      </p>
-      <div class="grid gap-5 md:grid-cols-[1fr_320px]">
-        <div class="space-y-4">
+      </div>
+      <div class="grid gap-0 md:grid-cols-[1fr_320px]">
+        <div class="space-y-4 border-r-0 pr-0 md:border-r md:border-[color:var(--crm-border,#e1e7ec)] md:pr-[18px]">
           <div>
-            <div class="mb-1 text-[12.5px] text-[color:var(--crm-muted-fg,#64748b)]">
+            <div class="mb-1 text-[12px] font-semibold text-[color:var(--crm-fg,#0b1324)]">
               {{ __('Chart type') }}
             </div>
-            <div class="flex flex-wrap gap-1 rounded-md border border-[color:var(--crm-border,#e2e8f0)] p-0.5">
+            <div
+              class="inline-flex overflow-hidden rounded-[7px] border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)]"
+            >
               <button
-                v-for="t in chartTypes"
+                v-for="(t, idx) in chartTypes"
                 :key="t"
                 type="button"
-                class="rounded px-2.5 py-1 text-[12.5px] capitalize"
-                :class="
+                class="inline-flex h-[30px] items-center gap-1.5 px-2.5 text-[12px] font-medium capitalize"
+                :class="[
+                  idx < chartTypes.length - 1
+                    ? 'border-r border-[color:var(--crm-border,#e1e7ec)]'
+                    : '',
                   draft.chart_type === t
-                    ? 'bg-[color:var(--crm-primary,#0a7393)] text-[color:var(--crm-primary-fg,#fff)]'
-                    : 'text-[color:var(--crm-fg,#0f172a)]'
-                "
+                    ? 'bg-[color:var(--crm-primary-soft,#e4f2f6)] font-semibold text-[color:var(--crm-primary,#0a7393)]'
+                    : 'text-[color:var(--crm-muted-fg,#5b6478)]',
+                ]"
                 @click="draft.chart_type = t"
               >
-                {{ __(t === 'donut' ? 'pie' : t) }}
+                {{ __(t === 'donut' ? 'Pie' : t) }}
               </button>
             </div>
           </div>
@@ -92,7 +97,7 @@
           </div>
 
           <div>
-            <div class="mb-2 text-[12.5px] text-[color:var(--crm-muted-fg,#64748b)]">
+            <div class="mb-2 text-[12.5px] text-[color:var(--crm-muted-fg,#5b6478)]">
               {{ __('Series colours') }} · {{ __('Astra palette') }}
             </div>
             <div class="flex flex-wrap gap-2">
@@ -103,8 +108,8 @@
                 class="size-[22px] rounded-md border-2 border-[color:var(--crm-card,#fff)]"
                 :class="
                   selectedSwatch === sw.key
-                    ? 'ring-2 ring-[color:var(--crm-primary,#0a7393)]'
-                    : 'ring-1 ring-[color:var(--crm-border-strong,#94a3b8)]'
+                    ? 'shadow-[0_0_0_2px_var(--crm-primary,#0a7393)]'
+                    : 'shadow-[0_0_0_1px_var(--crm-border-strong,#d0d9e0)]'
                 "
                 :style="{ background: sw.css }"
                 :title="sw.label"
@@ -114,30 +119,53 @@
           </div>
         </div>
 
-        <aside
-          class="rounded-[10px] border border-[color:var(--crm-border,#e2e8f0)] bg-[color:var(--crm-card,#fff)] p-3"
-        >
-          <div class="mb-2 flex items-center justify-between text-[12px]">
-            <span class="font-semibold text-[color:var(--crm-muted-fg,#64748b)]">
+        <aside class="bg-[color:var(--crm-muted,#f6f8fa)] p-0 md:pl-[18px]">
+          <div class="mb-2 flex flex-wrap items-center gap-2 text-[12px]">
+            <span class="font-semibold text-[color:var(--crm-muted-fg,#5b6478)]">
               {{ __('Live preview') }}
             </span>
-            <span class="text-[11px] text-[color:var(--crm-faint,#94a3b8)]">
+            <span class="text-[11px] text-[color:var(--crm-faint,#8a94a6)]">
               8 × 3 {{ __('tile') }}
             </span>
+            <span
+              class="inline-flex h-6 items-center gap-1.5 rounded-md border border-dashed border-[color:var(--crm-border-strong,#d0d9e0)] px-2 text-[11.5px] font-medium text-[color:var(--crm-muted-fg,#5b6478)]"
+            >
+              <i
+                class="block size-1.5 rounded-full bg-[color:var(--crm-warning,#a86a0b)]"
+                aria-hidden="true"
+              />
+              {{ __('Example data') }}
+            </span>
           </div>
-          <div class="h-56">
+          <div
+            class="h-56 rounded-[10px] border border-[color:var(--crm-border,#e1e7ec)] bg-[color:var(--crm-card,#fff)] p-3"
+          >
             <ReportChartTile
               :title="draft.title || __('Untitled chart')"
+              :subtitle="previewSubtitle"
               :tile-type="draft.chart_type"
               :data="preview"
             />
+          </div>
+          <div
+            v-if="previewSummary"
+            class="mt-3 text-[11.5px] text-[color:var(--crm-muted-fg,#5b6478)]"
+          >
+            {{ previewSummary }}
           </div>
         </aside>
       </div>
     </template>
     <template #actions>
-      <Button :label="__('Cancel')" @click="show = false" />
-      <Button variant="solid" :label="__('Add to dashboard')" @click="submit" />
+      <div class="flex w-full items-center justify-end gap-2">
+        <Button size="sm" :label="__('Cancel')" @click="show = false" />
+        <Button
+          size="sm"
+          variant="solid"
+          :label="__('Add to dashboard')"
+          @click="submit"
+        />
+      </div>
     </template>
   </Dialog>
 </template>
@@ -172,6 +200,17 @@ const chartTitle = computed(() => {
     table: __('Table tile'),
   }
   return map[draft.chart_type] || __('Chart tile')
+})
+
+const previewSubtitle = computed(() => {
+  if (draft.aggregation === 'sum') return '₹ L'
+  return ''
+})
+
+const previewSummary = computed(() => {
+  const rows = preview.value?.data || []
+  if (!rows.length) return ''
+  return preview.value?.summary_text || ''
 })
 
 const moduleOptions = computed(() =>

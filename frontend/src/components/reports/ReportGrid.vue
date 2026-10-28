@@ -1,7 +1,7 @@
 <template>
   <div
-    class="report-grid min-h-0 flex-1 overflow-y-auto p-3"
-    :class="editing ? 'report-grid--editing' : ''"
+    class="report-grid min-h-0 flex-1 overflow-y-auto pb-6 pt-4"
+    :class="editing ? 'report-grid--editing mx-crm-page-x' : 'px-crm-page-x'"
   >
     <GridLayout
       v-if="items.length > 0"
@@ -11,7 +11,7 @@
       :cols="{ lg: 12, md: 12, sm: 12, xs: 1, xxs: 1 }"
       :row-height="92"
       :margin="[12, 12]"
-      :is-draggable="editing"
+      :is-draggable="editing && !draggingId"
       :is-resizable="editing"
       responsive
       :layout="items.map((item) => item.layout)"
@@ -27,9 +27,26 @@
         :w="tile.layout.w"
         :h="tile.layout.h"
         :min-w="tile.layout.minW || 2"
-        :min-h="tile.layout.minH || 2"
+        :min-h="tile.layout.minH || 1"
+        :class="{
+          'vgl-item--parity-dragging': draggingId && draggingId === tile.id,
+        }"
       >
-        <div v-if="layoutReady" class="h-full w-full">
+        <!-- Static drop slot under a mid-drag tile (Figma screen 17) -->
+        <div
+          v-if="layoutReady && draggingId && draggingId === tile.id"
+          class="report-drop-slot"
+          aria-hidden="true"
+        >
+          {{ __('Drop here') }} · {{ tile.layout.w }} × {{ tile.layout.h }}
+        </div>
+        <div
+          v-if="layoutReady"
+          class="h-full w-full"
+          :class="{
+            'report-tile-drag-ghost': draggingId && draggingId === tile.id,
+          }"
+        >
           <ReportTile
             :tile="tile"
             :editing="editing"
@@ -48,14 +65,14 @@
       class="flex flex-col items-center justify-center gap-3 px-6 py-20 text-center"
     >
       <div
-        class="flex size-11 items-center justify-center rounded-[10px] bg-[color:var(--crm-muted,#f1f5f9)] text-[color:var(--crm-muted-fg,#64748b)]"
+        class="flex size-11 items-center justify-center rounded-[10px] bg-[color:var(--crm-muted,#f6f8fa)] text-[color:var(--crm-muted-fg,#5b6478)]"
       >
-        <span class="lucide-layout-dashboard size-5" />
+        <LucideLayoutDashboard class="size-5" />
       </div>
-      <div class="text-[15px] font-semibold text-[color:var(--crm-fg,#0f172a)]">
+      <div class="text-[15px] font-semibold text-[color:var(--crm-fg,#0b1324)]">
         {{ __('No tiles yet') }}
       </div>
-      <p class="max-w-[420px] text-[13px] text-[color:var(--crm-muted-fg,#64748b)]">
+      <p class="max-w-[420px] text-[13px] text-[color:var(--crm-muted-fg,#5b6478)]">
         {{ __('Add a KPI or chart tile to start building this dashboard.') }}
       </p>
       <Button
@@ -70,6 +87,7 @@
 
 <script setup>
 import ReportTile from './ReportTile.vue'
+import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
 import { Button } from 'frappe-ui'
 import { GridItem, GridLayout } from 'grid-layout-plus'
 import { ref } from 'vue'
@@ -77,6 +95,7 @@ import { ref } from 'vue'
 defineProps({
   editing: { type: Boolean, default: false },
   selectedId: { type: String, default: null },
+  draggingId: { type: String, default: null },
 })
 
 defineEmits(['select', 'edit', 'duplicate', 'add'])
@@ -96,23 +115,22 @@ function onLayout(newLayout) {
   background-image:
     linear-gradient(
       to right,
-      var(--crm-border, #e2e8f0) 1px,
+      var(--crm-border, #e1e7ec) 1px,
       transparent 1px
     ),
     linear-gradient(
       to bottom,
-      var(--crm-border, #e2e8f0) 1px,
+      var(--crm-border, #e1e7ec) 1px,
       transparent 1px
     );
-  background-size: calc((100% - 24px) / 12) 104px;
-  background-position: 12px 12px;
-  outline: 1px dashed var(--crm-border-strong, #94a3b8);
+  background-size: calc((100% + 12px) / 12) 104px;
+  outline: 1px dashed var(--crm-border-strong, #d0d9e0);
   outline-offset: 6px;
-  border-radius: 10px;
+  border-radius: 4px;
 }
 
 .vgl-layout {
-  --vgl-placeholder-bg: var(--crm-primary-soft, #e6f4f8);
+  --vgl-placeholder-bg: var(--crm-primary-soft, #e4f2f6);
   --vgl-placeholder-opacity: 100%;
   --vgl-placeholder-z-index: 2;
   --vgl-item-dragging-z-index: 3;
@@ -120,20 +138,62 @@ function onLayout(newLayout) {
   --vgl-resizer-size: 12px;
 }
 
+.report-grid--editing :deep(.vgl-item) {
+  overflow: visible;
+}
+
 :deep(.vgl-item--placeholder) {
-  background-color: var(--crm-primary-soft, #e6f4f8);
+  background-color: var(--crm-primary-soft, #e4f2f6);
   border: 2px dashed var(--crm-primary, #0a7393);
   border-radius: 10px;
   opacity: 1;
 }
 
-:deep(.vgl-item--dragging) {
-  transform: rotate(-0.6deg);
+:deep(.vgl-item--placeholder)::after {
+  content: 'Drop here';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--crm-primary, #0a7393);
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+:deep(.vgl-item--dragging),
+:deep(.vgl-item--parity-dragging) {
+  z-index: 3;
+}
+
+:deep(.vgl-item--dragging) .report-tile-drag-ghost,
+.report-tile-drag-ghost {
+  transform: translate(18px, 14px) rotate(-0.6deg);
   box-shadow: var(
     --crm-shadow-tile-drag,
     0 14px 30px rgba(4, 20, 27, 0.2),
     0 0 0 2px var(--crm-primary, #0a7393)
   );
+  border-radius: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.report-drop-slot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--crm-primary, #0a7393);
+  border-radius: 10px;
+  background: var(--crm-primary-soft, #e4f2f6);
+  color: var(--crm-primary, #0a7393);
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 1;
 }
 
 :deep(.vgl-item__resizer) {
@@ -145,5 +205,6 @@ function onLayout(newLayout) {
   border-bottom: 2px solid var(--crm-primary, #0a7393);
   border-radius: 0 0 3px 0;
   box-sizing: border-box;
+  background: transparent;
 }
 </style>

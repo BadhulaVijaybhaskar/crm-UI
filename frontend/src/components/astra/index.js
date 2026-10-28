@@ -1,6 +1,7 @@
 export { default as AstraAvatar } from './AstraAvatar.vue'
 export { default as AstraBadge } from './AstraBadge.vue'
 export { default as AstraButton } from './AstraButton.vue'
+export { default as AstraConceptBanner } from './AstraConceptBanner.vue'
 export { default as AstraEmptyState } from './AstraEmptyState.vue'
 export { default as AstraFilterBar } from './AstraFilterBar.vue'
 export { default as AstraInput } from './AstraInput.vue'

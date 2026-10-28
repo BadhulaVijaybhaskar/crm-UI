@@ -1,52 +1,36 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col overflow-hidden">
-    <LayoutHeader>
-      <template #left-header>
-        <div>
-          <ViewBreadcrumbs routeName="Reports" />
-          <p class="mt-0.5 text-[12.5px] text-[color:var(--crm-muted-fg,#64748b)]">
-            {{
-              __(
-                'Build dashboards from your CRM data. Each person or team can keep several.',
-              )
-            }}
-          </p>
-        </div>
-      </template>
-      <template #right-header>
-        <Dropdown
-          :options="periodOptions"
-          :button="{
-            label: periodLabel,
-            variant: 'outline',
-            iconLeft: 'lucide-calendar',
-            iconRight: 'lucide-chevron-down',
-          }"
-        />
-        <Link
-          v-if="isAdmin() || isManager()"
-          class="form-control w-44"
-          variant="outline"
-          :value="userFilter && getUser(userFilter).full_name"
-          doctype="User"
-          :filters="{
-            name: ['in', users.data.crmUsers?.map((u) => u.name)],
-            ignore_user_type: 1,
-          }"
-          :placeholder="__('Sales user')"
-          :hideMe="true"
-          @change="(v) => ((userFilter = v), reloadDashboard())"
-        />
-        <Button
-          v-if="!editing"
-          :label="__('Edit')"
-          :iconLeft="LucidePenLine"
-          @click="startEdit"
-        />
-      </template>
-    </LayoutHeader>
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-[color:var(--crm-bg,#f3f6f8)]">
+    <AstraConceptBanner
+      :text="
+        __(
+          'Dashboard builder. Edit mode, chart tiles, Reset to default and Save exist today; resizing, custom KPIs, formulas and several saved dashboards per user or team are new.',
+        )
+      "
+    />
 
-    <div class="flex flex-wrap items-center gap-2 px-5 pb-2 pt-3">
+    <AstraPageHeader
+      :title="__('Reports')"
+      :description="
+        __(
+          'Build dashboards from your CRM data. Each person or team can keep several.',
+        )
+      "
+    >
+      <span
+        class="inline-flex h-6 items-center gap-1.5 rounded-md border border-dashed border-[color:var(--crm-border-strong,#d0d9e0)] px-2.5 text-[11.5px] font-medium text-[color:var(--crm-muted-fg,#5b6478)]"
+        data-parity-mask="example-data"
+      >
+        <i
+          class="block size-1.5 rounded-full bg-[color:var(--crm-warning,#a86a0b)]"
+          aria-hidden="true"
+        />
+        {{ __('Example data') }}
+      </span>
+    </AstraPageHeader>
+
+    <div
+      class="flex h-11 shrink-0 items-center gap-0.5 border-b border-[color:var(--crm-border,#e1e7ec)] px-crm-page-x"
+    >
       <Dropdown
         :options="dashboardMenuOptions"
         :button="{
@@ -57,66 +41,137 @@
       />
       <button
         type="button"
-        class="rounded-md px-2.5 py-1.5 text-[12.5px]"
-        :class="tab === 'personal' ? 'bg-[color:var(--crm-muted,#f1f5f9)] font-semibold' : 'text-[color:var(--crm-muted-fg,#64748b)]'"
+        class="inline-flex h-[34px] items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium"
+        :class="
+          tab === 'personal'
+            ? 'border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] font-semibold text-[color:var(--crm-fg,#0b1324)]'
+            : 'text-[color:var(--crm-muted-fg,#5b6478)]'
+        "
         @click="tab = 'personal'"
       >
-        {{ __('My dashboards') }} ({{ lists.personal.length }})
+        {{ __('My dashboards') }}
+        <em
+          class="not-italic"
+          :class="
+            tab === 'personal'
+              ? 'text-[color:var(--crm-primary,#0a7393)]'
+              : 'text-[color:var(--crm-faint,#8a94a6)]'
+          "
+          >{{ lists.personal.length }}</em
+        >
       </button>
       <button
         type="button"
-        class="rounded-md px-2.5 py-1.5 text-[12.5px]"
-        :class="tab === 'team' ? 'bg-[color:var(--crm-muted,#f1f5f9)] font-semibold' : 'text-[color:var(--crm-muted-fg,#64748b)]'"
+        class="inline-flex h-[34px] items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium"
+        :class="
+          tab === 'team'
+            ? 'bg-[color:var(--crm-muted,#f6f8fa)] font-semibold text-[color:var(--crm-fg,#0b1324)]'
+            : 'text-[color:var(--crm-muted-fg,#5b6478)]'
+        "
         @click="tab = 'team'"
       >
-        {{ __('Team') }} ({{ lists.team.length }})
+        {{ __('Team') }}
+        <em class="not-italic text-[color:var(--crm-faint,#8a94a6)]">{{
+          lists.team.length
+        }}</em>
       </button>
-      <Button :label="__('New dashboard')" iconLeft="lucide-plus" @click="createDashboard" />
-      <span
-        v-if="current?.is_default"
-        class="text-[11.5px] text-[color:var(--crm-muted-fg,#64748b)]"
+      <button
+        type="button"
+        class="inline-flex h-[34px] items-center gap-1 px-2 text-[12.5px] font-semibold text-[color:var(--crm-primary,#0a7393)]"
+        @click="createDashboard"
       >
-        {{ __('Default') }}
-        <template v-if="current.shared_role">
-          · {{ __('shared with') }} {{ current.shared_role }}
-        </template>
-      </span>
+        <LucidePlus class="size-3.5" aria-hidden="true" />
+        {{ __('New dashboard') }}
+      </button>
+
+      <div
+        class="ml-auto flex flex-wrap items-center gap-3.5 text-[12px] text-[color:var(--crm-muted-fg,#5b6478)]"
+      >
+        <span v-if="current?.is_default">
+          {{ __('Default') }}
+          <template v-if="current.shared_role">
+            · {{ __('shared with') }} {{ current.shared_role }}
+          </template>
+        </span>
+        <Dropdown
+          :options="periodOptions"
+          :button="{
+            label: `${__('Date')} ${periodLabel}`,
+            variant: 'outline',
+            iconRight: 'lucide-chevron-down',
+          }"
+        />
+        <Dropdown
+          v-if="isAdmin() || isManager()"
+          :options="salesUserOptions"
+          :button="{
+            label: `${__('Sales user')} ${salesUserLabel}`,
+            variant: 'outline',
+            iconRight: 'lucide-chevron-down',
+          }"
+        />
+        <Button
+          v-if="!editing"
+          size="sm"
+          :label="__('Edit')"
+          :iconLeft="LucidePenLine"
+          @click="startEdit"
+        />
+      </div>
     </div>
 
     <div
       v-if="editing"
-      class="mx-5 mb-2 flex flex-wrap items-center gap-2 rounded-md bg-[color:var(--crm-primary-soft,#e6f4f8)] px-3 py-2"
+      class="mx-crm-page-x mt-0 flex h-[46px] shrink-0 items-center gap-2.5 rounded-lg border border-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-primary-soft,#e4f2f6)] px-3"
     >
+      <i
+        class="block size-1.5 shrink-0 rounded-full bg-[color:var(--crm-success,#0f8a5f)]"
+        aria-hidden="true"
+      />
       <span
-        class="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[color:var(--crm-fg,#0f172a)]"
+        class="shrink-0 text-[12.5px] font-semibold text-[color:var(--crm-primary,#0a7393)]"
       >
-        <span class="size-1.5 rounded-full bg-[color:var(--crm-success,#16a34a)]" />
-        {{ __('Editing') }}: {{ current?.title }}
+        {{ __('Editing') }}
       </span>
-      <span class="text-[12px] text-[color:var(--crm-muted-fg,#64748b)]">
+      <span class="min-w-0 truncate text-[12.5px] text-[color:var(--crm-muted-fg,#5b6478)]">
+        <b class="font-semibold text-[color:var(--crm-fg,#0b1324)]">{{
+          current?.title || __('Dashboard')
+        }}</b>
         {{
           __(
             'Drag a tile to move it, drag a corner to resize. Tiles snap to a 12-column grid.',
           )
         }}
       </span>
-      <div class="ml-auto flex flex-wrap gap-2">
-        <Button :label="__('Add tile')" iconLeft="lucide-plus" @click="showAddTile = true" />
-        <Button :label="__('Reset to default')" @click="resetLayout" />
-        <Button :label="__('Cancel')" @click="cancelEdit" />
-        <Button
-          variant="solid"
-          :label="__('Save dashboard')"
-          :loading="saving"
-          @click="saveLayout"
-        />
-      </div>
+      <span class="flex-1" />
+      <Button
+        size="sm"
+        :label="__('Add tile')"
+        iconLeft="lucide-plus"
+        @click="showAddTile = true"
+      />
+      <Button
+        size="sm"
+        variant="ghost"
+        :label="__('Reset to default')"
+        @click="resetLayout"
+      />
+      <Button size="sm" :label="__('Cancel')" @click="cancelEdit" />
+      <AstraButton
+        size="sm"
+        variant="primary"
+        :loading="saving"
+        @click="saveLayout"
+      >
+        {{ __('Save dashboard') }}
+      </AstraButton>
     </div>
 
     <ReportGrid
       v-model="tiles"
       :editing="editing"
       :selected-id="selectedId"
+      :dragging-id="draggingId"
       @select="(t) => (selectedId = t.id)"
       @edit="openEditTile"
       @duplicate="duplicateTile"
@@ -150,10 +205,11 @@ import AddTileModal from '@/components/reports/AddTileModal.vue'
 import ChartBuilderModal from '@/components/reports/ChartBuilderModal.vue'
 import KpiBuilderModal from '@/components/reports/KpiBuilderModal.vue'
 import ReportGrid from '@/components/reports/ReportGrid.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
-import Link from '@/components/Controls/Link.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import AstraConceptBanner from '@/components/astra/AstraConceptBanner.vue'
+import AstraPageHeader from '@/components/astra/AstraPageHeader.vue'
 import LucidePenLine from '~icons/lucide/pen-line'
+import LucidePlus from '~icons/lucide/plus'
 import { usersStore } from '@/stores/users'
 import { getSettings } from '@/stores/settings'
 import {
@@ -164,10 +220,12 @@ import {
   toast,
   usePageMeta,
 } from 'frappe-ui'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 const { brand } = getSettings()
-const { getUser, isAdmin, isManager, users } = usersStore()
+const { isAdmin, isManager } = usersStore()
+const route = useRoute()
 
 usePageMeta(() => ({
   title: __('Reports'),
@@ -182,9 +240,11 @@ const showChartBuilder = ref(false)
 const pendingChartType = ref('bar')
 const editingTileConfig = ref(null)
 const selectedId = ref(null)
+/** Parity / edit-demo: tile id currently mid-drag (shows drop placeholder). */
+const draggingId = ref(null)
 const tab = ref('personal')
 const period = ref('this_quarter')
-const userFilter = ref(null)
+const userFilter = ref('West team')
 const tiles = ref([])
 const snapshot = ref([])
 const current = ref(null)
@@ -210,6 +270,24 @@ const periodOptions = computed(() =>
     },
   })),
 )
+
+const salesUserLabel = computed(
+  () => userFilter.value || current.value?.shared_role || __('West team'),
+)
+
+const salesUserOptions = computed(() => {
+  const roles = [
+    current.value?.shared_role,
+    'West team',
+    'All India',
+  ].filter(Boolean)
+  return [...new Set(roles)].map((label) => ({
+    label,
+    onClick: () => {
+      userFilter.value = label
+    },
+  }))
+})
 
 function periodLabelFor(value) {
   return (
@@ -262,39 +340,65 @@ async function selectDashboard(name) {
   current.value = data
   tiles.value = normalizeTiles(data.layout || [])
   selectedId.value = null
+  draggingId.value = null
+  if (editing.value) applyEditSelection()
 }
 
 async function reloadDashboard() {
   if (current.value?.name) await selectDashboard(current.value.name)
 }
 
+function defaultSize(type) {
+  if (type === 'kpi') return { w: 3, h: 1, minW: 2, minH: 1 }
+  if (type === 'funnel') return { w: 4, h: 3, minW: 3, minH: 2 }
+  if (type === 'table') return { w: 6, h: 2, minW: 3, minH: 2 }
+  return { w: 8, h: 3, minW: 3, minH: 2 }
+}
+
 function normalizeTiles(layout) {
   return layout.map((t, idx) => {
     const id = t.id || t.layout?.i || `tile_${idx}`
+    const defaults = defaultSize(t.type)
     return {
       ...t,
       id,
       layout: {
         x: t.layout?.x ?? (idx % 4) * 3,
-        y: t.layout?.y ?? Math.floor(idx / 4) * 2,
-        w: t.layout?.w ?? (t.type === 'kpi' ? 3 : 6),
-        h: t.layout?.h ?? (t.type === 'kpi' ? 2 : 4),
+        y: t.layout?.y ?? Math.floor(idx / 4),
+        w: t.layout?.w ?? defaults.w,
+        h: t.layout?.h ?? defaults.h,
         i: id,
-        minW: 2,
-        minH: 2,
+        minW: defaults.minW,
+        minH: defaults.minH,
       },
     }
   })
 }
 
+function applyEditSelection() {
+  // Figma screen 17: Pipeline by stage selected; Won-value line tile mid-drag
+  if (!selectedId.value) {
+    const bar = tiles.value.find((t) => t.type === 'bar')
+    if (bar) selectedId.value = bar.id
+  }
+  if (!draggingId.value) {
+    const line =
+      tiles.value.find((t) => t.config?.dragging) ||
+      tiles.value.find((t) => t.type === 'line')
+    if (line) draggingId.value = line.id
+  }
+}
+
 function startEdit() {
   snapshot.value = JSON.parse(JSON.stringify(tiles.value))
   editing.value = true
+  applyEditSelection()
 }
 
 function cancelEdit() {
   tiles.value = JSON.parse(JSON.stringify(snapshot.value))
   editing.value = false
+  draggingId.value = null
 }
 
 async function saveLayout() {
@@ -360,12 +464,13 @@ function nextPosition(w, h) {
 
 function addKpiTile(config) {
   const id = `kpi_${Date.now()}`
-  const pos = nextPosition(3, 2)
+  const size = defaultSize('kpi')
+  const pos = nextPosition(size.w, size.h)
   tiles.value.push({
     id,
     type: 'kpi',
     title: config.title || __('KPI'),
-    layout: { ...pos, i: id, minW: 2, minH: 2 },
+    layout: { ...pos, i: id, minW: size.minW, minH: size.minH },
     config,
     data: null,
   })
@@ -375,12 +480,13 @@ function addKpiTile(config) {
 function addChartTile(config) {
   const type = config.chart_type || 'bar'
   const id = `${type}_${Date.now()}`
-  const pos = nextPosition(type === 'table' ? 6 : 8, 4)
+  const size = defaultSize(type)
+  const pos = nextPosition(size.w, size.h)
   tiles.value.push({
     id,
     type,
     title: config.title || __('Chart'),
-    layout: { ...pos, i: id, minW: 3, minH: 3 },
+    layout: { ...pos, i: id, minW: size.minW, minH: size.minH },
     config,
     data: null,
   })
@@ -400,7 +506,11 @@ function duplicateTile(tile) {
   const copy = JSON.parse(JSON.stringify(tile))
   const id = `${tile.type}_${Date.now()}`
   copy.id = id
-  copy.layout = { ...copy.layout, i: id, y: (copy.layout?.y || 0) + (copy.layout?.h || 2) }
+  copy.layout = {
+    ...copy.layout,
+    i: id,
+    y: (copy.layout?.y || 0) + (copy.layout?.h || 2),
+  }
   tiles.value.push(copy)
 }
 
@@ -422,6 +532,32 @@ async function refreshTileData(tile) {
     tile.error = e.message
   }
 }
+
+/** Test-only convenience: ?parityModal=add|kpi|chart (or #parityModal=…) */
+function applyParityModalQuery() {
+  const fromQuery = String(route.query.parityModal || '')
+  const hash = String(route.hash || '')
+  const fromHash = hash.match(/parityModal=([a-z]+)/i)?.[1] || ''
+  const modal = (fromQuery || fromHash).toLowerCase()
+  if (!modal) return
+  startEdit()
+  // edit | add | kpi | chart — "edit" only enters edit mode (screen 17)
+  if (modal === 'add') showAddTile.value = true
+  else if (modal === 'kpi') showKpiBuilder.value = true
+  else if (modal === 'chart') showChartBuilder.value = true
+}
+
+onMounted(() => {
+  applyParityModalQuery()
+})
+
+// Tiles often arrive after onMounted startEdit — re-apply Figma selection/drag.
+watch(
+  () => tiles.value.map((t) => t.id).join(','),
+  () => {
+    if (editing.value) applyEditSelection()
+  },
+)
 
 watch(period, () => reloadDashboard())
 </script>

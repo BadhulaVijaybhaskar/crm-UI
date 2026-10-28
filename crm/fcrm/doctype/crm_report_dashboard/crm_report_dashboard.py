@@ -114,7 +114,7 @@ def default_sales_overview_layout() -> str:
 			"id": "open_pipeline",
 			"type": "kpi",
 			"title": "Open pipeline",
-			"layout": {"x": 0, "y": 0, "w": 3, "h": 2, "i": "open_pipeline"},
+			"layout": {"x": 0, "y": 0, "w": 3, "h": 1, "i": "open_pipeline"},
 			"config": {
 				"kpi_type": "simple",
 				"doctype": "CRM Deal",
@@ -129,7 +129,7 @@ def default_sales_overview_layout() -> str:
 			"id": "won_quarter",
 			"type": "kpi",
 			"title": "Won this quarter",
-			"layout": {"x": 3, "y": 0, "w": 3, "h": 2, "i": "won_quarter"},
+			"layout": {"x": 3, "y": 0, "w": 3, "h": 1, "i": "won_quarter"},
 			"config": {
 				"kpi_type": "simple",
 				"doctype": "CRM Deal",
@@ -144,7 +144,7 @@ def default_sales_overview_layout() -> str:
 			"id": "pipeline_by_stage",
 			"type": "bar",
 			"title": "Pipeline by stage",
-			"layout": {"x": 0, "y": 2, "w": 8, "h": 4, "i": "pipeline_by_stage"},
+			"layout": {"x": 0, "y": 1, "w": 8, "h": 3, "i": "pipeline_by_stage"},
 			"config": {
 				"doctype": "CRM Deal",
 				"aggregation": "sum",
@@ -158,7 +158,7 @@ def default_sales_overview_layout() -> str:
 			"id": "won_by_month",
 			"type": "line",
 			"title": "Won value by month",
-			"layout": {"x": 8, "y": 2, "w": 4, "h": 4, "i": "won_by_month"},
+			"layout": {"x": 8, "y": 1, "w": 4, "h": 3, "i": "won_by_month"},
 			"config": {
 				"doctype": "CRM Deal",
 				"aggregation": "sum",

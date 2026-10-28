@@ -59,6 +59,99 @@ export const SCREENS = {
     ],
     fixture: '04-leads-list',
   },
+  '17-reports-edit': {
+    id: '17-reports-edit',
+    route: '/crm/reports?parityModal=edit',
+    sourceHtml: {
+      light: 'p-17-reports-edit-light.html',
+      dark: 'p-17-reports-edit-dark.html',
+    },
+    figma: {
+      light: '17-reports-edit-light.png',
+      dark: '17-reports-edit-dark.png',
+    },
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    /** Fixed PNG pass bar (Vijay): ≤ 0.75% real vs PNG. */
+    pngMaxPct: 0.75,
+    masks: [
+      {
+        name: 'Example data tag',
+        selector: '[data-parity-mask="example-data"]',
+        fallback: { x: 1188, y: 95, width: 118, height: 28 },
+      },
+    ],
+    fixture: '17-reports-edit',
+  },
+  '18-reports-add-tile': {
+    id: '18-reports-add-tile',
+    route: '/crm/reports?parityModal=add',
+    sourceHtml: {
+      light: 'p-18-reports-add-tile-light.html',
+      dark: 'p-18-reports-add-tile-dark.html',
+    },
+    figma: {
+      light: '18-reports-add-tile-light.png',
+      dark: '18-reports-add-tile-dark.png',
+    },
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    pngMaxPct: 0.75,
+    masks: [
+      {
+        name: 'Example data tag',
+        selector: '[data-parity-mask="example-data"]',
+        fallback: { x: 1188, y: 95, width: 118, height: 28 },
+      },
+    ],
+    fixture: '17-reports-edit',
+  },
+  '19-reports-kpi-builder': {
+    id: '19-reports-kpi-builder',
+    route: '/crm/reports?parityModal=kpi',
+    sourceHtml: {
+      light: 'p-19-reports-kpi-builder-light.html',
+      dark: 'p-19-reports-kpi-builder-dark.html',
+    },
+    figma: {
+      light: '19-reports-kpi-builder-light.png',
+      dark: '19-reports-kpi-builder-dark.png',
+    },
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    pngMaxPct: 0.75,
+    masks: [
+      {
+        name: 'Example data tag',
+        selector: '[data-parity-mask="example-data"]',
+        fallback: { x: 1188, y: 95, width: 118, height: 28 },
+      },
+    ],
+    fixture: '17-reports-edit',
+  },
+  '20-reports-chart-builder': {
+    id: '20-reports-chart-builder',
+    route: '/crm/reports?parityModal=chart',
+    sourceHtml: {
+      light: 'p-20-reports-chart-builder-light.html',
+      dark: 'p-20-reports-chart-builder-dark.html',
+    },
+    figma: {
+      light: '20-reports-chart-builder-light.png',
+      dark: '20-reports-chart-builder-dark.png',
+    },
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    pngMaxPct: 0.75,
+    masks: [
+      {
+        name: 'Example data tag',
+        selector: '[data-parity-mask="example-data"]',
+        fallback: { x: 1188, y: 95, width: 118, height: 28 },
+      },
+    ],
+    fixture: '17-reports-edit',
+  },
 }
 
 export function resolveFigmaPng(screenId, theme) {

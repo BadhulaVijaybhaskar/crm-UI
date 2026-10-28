@@ -1,0 +1,47 @@
+{
+  "message": {
+    "modules": [
+      {
+        "doctype": "CRM Deal",
+        "label": "Deals"
+      },
+      {
+        "doctype": "CRM Lead",
+        "label": "Leads"
+      },
+      {
+        "doctype": "CRM Call Log",
+        "label": "Call logs"
+      }
+    ],
+    "fields_by_doctype": {
+      "CRM Deal": [
+        {
+          "fieldname": "name",
+          "label": "Name (record)",
+          "fieldtype": "Data"
+        },
+        {
+          "fieldname": "deal_value",
+          "label": "Deal value",
+          "fieldtype": "Currency"
+        },
+        {
+          "fieldname": "status",
+          "label": "Stage",
+          "fieldtype": "Link"
+        },
+        {
+          "fieldname": "closed_on",
+          "label": "Closed on",
+          "fieldtype": "Date"
+        },
+        {
+          "fieldname": "deal_owner",
+          "label": "Owner",
+          "fieldtype": "Link"
+        }
+      ]
+    }
+  }
+}

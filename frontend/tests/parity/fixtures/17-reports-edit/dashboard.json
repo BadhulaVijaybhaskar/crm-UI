@@ -1,0 +1,183 @@
+{
+  "message": {
+    "name": "sales-overview",
+    "title": "Sales overview",
+    "dashboard_type": "Personal",
+    "owner_user": "priya.nair@example.com",
+    "shared_role": "West team",
+    "is_default": 1,
+    "from_date": "2026-10-01",
+    "to_date": "2026-12-31",
+    "layout": [
+      {
+        "id": "kpi_open_pipeline",
+        "type": "kpi",
+        "title": "Open pipeline",
+        "layout": { "x": 0, "y": 0, "w": 3, "h": 1, "i": "kpi_open_pipeline" },
+        "config": { "format": "currency_lakh", "kpi_type": "simple" },
+        "data": {
+          "value": 6360000,
+          "format": "currency_lakh",
+          "display": "₹63.6 L",
+          "delta_pct": 8.2,
+          "compare_label": "vs last quarter",
+          "kpi_type": "simple"
+        }
+      },
+      {
+        "id": "kpi_won_quarter",
+        "type": "kpi",
+        "title": "Won this quarter",
+        "layout": { "x": 3, "y": 0, "w": 3, "h": 1, "i": "kpi_won_quarter" },
+        "config": { "format": "currency_lakh" },
+        "data": {
+          "value": 2720000,
+          "format": "currency_lakh",
+          "display": "₹27.2 L",
+          "delta_pct": 14,
+          "secondary": "4 deals",
+          "compare_label": "",
+          "kpi_type": "simple"
+        }
+      },
+      {
+        "id": "kpi_win_rate",
+        "type": "kpi",
+        "title": "Win rate",
+        "layout": { "x": 6, "y": 0, "w": 3, "h": 1, "i": "kpi_win_rate" },
+        "config": { "format": "percent" },
+        "data": {
+          "value": 28.6,
+          "format": "percent",
+          "display": "28.6%",
+          "delta_pts": -3.1,
+          "compare_label": "vs last quarter",
+          "kpi_type": "simple"
+        }
+      },
+      {
+        "id": "kpi_avg_won",
+        "type": "kpi",
+        "title": "Avg won deal size",
+        "layout": { "x": 9, "y": 0, "w": 3, "h": 1, "i": "kpi_avg_won" },
+        "config": {
+          "kpi_type": "calculated",
+          "formula": "Won value ÷ Won deals",
+          "format": "currency_lakh"
+        },
+        "data": {
+          "value": 680000,
+          "format": "currency_lakh",
+          "display": "₹6.8 L",
+          "delta_pct": 12,
+          "kpi_type": "calculated",
+          "formula": "Won value ÷ Won deals",
+          "compare_label": ""
+        }
+      },
+      {
+        "id": "chart_pipeline_stage",
+        "type": "bar",
+        "title": "Pipeline by stage",
+        "layout": { "x": 0, "y": 1, "w": 8, "h": 3, "i": "chart_pipeline_stage" },
+        "config": { "subtitle": "· sum of deal value, ₹ L", "selected": true },
+        "data": {
+          "subtitle": "· sum of deal value, ₹ L",
+          "labels": [
+            "Qualification",
+            "Demo/Making",
+            "Proposal/Quotation",
+            "Negotiation",
+            "Ready to Close"
+          ],
+          "values": [18.0, 22.2, 16.3, 20.5, 4.3],
+          "heights": [55, 70, 48, 62, 18],
+          "colors": [
+            "var(--crm-c6)",
+            "var(--crm-c4)",
+            "var(--crm-c2)",
+            "var(--crm-c5)",
+            "var(--crm-c1)"
+          ],
+          "series": [
+            {
+              "name": "Deal value",
+              "data": [18.0, 22.2, 16.3, 20.5, 4.3]
+            }
+          ]
+        }
+      },
+      {
+        "id": "chart_lead_won",
+        "type": "funnel",
+        "title": "Lead → Won",
+        "layout": { "x": 8, "y": 1, "w": 4, "h": 3, "i": "chart_lead_won" },
+        "config": { "subtitle": "· this quarter" },
+        "data": {
+          "subtitle": "· this quarter",
+          "steps": [
+            { "label": "Leads", "value": 420, "width": 100, "color": "var(--crm-c2)" },
+            { "label": "Qualified", "value": 168, "width": 72, "color": "var(--crm-c3)" },
+            { "label": "Deals", "value": 62, "width": 48, "color": "var(--crm-c5)" },
+            { "label": "Proposal", "value": 31, "width": 32, "color": "var(--crm-c4)" },
+            { "label": "Won", "value": 14, "width": 18, "color": "var(--crm-success)" }
+          ],
+          "footer": "Lead to won 3.3% · median 38 days"
+        }
+      },
+      {
+        "id": "table_top_deals",
+        "type": "table",
+        "title": "Top open deals",
+        "layout": { "x": 0, "y": 4, "w": 6, "h": 2, "i": "table_top_deals" },
+        "config": {},
+        "data": {
+          "rows": [
+            {
+              "name": "Lumen Logistics",
+              "stage": "Negotiation",
+              "value": "₹12.4 L",
+              "owner": "RM"
+            },
+            {
+              "name": "Orbit Pharma",
+              "stage": "Demo/Making",
+              "value": "₹9.0 L",
+              "owner": "RM"
+            },
+            {
+              "name": "Harbor Freight Co",
+              "stage": "Negotiation",
+              "value": "₹8.1 L",
+              "owner": "SK"
+            }
+          ]
+        }
+      },
+      {
+        "id": "chart_won_month",
+        "type": "line",
+        "title": "Won value by month",
+        "layout": { "x": 6, "y": 4, "w": 6, "h": 2, "i": "chart_won_month" },
+        "config": { "subtitle": "· vs last year", "dragging": true },
+        "data": {
+          "subtitle": "· vs last year",
+          "labels": ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
+          "series": [
+            {
+              "name": "This year",
+              "data": [12, 14, 13, 18, 16, 22, 24],
+              "color": "var(--crm-c1)"
+            },
+            {
+              "name": "Last year",
+              "data": [10, 11, 12, 14, 13, 15, 16],
+              "dashed": true,
+              "color": "var(--crm-c6)"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
