@@ -20,6 +20,7 @@ class FCRMNote(Document):
 		from frappe.types import DF
 
 		astra_call_id: DF.Data | None
+		astra_source_ts: DF.Datetime | None
 		content: DF.TextEditor | None
 		pinned: DF.Check
 		pinned_by: DF.Link | None

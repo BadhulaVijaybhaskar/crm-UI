@@ -45,13 +45,14 @@ Timestamp lives inside the signature header; `X-Astra-Timestamp` is optional for
 
 | Code | When | Connect outbox |
 |---|---|---|
-| **2xx** | Processed, duplicate, or **business failure** recorded as Failed | Stop (final) |
+| **202 accepted** | Inbox row inserted; worker will process | Stop (final — inbox is durable) |
+| **200 duplicate** | Same `X-Astra-Delivery` already stored (incl. Failed) | Stop (final) |
 | **400** | Malformed JSON / missing delivery id or type | Stop (final) |
 | **401** | Bad signature or stale timestamp | Stop (final) |
 | **5xx / 429** | Transient server errors only | Retry |
 | **503** | Webhook secret not configured | Retry |
 
-Business failures (no phone match, ambiguous match, unsupported type) return **200** with `"status":"failed"` so Connect does not retry forever. The **Astra Connect Event** row keeps the error for admin retry.
+`receive()` only verifies HMAC and inserts the inbox row. Business failures land on the **Astra Connect Event** as `Failed` after the worker runs. Redelivering a Failed delivery returns **duplicate**; recover via `retry_event` or the stale-Processing sweeper.
 
 ## Site configuration
 
@@ -215,4 +216,22 @@ curl -sS -X POST \
 
 ## Audit log
 
-Every accepted delivery is stored as **Astra Connect Event** (`event_id` = Delivery id, `type`, `payload`, `status`, `error`, `attempts`, `processed_at`). System Managers can retry Failed rows via `crm.integrations.astra_connect.api.retry_event`.
+Every accepted delivery is stored as **Astra Connect Event** (`event_id` = Delivery id, `type`, `payload`, `status`, `error`, `attempts`, `claimed_at`, `processed_at`, `source_timestamp`). System Managers can retry Failed / Received / stale Processing rows via `POST crm.integrations.astra_connect.api.retry_event`.
+
+## Background worker (required on deploy)
+
+Inbox rows are processed on the dedicated RQ queue **`astra_connect`**.
+
+Deploys must run a worker that listens to that queue, for example:
+
+```bash
+bench worker --queue astra_connect
+# or include it alongside short/default:
+bench worker --queue astra_connect,short,default
+```
+
+Without a worker on `astra_connect`, events stay `Received` / `Processing` until a worker picks them up. A scheduler job (`*/2 * * * *` → `sweep_stale_processing`) resets `Processing` rows older than **N minutes** (default **5**, configurable on **Astra Connect Settings** / site_config `astra_connect_stale_processing_minutes`) back to `Received` and re-enqueues them.
+
+## Out-of-order deliveries
+
+Call summary text on **CRM Call Log** / **FCRM Note** is guarded by `astra_source_ts` (payload `occurredAt` / `endedAt`, else the signed request timestamp). An older delivery does not overwrite a newer summary.
