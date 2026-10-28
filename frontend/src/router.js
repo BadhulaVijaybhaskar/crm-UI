@@ -150,6 +150,11 @@ const routes = [
     component: () => import('@/pages/Activities.vue'),
   },
   {
+    path: '/conversations',
+    name: 'Conversations',
+    component: () => import('@/pages/Conversations.vue'),
+  },
+  {
     path: '/reports',
     name: 'Reports',
     component: () => import('@/pages/Reports.vue'),

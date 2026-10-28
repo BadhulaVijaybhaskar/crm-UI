@@ -10,19 +10,40 @@ describe('navigation sections', () => {
     delete window.astra_connect_url
   })
 
-  it('groups records / activity / insights for the shell', () => {
+  it('matches Figma v1 main + records / activity / insights labels', () => {
     const sections = getNavigationSections()
     const ids = sections.map((s) => s.id)
     expect(ids).toEqual(
       expect.arrayContaining(['main', 'records', 'activity', 'insights']),
     )
+    const main = sections.find((s) => s.id === 'main')
+    expect(main.views.map((v) => v.label)).toEqual([
+      'Home',
+      'Work queue',
+      'Conversations',
+    ])
     const records = sections.find((s) => s.id === 'records')
     expect(records.views.map((v) => v.label)).toEqual([
       'Leads',
+      'Deals',
       'Contacts',
       'Companies',
-      'Deals',
     ])
+    const activity = sections.find((s) => s.id === 'activity')
+    expect(activity.views.map((v) => v.label)).toEqual([
+      'Tasks',
+      'Notes',
+      'Call logs',
+    ])
+  })
+
+  it('exposes design-default nav counts from Figma', () => {
+    const sections = getNavigationSections()
+    const flat = sections.flatMap((s) => s.views)
+    expect(flat.find((v) => v.label === 'Work queue')?.count).toBe(12)
+    expect(flat.find((v) => v.label === 'Leads')?.count).toBe(42)
+    expect(flat.find((v) => v.label === 'Deals')?.count).toBe(14)
+    expect(flat.find((v) => v.label === 'Tasks')?.count).toBe(7)
   })
 
   it('pins Settings in the footer, not the scrolling list', () => {
