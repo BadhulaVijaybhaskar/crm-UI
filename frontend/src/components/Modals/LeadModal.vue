@@ -32,6 +32,7 @@
           </div>
           <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6 sm:px-6">
             <FieldLayout v-if="tabs.data" :tabs="tabs.data" :data="lead.doc" />
+            <DuplicateMatchWarning :matches="duplicateMatches" />
             <ErrorMessage v-if="error" class="mt-4" :message="__(error)" />
           </div>
         </div>
@@ -53,11 +54,13 @@
 <script setup>
 import EditIcon from '@/components/Icons/EditIcon.vue'
 import FieldLayout from '@/components/FieldLayout/FieldLayout.vue'
+import DuplicateMatchWarning from '@/components/DuplicateMatchWarning.vue'
 import { usersStore } from '@/stores/users'
 import { statusesStore } from '@/stores/statuses'
 import { sessionStore } from '@/stores/session'
 import { isMobileView } from '@/composables/settings'
 import { showQuickEntryModal, quickEntryProps } from '@/composables/modals'
+import { useDuplicateCheck } from '@/composables/useDuplicateCheck'
 import { useTelemetry } from '@framework/ui/telemetry'
 import { useCrmOnboarding } from '@/composables/onboarding'
 import { Dialog, createResource } from 'frappe-ui'
@@ -80,6 +83,12 @@ const error = ref(null)
 const isLeadCreating = ref(false)
 
 const { document: lead, triggerOnBeforeCreate } = useDocument('CRM Lead')
+
+const {
+  matches: duplicateMatches,
+  bind: bindDuplicateCheck,
+} = useDuplicateCheck('CRM Lead', () => lead.doc)
+bindDuplicateCheck(() => lead.doc)
 
 const { capture } = useTelemetry()
 
