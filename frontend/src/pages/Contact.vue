@@ -99,6 +99,14 @@
                   :iconLeft="PhoneIcon"
                   @click="callEnabled && makeCall(contact.doc.mobile_no)"
                 />
+                <ConnectActions
+                  v-if="contact.doc.name"
+                  record-type="Contact"
+                  :record-id="contact.doc.name"
+                  :phone="contact.doc.mobile_no || ''"
+                  size="sm"
+                  show-labels
+                />
                 <Button
                   v-if="canDelete"
                   :label="__('Delete')"
@@ -189,6 +197,7 @@ import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
 import DealModal from '@/components/Modals/DealModal.vue'
 import CustomActions from '@/components/CustomActions.vue'
+import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
 import { validateIsImageFile, setupCustomizations } from '@/utils'
 import { useContactFields } from '@/composables/useContactFields'
 import { timestampCell } from '@/composables/useTimelinePreferences'

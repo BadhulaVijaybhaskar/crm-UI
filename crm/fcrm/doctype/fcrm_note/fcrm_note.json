@@ -12,6 +12,8 @@
   "content",
   "reference_doctype",
   "reference_docname",
+  "astra_call_id",
+  "astra_source_ts",
   "pinned",
   "pinned_by",
   "pinned_on"
@@ -46,6 +48,20 @@
    "options": "reference_doctype"
   },
   {
+   "description": "Connect call id — one summary note per call log. Uniqueness is enforced by a DB index (see astra_connect_inbox_unique_indexes patch).",
+   "fieldname": "astra_call_id",
+   "fieldtype": "Data",
+   "label": "Astra Call Id",
+   "read_only": 1
+  },
+  {
+   "description": "Source event timestamp (occurredAt/endedAt or signed ts). Guards out-of-order summary overwrites.",
+   "fieldname": "astra_source_ts",
+   "fieldtype": "Datetime",
+   "label": "Astra Source Timestamp",
+   "read_only": 1
+  },
+  {
    "default": "0",
    "fieldname": "pinned",
    "fieldtype": "Check",
@@ -74,7 +90,7 @@
    "link_fieldname": "note"
   }
  ],
- "modified": "2026-10-13 10:30:00.000000",
+ "modified": "2026-10-28 01:30:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "FCRM Note",

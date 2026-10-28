@@ -27,6 +27,16 @@
   "recording_url",
   "end_time",
   "note",
+  "outcome",
+  "disposition",
+  "qualified",
+  "call_summary",
+  "transcript_url",
+  "transcript",
+  "channel",
+  "astra_contact_id",
+  "astra_source_ts",
+  "ai_employee_id",
   "section_break_kebz",
   "links"
  ],
@@ -43,8 +53,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "From Number",
-   "options": "Phone",
-   "reqd": 1
+   "options": "Phone"
   },
   {
    "fieldname": "status",
@@ -83,8 +92,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "To Number",
-   "options": "Phone",
-   "reqd": 1
+   "options": "Phone"
   },
   {
    "fieldname": "duration",
@@ -107,6 +115,63 @@
    "fieldtype": "Link",
    "label": "Note",
    "options": "FCRM Note"
+  },
+  {
+   "description": "Free-text Connect outcome (stored as sent; max 64 chars).",
+   "fieldname": "outcome",
+   "fieldtype": "Data",
+   "label": "Outcome"
+  },
+  {
+   "description": "Mapped disposition from a known outcome, or Other.",
+   "fieldname": "disposition",
+   "fieldtype": "Data",
+   "label": "Disposition"
+  },
+  {
+   "default": "0",
+   "fieldname": "qualified",
+   "fieldtype": "Check",
+   "label": "Qualified"
+  },
+  {
+   "fieldname": "call_summary",
+   "fieldtype": "Text",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "transcript_url",
+   "fieldtype": "Small Text",
+   "label": "Transcript URL"
+  },
+  {
+   "fieldname": "transcript",
+   "fieldtype": "Long Text",
+   "label": "Transcript"
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "label": "Channel",
+   "options": "\nvoice\nwhatsapp"
+  },
+  {
+   "description": "Connect contact id from the event (matching is still by phone).",
+   "fieldname": "astra_contact_id",
+   "fieldtype": "Data",
+   "label": "Astra Contact ID"
+  },
+  {
+   "description": "Source event timestamp used to ignore stale out-of-order Connect deliveries.",
+   "fieldname": "astra_source_ts",
+   "fieldtype": "Datetime",
+   "label": "Astra Source Timestamp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ai_employee_id",
+   "fieldtype": "Data",
+   "label": "AI Employee ID"
   },
   {
    "depends_on": "eval:doc.type == 'Incoming'",
@@ -151,7 +216,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Telephony Medium",
-   "options": "\nManual\nTwilio\nExotel",
+   "options": "\nManual\nTwilio\nExotel\nAstra Connect",
    "read_only": 1
   },
   {
@@ -161,7 +226,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-30 12:31:44.974374",
+ "modified": "2026-10-28 01:30:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Call Log",

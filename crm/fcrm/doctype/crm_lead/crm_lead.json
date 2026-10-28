@@ -75,6 +75,9 @@
   "facebook_lead_id",
   "column_break_ixmu",
   "facebook_form_id",
+  "astra_connect_tab",
+  "astra_external_id",
+  "ai_employee_id",
   "lost_details_tab",
   "lost_reason",
   "lost_notes"
@@ -386,6 +389,26 @@
    "fieldname": "facebook_form_id",
    "fieldtype": "Data",
    "label": "Facebook Form ID"
+  },
+  {
+   "fieldname": "astra_connect_tab",
+   "fieldtype": "Tab Break",
+   "label": "Astra Connect"
+  },
+  {
+   "description": "Stable external identifier from Astra Connect (used for lead.upsert idempotency).",
+   "fieldname": "astra_external_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Astra External ID",
+   "unique": 1
+  },
+  {
+   "description": "AI Employee assignment from Astra Connect.",
+   "fieldname": "ai_employee_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "AI Employee ID"
   },
   {
    "fieldname": "section_break_kikl",

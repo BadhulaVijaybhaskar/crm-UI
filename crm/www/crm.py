@@ -126,10 +126,16 @@ def _astra_connect_boot() -> dict:
 	url = ""
 	try:
 		if frappe.db.exists("DocType", "Astra Connect Settings"):
-			enabled = bool(cint(frappe.db.get_single_value("Astra Connect Settings", "enabled")))
-			url = (
-				frappe.db.get_single_value("Astra Connect Settings", "connect_base_url") or ""
-			).strip().rstrip("/")
+			from crm.fcrm.doctype.astra_connect_settings.astra_connect_settings import (
+				get_connect_base_url,
+				is_connect_enabled,
+			)
+
+			enabled = bool(is_connect_enabled())
+			url = (get_connect_base_url() or "").strip().rstrip("/")
+			# get_connect_base_url falls back to conf; only surface when enabled.
+			if not enabled:
+				url = ""
 	except Exception:
 		enabled = False
 		url = ""
@@ -155,6 +161,7 @@ def _erp_integration_available() -> bool:
 	except Exception:
 		return False
 	return False
+
 
 
 def get_state_options() -> dict[str, list[str]]:

@@ -1,0 +1,74 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "connect_base_url",
+  "default_lead_owner",
+  "connect_agent_number",
+  "stale_processing_minutes"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "description": "Base URL for Astra Connect (no trailing slash). Used for sidebar and Call/Message with AI entry points.",
+   "fieldname": "connect_base_url",
+   "fieldtype": "Data",
+   "label": "Connect Base URL",
+   "options": "URL"
+  },
+  {
+   "description": "Default owner assigned to leads and call logs created from Connect webhooks. Never Guest.",
+   "fieldname": "default_lead_owner",
+   "fieldtype": "Link",
+   "label": "Default Lead Owner",
+   "options": "User"
+  },
+  {
+   "description": "E.164 number for the Connect agent leg on CRM Call Log from/to. Optional \u2014 when empty, the party phone is used on both legs (never a placeholder).",
+   "fieldname": "connect_agent_number",
+   "fieldtype": "Data",
+   "label": "Connect Agent Number",
+   "options": "Phone"
+  },
+  {
+   "default": "5",
+   "description": "Processing rows older than this many minutes are reset by the Connect sweeper and re-enqueued. Overridable via site_config astra_connect_stale_processing_minutes.",
+   "fieldname": "stale_processing_minutes",
+   "fieldtype": "Int",
+   "label": "Stale Processing Minutes",
+   "non_negative": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-28 01:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "Astra Connect Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

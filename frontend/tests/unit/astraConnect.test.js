@@ -5,13 +5,15 @@ import {
   getAstraConnectUrl,
   isAstraConnectConfigured,
   openAstraConnect,
+  openConnectCompose,
 } from '@/utils/astraConnect'
 
-describe('astraConnect', () => {
+describe('astraConnect helpers', () => {
   afterEach(() => {
     delete window.astra_connect_url
     delete window.astra_connect_enabled
     delete window.boot
+    delete window.site_name
     vi.restoreAllMocks()
   })
 
@@ -48,5 +50,61 @@ describe('astraConnect', () => {
       '_blank',
       'noopener,noreferrer',
     )
+  })
+
+  it('builds Call/Message with AI compose URLs with query params', () => {
+    window.astra_connect_enabled = true
+    window.astra_connect_url = 'https://connect.example.test'
+    window.boot = {
+      astra_connect_enabled: true,
+      astra_connect_url: 'https://connect.example.test',
+      site_name: 'crm.example.test',
+    }
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const url = openConnectCompose('calls', {
+      recordType: 'CRM Lead',
+      recordId: 'CRM-LEAD-0001',
+      phone: '+14155550100',
+    })
+    expect(url).toContain('https://connect.example.test/calls/new?')
+    expect(url).toContain('crm_site=crm.example.test')
+    expect(url).toContain('record_type=CRM+Lead')
+    expect(url).toContain('record_id=CRM-LEAD-0001')
+    expect(url).toContain('phone=%2B14155550100')
+    expect(open).toHaveBeenCalledWith(
+      url,
+      '_blank',
+      'noopener,noreferrer',
+    )
+  })
+
+  it('does not embed secrets in compose URLs', () => {
+    window.astra_connect_enabled = true
+    window.astra_connect_url = 'https://connect.example.test'
+    window.boot = {
+      astra_connect_enabled: true,
+      astra_connect_url: 'https://connect.example.test',
+      site_name: 'crm.example.test',
+      astra_connect_webhook_secret: 'should-never-appear',
+    }
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const url = openConnectCompose('messages', {
+      recordType: 'Contact',
+      recordId: 'CONT-1',
+    })
+    expect(url).not.toMatch(/secret|token|password|hmac/i)
+    expect(url).toContain('/messages/new?')
+    expect(open).toHaveBeenCalled()
+  })
+
+  it('skips compose when Connect is not configured', () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    expect(
+      openConnectCompose('calls', {
+        recordType: 'CRM Lead',
+        recordId: 'X',
+      }),
+    ).toBeNull()
+    expect(open).not.toHaveBeenCalled()
   })
 })

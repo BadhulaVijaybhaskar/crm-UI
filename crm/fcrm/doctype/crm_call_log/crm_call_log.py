@@ -42,8 +42,17 @@ class CRMCallLog(Document):
 			"Queued",
 			"Canceled",
 		]
-		telephony_medium: DF.Literal["", "Manual", "Twilio", "Exotel"]
+		ai_employee_id: DF.Data | None
+		astra_contact_id: DF.Data | None
+		call_summary: DF.Text | None
+		channel: DF.Literal["", "voice", "whatsapp"] | None
+		disposition: DF.Data | None
+		outcome: DF.Data | None
+		qualified: DF.Check
+		telephony_medium: DF.Literal["", "Manual", "Twilio", "Exotel", "Astra Connect"]
 		to: DF.Data
+		transcript: DF.LongText | None
+		transcript_url: DF.SmallText | None
 		type: DF.Literal["Incoming", "Outgoing"]
 	# end: auto-generated types
 
@@ -116,6 +125,7 @@ class CRMCallLog(Document):
 			"duration",
 			"from",
 			"to",
+			"ai_employee_id",
 			"note",
 			"recording_url",
 			"reference_doctype",
@@ -155,9 +165,18 @@ class CRMCallLog(Document):
 		return d
 
 
+def _ai_employee_label(call):
+	"""Display label for Connect AI employees when no User is on the agent leg."""
+	emp_id = call.get("ai_employee_id")
+	if not emp_id:
+		return None
+	return _("AI Employee {0}").format(emp_id)
+
+
 def parse_call_log(call):
 	call["show_recording"] = False
 	call["_duration"] = seconds_to_duration(call.get("duration"))
+	ai_label = _ai_employee_label(call)
 	if call.get("type") == "Incoming":
 		call["activity_type"] = "incoming_call"
 		contact = get_call_contact(call, call.get("from"))
@@ -171,7 +190,7 @@ def parse_call_log(call):
 			"image": contact.get("image"),
 		}
 		call["_receiver"] = {
-			"label": receiver[0],
+			"label": receiver[0] or ai_label,
 			"image": receiver[1],
 		}
 	elif call.get("type") == "Outgoing":
@@ -183,7 +202,7 @@ def parse_call_log(call):
 			else [None, None]
 		)
 		call["_caller"] = {
-			"label": caller[0],
+			"label": caller[0] or ai_label,
 			"image": caller[1],
 		}
 		call["_receiver"] = {
