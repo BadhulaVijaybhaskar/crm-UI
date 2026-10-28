@@ -10,7 +10,7 @@
         {{ __('Search leads, deals, contacts, companies') }}
       </span>
       <kbd
-        class="rounded-crm-mini border border-crm-border-strong bg-crm-card px-[5px] py-px text-[11px] font-semibold text-crm-muted-fg"
+        class="ml-auto rounded-crm-mini border border-crm-border-strong bg-crm-card px-[5px] py-px font-[600] text-[11px] leading-none text-crm-muted-fg"
       >
         Ctrl K
       </kbd>
