@@ -117,76 +117,15 @@ def process_lead_created(data: dict) -> dict[str, Any]:
 	}
 
 
-def _is_retryable_call_write(exc: BaseException) -> bool:
-	"""True for deadlock / lock-wait / duplicate / 1020 under parallel load."""
-	msg = str(exc).lower()
-	if "deadlock" in msg or "1213" in msg or "lock wait" in msg or "1205" in msg:
-		return True
-	if "1020" in msg or "record has changed" in msg:
-		return True
-	if "duplicate" in msg or "1062" in msg:
-		return True
-	errno = getattr(exc, "errno", None)
-	if errno is None and getattr(exc, "args", None):
-		errno = exc.args[0]
-	if errno in (1213, 1205, 1062, 1020):
-		return True
-	name = type(exc).__name__.lower()
-	return "deadlock" in name or "lockwait" in name or "duplicate" in name
-
-
-def _call_id_lock_name(call_id: str) -> str:
-	# MySQL GET_LOCK name max 64 chars
-	return f"astra_call_{(call_id or '')[:48]}"
-
-
 def process_call_completed(data: dict, *, employee_enriched: bool = False) -> dict[str, Any]:
-	"""Create/update CRM Call Log from call.completed / employee.call.completed.
+	"""Upsert CRM Call Log from call.completed / employee.call.completed.
 
 	Matching is by phone (contactId is Connect's id — not a CRM leadId). Ambiguous
 	phone matches fail the event with a clear error.
 
-	Deadlock/duplicate retry wraps the whole unit of work — including call-log
-	insert/save at `_save_call_log` — using a savepoint so only this attempt is
-	rolled back (fixtures / outer txn stay intact). Concurrent deliveries of the
-	same callId are serialised with GET_LOCK; retries use backoff + jitter.
+	Idempotent under UNIQUE(CRM Call Log.id) and UNIQUE(FCRM Note.astra_call_id).
+	Retry/rollback lives in the inbox worker — no GET_LOCK / savepoints here.
 	"""
-	import random as _random
-	import time as _time
-
-	call_id = _first_str(data, "callId", "call_id") or ""
-	lock_name = _call_id_lock_name(call_id) if call_id else None
-	got_lock = False
-	if lock_name:
-		try:
-			got_lock = bool(frappe.db.sql("SELECT GET_LOCK(%s, %s)", (lock_name, 8))[0][0])
-		except Exception:
-			got_lock = False
-
-	last_exc = None
-	try:
-		for attempt in range(5):
-			sp = f"astra_call_{attempt}"
-			frappe.db.savepoint(sp)
-			try:
-				return _process_call_completed_once(data, employee_enriched=employee_enriched)
-			except Exception as exc:
-				last_exc = exc
-				if not _is_retryable_call_write(exc):
-					raise
-				frappe.db.rollback(save_point=sp)
-				_time.sleep(0.05 * (attempt + 1) + _random.uniform(0, 0.08))
-		raise last_exc
-	finally:
-		if lock_name and got_lock:
-			try:
-				frappe.db.sql("SELECT RELEASE_LOCK(%s)", (lock_name,))
-			except Exception:
-				pass
-
-
-def _process_call_completed_once(data: dict, *, employee_enriched: bool = False) -> dict[str, Any]:
-	"""Single attempt of call.completed processing (may raise on deadlock)."""
 	call_id = _first_str(data, "callId", "call_id")
 	if not call_id:
 		raise ProcessingError(_("call.completed requires callId"))
@@ -238,11 +177,8 @@ def _process_call_completed_once(data: dict, *, employee_enriched: bool = False)
 	if not (from_number or to_number):
 		raise ProcessingError(_("call.completed requires a valid party phone number"))
 
-	# Lock parent before call-log so concurrent call.completed share one lock order.
-	frappe.db.get_value(match["doctype"], match["name"], "name", for_update=True)
-
+	# Upsert on UNIQUE call id (CRM Call Log.name == id).
 	if frappe.db.exists("CRM Call Log", call_id):
-		frappe.db.get_value("CRM Call Log", call_id, "name", for_update=True)
 		call_log = frappe.get_doc("CRM Call Log", call_id)
 	else:
 		call_log = frappe.new_doc("CRM Call Log")
@@ -513,11 +449,14 @@ def _map_call_status(value: str | None) -> str:
 
 
 def _upsert_call_summary_note(call_log, *, call_id: str, match: dict, owner: str, summary: str):
-	"""One summary note per call log — update in place when the text changes."""
+	"""One summary note per call — keyed on UNIQUE FCRM Note.astra_call_id."""
 	title = _("Call summary ({0})").format(call_id)
 	content = f"<p>{frappe.utils.escape_html(summary)}</p>"
+	has_call_key = frappe.db.has_column("FCRM Note", "astra_call_id")
 
 	note_name = call_log.note
+	if not note_name and has_call_key:
+		note_name = frappe.db.get_value("FCRM Note", {"astra_call_id": call_id}, "name")
 	if not note_name:
 		note_name = frappe.db.get_value(
 			"FCRM Note",
@@ -542,32 +481,55 @@ def _upsert_call_summary_note(call_log, *, call_id: str, match: dict, owner: str
 			note.reference_doctype = match["doctype"]
 			note.reference_docname = match["name"]
 			changed = True
+		if has_call_key and note.get("astra_call_id") != call_id:
+			note.astra_call_id = call_id
+			changed = True
 		if changed:
 			note.flags.ignore_permissions = True
 			note.save(ignore_permissions=True)
 		return note
 
-	note = frappe.get_doc(
-		{
-			"doctype": "FCRM Note",
-			"title": title,
-			"content": content,
-			"reference_doctype": match["doctype"],
-			"reference_docname": match["name"],
-			"owner": owner,
-		}
-	)
-	note.insert(ignore_permissions=True)
+	note_dict = {
+		"doctype": "FCRM Note",
+		"title": title,
+		"content": content,
+		"reference_doctype": match["doctype"],
+		"reference_docname": match["name"],
+		"owner": owner,
+	}
+	if has_call_key:
+		note_dict["astra_call_id"] = call_id
+	note = frappe.get_doc(note_dict)
+	try:
+		note.insert(ignore_permissions=True)
+	except Exception as exc:
+		# Lost the insert race on UNIQUE(astra_call_id) — reload winner and update.
+		msg = str(exc).lower()
+		is_dup = (
+			"duplicate" in msg
+			or "1062" in msg
+			or isinstance(exc, frappe.DuplicateEntryError)
+		)
+		if not is_dup or not has_call_key:
+			raise
+		winner = frappe.db.get_value("FCRM Note", {"astra_call_id": call_id}, "name")
+		if not winner:
+			raise
+		note = frappe.get_doc("FCRM Note", winner)
+		note.content = content
+		note.title = title
+		note.reference_doctype = match["doctype"]
+		note.reference_docname = match["name"]
+		note.flags.ignore_permissions = True
+		note.save(ignore_permissions=True)
 	return note
 
 
 def _save_call_log(call_log):
-	"""Insert/save a call log inside process_call_completed's retry loop.
+	"""Insert/save a call log. Deadlock / 1062 bubble to the inbox worker retry.
 
 	Ignore mandatory on from/to so Connect can leave the agent/DID leg empty
-	instead of fabricating a duplicate customer number. Deadlocks and duplicate
-	primary keys bubble to process_call_completed, which rolls back the savepoint
-	and retries idempotently (exists → for_update → update).
+	instead of fabricating a duplicate customer number.
 	"""
 	call_log.flags.ignore_mandatory = True
 	call_log.flags.ignore_permissions = True

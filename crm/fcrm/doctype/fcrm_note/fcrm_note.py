@@ -19,6 +19,7 @@ class FCRMNote(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		astra_call_id: DF.Data | None
 		content: DF.TextEditor | None
 		pinned: DF.Check
 		pinned_by: DF.Link | None
