@@ -40,7 +40,7 @@
           >
             {{ tab.label }}
             <span
-              class="text-[11px] font-semibold"
+              class="text-[11px] font-semibold tabular-nums"
               :class="
                 activeTab === tab.value ? 'text-crm-primary' : 'text-crm-faint'
               "
@@ -169,7 +169,7 @@
                   {{ item.record_label }}
                 </span>
               </div>
-              <div class="flex min-w-0 flex-col pt-[5.5px] leading-[1.45]">
+              <div class="flex min-w-0 flex-col pt-[3.5px] leading-[1.45]">
                 <b
                   class="truncate text-[12.5px] font-semibold tracking-[-0.005em] text-crm-fg"
                 >
