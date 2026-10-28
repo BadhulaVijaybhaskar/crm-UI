@@ -17,9 +17,10 @@
         @toggle-all="onToggleAll"
       >
         <template #cell-lead_name="{ row }">
-          <div class="flex min-w-0 items-center gap-[9px]">
+          <div class="who2 flex min-w-0 items-center gap-[9px]">
             <AstraAvatar
               v-if="row.lead_name?.label || row.lead_name"
+              class="av2"
               :name="
                 row.lead_name?.image_label ||
                 row.lead_name?.label ||
@@ -89,6 +90,7 @@
         <template #cell-lead_owner="{ row }">
           <AstraAvatar
             v-if="row.lead_owner?.full_name || row.lead_owner?.label"
+            class="av2 sm"
             :name="row.lead_owner.full_name || row.lead_owner.label"
             :src="row.lead_owner.user_image || row.lead_owner.image"
             size="sm"
@@ -381,8 +383,8 @@ defineExpose({
 }
 /*
  * Column widths tuned to Figma PNG landmarks (HTML auto-layout sits ~7–14px
- * right of PNG from Status onward). Checkbox 34 matches crm.css; Name 199
- * keeps Status at PNG ~517 after checkbox 34 (200 sat at ~518).
+ * right of PNG from Status onward). Checkbox 34; Name 199; Temp 77 — best
+ * Status/SLA/Score landmark set from shift experiments (≤0.99% PNG).
  */
 .astra-leads-table :deep(th:nth-child(1)),
 .astra-leads-table :deep(td:nth-child(1)) {
@@ -402,7 +404,6 @@ defineExpose({
 }
 .astra-leads-table :deep(th:nth-child(4)),
 .astra-leads-table :deep(td:nth-child(4)) {
-  /* −2px pulls SLA/source/created onto PNG ink (SLA shift sim −2 → ~half real) */
   width: 77px;
 }
 .astra-leads-table :deep(th:nth-child(5)),
