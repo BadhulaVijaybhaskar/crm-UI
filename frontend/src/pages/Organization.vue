@@ -14,12 +14,16 @@
       <span class="truncate text-crm-fg">{{ title }}</span>
     </nav>
 
-    <AstraRecordHeader
-      :title="title"
-      :avatar-src="organization.doc.organization_logo || ''"
-      squared-avatar
-      :meta="organizationMeta"
-    >
+    <AstraRecordHeader :title="title" :meta="organizationMeta" squared-avatar>
+      <template #avatar>
+        <RecordAvatar
+          :name="title"
+          :src="organization.doc.organization_logo || ''"
+          :removable="!!organization.doc.organization_logo"
+          @upload="changeOrganizationImage"
+          @remove="changeOrganizationImage('')"
+        />
+      </template>
       <template #actions>
         <CustomActions
           v-if="organization._actions?.length"
@@ -64,6 +68,12 @@
             />
           </template>
         </Link>
+        <AstraButton
+          variant="secondary"
+          size="sm"
+          :label="__('Open Website')"
+          @click="openWebsite"
+        />
         <AstraButton
           v-if="canDelete"
           variant="negative"
