@@ -47,12 +47,12 @@ describe('navigationItems', () => {
     }
   })
 
-  it('shows Activities when ready and still hides Reports', () => {
+  it('shows Activities and Reports when ready', () => {
     expect(NAV_FEATURE_READY.Activities).toBe(true)
-    expect(NAV_FEATURE_READY.Reports).toBe(false)
+    expect(NAV_FEATURE_READY.Reports).toBe(true)
     const labels = getNavigationItems().map((item) => item.label)
     expect(labels).toContain('Activities')
-    expect(labels).not.toContain('Reports')
+    expect(labels).toContain('Reports')
   })
 
   it('hides Connect destinations until Settings is enabled with a base URL', () => {

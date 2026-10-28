@@ -19,7 +19,7 @@ import { isAstraConnectConfigured } from '@/utils/astraConnect'
  */
 export const NAV_FEATURE_READY = Object.freeze({
   Activities: true,
-  Reports: false,
+  Reports: true,
 })
 
 /**
