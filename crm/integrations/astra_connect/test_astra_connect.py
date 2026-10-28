@@ -1,11 +1,13 @@
 # Copyright (c) 2026, Astra and contributors
 # For license information, please see license.txt
 
-"""Frappe test cases for Astra Connect webhooks aligned with Connect-today payloads."""
+"""Frappe test cases for Astra Connect webhooks (inbox + worker redesign)."""
 
 from __future__ import annotations
 
+import inspect
 import json
+import threading
 import time
 
 import frappe
@@ -15,7 +17,6 @@ from crm.integrations.astra_connect.auth import sign_payload
 from crm.integrations.astra_connect.mapping import DEFAULT_DISPOSITION, map_disposition
 from crm.integrations.astra_connect.processing import (
 	ProcessingError,
-	_is_retryable_call_write,
 	process_call_completed,
 	process_lead_created as _process_lead_created,
 	resolve_party_by_phone,
@@ -85,17 +86,35 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 				frappe.delete_doc("CRM Call Log", call_id, force=True, ignore_permissions=True)
 				if note and frappe.db.exists("FCRM Note", note):
 					frappe.delete_doc("FCRM Note", note, force=True, ignore_permissions=True)
-			for note_name in frappe.get_all(
-				"FCRM Note",
-				filters={"title": ("like", f"%({call_id})%")},
-				pluck="name",
-			):
+			filters = {"title": ("like", f"%({call_id})%")}
+			if frappe.db.has_column("FCRM Note", "astra_call_id"):
+				for note_name in frappe.get_all(
+					"FCRM Note", filters={"astra_call_id": call_id}, pluck="name"
+				):
+					frappe.delete_doc("FCRM Note", note_name, force=True, ignore_permissions=True)
+			for note_name in frappe.get_all("FCRM Note", filters=filters, pluck="name"):
 				frappe.delete_doc("FCRM Note", note_name, force=True, ignore_permissions=True)
 		for ext in list(getattr(self, "_created_lead_ext_ids", [])):
 			lead = frappe.db.get_value("CRM Lead", {"astra_external_id": ext}, "name")
 			if lead:
 				frappe.delete_doc("CRM Lead", lead, force=True, ignore_permissions=True)
 		frappe.db.commit()
+
+	def _event_status(self, eid: str) -> str | None:
+		return frappe.db.get_value("Astra Connect Event", {"event_id": eid}, "status")
+
+	def _event_error(self, eid: str) -> str | None:
+		return frappe.db.get_value("Astra Connect Event", {"event_id": eid}, "error")
+
+	def _wait_event_status(self, eid: str, allowed: set[str], timeout: float = 10.0) -> str:
+		deadline = time.time() + timeout
+		status = self._event_status(eid)
+		while time.time() < deadline:
+			status = self._event_status(eid)
+			if status in allowed:
+				return status
+			time.sleep(0.05)
+		return status or ""
 
 	def _post(
 		self,
@@ -158,6 +177,18 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			else:
 				frappe.conf.astra_connect_webhook_secret = prev
 
+	def _thread_site_bootstrap(self):
+		"""Return a callable that inits + connects a worker thread to this site."""
+		site = frappe.local.site
+
+		def bootstrap():
+			frappe.init(site=site)
+			frappe.connect()
+			frappe.set_user("Administrator")
+			frappe.local.request_ip = "127.0.0.1"
+
+		return bootstrap
+
 	# --- signature formats ---
 
 	def test_signature_sha256_style(self):
@@ -171,8 +202,9 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"employeeId": "emp-1",
 		}
 		result, status, eid = self._post(payload, sig_style="sha256")
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "processed")
+		self.assertEqual(status, 202)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 		self.assertTrue(frappe.db.exists("Astra Connect Event", {"event_id": eid}))
 
 	def test_signature_tv1_style(self):
@@ -186,8 +218,9 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"employeeId": "emp-1",
 		}
 		result, status, eid = self._post(payload, sig_style="tv1")
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "processed")
+		self.assertEqual(status, 202)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 		lead = frappe.get_doc("CRM Lead", {"astra_external_id": "lead-sig-b"})
 		self.assertEqual(lead.status, "Nurture")
 
@@ -292,8 +325,9 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"status": "new",
 		}
 		r1, s1, eid = self._post(payload, delivery_id="dlv-dup-1")
-		self.assertEqual(s1, 200)
-		self.assertEqual(r1["status"], "processed")
+		self.assertEqual(s1, 202)
+		self.assertEqual(r1["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 		count = frappe.db.count("CRM Lead", {"astra_external_id": "lead-dup"})
 		r2, s2, _ = self._post(payload, delivery_id="dlv-dup-1")
 		self.assertEqual(s2, 200)
@@ -308,8 +342,9 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"phone": "+919876543207",
 		}
 		result, status, eid = self._post(payload, use_event_id_fallback=True)
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "processed")
+		self.assertEqual(status, 202)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 		self.assertTrue(frappe.db.exists("Astra Connect Event", {"event_id": eid}))
 
 	# --- lead.created ---
@@ -325,18 +360,20 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"source": "connect",
 			"employeeId": "emp-2",
 		}
-		r1, s1, _ = self._post(payload)
-		self.assertEqual(s1, 200)
-		self.assertEqual(r1["result"]["action"], "created")
+		r1, s1, eid1 = self._post(payload)
+		self.assertEqual(s1, 202)
+		self.assertEqual(r1["status"], "accepted")
+		self.assertEqual(self._event_status(eid1), "Processed")
 		lead = frappe.get_doc("CRM Lead", {"astra_external_id": "lead-up-1"})
 		self.assertEqual(lead.status, "Contacted")
 		self.assertEqual(lead.ai_employee_id, "emp-2")
 
 		payload["email"] = "grace.updated@example.com"
 		payload["status"] = "qualified"
-		r2, s2, _ = self._post(payload, delivery_id="dlv-up-2")
-		self.assertEqual(s2, 200)
-		self.assertEqual(r2["result"]["action"], "updated")
+		r2, s2, eid2 = self._post(payload, delivery_id="dlv-up-2")
+		self.assertEqual(s2, 202)
+		self.assertEqual(r2["status"], "accepted")
+		self.assertEqual(self._event_status(eid2), "Processed")
 		lead.reload()
 		self.assertEqual(lead.email, "grace.updated@example.com")
 		self.assertEqual(lead.status, "Qualified")
@@ -349,9 +386,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"phone": "+919876543209",
 			"status": "new",
 		}
-		result, status, _ = self._post(payload)
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "processed")
+		result, status, eid = self._post(payload)
+		self.assertEqual(status, 202)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 		self.assertTrue(frappe.db.exists("CRM Lead", {"astra_external_id": "lead-alias"}))
 
 	# --- call.completed ---
@@ -380,9 +418,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"endedAt": "2026-10-27T10:05:00Z",
 			"channel": "voice",
 		}
-		result, status, _ = self._post(payload)
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "processed")
+		result, status, eid = self._post(payload)
+		self.assertEqual(status, 202)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 		call_log = frappe.get_doc("CRM Call Log", "call-100")
 		self.assertEqual(call_log.outcome, "weird_custom_label_from_ops")
 		self.assertEqual(call_log.disposition, DEFAULT_DISPOSITION)
@@ -403,7 +442,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertEqual(map_disposition("appointment_booked"), "Appointment Booked")
 
 	def test_failed_delivery_is_retryable(self):
-		"""A 5xx / Failed event with the same X-Astra-Delivery must reprocess."""
+		"""Failed inbox rows stay redeliverable via retry_event (same delivery id is duplicate)."""
 		payload = {
 			"type": "call.completed",
 			"callId": "call-retry-1",
@@ -417,9 +456,17 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"endedAt": "2026-10-27T11:00:00Z",
 		}
 		r1, s1, eid = self._post(payload, delivery_id="dlv-retry-1")
-		self.assertEqual(s1, 200)
-		self.assertEqual(r1["status"], "failed")
-		# Seed the party, then replay the same delivery id.
+		self.assertEqual(s1, 202)
+		self.assertEqual(r1["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Failed")
+
+		# Resend of the same delivery is a pure duplicate — no row rewrite.
+		r_dup, s_dup, _ = self._post(payload, delivery_id="dlv-retry-1")
+		self.assertEqual(s_dup, 200)
+		self.assertEqual(r_dup["status"], "duplicate")
+		self.assertEqual(self._event_status(eid), "Failed")
+
+		# Seed the party, then admin-retry the Failed row.
 		self.process_lead_created(
 			{
 				"leadId": "lead-retry-1",
@@ -427,9 +474,11 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 				"phone": "+919999998888",
 			}
 		)
-		r2, s2, _ = self._post(payload, delivery_id="dlv-retry-1")
-		self.assertEqual(s2, 200)
-		self.assertEqual(r2["status"], "processed")
+		from crm.integrations.astra_connect.api import retry_event
+
+		r2 = retry_event(eid)
+		self.assertEqual(r2["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 		self.assertTrue(frappe.db.exists("CRM Call Log", "call-retry-1"))
 
 	def test_employee_call_completed_extras(self):
@@ -457,9 +506,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"recordingUrl": "https://connect.example/r/1",
 			"transcript": [{"role": "agent", "text": "Hi"}],
 		}
-		result, status, _ = self._post(payload)
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "processed")
+		result, status, eid = self._post(payload)
+		self.assertEqual(status, 202)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 		call_log = frappe.get_doc("CRM Call Log", "call-emp-1")
 		self.assertEqual(call_log.status, "Canceled")
 		self.assertEqual(call_log.duration, 120)
@@ -471,7 +521,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertFalse(call_log.to)
 		self.assertEqual(call_log.ai_employee_id, "emp-3")
 
-	def test_call_unmatched_returns_200_failed(self):
+	def test_call_unmatched_returns_accepted_event_failed(self):
 		payload = {
 			"type": "call.completed",
 			"callId": "call-orphan",
@@ -485,11 +535,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"endedAt": "2026-10-27T11:00:00Z",
 		}
 		result, status, eid = self._post(payload)
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "failed")
-		event = frappe.get_doc("Astra Connect Event", {"event_id": eid})
-		self.assertEqual(event.status, "Failed")
-		self.assertIn("No matching", event.error)
+		self.assertEqual(status, 202)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Failed")
+		self.assertIn("No matching", self._event_error(eid) or "")
 
 	def test_phone_last10_fallback(self):
 		# Store lead with local formatting; event sends E.164
@@ -541,14 +590,17 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"summary": "Ambiguous",
 			"endedAt": "2026-10-27T11:00:00Z",
 		}
-		result, status, _ = self._post(payload)
-		self.assertEqual(status, 200)
-		self.assertEqual(result["status"], "failed")
-		self.assertIn("Ambiguous", result["error"])
+		result, status, eid = self._post(payload)
+		self.assertEqual(status, 202)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Failed")
+		self.assertIn("Ambiguous", self._event_error(eid) or "")
 
-	def test_call_completed_retries_deadlock_on_save(self):
-		"""_save_call_log deadlocks must retry via savepoint (fixture must survive)."""
+	def test_call_completed_retries_deadlock_in_worker(self):
+		"""Worker retries the whole job on deadlock; claim stays Processing until done."""
 		from unittest.mock import patch
+
+		from crm.integrations.astra_connect import api as connect_api
 
 		self.process_lead_created(
 			{
@@ -572,11 +624,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"channel": "voice",
 		}
 
-		self.assertTrue(_is_retryable_call_write(Exception("Deadlock found when trying to get lock")))
-		self.assertTrue(_is_retryable_call_write(Exception("(1213, 'Deadlock')")))
+		self.assertTrue(connect_api._is_retryable_db(Exception("Deadlock found when trying to get lock")))
+		self.assertTrue(connect_api._is_retryable_db(Exception("(1213, 'Deadlock')")))
 
 		calls = {"n": 0}
-
 		import crm.integrations.astra_connect.processing as processing
 
 		real_save = processing._save_call_log
@@ -587,14 +638,27 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 				raise Exception("Deadlock found when trying to get lock; try restarting transaction")
 			return real_save(call_log)
 
-		with patch.object(processing, "_save_call_log", side_effect=flaky_save):
-			result = process_call_completed(data)
+		event = frappe.get_doc(
+			{
+				"doctype": "Astra Connect Event",
+				"event_id": "dlv-deadlock-1",
+				"event_type": "call.completed",
+				"payload": {"type": "call.completed", **data},
+				"status": "Received",
+				"attempts": 0,
+			}
+		).insert(ignore_permissions=True)
+		self._created_event_ids.append("dlv-deadlock-1")
+		frappe.db.commit()
 
-		self.assertEqual(result["name"], "call-deadlock-1")
+		with patch.object(processing, "_save_call_log", side_effect=flaky_save):
+			result = connect_api.process_inbox_event(event.name)
+
+		self.assertEqual(result["status"], "processed")
 		self.assertGreaterEqual(calls["n"], 2)
 		self.assertTrue(frappe.db.exists("CRM Call Log", "call-deadlock-1"))
-		# Lead fixture must still exist after savepoint rollback of the failed attempt.
 		self.assertTrue(frappe.db.exists("CRM Lead", {"astra_external_id": "lead-deadlock-1"}))
+		self.assertEqual(self._event_status("dlv-deadlock-1"), "Processed")
 
 	def test_call_summary_note_is_upserted_across_deliveries(self):
 		"""Three deliveries + both event types leave exactly one summary note."""
@@ -621,9 +685,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 
 		for i, summary in enumerate(("First", "Second", "Third")):
 			payload = {**base, "type": "call.completed", "summary": summary}
-			result, status, _ = self._post(payload, delivery_id=f"dlv-note-{i}")
-			self.assertEqual(status, 200, result)
-			self.assertEqual(result["status"], "processed")
+			result, status, eid = self._post(payload, delivery_id=f"dlv-note-{i}")
+			self.assertEqual(status, 202, result)
+			self.assertEqual(result["status"], "accepted")
+			self.assertEqual(self._event_status(eid), "Processed")
 
 		emp_payload = {
 			**base,
@@ -631,24 +696,45 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			"summary": "Employee enriched",
 			"durationSeconds": 42,
 		}
-		result, status, _ = self._post(emp_payload, delivery_id="dlv-note-emp")
-		self.assertEqual(status, 200, result)
-		self.assertEqual(result["status"], "processed")
+		result, status, eid = self._post(emp_payload, delivery_id="dlv-note-emp")
+		self.assertEqual(status, 202, result)
+		self.assertEqual(result["status"], "accepted")
+		self.assertEqual(self._event_status(eid), "Processed")
 
-		notes = frappe.get_all(
-			"FCRM Note",
-			filters={"title": ("like", "%call-note-1%")},
-			fields=["name", "content"],
-		)
+		if frappe.db.has_column("FCRM Note", "astra_call_id"):
+			notes = frappe.get_all(
+				"FCRM Note",
+				filters={"astra_call_id": "call-note-1"},
+				fields=["name", "content"],
+			)
+		else:
+			notes = frappe.get_all(
+				"FCRM Note",
+				filters={"title": ("like", "%call-note-1%")},
+				fields=["name", "content"],
+			)
 		self.assertEqual(len(notes), 1, notes)
 		self.assertIn("Employee enriched", notes[0].content)
 		call_log = frappe.get_doc("CRM Call Log", "call-note-1")
 		self.assertEqual(call_log.note, notes[0].name)
 
-	def test_concurrent_same_delivery_returns_duplicate(self):
-		"""Eight parallel posts of one X-Astra-Delivery: one processes, rest duplicate."""
-		import threading
+	def test_no_get_lock_or_savepoint_in_connect_path(self):
+		"""Cross-site isolation: path must not use global GET_LOCK / savepoints."""
+		from crm.integrations.astra_connect import api as connect_api
+		from crm.integrations.astra_connect import processing as processing
 
+		for mod in (connect_api, processing):
+			src = inspect.getsource(mod)
+			self.assertNotIn("GET_LOCK", src)
+			self.assertNotIn("RELEASE_LOCK", src)
+			self.assertNotIn("frappe.db.savepoint", src)
+			self.assertNotIn("rollback(save_point", src)
+			self.assertNotIn("rollback(savepoint", src)
+
+	def test_concurrent_same_delivery_one_call_one_note(self):
+		"""Eight parallel posts of one X-Astra-Delivery → 1 accepted + 7 duplicate;
+		exactly one call log and one note; event ends Processed.
+		"""
 		self.process_lead_created(
 			{
 				"leadId": "lead-concurrent-1",
@@ -657,6 +743,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 				"status": "new",
 			}
 		)
+		frappe.db.commit()
 		payload = {
 			"type": "call.completed",
 			"callId": "call-concurrent-1",
@@ -673,9 +760,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		delivery_id = "dlv-concurrent-same"
 		results: list[tuple] = []
 		lock = threading.Lock()
+		bootstrap = self._thread_site_bootstrap()
 
 		def worker():
-			frappe.connect()
+			bootstrap()
 			try:
 				result, status, _ = self._post(payload, delivery_id=delivery_id)
 				with lock:
@@ -690,11 +778,80 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 			t.join(timeout=60)
 
 		self.assertEqual(len(results), 8, results)
-		processed = [r for r in results if r[1] == "processed"]
+		accepted = [r for r in results if r[1] == "accepted"]
 		duplicates = [r for r in results if r[1] == "duplicate"]
-		failures = [r for r in results if r[1] not in ("processed", "duplicate")]
+		failures = [r for r in results if r[1] not in ("accepted", "duplicate")]
 		self.assertEqual(len(failures), 0, failures)
-		self.assertEqual(len(processed), 1, results)
+		self.assertEqual(len(accepted), 1, results)
 		self.assertEqual(len(duplicates), 7, results)
 		self.assertEqual(frappe.db.count("Astra Connect Event", {"event_id": delivery_id}), 1)
-		self.assertTrue(frappe.db.exists("CRM Call Log", "call-concurrent-1"))
+		self.assertEqual(self._event_status(delivery_id), "Processed")
+		self.assertEqual(frappe.db.count("CRM Call Log", {"name": "call-concurrent-1"}), 1)
+		if frappe.db.has_column("FCRM Note", "astra_call_id"):
+			self.assertEqual(frappe.db.count("FCRM Note", {"astra_call_id": "call-concurrent-1"}), 1)
+		else:
+			self.assertEqual(
+				frappe.db.count("FCRM Note", {"title": ("like", "%call-concurrent-1%")}),
+				1,
+			)
+
+	def test_concurrent_same_call_id_distinct_deliveries(self):
+		"""Eight deliveries of one callId → 0 5xx, one call log, all Processed."""
+		self.process_lead_created(
+			{
+				"leadId": "lead-callid-1",
+				"name": "CallId Lead",
+				"phone": "+919844445555",
+				"status": "new",
+			}
+		)
+		frappe.db.commit()
+		payload = {
+			"type": "call.completed",
+			"callId": "call-shared-1",
+			"contactId": "ctc-shared",
+			"employeeId": "emp-shared",
+			"direction": "outbound",
+			"phone": "+919844445555",
+			"outcome": "interested",
+			"qualified": False,
+			"summary": "Shared call",
+			"endedAt": "2026-10-27T12:00:00Z",
+		}
+		self._track_call("call-shared-1")
+		results: list[tuple] = []
+		lock = threading.Lock()
+		bootstrap = self._thread_site_bootstrap()
+		delivery_ids = [f"dlv-shared-{i}" for i in range(8)]
+
+		def worker(delivery_id: str):
+			bootstrap()
+			try:
+				result, status, eid = self._post(payload, delivery_id=delivery_id)
+				with lock:
+					results.append((status, result.get("status"), eid))
+			finally:
+				frappe.db.close()
+
+		threads = [
+			threading.Thread(target=worker, args=(did,)) for did in delivery_ids
+		]
+		for t in threads:
+			t.start()
+		for t in threads:
+			t.join(timeout=60)
+
+		self.assertEqual(len(results), 8, results)
+		server_errors = [r for r in results if r[0] >= 500]
+		self.assertEqual(server_errors, [], server_errors)
+		for status, body_status, eid in results:
+			self.assertEqual(status, 202, (status, body_status, eid))
+			self.assertEqual(body_status, "accepted")
+			self.assertEqual(
+				self._wait_event_status(eid, {"Processed", "Failed"}),
+				"Processed",
+				self._event_error(eid),
+			)
+		self.assertEqual(frappe.db.count("CRM Call Log", {"name": "call-shared-1"}), 1)
+		if frappe.db.has_column("FCRM Note", "astra_call_id"):
+			self.assertEqual(frappe.db.count("FCRM Note", {"astra_call_id": "call-shared-1"}), 1)
