@@ -63,3 +63,7 @@ jobs:
           build-args: |
             "FRAPPE_BRANCH=${{ env.FRAPPE_BRANCH }}"
             "APPS_JSON_BASE64=${{ env.APPS_JSON_BASE64 }}"
+
+      # Sourcemaps: the layered image may still ship framework *.map under sites/assets.
+      # Runtime scrub is scripts/strip-sourcemaps.sh (docker/init.sh + after_migrate).
+      # Edge also returns 404 for *.map — see docs/nginx-security-headers.md.

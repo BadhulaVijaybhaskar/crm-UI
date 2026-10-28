@@ -149,9 +149,15 @@ def apply_doctype_label_overrides() -> None:
 		erp_settings_dt: "ERP Settings",
 		"FCRM Settings": "CRM Settings",
 		"FCRM Note": "Note",
+		# Desk sidebar / module chrome — keep internal module name "FCRM" and
+		# Workspace document name "Frappe CRM"; only the user-visible string changes.
+		"Frappe CRM": ASTRA_APP_NAME,
+		"FCRM": ASTRA_APP_NAME,
 	}
 	for source, translated in translations.items():
 		_ensure_translation(source, translated)
+
+	_relabel_fcrm_module()
 
 
 def _ensure_property_setter(doctype: str, fieldname: str, prop: str, value: str, property_type: str) -> None:
@@ -190,6 +196,28 @@ def _ensure_translation(source: str, translated: str, language: str = "en") -> N
 		}
 	)
 	doc.insert(ignore_permissions=True)
+
+
+def _relabel_fcrm_module() -> None:
+	"""Ensure Module Def for FCRM displays as Astra CRM without renaming the module.
+
+	Module name stays ``FCRM`` (doctype ``module`` fields and ``modules.txt``).
+	Desk module headers use the Module Def row; when a ``module_name`` / label-like
+	column exists we mirror the visible brand. Translations cover ``_("FCRM")``.
+	"""
+	import frappe
+
+	if not frappe.db.exists("DocType", "Module Def"):
+		return
+	if not frappe.db.exists("Module Def", "FCRM"):
+		return
+
+	# Some framework versions expose a separate display field; prefer it when present.
+	for field in ("module_name", "label"):
+		if frappe.db.has_column("Module Def", field):
+			current = frappe.db.get_value("Module Def", "FCRM", field)
+			if current != ASTRA_APP_NAME:
+				frappe.db.set_value("Module Def", "FCRM", field, ASTRA_APP_NAME, update_modified=False)
 
 
 def relabel_crm_workspace() -> None:
@@ -233,6 +261,11 @@ def relabel_crm_workspace() -> None:
 			updates["route"] = "astra-crm"
 	if updates:
 		frappe.db.set_value("Workspace", doc_name, updates, update_modified=False)
+
+	# Desk often renders _(workspace.name) — keep the document name, translate the string.
+	_ensure_translation(doc_name, visible)
+	_ensure_translation("FCRM", visible)
+	_relabel_fcrm_module()
 
 
 # Back-compat alias for older patch imports
