@@ -29,8 +29,7 @@
               :src="row.lead_name?.image"
               size="md"
             />
-            <!-- PNG name/org baseline sits ~1px lower than default flex mid. -->
-            <div class="tx flex min-w-0 translate-y-px flex-col leading-[1.3]">
+            <div class="tx flex min-w-0 flex-col leading-[1.3]">
               <span
                 class="truncate text-[12.5px] font-semibold leading-[1.3] text-crm-fg"
               >
