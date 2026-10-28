@@ -10,7 +10,9 @@
           >
             {{ __('Work queue') }}
           </h1>
-          <p class="m-0 -mt-px text-[13px] leading-[1.45] text-crm-muted-fg">
+          <p
+            class="relative top-px m-0 -mt-px text-[13px] leading-[1.45] text-crm-muted-fg"
+          >
             {{ __('What needs you next, ranked. Showing your records.') }}
           </p>
         </div>
@@ -18,7 +20,7 @@
 
       <div class="flex h-11 items-center gap-2 px-crm-page-x pb-2.5">
         <div
-          class="flex gap-0.5 rounded-crm-control border border-crm-border bg-crm-muted p-[3px]"
+          class="relative top-px flex gap-0.5 rounded-crm-control border border-crm-border bg-crm-muted p-[3px]"
           role="tablist"
           :aria-label="__('Queue')"
         >
@@ -49,7 +51,7 @@
         </div>
         <span class="mx-1 block h-6 w-px bg-crm-border" aria-hidden="true" />
         <label
-          class="relative inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm border border-crm-border-strong bg-crm-card pl-3 pr-2.5 text-[12.5px] font-medium"
+          class="relative top-px inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm border border-crm-border-strong bg-crm-card pl-3 pr-2.5 text-[12.5px] font-medium"
         >
           <span class="text-crm-muted-fg">{{ __('Priority') }}</span>
           <span class="font-semibold text-crm-fg">{{ priorityLabel }}</span>
@@ -114,7 +116,7 @@
             <div
               class="flex items-center gap-2.5 px-4 text-[13px]"
               :class="
-                index ? 'h-[49px] border-t border-crm-border' : 'h-[46px]'
+                index ? 'h-[49px] border-t border-crm-border pt-1.5' : 'h-[46px] pt-1'
               "
             >
               <span
@@ -159,20 +161,20 @@
               >
                 {{ initialsFrom(personName(item)) }}
               </span>
-              <div class="flex min-w-0 flex-col leading-[1.3]">
+              <div class="flex min-w-0 flex-col pt-0.5 leading-[1.3]">
                 <b class="truncate text-[13px] font-semibold text-crm-fg">
                   {{ personName(item) }}
                 </b>
-                <span class="truncate text-[11.5px] text-crm-muted-fg">
+                <span class="mt-0.5 truncate text-[11.5px] text-crm-muted-fg">
                   {{ item.record_label }}
                 </span>
               </div>
-              <div class="flex min-w-0 flex-col leading-[1.45]">
+              <div class="flex min-w-0 flex-col pt-[5.5px] leading-[1.45]">
                 <b class="truncate text-[12.5px] font-semibold text-crm-fg">
                   {{ item.title }}
                 </b>
                 <span
-                  class="truncate whitespace-nowrap text-[11.5px] text-crm-muted-fg"
+                  class="mt-[0.5px] truncate whitespace-nowrap text-[11.5px] text-crm-muted-fg"
                 >
                   {{ itemMeta(item) }}
                 </span>
@@ -256,7 +258,7 @@
 
         <aside
           v-if="detail.data"
-          class="hidden overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card lg:block"
+          class="hidden min-h-[538px] overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card lg:block"
         >
           <div
             class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
@@ -276,7 +278,7 @@
               <LucideChevronRight class="size-3.5" aria-hidden="true" />
             </router-link>
           </div>
-          <div class="px-4 pb-4 pt-3.5">
+          <div class="px-4 pb-4 pt-[15px]">
             <div class="flex items-center gap-2.5">
               <AstraBadge
                 v-if="detail.data.status"
@@ -301,7 +303,7 @@
             </p>
             <dl
               v-if="detailRows.length"
-              class="m-0 mt-3.5 grid grid-cols-[96px_1fr] gap-x-3 gap-y-[9px] text-[12.5px]"
+              class="m-0 mt-3 grid grid-cols-[96px_1fr] gap-x-3 gap-y-[9px] text-[12.5px] leading-[18px]"
             >
               <template v-for="row in detailRows" :key="row.label">
                 <dt class="text-crm-muted-fg">{{ row.label }}</dt>
@@ -312,7 +314,7 @@
             </dl>
             <div
               v-if="detail.data.last_call"
-              class="mt-3 flex gap-2.5 rounded-lg border border-crm-border bg-crm-muted px-[13px] py-[11px] text-[12px] leading-[1.5] text-crm-muted-fg"
+              class="mt-2.5 flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-[13px] py-[11px] text-[12px] leading-[1.5] text-crm-muted-fg"
             >
               <LucidePhone
                 class="mt-0.5 size-3.5 shrink-0"
@@ -324,7 +326,7 @@
                 {{ lastCallOutcome }}
               </div>
             </div>
-            <div class="mt-3 flex gap-2">
+            <div class="mt-[13px] flex gap-2">
               <AstraButton
                 v-if="connectReady"
                 size="sm"
