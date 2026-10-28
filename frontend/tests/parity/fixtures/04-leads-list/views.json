@@ -1,0 +1,32 @@
+{
+  "message": [
+    {
+      "name": "all-leads",
+      "label": "All leads",
+      "route_name": "Leads",
+      "doctype": "CRM Lead",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "priya.nair@example.com"
+    },
+    {
+      "name": "my-open-leads",
+      "label": "My open leads",
+      "route_name": "Leads",
+      "doctype": "CRM Lead",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1
+    }
+  ]
+}
