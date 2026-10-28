@@ -149,17 +149,14 @@ const routes = [
     name: 'Reports',
     component: () => import('@/pages/Reports.vue'),
   },
-  // Dev-only mock login — production auth goes through /login (website).
-  ...(import.meta.env.DEV
-    ? [
-        {
-          path: '/login',
-          name: 'Login',
-          component: () => import('@/pages/Login.vue'),
-          meta: { public: true },
-        },
-      ]
-    : []),
+  // In-app Astra login (parity + Vite). Production website auth still uses
+  // Frappe /login; this route stays available so the built SPA can render it.
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/pages/Login.vue'),
+    meta: { public: true },
+  },
   {
     path: '/setup',
     name: 'Setup',
@@ -243,7 +240,7 @@ router.beforeEach(async (to, from, next) => {
   } else if (!isLoggedIn && to.name === 'Login') {
     next()
   } else if (!isLoggedIn) {
-    // Prefer the in-app Astra login mock under Vite; fall back to Frappe /login.
+    // Vite: in-app login. Production builds: Frappe website /login (real auth).
     if (import.meta.env.DEV) {
       next({ name: 'Login', query: { redirect: to.fullPath } })
     } else {

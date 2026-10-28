@@ -1,7 +1,7 @@
 <template>
-  <!-- In-app login for local Vite. Production uses Frappe /login with the
-       same .astra-login-* chrome from astra-login.css. Auth calls `login`
-       (session store) so redirects and 429 lockouts match production. -->
+  <!-- In-app login for local Vite + parity. Production website auth uses
+       crm/www/login.html with the same .astra-login-* chrome. Auth calls
+       session.login so redirects and 429 lockouts match production. -->
   <div class="astra-login" data-testid="astra-login">
     <aside class="astra-login__panel" aria-hidden="true">
       <p class="astra-login__eyebrow">{{ __('ASTRA CRM') }}</p>
@@ -11,7 +11,18 @@
       <ul class="astra-login__features">
         <li>
           <span class="astra-login__feature-icon" aria-hidden="true">
-            <Icon icon="lucide-list" class="size-4" />
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+            </svg>
           </span>
           <div>
             <strong>{{ __('Start with your day') }}</strong>
@@ -22,7 +33,19 @@
         </li>
         <li>
           <span class="astra-login__feature-icon" aria-hidden="true">
-            <Icon icon="lucide-layout-grid" class="size-4" />
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 9h18M9 21V9" />
+            </svg>
           </span>
           <div>
             <strong>{{ __('Stages your team defines') }}</strong>
@@ -35,7 +58,20 @@
         </li>
         <li>
           <span class="astra-login__feature-icon" aria-hidden="true">
-            <Icon icon="lucide-phone" class="size-4" />
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
+              />
+            </svg>
           </span>
           <div>
             <strong>{{ __('Calls and messages through Astra Connect') }}</strong>
@@ -55,7 +91,6 @@
           <img
             class="astra-login-logo"
             :src="logoSrc"
-            :srcset="logoSrcset"
             alt="Astra CRM"
             height="28"
           />
@@ -71,38 +106,38 @@
 
         <form
           v-if="mode === 'login'"
-          class="flex flex-col gap-4"
+          class="astra-login__form"
           @submit.prevent="onSubmit"
         >
-          <label class="block text-[12px] font-semibold text-[color:var(--crm-fg)]">
-            {{ __('Work email') }}
+          <div class="astra-login__field">
+            <label class="astra-login__label" for="login_email">{{
+              __('Work email')
+            }}</label>
             <input
+              id="login_email"
               v-model="email"
-              class="mt-1.5"
               type="email"
               autocomplete="username"
               required
+              autofocus
             />
-          </label>
-          <div>
-            <div class="mb-1.5 flex items-baseline justify-between gap-3">
-              <label
-                class="text-[12px] font-semibold text-[color:var(--crm-fg)]"
-                for="astra-login-password"
-              >
-                {{ __('Password') }}
-              </label>
+          </div>
+          <div class="astra-login__field">
+            <div class="astra-login__label-row">
+              <label class="astra-login__label" for="login_password">{{
+                __('Password')
+              }}</label>
               <button
                 type="button"
-                class="text-[12.5px] font-medium text-[color:var(--crm-primary)]"
+                class="astra-login__forgot"
                 @click="mode = 'forgot'"
               >
                 {{ __('Forgot password?') }}
               </button>
             </div>
-            <div class="relative">
+            <div class="astra-login__password">
               <input
-                id="astra-login-password"
+                id="login_password"
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 autocomplete="current-password"
@@ -110,64 +145,64 @@
               />
               <button
                 type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--crm-muted-fg)]"
-                :aria-label="showPassword ? __('Hide password') : __('Show password')"
+                class="astra-login__toggle"
+                :aria-label="
+                  showPassword ? __('Hide password') : __('Show password')
+                "
                 @click="showPassword = !showPassword"
               >
-                <Icon
-                  :icon="showPassword ? 'lucide-eye-off' : 'lucide-eye'"
-                  class="size-4"
-                />
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"
+                  />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               </button>
             </div>
           </div>
-          <p
-            v-if="errorMessage"
-            class="text-[12.5px] font-medium text-[color:var(--crm-danger)]"
-            role="alert"
-          >
+          <p v-if="errorMessage" class="astra-login__error" role="alert">
             {{ errorMessage }}
           </p>
-          <button class="btn-primary mt-1" type="submit" :disabled="submitting">
+          <button class="btn-primary" type="submit" :disabled="submitting">
             {{ submitting ? __('Signing in…') : __('Sign in') }}
           </button>
         </form>
 
-        <form
-          v-else
-          class="flex flex-col gap-4"
-          @submit.prevent="onForgot"
-        >
-          <label class="block text-[12px] font-semibold text-[color:var(--crm-fg)]">
-            {{ __('Work email') }}
+        <form v-else class="astra-login__form" @submit.prevent="onForgot">
+          <div class="astra-login__field">
+            <label class="astra-login__label" for="login_email_forgot">{{
+              __('Work email')
+            }}</label>
             <input
+              id="login_email_forgot"
               v-model="email"
-              class="mt-1.5"
               type="email"
               autocomplete="username"
               required
             />
-          </label>
-          <p
-            v-if="errorMessage"
-            class="text-[12.5px] font-medium text-[color:var(--crm-danger)]"
-            role="alert"
-          >
+          </div>
+          <p v-if="errorMessage" class="astra-login__error" role="alert">
             {{ errorMessage }}
           </p>
-          <p
-            v-if="forgotSent"
-            class="text-[12.5px] text-[color:var(--crm-muted-fg)]"
-            role="status"
-          >
+          <p v-if="forgotSent" class="astra-login__status" role="status">
             {{ __('If that account exists, a reset link is on its way.') }}
           </p>
-          <button class="btn-primary mt-1" type="submit" :disabled="submitting">
+          <button class="btn-primary" type="submit" :disabled="submitting">
             {{ submitting ? __('Sending…') : __('Reset Password') }}
           </button>
           <button
             type="button"
-            class="text-center text-[12.5px] font-medium text-[color:var(--crm-primary)]"
+            class="astra-login__forgot astra-login__back"
             @click="mode = 'login'"
           >
             {{ __('Back to Login') }}
@@ -176,7 +211,19 @@
 
         <p v-if="mode === 'login'" class="astra-login__lockout" role="note">
           <span class="astra-login__lock-icon" aria-hidden="true">
-            <Icon icon="lucide-lock" class="size-3.5" />
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
           </span>
           {{
             __(
@@ -191,15 +238,12 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { usePageMeta, useColorScheme, call } from 'frappe-ui'
-import Icon from '@/components/Icon.vue'
+import { usePageMeta, useColorScheme } from 'frappe-ui'
 import { sessionStore } from '@/stores/session'
 import {
   ASTRA_FAVICON,
   ASTRA_LOGO,
   ASTRA_LOGO_ON_DARK,
-  ASTRA_LOCKUP_SRCSET,
-  ASTRA_NAV_LOCKUP_SRCSET,
 } from '@/assets/brand'
 
 const email = ref('')
@@ -216,11 +260,6 @@ const session = sessionStore()
 const logoSrc = computed(() =>
   resolvedColorScheme.value === 'dark' ? ASTRA_LOGO_ON_DARK : ASTRA_LOGO,
 )
-const logoSrcset = computed(() =>
-  resolvedColorScheme.value === 'dark'
-    ? ASTRA_NAV_LOCKUP_SRCSET
-    : ASTRA_LOCKUP_SRCSET,
-)
 
 usePageMeta(() => ({
   title: __('Login'),
@@ -234,11 +273,11 @@ function lockoutMessage(error) {
     error?.response?.status ||
     error?.exc_type === 'SecurityException'
   if (status === 429 || error?.exc_type === 'SecurityException') {
-    return __(
-      'Too many failed attempts. Please try again after some time.',
-    )
+    return __('Too many failed attempts. Please try again after some time.')
   }
-  return error?.messages?.[0] || error?.message || __('Invalid Email or Password')
+  return (
+    error?.messages?.[0] || error?.message || __('Invalid Email or Password')
+  )
 }
 
 async function onSubmit() {
@@ -261,6 +300,7 @@ async function onForgot() {
   forgotSent.value = false
   submitting.value = true
   try {
+    const { call } = await import('frappe-ui')
     await call('frappe.core.doctype.user.user.reset_password', {
       user: email.value,
     })
@@ -284,7 +324,10 @@ async function onForgot() {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   min-height: 100dvh;
   width: 100%;
-  background: var(--crm-muted, #f6f8fa);
+  background: var(--crm-bg, #f3f6f8);
+  font-family: var(--font-sans);
+  color: var(--crm-fg, #0b1324);
+  -webkit-font-smoothing: antialiased;
 }
 
 .astra-login__form-pane {
@@ -293,7 +336,7 @@ async function onForgot() {
   justify-content: center;
   padding: 40px 24px;
   min-width: 0;
-  background: var(--crm-muted, #f8f9fb);
+  background: var(--crm-bg, #f3f6f8);
 }
 
 .astra-login__panel {
@@ -309,7 +352,7 @@ async function onForgot() {
 
 .astra-login__eyebrow {
   margin: 0;
-  font: 700 11px/1.3 var(--font-sans);
+  font: 600 11px/1.3 var(--font-sans);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--crm-teal, #0e8f83);
@@ -318,8 +361,13 @@ async function onForgot() {
 .astra-login__headline {
   margin: 0;
   max-width: 22ch;
-  font: 700 32px/1.2 var(--font-sans);
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.2;
   letter-spacing: -0.02em;
+  font-feature-settings: "cv11", "ss01";
   color: #fff;
 }
 
@@ -340,10 +388,13 @@ async function onForgot() {
 
 .astra-login__feature-icon {
   flex: 0 0 28px;
+  width: 28px;
   height: 28px;
   display: grid;
   place-items: center;
-  color: var(--crm-teal, #2dd4bf);
+  border-radius: 8px;
+  background: var(--crm-nav-active, #0f2a36);
+  color: var(--crm-teal, #0e8f83);
 }
 
 .astra-login__features strong {
@@ -356,16 +407,22 @@ async function onForgot() {
   display: block;
   margin-top: 2px;
   font: 400 13px/1.45 var(--font-sans);
-  color: var(--crm-muted-fg, #97a9b4);
+  /* Panel muted — not --crm-muted-fg (that is form-pane gray). */
+  color: #97a9b4;
 }
 
 .astra-login__card {
-  width: min(100%, 400px);
+  width: min(100%, 380px);
+}
+
+.astra-login__head {
+  margin-bottom: 28px;
+  text-align: left;
 }
 
 .astra-login__head h1 {
   margin: 20px 0 6px;
-  font: 700 28px/1.2 var(--font-sans);
+  font: 600 28px/1.2 var(--font-sans);
   letter-spacing: -0.02em;
   color: var(--crm-fg);
 }
@@ -382,6 +439,59 @@ async function onForgot() {
   width: auto;
   max-width: 180px;
   object-fit: contain;
+  margin: 0;
+}
+
+.astra-login__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.astra-login__field {
+  margin-bottom: 16px;
+}
+
+.astra-login__label {
+  display: block;
+  margin-bottom: 6px;
+  font: 600 12px/1.3 var(--font-sans);
+  color: var(--crm-fg);
+}
+
+.astra-login__label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.astra-login__label-row .astra-login__label {
+  margin-bottom: 0;
+}
+
+.astra-login__forgot {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: 500 12.5px/1.3 var(--font-sans);
+  color: var(--crm-primary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.astra-login__forgot:hover {
+  text-decoration: underline;
+}
+
+.astra-login__back {
+  margin-top: 12px;
+  text-align: center;
+  width: 100%;
+}
+
+.astra-login__password {
+  position: relative;
 }
 
 .astra-login__card input {
@@ -392,7 +502,14 @@ async function onForgot() {
   border: 1px solid var(--crm-border-strong);
   background: var(--crm-card);
   color: var(--crm-fg);
-  font: 400 13px var(--font-sans);
+  font: 400 13px/1.45 var(--font-sans);
+  box-sizing: border-box;
+  box-shadow: none;
+  caret-color: transparent;
+}
+
+.astra-login__password input {
+  padding-right: 36px;
 }
 
 .astra-login__card input:focus {
@@ -401,20 +518,52 @@ async function onForgot() {
   box-shadow: var(--crm-input-focus);
 }
 
+.astra-login__toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--crm-muted-fg);
+  cursor: pointer;
+  line-height: 0;
+}
+
 .astra-login__card .btn-primary {
+  display: block;
   width: 100%;
   min-height: 40px;
+  margin-top: 8px;
   border: 0;
   border-radius: 8px;
   color: var(--crm-primary-fg);
-  font: 600 13px var(--font-sans);
+  font: 600 13px/1.3 var(--font-sans);
   background: var(--crm-primary);
   cursor: pointer;
+  box-shadow: none;
 }
 
 .astra-login__card .btn-primary:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.astra-login__error {
+  margin: 0 0 8px;
+  font: 500 12.5px/1.4 var(--font-sans);
+  color: var(--crm-danger);
+}
+
+.astra-login__status {
+  margin: 0 0 8px;
+  font: 400 12.5px/1.4 var(--font-sans);
+  color: var(--crm-muted-fg);
 }
 
 .astra-login__lockout {
@@ -433,6 +582,8 @@ async function onForgot() {
 .astra-login__lock-icon {
   flex: 0 0 14px;
   margin-top: 2px;
+  color: var(--crm-muted-fg);
+  line-height: 0;
 }
 
 @media (max-width: 900px) {

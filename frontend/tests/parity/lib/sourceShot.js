@@ -24,7 +24,7 @@ export async function screenshotSourceHtml({
     let pathname = decodeURIComponent(new URL(req.url, 'http://x').pathname)
     if (pathname === '/') pathname = `/${htmlFile}`
     const fp = path.join(root, pathname)
-    if (!fp.startsWith(root) || !fs.existsSync(fp)) {
+    if (!fp.startsWith(root) || !fs.existsSync(fp) || fs.statSync(fp).isDirectory()) {
       res.writeHead(404)
       return res.end('not found')
     }
@@ -66,6 +66,11 @@ export async function screenshotSourceHtml({
     waitUntil: 'networkidle',
     timeout: 30000,
   })
+  // Match Vue parity fills: focused email field (Figma shows primary ring)
+  const email = page.locator('#login_email').first()
+  if ((await email.count()) > 0) {
+    await email.focus()
+  }
   await page.waitForTimeout(400)
   fs.mkdirSync(path.dirname(outPath), { recursive: true })
   await page.screenshot({

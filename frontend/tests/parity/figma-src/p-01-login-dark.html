@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en" class="dark" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Astra CRM — Sign in (dark capture)</title>
+    <link rel="stylesheet" href="./astra-login.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 1440px;
+        height: 960px;
+        overflow: hidden;
+        background: #081218;
+      }
+      /* Match Login.vue scoped form chrome (no Frappe page-card helpers). */
+      .astra-login__form { display: flex; flex-direction: column; }
+      .astra-login__field { margin-bottom: 16px; }
+      .astra-login__label {
+        display: block;
+        margin-bottom: 6px;
+        font: 600 12px/1.3 "Inter", sans-serif;
+        color: var(--astra-text);
+      }
+      .astra-login__label-row .astra-login__label { margin-bottom: 0; }
+      .astra-login__password { position: relative; }
+      .astra-login__password input { padding-right: 36px !important; }
+      .astra-login__toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: grid;
+        place-items: center;
+        width: 16px;
+        height: 16px;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        color: var(--astra-muted);
+        cursor: pointer;
+        line-height: 0;
+      }
+      .astra-login__card input {
+        display: block;
+        width: 100%;
+        height: 40px;
+        padding: 0 12px;
+        border-radius: 8px;
+        border: 1px solid var(--astra-border-strong);
+        background: var(--astra-surface);
+        color: var(--astra-text);
+        font: 400 13px/1.45 "Inter", "Noto Sans Telugu", "Noto Sans Devanagari", ui-sans-serif, system-ui, sans-serif;
+        box-sizing: border-box;
+        box-shadow: none;
+        margin: 0;
+        caret-color: transparent;
+      }
+      .astra-login__card input:focus {
+        outline: none;
+        border-color: var(--ac);
+        box-shadow: var(--astra-input-focus);
+      }
+      .astra-login__card .btn-primary {
+        display: block;
+        width: 100%;
+        min-height: 40px;
+        margin-top: 8px;
+        border: 0;
+        border-radius: 8px;
+        color: var(--astra-primary-fg);
+        font: 600 13px/1.3 "Inter", sans-serif;
+        background: var(--ac);
+        cursor: pointer;
+        box-shadow: none;
+      }
+      .astra-login__forgot {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        font: 500 12.5px/1.3 "Inter", sans-serif;
+        color: var(--ac);
+        cursor: pointer;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body class="dark">
+    <div class="astra-login" data-testid="astra-login">
+      <aside class="astra-login__panel" aria-hidden="true">
+        <p class="astra-login__eyebrow">ASTRA CRM</p>
+        <h2 class="astra-login__headline">
+          Every lead, deal and customer conversation in one place.
+        </h2>
+        <ul class="astra-login__features">
+          <li>
+            <span class="astra-login__feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </span>
+            <div>
+              <strong>Start with your day</strong>
+              <span>Due tasks, response deadlines and quiet leads, ranked for you.</span>
+            </div>
+          </li>
+          <li>
+            <span class="astra-login__feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </span>
+            <div>
+              <strong>Stages your team defines</strong>
+              <span>Pipeline stages come from Settings, so boards and paths update on their own.</span>
+            </div>
+          </li>
+          <li>
+            <span class="astra-login__feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            <div>
+              <strong>Calls and messages through Astra Connect</strong>
+              <span>Call outcomes and summaries land on the record automatically.</span>
+            </div>
+          </li>
+        </ul>
+      </aside>
+
+      <div class="astra-login__form-pane">
+        <div class="astra-login__card">
+          <div class="astra-login__head">
+            <img
+              class="astra-login-logo"
+              src="./astra-crm-logo-on-dark.png"
+              alt="Astra CRM"
+              height="28"
+            />
+            <h1>Sign in</h1>
+            <p class="astra-login__sub">
+              Use your work email. Your admin manages access.
+            </p>
+          </div>
+          <form class="astra-login__form" onsubmit="return false">
+            <div class="astra-login__field">
+              <label class="astra-login__label" for="login_email">Work email</label>
+              <input
+                id="login_email"
+                type="email"
+                value="rohan.mehta@example.in"
+                autocomplete="username"
+                autofocus
+              />
+            </div>
+            <div class="astra-login__field">
+              <div class="astra-login__label-row">
+                <label class="astra-login__label" for="login_password">Password</label>
+                <button type="button" class="astra-login__forgot">Forgot password?</button>
+              </div>
+              <div class="astra-login__password">
+                <input
+                  id="login_password"
+                  type="password"
+                  value="password123"
+                  autocomplete="current-password"
+                />
+                <button type="button" class="astra-login__toggle" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <button class="btn-primary" type="submit">Sign in</button>
+          </form>
+          <p class="astra-login__lockout" role="note">
+            <span class="astra-login__lock-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            Too many failed attempts locks the account for a short time. Ask your admin if you are locked out.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

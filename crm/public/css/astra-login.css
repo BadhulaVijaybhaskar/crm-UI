@@ -23,27 +23,14 @@
   font-display: swap;
   src: url("/assets/crm/fonts/Inter-600.woff2") format("woff2");
 }
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/assets/crm/fonts/Inter-600.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url("/assets/crm/fonts/Inter-600.woff2") format("woff2");
-}
+/* No separate 700/800 faces — match Vue (astra-theme only ships 400/500/600). */
 
 :root {
   --ac: #0a7393;
   --acm: #08627e;
   --ac2: #0e8f83;
   --astra-bg: #f3f6f8;
-  --astra-form-bg: #f8f9fb;
+  --astra-form-bg: #f3f6f8;
   --astra-surface: #ffffff;
   --astra-text: #0b1324;
   --astra-muted: #5b6478;
@@ -64,7 +51,7 @@ body.dark {
   --acm: #62c8e2;
   --ac2: #2dd4bf;
   --astra-bg: #081218;
-  --astra-form-bg: #0b1117;
+  --astra-form-bg: #081218;
   --astra-surface: #0d1a22;
   --astra-text: #e6eef2;
   --astra-muted: #97a9b4;
@@ -84,7 +71,7 @@ body.dark {
     --acm: #62c8e2;
     --ac2: #2dd4bf;
     --astra-bg: #081218;
-    --astra-form-bg: #0b1117;
+    --astra-form-bg: #081218;
     --astra-surface: #0d1a22;
     --astra-text: #e6eef2;
     --astra-muted: #97a9b4;
@@ -99,10 +86,20 @@ body.dark {
   }
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
   background: var(--astra-form-bg) !important;
   color: var(--astra-text);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
 }
 
 /* Hide website chrome on login */
@@ -143,7 +140,7 @@ body {
 
 .astra-login__eyebrow {
   margin: 0;
-  font: 700 11px/1.3 "Inter", sans-serif;
+  font: 600 11px/1.3 "Inter", sans-serif;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ac2);
@@ -152,8 +149,14 @@ body {
 .astra-login__headline {
   margin: 0;
   max-width: 22ch;
-  font: 700 32px/1.2 "Inter", sans-serif;
+  font-family: "Inter", "Noto Sans Telugu", "Noto Sans Devanagari", ui-sans-serif,
+    system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.2;
   letter-spacing: -0.02em;
+  font-feature-settings: "cv11", "ss01";
   color: #fff;
 }
 
@@ -174,9 +177,12 @@ body {
 
 .astra-login__feature-icon {
   flex: 0 0 28px;
+  width: 28px;
   height: 28px;
   display: grid;
   place-items: center;
+  border-radius: 8px;
+  background: #0f2a36;
   color: var(--ac2);
 }
 
@@ -196,14 +202,15 @@ body {
 /* Card / form — Frappe section classes kept for login.js */
 .astra-login .page-card,
 .astra-login__card {
-  width: min(100%, 400px) !important;
+  width: min(100%, 380px) !important;
   margin: 0 auto !important;
-  padding: 8px 0 0 !important;
+  padding: 0 !important;
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   color: var(--astra-text) !important;
+  box-sizing: border-box !important;
 }
 
 .astra-login__head {
@@ -214,7 +221,7 @@ body {
 .astra-login__head h1,
 .astra-login__head h4 {
   margin: 20px 0 6px !important;
-  font: 700 28px/1.2 "Inter", sans-serif !important;
+  font: 600 28px/1.2 "Inter", sans-serif !important;
   letter-spacing: -0.02em;
   color: var(--astra-text) !important;
 }
@@ -253,6 +260,17 @@ body.dark .astra-login-logo--dark {
 
 .astra-login .form-group {
   margin-bottom: 16px;
+}
+
+.astra-login .page-card-body,
+.astra-login .page-card-actions {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.astra-login .btn-sm {
+  padding: 0 !important;
+  line-height: 1.3 !important;
 }
 
 .astra-login label.form-label,
@@ -295,6 +313,10 @@ body.dark .astra-login-logo--dark {
 .astra-login input[type="email"],
 .astra-login input[type="password"],
 .astra-login input[type="text"] {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
   min-height: 40px !important;
   height: 40px !important;
   border-radius: 8px !important;
@@ -304,6 +326,7 @@ body.dark .astra-login-logo--dark {
   padding: 0 12px !important;
   font: 400 13px/1.45 "Inter", sans-serif !important;
   box-shadow: none !important;
+  margin: 0 !important;
 }
 
 .astra-login .form-control:focus,
@@ -322,9 +345,19 @@ body.dark .astra-login-logo--dark {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
   font-size: 12px;
   color: var(--astra-muted);
   cursor: pointer;
+  line-height: 0;
+}
+
+.astra-login .password-field .form-control,
+.astra-login .password-field input {
+  padding-right: 36px !important;
 }
 
 .astra-login .field-icon {
@@ -336,6 +369,8 @@ body.dark .astra-login-logo--dark {
 .astra-login .btn-login-with-email-link,
 .astra-login .btn-primary,
 .astra-login button[type="submit"] {
+  display: block !important;
+  width: 100% !important;
   border: 0 !important;
   border-radius: 8px !important;
   color: var(--astra-primary-fg) !important;
@@ -345,6 +380,7 @@ body.dark .astra-login-logo--dark {
   background: var(--ac) !important;
   background-image: none !important;
   box-shadow: none !important;
+  cursor: pointer;
 }
 
 .astra-login .btn-login:hover,

@@ -8,11 +8,11 @@
  *
  * Nothing here is imported by production src/.
  *
- * Shell pass criterion: attributable shell real % ≈ 0, where
- *   attributable = max(0, vue↔png_shell − sourceHtml↔png_shell)
- * The Figma MCP capture PNGs are not Chrome pixels; even identical capture
- * HTML retains a small shell floor vs the PNG. Subtracting that floor isolates
- * Vue shell deltas the shell agent owns.
+ * Pass bar (per screen × theme):
+ *   (a) real % vs source HTML (p-*.html in Chrome) ≈ 0  (ε = 0.05%)
+ *   (b) real % vs Figma PNG ≤ floor (sourceHtml↔PNG), ~0.75% typical
+ *
+ * Floor = sourceHtml re-rendered in Chrome ↔ Figma PNG (MCP rasterisation noise).
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -28,10 +28,16 @@ import { clockInitScript } from './lib/clock.js'
 import {
   installParityMocks,
   sessionInitScript,
+  guestSessionInitScript,
   themeInitScript,
 } from './lib/mocks.js'
-import { compareImages, shellRealPercent } from './lib/diff.js'
+import { compareImages, realPercent } from './lib/diff.js'
 import { screenshotSourceHtml } from './lib/sourceShot.js'
+
+/** ε for mode (a): Vue must match source HTML within this real %. */
+const HTML_PASS_EPS = 0.05
+/** Soft ceiling when floor is missing — ~0.75% typical MCP noise. */
+const PNG_FLOOR_FALLBACK = 0.75
 
 function usage() {
   console.error(`Usage: yarn parity <screen-id>
@@ -74,7 +80,11 @@ async function runTheme({ screen, theme, origin, browser }) {
   const page = await context.newPage()
 
   await page.addInitScript(clockInitScript(PARITY_CLOCK))
-  await page.addInitScript(sessionInitScript('priya.nair@example.com'))
+  await page.addInitScript(
+    screen.guest
+      ? guestSessionInitScript()
+      : sessionInitScript('priya.nair@example.com'),
+  )
   await page.addInitScript(themeInitScript(theme))
 
   await installParityMocks(page, { fixture: screen.fixture || screen.id })
@@ -82,6 +92,22 @@ async function runTheme({ screen, theme, origin, browser }) {
   const url = `${origin}${screen.route}`
   await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {})
   await page.waitForTimeout(1500)
+
+  // Optional field fills (e.g. Figma sample email/password on login)
+  if (screen.fills) {
+    for (const [selector, value] of Object.entries(screen.fills)) {
+      const loc = page.locator(selector).first()
+      if ((await loc.count()) > 0) {
+        await loc.fill(String(value))
+      }
+    }
+    // Match Figma capture: email field focused with primary ring
+    const email = page.locator('#login_email').first()
+    if ((await email.count()) > 0) {
+      await email.focus()
+    }
+  }
+
   await page.evaluate(async () => {
     if (document.fonts?.ready) await document.fonts.ready
   })
@@ -117,11 +143,12 @@ async function runTheme({ screen, theme, origin, browser }) {
     shellRegions: screen.shellRegions || [],
   })
 
-  // Source HTML floor (same engine) — isolates Vue shell deltas from MCP PNG noise
-  let shellSourceFloorPct = null
-  let shellAttributablePct = result.shellRealPct
+  // Mode (a)+(b): render source HTML as second reference
+  let realVsHtmlPct = null
+  let floorPct = null
+  let srcPath = null
   if (screen.sourceHtml?.[theme]) {
-    const srcPath = path.join(
+    srcPath = path.join(
       PATHS.artifacts,
       `_tmp-${screen.id}-${theme}-source.png`,
     )
@@ -132,19 +159,42 @@ async function runTheme({ screen, theme, origin, browser }) {
       viewport: screen.viewport,
       outPath: srcPath,
     })
-    shellSourceFloorPct = shellRealPercent(
-      srcPath,
-      figmaPath,
-      screen.shellRegions || [],
+    // (a) Vue built ↔ source HTML (same engine) — must be ~0
+    realVsHtmlPct = realPercent(shotPath, srcPath, masks)
+    // Floor: source HTML ↔ Figma PNG
+    floorPct = realPercent(srcPath, figmaPath, masks)
+    // Keep HTML↔Vue diff artifact for debugging
+    const htmlTriplet = path.join(
+      PATHS.artifacts,
+      `${screen.id}-${theme}-vs-html.png`,
     )
-    shellAttributablePct = Math.max(0, result.shellRealPct - shellSourceFloorPct)
-    try {
-      fs.unlinkSync(srcPath)
-    } catch {
-      /* keep */
-    }
+    compareImages({
+      builtPath: shotPath,
+      figmaPath: srcPath,
+      outTripletPath: htmlTriplet,
+      masks,
+      shellRegions: [],
+    })
   }
 
+  const realVsPngPct = result.realPct
+  const floorLimit = floorPct != null ? floorPct : PNG_FLOOR_FALLBACK
+  const passA = realVsHtmlPct != null ? realVsHtmlPct <= HTML_PASS_EPS : false
+  const passB = realVsPngPct <= floorLimit + HTML_PASS_EPS
+  const pass = passA && passB
+
+  // Legacy shell metrics (still useful for shell-owned crops)
+  let shellSourceFloorPct = floorPct
+  let shellAttributablePct =
+    floorPct != null
+      ? Math.max(0, result.shellRealPct - floorPct)
+      : result.shellRealPct
+
+  try {
+    if (srcPath) fs.unlinkSync(srcPath)
+  } catch {
+    /* keep */
+  }
   try {
     fs.unlinkSync(shotPath)
   } catch {
@@ -155,9 +205,27 @@ async function runTheme({ screen, theme, origin, browser }) {
     screen: screen.id,
     theme,
     ...result,
+    realVsHtmlPct,
+    realVsPngPct,
+    floorPct,
+    pass,
+    passA,
+    passB,
     shellSourceFloorPct,
     shellAttributablePct,
     masked: masks.map((m) => m.name),
+    remaining: pass
+      ? '—'
+      : [
+          !passA
+            ? `real vs HTML ${fmt(realVsHtmlPct)} > ${HTML_PASS_EPS}%`
+            : null,
+          !passB
+            ? `real vs PNG ${fmt(realVsPngPct)} > floor ${fmt(floorLimit)}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join('; '),
   }
 }
 
@@ -168,12 +236,12 @@ function fmt(pct) {
 
 function printTable(rows) {
   const lines = [
-    '| screen | theme | raw % | real % (1px/0.1) | shell real % | shell floor (src HTML) | shell attributable % | masked | triplet |',
-    '|---|---|---:|---:|---:|---:|---:|---|---|',
+    '| screen | theme | real vs HTML % | real vs PNG % | floor % | pass | masked | remaining |',
+    '|---|---|---:|---:|---:|---|---|---|',
   ]
   for (const r of rows) {
     lines.push(
-      `| ${r.screen} | ${r.theme} | ${fmt(r.rawPct)} | ${fmt(r.realPct)} | ${fmt(r.shellRealPct)} | ${fmt(r.shellSourceFloorPct)} | ${fmt(r.shellAttributablePct)} | ${(r.masked || []).join('; ') || '—'} | \`${r.tripletPath}\` |`,
+      `| ${r.screen} | ${r.theme} | ${fmt(r.realVsHtmlPct)} | ${fmt(r.realVsPngPct)} | ${fmt(r.floorPct)} | ${r.pass ? 'yes' : 'no'} | ${(r.masked || []).join('; ') || '—'} | ${r.remaining || '—'} |`,
     )
   }
   return lines.join('\n')
@@ -222,7 +290,7 @@ async function main() {
       })
       results.push(row)
       console.log(
-        `[parity] ${screen.id}/${theme}: raw=${fmt(row.rawPct)} real=${fmt(row.realPct)} shell=${fmt(row.shellRealPct)} floor=${fmt(row.shellSourceFloorPct)} attributable=${fmt(row.shellAttributablePct)}`,
+        `[parity] ${screen.id}/${theme}: vsHtml=${fmt(row.realVsHtmlPct)} vsPng=${fmt(row.realVsPngPct)} floor=${fmt(row.floorPct)} pass=${row.pass}`,
       )
     } finally {
       await browser.close()
@@ -233,7 +301,7 @@ async function main() {
   const report = {
     clock: PARITY_CLOCK,
     generatedAt: new Date().toISOString(),
-    note: 'shell attributable % = max(0, shell real vs PNG − source-HTML vs PNG). Figma MCP PNGs are not Chrome pixels.',
+    note: 'Pass: (a) real vs source HTML ≤ 0.05%; (b) real vs PNG ≤ floor (sourceHtml↔PNG).',
     results,
   }
   const jsonPath = path.join(PATHS.artifacts, `${screenId}-report.json`)
@@ -246,13 +314,12 @@ async function main() {
     '',
     printTable(results),
     '',
-    '## Notes',
+    '## Pass bar',
     '',
-    '- Full-page mask: only the design-only **Example data** tag box.',
-    '- **shell real %** crops nav (240×960) + app bar (1200×52) vs the Figma PNG.',
-    '- **shell floor** is the same crop of the capture HTML re-rendered in Chrome vs the PNG (Figma MCP rasterisation noise).',
-    '- **shell attributable %** = max(0, shell real − floor). Shell agent target: 0%.',
-    '- Page-content differences remain until screen agents restyle list/record pages.',
+    '- **(a) real vs HTML %** — Vue build ↔ `p-*.html` in Chrome (same viewport/fixtures/clock). Target: **0%**.',
+    '- **(b) real vs PNG %** — Vue build ↔ Figma PNG. Must be **≤ floor** (~0.75% MCP noise).',
+    '- **floor %** — source HTML ↔ Figma PNG (same engine as Vue).',
+    '- Full-page mask: only the design-only **Example data** tag (login has none).',
     '',
   ].join('\n')
   fs.writeFileSync(mdPath, md)
@@ -260,9 +327,8 @@ async function main() {
   console.log(`Wrote ${jsonPath}`)
   console.log(`Wrote ${mdPath}`)
 
-  // Pass when Vue adds no shell delta beyond the HTML↔PNG floor (ε = 0.05%)
-  const shellFail = results.some((r) => (r.shellAttributablePct ?? r.shellRealPct) > 0.05)
-  process.exit(shellFail ? 1 : 0)
+  const fail = results.some((r) => !r.pass)
+  process.exit(fail ? 1 : 0)
 }
 
 main().catch((err) => {
