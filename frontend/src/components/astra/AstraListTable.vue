@@ -27,7 +27,7 @@
             :key="col.key"
             class="h-crm-th border-b border-crm-border bg-crm-muted px-2.5 text-left text-crm-micro font-semibold text-crm-muted-fg"
             :class="[
-              uppercaseHeaders ? 'uppercase tracking-[0.02em]' : 'normal-case',
+              uppercaseHeaders ? 'uppercase tracking-[0.03em]' : 'normal-case',
               { 'text-right': col.align === 'right' },
             ]"
             :style="col.width ? { width: col.width } : undefined"

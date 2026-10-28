@@ -29,7 +29,8 @@
               :src="row.lead_name?.image"
               size="md"
             />
-            <div class="tx flex min-w-0 flex-col leading-[1.3]">
+            <!-- PNG name/org baseline sits ~1px lower than Chromium -->
+            <div class="tx flex min-w-0 translate-y-px flex-col leading-[1.3]">
               <span
                 class="truncate text-[12.5px] font-semibold leading-[1.3] text-crm-fg"
               >
@@ -369,7 +370,8 @@ defineExpose({
 .astra-leads-table :deep(th) {
   height: 34px;
   padding: 0 10px;
-  letter-spacing: 0.02em;
+  /* PNG uppercase caps track slightly wider than tight 0.02em */
+  letter-spacing: 0.03em;
   font-size: 11.5px;
   font-weight: 600;
 }
@@ -409,27 +411,35 @@ defineExpose({
 .astra-leads-table :deep(th:nth-child(5)),
 .astra-leads-table :deep(td:nth-child(5)) {
   width: 197px;
+  /* Shift-sim: SLA ink −1px vs PNG */
+  padding-left: 9px;
 }
 .astra-leads-table :deep(th:nth-child(6)),
 .astra-leads-table :deep(td:nth-child(6)) {
   width: 67px;
+  /* Score/Source/Owner/Activity sit ~2–3px right of PNG */
+  padding-left: 8px;
 }
 .astra-leads-table :deep(th:nth-child(7)),
 .astra-leads-table :deep(td:nth-child(7)) {
   width: 108px;
+  padding-left: 8px;
 }
 .astra-leads-table :deep(th:nth-child(8)),
 .astra-leads-table :deep(td:nth-child(8)) {
   width: 73px;
+  padding-left: 8px;
 }
 .astra-leads-table :deep(th:nth-child(9)),
 .astra-leads-table :deep(td:nth-child(9)) {
-  /* −2px pulls Created onto PNG ink (~1332) */
   width: 158px;
+  padding-left: 8px;
 }
 .astra-leads-table :deep(th:nth-child(10)),
 .astra-leads-table :deep(td:nth-child(10)) {
   width: 91px;
+  /* Shift-sim: Created ink −2px vs PNG (~1332) */
+  padding-left: 8px;
 }
 .astra-leads-table :deep(td.bg-crm-row-selected) {
   background: var(--crm-row-selected);

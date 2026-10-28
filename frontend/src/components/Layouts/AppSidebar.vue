@@ -186,7 +186,7 @@
           </nav>
 
           <div
-            class="flex items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-4 py-3.5"
+            class="flex -translate-x-px items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-4 py-3.5"
             :class="isCollapsed && 'justify-center px-0'"
           >
             <AstraAvatar
