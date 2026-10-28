@@ -23,7 +23,7 @@
       />
     </div>
 
-    <!-- Funnel -->
+    <!-- Funnel — centered taper (Figma PNG); label left, value right -->
     <div v-if="kind === 'funnel'" class="mt-2.5 flex min-h-0 flex-1 flex-col gap-1.5">
       <div
         v-for="(step, i) in funnelSteps"
@@ -33,7 +33,7 @@
         <span class="truncate text-[color:var(--crm-fg,#0b1324)]">{{
           step.label
         }}</span>
-        <div class="min-w-0">
+        <div class="flex min-w-0 justify-center">
           <div
             class="h-5 rounded"
             :style="{
@@ -218,16 +218,17 @@ import LucideEllipsis from '~icons/lucide/ellipsis'
 import LucideGripVertical from '~icons/lucide/grip-vertical'
 import { computed } from 'vue'
 
+/** Figma PNG funnel palette (centered taper) — PNG wins over HTML c2/c3/…. */
 const FUNNEL_COLORS = [
-  'var(--crm-c2)',
-  'var(--crm-c3)',
-  'var(--crm-c5)',
+  'var(--crm-c6)',
   'var(--crm-c4)',
-  'var(--crm-success)',
+  'var(--crm-c2)',
+  'var(--crm-c5)',
+  'var(--crm-c3)',
 ]
 
-/** Design funnel widths (not raw value proportions) — Figma / HTML agree. */
-const FUNNEL_WIDTHS = [100, 72, 48, 32, 18]
+/** Measured from Figma PNG bar spans (relative to top bar). */
+const FUNNEL_WIDTHS = [100, 40, 14, 10, 10]
 
 const props = defineProps({
   title: { type: String, default: '' },

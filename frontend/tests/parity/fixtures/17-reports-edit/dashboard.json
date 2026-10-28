@@ -116,11 +116,11 @@
         "data": {
           "subtitle": "· this quarter",
           "steps": [
-            { "label": "Leads", "value": 420, "width": 100, "color": "var(--crm-c2)" },
-            { "label": "Qualified", "value": 168, "width": 72, "color": "var(--crm-c3)" },
-            { "label": "Deals", "value": 62, "width": 48, "color": "var(--crm-c5)" },
-            { "label": "Proposal", "value": 31, "width": 32, "color": "var(--crm-c4)" },
-            { "label": "Won", "value": 14, "width": 18, "color": "var(--crm-success)" }
+            { "label": "Leads", "value": 420, "width": 100, "color": "var(--crm-c6)" },
+            { "label": "Qualified", "value": 168, "width": 40, "color": "var(--crm-c4)" },
+            { "label": "Deals", "value": 62, "width": 14, "color": "var(--crm-c2)" },
+            { "label": "Proposal", "value": 31, "width": 10, "color": "var(--crm-c5)" },
+            { "label": "Won", "value": 14, "width": 10, "color": "var(--crm-c3)" }
           ],
           "footer": "Lead to won 3.3% · median 38 days"
         }
