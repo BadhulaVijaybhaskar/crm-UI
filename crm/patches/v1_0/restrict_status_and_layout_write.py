@@ -23,7 +23,6 @@ def execute():
 def _set_role_perms(doctype: str, role: str, flags: dict):
 	if not frappe.db.exists("DocType", doctype):
 		return
-	name = frappe.db.get_value("DocPerm", {"parent": doctype, "role": role, "permlevel": 0})
 	values = {
 		"create": 0,
 		"write": 0,
@@ -33,9 +32,14 @@ def _set_role_perms(doctype: str, role: str, flags: dict):
 		"amend": 0,
 		**flags,
 	}
-	if name:
-		frappe.db.set_value("DocPerm", name, values)
-	else:
-		doc = frappe.get_doc("DocType", doctype)
-		doc.append("permissions", {"role": role, "permlevel": 0, **values})
-		doc.save(ignore_permissions=True)
+	# Custom DocPerm replaces DocPerm for the whole DocType, so a site that
+	# customized permissions keeps Sales User write unless this row is updated too.
+	for perm_doctype in ("DocPerm", "Custom DocPerm"):
+		name = frappe.db.get_value(perm_doctype, {"parent": doctype, "role": role, "permlevel": 0})
+		if name:
+			frappe.db.set_value(perm_doctype, name, values)
+		elif perm_doctype == "DocPerm":
+			doc = frappe.get_doc("DocType", doctype)
+			doc.append("permissions", {"role": role, "permlevel": 0, **values})
+			doc.save(ignore_permissions=True)
+	frappe.clear_cache(doctype=doctype)
