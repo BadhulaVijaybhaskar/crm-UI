@@ -19,8 +19,8 @@
         "name": "CALL-MI1",
         "creation": "2026-10-26 16:20:00",
         "start_time": "2026-10-26 16:20:00",
-        "outcome": "Callback requested. \"Send per-school pricing before Thursday.\"",
-        "call_summary": "Callback requested. \"Send per-school pricing before Thursday.\"",
+        "outcome": "Callback requested. “Send per-school pricing before Thursday.”",
+        "call_summary": "Callback requested. “Send per-school pricing before Thursday.”",
         "status": "Completed",
         "type": "Outgoing"
       },
