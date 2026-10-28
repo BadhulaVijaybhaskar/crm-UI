@@ -44,12 +44,41 @@ def process_event(event_doc) -> dict[str, Any]:
 	raw_type = (event_doc.event_type or payload.get("type") or payload.get("event") or "").strip()
 	event_type = ALIAS_EVENTS.get(raw_type, raw_type)
 	data = _event_data(payload)
+	source_ts = _resolve_event_source_ts(event_doc, data)
 
 	if event_type == "lead.created":
 		return process_lead_created(data)
 	if event_type in ("call.completed", "employee.call.completed"):
-		return process_call_completed(data, employee_enriched=(event_type == "employee.call.completed"))
+		return process_call_completed(
+			data,
+			employee_enriched=(event_type == "employee.call.completed"),
+			source_ts=source_ts,
+		)
 	raise ProcessingError(_("Unsupported event type: {0}").format(raw_type or "-"))
+
+
+def _resolve_event_source_ts(event_doc, data: dict):
+	"""Source timestamp for out-of-order guards: payload times, else event.source_timestamp."""
+	for key in (
+		"occurredAt",
+		"occurred_at",
+		"endedAt",
+		"ended_at",
+		"createdAt",
+		"created_at",
+		"startedAt",
+		"started_at",
+	):
+		raw = data.get(key)
+		if raw in (None, ""):
+			continue
+		dt = _naive_site_datetime(raw)
+		if dt is not None:
+			return dt
+	stored = getattr(event_doc, "source_timestamp", None)
+	if stored:
+		return _naive_site_datetime(stored) or stored
+	return None
 
 
 def process_lead_created(data: dict) -> dict[str, Any]:
@@ -117,14 +146,17 @@ def process_lead_created(data: dict) -> dict[str, Any]:
 	}
 
 
-def process_call_completed(data: dict, *, employee_enriched: bool = False) -> dict[str, Any]:
+def process_call_completed(
+	data: dict, *, employee_enriched: bool = False, source_ts=None
+) -> dict[str, Any]:
 	"""Upsert CRM Call Log from call.completed / employee.call.completed.
 
 	Matching is by phone (contactId is Connect's id — not a CRM leadId). Ambiguous
 	phone matches fail the event with a clear error.
 
 	Idempotent under UNIQUE(CRM Call Log.id) and UNIQUE(FCRM Note.astra_call_id).
-	Retry/rollback lives in the inbox worker — no GET_LOCK / savepoints here.
+	Summary / note text only update when ``source_ts`` is newer or equal to the
+	stored ``astra_source_ts`` (out-of-order deliveries do not regress content).
 	"""
 	call_id = _first_str(data, "callId", "call_id")
 	if not call_id:
@@ -141,6 +173,9 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 	channel = _normalize_channel(data.get("channel"))
 	ended_at = data.get("endedAt") or data.get("ended_at")
 	fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+	incoming_ts = source_ts or _naive_site_datetime(ended_at) or _naive_site_datetime(
+		data.get("occurredAt") or data.get("occurred_at")
+	)
 
 	# employee.call.completed extras
 	started_at = data.get("startedAt") or data.get("started_at")
@@ -184,6 +219,8 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 		call_log = frappe.new_doc("CRM Call Log")
 		call_log.id = call_id
 
+	apply_summary = _should_apply_source(call_log.get("astra_source_ts"), incoming_ts)
+
 	owner = get_connect_integration_user()
 	call_log.owner = owner
 	call_log.type = direction
@@ -219,11 +256,15 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 	call_log.outcome = outcome_raw
 	call_log.disposition = disposition
 	call_log.qualified = 1 if qualified else 0
-	call_log.call_summary = _compose_summary(summary, fields)
+	composed = _compose_summary(summary, fields)
+	if apply_summary:
+		call_log.call_summary = composed
+		if incoming_ts is not None and frappe.db.has_column("CRM Call Log", "astra_source_ts"):
+			call_log.astra_source_ts = incoming_ts
 	call_log.ai_employee_id = ai_employee_id
 	call_log.channel = channel
 	call_log.astra_contact_id = contact_id
-	if transcript is not None:
+	if transcript is not None and apply_summary:
 		call_log.transcript = _format_transcript(transcript)
 
 	call_log.reference_doctype = match["doctype"]
@@ -237,13 +278,17 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 		call_log.link_with_reference_doc("Contact", match["contact"])
 
 	note_name = None
-	if call_log.call_summary:
+	summary_for_note = call_log.call_summary if apply_summary else None
+	if not summary_for_note and apply_summary and composed:
+		summary_for_note = composed
+	if summary_for_note:
 		note = _upsert_call_summary_note(
 			call_log,
 			call_id=call_id,
 			match=match,
 			owner=owner,
-			summary=call_log.call_summary,
+			summary=summary_for_note,
+			source_ts=incoming_ts,
 		)
 		note_name = note.name
 		if call_log.note != note.name:
@@ -252,6 +297,8 @@ def process_call_completed(data: dict, *, employee_enriched: bool = False) -> di
 			_save_call_log(call_log)
 		elif note.name:
 			call_log.link_with_reference_doc("FCRM Note", note.name)
+	elif call_log.note:
+		note_name = call_log.note
 
 	task_name = None
 	if next_action:
@@ -448,11 +495,28 @@ def _map_call_status(value: str | None) -> str:
 	return mapping.get(v, "Completed")
 
 
-def _upsert_call_summary_note(call_log, *, call_id: str, match: dict, owner: str, summary: str):
-	"""One summary note per call — keyed on UNIQUE FCRM Note.astra_call_id."""
+def _should_apply_source(existing_ts, incoming_ts) -> bool:
+	"""True when incoming source timestamp is missing, new, or >= stored."""
+	if incoming_ts is None or existing_ts in (None, ""):
+		return True
+	try:
+		return get_datetime(incoming_ts) >= get_datetime(existing_ts)
+	except Exception:
+		return True
+
+
+def _upsert_call_summary_note(
+	call_log, *, call_id: str, match: dict, owner: str, summary: str, source_ts=None
+):
+	"""One summary note per call — keyed on UNIQUE FCRM Note.astra_call_id.
+
+	Content updates only when ``source_ts`` is newer or equal to the note's
+	``astra_source_ts``.
+	"""
 	title = _("Call summary ({0})").format(call_id)
 	content = f"<p>{frappe.utils.escape_html(summary)}</p>"
 	has_call_key = frappe.db.has_column("FCRM Note", "astra_call_id")
+	has_source = frappe.db.has_column("FCRM Note", "astra_source_ts")
 
 	note_name = call_log.note
 	if not note_name and has_call_key:
@@ -470,6 +534,8 @@ def _upsert_call_summary_note(call_log, *, call_id: str, match: dict, owner: str
 
 	if note_name and frappe.db.exists("FCRM Note", note_name):
 		note = frappe.get_doc("FCRM Note", note_name)
+		if not _should_apply_source(note.get("astra_source_ts") if has_source else None, source_ts):
+			return note
 		changed = False
 		if note.content != content:
 			note.content = content
@@ -483,6 +549,9 @@ def _upsert_call_summary_note(call_log, *, call_id: str, match: dict, owner: str
 			changed = True
 		if has_call_key and note.get("astra_call_id") != call_id:
 			note.astra_call_id = call_id
+			changed = True
+		if has_source and source_ts is not None and note.get("astra_source_ts") != source_ts:
+			note.astra_source_ts = source_ts
 			changed = True
 		if changed:
 			note.flags.ignore_permissions = True
@@ -499,6 +568,8 @@ def _upsert_call_summary_note(call_log, *, call_id: str, match: dict, owner: str
 	}
 	if has_call_key:
 		note_dict["astra_call_id"] = call_id
+	if has_source and source_ts is not None:
+		note_dict["astra_source_ts"] = source_ts
 	note = frappe.get_doc(note_dict)
 	try:
 		note.insert(ignore_permissions=True)
@@ -516,10 +587,14 @@ def _upsert_call_summary_note(call_log, *, call_id: str, match: dict, owner: str
 		if not winner:
 			raise
 		note = frappe.get_doc("FCRM Note", winner)
+		if not _should_apply_source(note.get("astra_source_ts") if has_source else None, source_ts):
+			return note
 		note.content = content
 		note.title = title
 		note.reference_doctype = match["doctype"]
 		note.reference_docname = match["name"]
+		if has_source and source_ts is not None:
+			note.astra_source_ts = source_ts
 		note.flags.ignore_permissions = True
 		note.save(ignore_permissions=True)
 	return note
