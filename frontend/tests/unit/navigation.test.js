@@ -47,11 +47,11 @@ describe('navigationItems', () => {
     }
   })
 
-  it('hides Activities and Reports until their feature flags flip', () => {
-    expect(NAV_FEATURE_READY.Activities).toBe(false)
+  it('shows Activities when ready and still hides Reports', () => {
+    expect(NAV_FEATURE_READY.Activities).toBe(true)
     expect(NAV_FEATURE_READY.Reports).toBe(false)
     const labels = getNavigationItems().map((item) => item.label)
-    expect(labels).not.toContain('Activities')
+    expect(labels).toContain('Activities')
     expect(labels).not.toContain('Reports')
   })
 

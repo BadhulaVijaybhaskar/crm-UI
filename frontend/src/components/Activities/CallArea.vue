@@ -75,7 +75,25 @@
           :label="getCallStatusLabel(call.status, call.type)"
           :theme="statusColorMap[call.status]"
         />
+        <Badge
+          v-if="call.outcome"
+          :label="call.outcome"
+          theme="blue"
+          variant="subtle"
+        />
+        <Badge
+          v-if="call.qualified"
+          :label="__('Qualified')"
+          theme="green"
+          variant="subtle"
+        />
       </div>
+      <p
+        v-if="call.call_summary"
+        class="mt-1 line-clamp-2 text-p-sm text-ink-gray-6"
+      >
+        {{ call.call_summary }}
+      </p>
       <div
         v-if="
           call.show_recording &&
