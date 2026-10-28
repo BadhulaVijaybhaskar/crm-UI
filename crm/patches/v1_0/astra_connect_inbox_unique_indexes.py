@@ -1,11 +1,10 @@
-"""Dedupe Connect inbox / note rows, then ensure unique indexes for the redesign.
+"""Dedupe Connect inbox / note rows, commit, then add unique indexes if missing.
 
-Indexes:
-  - ``tabAstra Connect Event.event_id`` (delivery id) — unique
-  - ``tabFCRM Note.astra_call_id`` — unique (NULLs allowed for non-Connect notes)
-  - CRM Call Log.id / name already unique via autoname field:id
+Order matters: never ADD UNIQUE while duplicate values still exist. DocType JSON
+does not mark ``FCRM Note.astra_call_id`` unique so schema sync cannot race this
+patch; uniqueness lives here.
 
-Safe to re-run.
+Safe / idempotent to re-run.
 """
 
 from __future__ import annotations
@@ -14,14 +13,21 @@ import frappe
 
 
 def execute():
+	# 1) Events: dedupe → commit → unique index
 	_dedupe_connect_events()
+	frappe.db.commit()
 	_ensure_unique_index("tabAstra Connect Event", "event_id", "unique_event_id")
 
-	_backfill_and_dedupe_notes()
+	# 2) Notes: backfill → dedupe → commit → unique index
+	_backfill_note_astra_call_ids()
+	_dedupe_notes_by_astra_call_id()
+	frappe.db.commit()
 	if frappe.db.has_column("FCRM Note", "astra_call_id"):
 		_ensure_unique_index("tabFCRM Note", "astra_call_id", "unique_astra_call_id")
 
+	# 3) Call log id (usually already unique via autoname)
 	_ensure_call_log_id_unique()
+	frappe.db.commit()
 
 
 def _table_exists(table: str) -> bool:
@@ -63,16 +69,15 @@ def _dedupe_connect_events() -> None:
 			as_dict=True,
 		)
 		for row in rows[1:]:
-			frappe.delete_doc("Astra Connect Event", row.name, force=True, ignore_permissions=True)
+			frappe.db.sql("DELETE FROM `tabAstra Connect Event` WHERE name = %s", (row.name,))
 
 
-def _backfill_and_dedupe_notes() -> None:
+def _backfill_note_astra_call_ids() -> None:
 	if not _table_exists("tabFCRM Note"):
 		return
 	if not frappe.db.has_column("FCRM Note", "astra_call_id"):
 		return
 
-	# Backfill from CRM Call Log.note → call log name/id.
 	if _table_exists("tabCRM Call Log") and frappe.db.has_column("CRM Call Log", "note"):
 		frappe.db.sql(
 			"""
@@ -95,6 +100,13 @@ def _backfill_and_dedupe_notes() -> None:
 		"""
 	)
 
+
+def _dedupe_notes_by_astra_call_id() -> None:
+	if not _table_exists("tabFCRM Note"):
+		return
+	if not frappe.db.has_column("FCRM Note", "astra_call_id"):
+		return
+
 	dupes = frappe.db.sql(
 		"""
 		SELECT astra_call_id, COUNT(*) AS n
@@ -105,11 +117,15 @@ def _backfill_and_dedupe_notes() -> None:
 		"""
 	)
 	for call_id, _n in dupes:
-		rows = frappe.get_all(
-			"FCRM Note",
-			filters={"astra_call_id": call_id},
-			fields=["name", "modified"],
-			order_by="modified desc",
+		rows = frappe.db.sql(
+			"""
+			SELECT name, modified
+			FROM `tabFCRM Note`
+			WHERE astra_call_id = %s
+			ORDER BY modified DESC
+			""",
+			(call_id,),
+			as_dict=True,
 		)
 		keep = rows[0].name
 		for row in rows[1:]:
@@ -122,7 +138,7 @@ def _backfill_and_dedupe_notes() -> None:
 					""",
 					(keep, row.name),
 				)
-			frappe.delete_doc("FCRM Note", row.name, force=True, ignore_permissions=True)
+			frappe.db.sql("DELETE FROM `tabFCRM Note` WHERE name = %s", (row.name,))
 
 
 def _ensure_call_log_id_unique() -> None:
@@ -133,10 +149,7 @@ def _ensure_call_log_id_unique() -> None:
 	_ensure_unique_index("tabCRM Call Log", "id", "unique_id")
 
 
-def _ensure_unique_index(table: str, column: str, index_name: str) -> None:
-	if not _table_exists(table):
-		return
-
+def _column_has_unique_index(table: str, column: str) -> bool:
 	indexes = frappe.db.sql(
 		f"SHOW INDEX FROM `{table}` WHERE Column_name = %s",
 		(column,),
@@ -144,16 +157,28 @@ def _ensure_unique_index(table: str, column: str, index_name: str) -> None:
 	)
 	for idx in indexes or []:
 		if int(idx.get("Non_unique", 1) or 1) == 0:
-			return
+			return True
+	return False
 
-	try:
-		frappe.db.sql_ddl(f"ALTER TABLE `{table}` DROP INDEX `{index_name}`")
-	except Exception:
-		pass
+
+def _ensure_unique_index(table: str, column: str, index_name: str) -> None:
+	"""Add UNIQUE INDEX only when the column has no unique index yet. Never recreate."""
+	if not _table_exists(table):
+		return
+	if _column_has_unique_index(table, column):
+		return
+
 	try:
 		frappe.db.sql_ddl(f"ALTER TABLE `{table}` ADD UNIQUE INDEX `{index_name}` (`{column}`)")
 	except Exception as exc:
+		msg = str(exc).lower()
+		# Already exists under another name, or raced — treat as success if unique now.
+		if _column_has_unique_index(table, column):
+			return
+		if "duplicate key name" in msg or "1061" in msg:
+			return
 		frappe.log_error(
 			title=f"Astra Connect unique index {table}.{column}",
 			message=str(exc),
 		)
+		raise
