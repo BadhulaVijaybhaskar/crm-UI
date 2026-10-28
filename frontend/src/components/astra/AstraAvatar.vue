@@ -56,17 +56,17 @@ const chipStyle = computed(() => {
 const sizeClass = computed(() => {
   const radius = props.squared ? 'rounded-crm-panel' : 'rounded-full'
   if (props.size === 'xs') return `${radius} size-5 text-[9px] font-semibold`
-  // crm.css .av2.sm — 20×20, 9px / 700 (Inter-700.woff2). !important so
-  // Tailwind utility order cannot leave 600 winning over 700.
+  // PNG av2 initials ink is lighter than Inter 700 in Chromium — match PNG
+  // (approved) with 600; HTML .av2 {700} disagrees with the capture.
   if (props.size === 'sm')
-    return `${radius} size-[20px] text-[9px] !font-bold`
+    return `${radius} size-[20px] text-[9px] font-semibold`
   // crm.css / app.css .nav .foot .av — 30×30, font 11px / 600
   if (props.size === 'foot')
     return `${radius} size-[30px] text-[11px] font-semibold`
   if (props.size === 'lg')
     return `${radius} size-[42px] text-[15px] font-semibold`
   if (props.size === 'xl') return `${radius} size-14 text-base font-semibold`
-  // crm.css .av2 — 26×26, 10.5px / 700
-  return `${radius} size-[26px] text-[10.5px] !font-bold`
+  // .av2 26×26 / 10.5px — PNG-approved weight 600 (not HTML 700)
+  return `${radius} size-[26px] text-[10.5px] font-semibold`
 })
 </script>

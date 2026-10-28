@@ -54,11 +54,11 @@
         </button>
       </slot>
     </div>
-    <!-- app.css .btn gap:7px; .btn font-weight:600 (ghost keeps muted-fg).
-         Shift-sim vs PNG: actions sit ~8–12px too far right → nudge left. -->
+    <!-- app.css .btn gap:7px; .btn font-weight:600. After -8px nudge, shift-sim
+         still prefers ~−2px more → -translate-x-2.5 (10px). -->
     <div
       v-if="$slots.actions || sortLabel"
-      class="-translate-x-2 flex flex-nowrap items-center gap-[7px]"
+      class="-translate-x-2.5 flex flex-nowrap items-center gap-[7px]"
     >
       <button
         v-if="sortLabel"
