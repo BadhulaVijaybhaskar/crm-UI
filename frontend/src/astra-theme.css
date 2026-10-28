@@ -149,6 +149,10 @@ body {
   border-bottom: 1px solid var(--crm-border);
 }
 
+.astra-shell__page-header:empty {
+  display: none;
+}
+
 .astra-shell__content {
   flex: 1;
   min-width: 0;

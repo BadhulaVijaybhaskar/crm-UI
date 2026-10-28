@@ -94,7 +94,7 @@
           },
           {
             "name": "Ready to Close",
-            "count": 2
+            "count": 1
           }
         ]
       },
@@ -161,7 +161,7 @@
         "time_label": "14:00",
         "sub_label": "45 min",
         "badge": "Meeting",
-        "badge_tone": "blue",
+        "badge_tone": "mute",
         "kind": "meeting",
         "due_date": "2026-10-28 14:00:00",
         "starts_on": "2026-10-28 14:00:00",

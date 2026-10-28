@@ -352,6 +352,8 @@ def get_home_summary(period: str | None = None) -> dict:
 			"subtitle": _("{0} new since yesterday").format(leads["new_since_yesterday"])
 			if leads["new_since_yesterday"]
 			else None,
+			"subtitle_tone": "success" if leads["new_since_yesterday"] else None,
+			"delta": leads["new_since_yesterday"],
 		},
 		{
 			"id": "open_pipeline",

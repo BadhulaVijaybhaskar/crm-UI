@@ -1,19 +1,20 @@
 <template>
   <div class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
     <div class="min-h-0 flex-1 overflow-y-auto">
-      <header
-        class="flex flex-wrap items-start justify-between gap-3 px-crm-page-x pb-3.5 pt-[18px]"
-      >
+      <header class="flex items-center gap-3 px-crm-page-x pb-3.5 pt-[19px]">
         <div class="min-w-0">
-          <h1 class="m-0 text-crm-page font-semibold tracking-crm-tight text-crm-fg">
+          <h1
+            class="m-0 text-[20px] font-semibold leading-[1.45] tracking-crm-tight text-crm-fg"
+          >
             {{ summary.data?.greeting || __('Home') }}
           </h1>
-          <p class="mt-1 text-crm-body text-crm-muted-fg">
+          <p class="m-0 -mt-px text-[13px] leading-[1.45] text-crm-muted-fg">
             {{ dateLabel }}
           </p>
         </div>
+        <div class="flex-1" />
         <div
-          class="inline-flex rounded-crm-control bg-crm-muted p-0.5 shadow-[inset_0_0_0_1px_var(--crm-border)]"
+          class="flex gap-0.5 rounded-crm-control border border-crm-border bg-crm-muted p-[3px]"
           role="group"
           :aria-label="__('Period')"
         >
@@ -21,11 +22,11 @@
             v-for="opt in periodOptions"
             :key="opt.value"
             type="button"
-            class="h-crm-control-sm rounded-[7px] px-3 text-crm-label font-semibold"
+            class="inline-flex h-[26px] items-center rounded-crm-chip px-2.5 text-[12.5px]"
             :class="
               period === opt.value
-                ? 'bg-crm-card text-crm-fg shadow-crm-sm'
-                : 'text-crm-muted-fg'
+                ? 'bg-crm-card font-semibold text-crm-fg shadow-[0_0_0_1px_var(--crm-border)]'
+                : 'font-medium text-crm-muted-fg'
             "
             @click="setPeriod(opt.value)"
           >
@@ -42,217 +43,300 @@
       </div>
 
       <div v-else class="flex flex-col gap-4 px-crm-page-x pb-6">
-        <!-- KPI row -->
         <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <article
             v-for="kpi in visibleKpis"
             :key="kpi.id"
-            class="rounded-crm-panel border border-crm-border bg-crm-card px-3.5 py-3"
+            class="rounded-crm-panel border border-crm-border bg-crm-card px-3.5 pb-[11px] pt-3"
           >
-            <div class="flex items-center gap-1.5 text-crm-meta text-crm-muted-fg">
+            <div
+              class="flex items-center gap-1.5 text-[12px] leading-[1.45] text-crm-muted-fg"
+            >
               <component :is="kpiIcon(kpi.id)" class="size-3.5" aria-hidden="true" />
               <span>{{ kpi.label }}</span>
             </div>
-            <p class="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-crm-fg">
+            <p
+              class="m-0 mt-[5px] text-[24px] font-semibold leading-[1.45] tracking-crm-num text-crm-fg"
+            >
               {{ formatKpiValue(kpi) }}
             </p>
             <p
               v-if="kpiSubtitle(kpi)"
-              class="mt-0.5 text-crm-meta"
-              :class="
-                kpi.subtitle_tone === 'danger'
-                  ? 'font-semibold text-crm-danger'
-                  : 'text-crm-muted-fg'
-              "
+              class="m-0 mt-0.5 text-[11.5px] leading-[1.45] text-crm-muted-fg"
             >
-              {{ kpiSubtitle(kpi) }}
+              <template v-if="kpiLead(kpi)">
+                <span
+                  class="font-semibold"
+                  :class="
+                    kpi.subtitle_tone === 'danger'
+                      ? 'text-crm-danger'
+                      : 'text-crm-success'
+                  "
+                  >{{ kpiLead(kpi) }}</span
+                >{{ kpiSubtitle(kpi).slice(kpiLead(kpi).length) }}
+              </template>
+              <template v-else>{{ kpiSubtitle(kpi) }}</template>
             </p>
           </article>
         </div>
 
-        <!-- Pipeline -->
         <section
           v-if="pipelineGroups.length"
-          class="rounded-crm-panel border border-crm-border bg-crm-card p-3.5"
+          class="rounded-crm-panel border border-crm-border bg-crm-card"
         >
-          <div class="mb-3 flex items-center justify-between gap-2">
-            <h2 class="m-0 text-crm-body font-semibold text-crm-fg">
+          <div
+            class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
+          >
+            <h2 class="m-0 text-crm-panel font-semibold leading-[21.5px] tracking-[-0.005em] text-crm-fg">
               {{ __('Your pipeline') }}
             </h2>
+            <span class="relative top-px text-[12.5px] leading-[1.45] text-crm-muted-fg">
+              {{ __('Grouped by milestone · stages from Settings') }}
+            </span>
+            <div class="flex-1" />
             <router-link
               :to="{ name: 'Deals', params: { viewType: 'kanban' } }"
-              class="text-crm-meta font-semibold text-crm-primary hover:underline"
+              class="relative top-px inline-flex items-center gap-1 text-[12.5px] font-semibold leading-[1.45] text-crm-primary hover:underline"
             >
-              {{ __('Deals board') }} →
+              {{ __('Deals board') }}
+              <LucideChevronRight class="size-3.5" aria-hidden="true" />
             </router-link>
           </div>
-          <div class="flex gap-2 overflow-x-auto pb-1">
+          <div class="flex items-stretch gap-1.5 overflow-x-auto px-4 pb-3.5 pt-3">
             <div
               v-for="group in pipelineGroups"
               :key="group.id"
-              class="min-w-[140px] flex-1 rounded-[9px] border bg-crm-card p-2.5"
+              class="min-w-0 rounded-crm-rail border bg-crm-card px-2.5 pb-2 pt-2"
               :class="
-                group.current
-                  ? 'border-crm-primary shadow-[inset_0_0_0_1px_var(--crm-primary)]'
-                  : 'border-crm-border'
+                group.current ? 'border-crm-primary' : 'border-crm-border'
               "
+              :style="railGroupStyle(group)"
             >
-              <div class="mb-2 flex items-baseline justify-between gap-2">
-                <span
-                  class="text-[10.5px] font-bold uppercase tracking-[0.06em]"
-                  :class="group.current ? 'text-crm-primary' : 'text-crm-muted-fg'"
-                >
-                  {{ group.label }}
+              <div
+                class="mb-1.5 flex items-center gap-1.5 whitespace-nowrap text-crm-caps font-bold uppercase leading-[1.45] tracking-crm-caps"
+                :class="group.current ? 'text-crm-primary' : 'text-crm-muted-fg'"
+              >
+                <span>{{ group.label }}</span>
+                <span class="ml-auto text-[12px] tracking-normal text-crm-fg">
+                  {{ group.count }}
                 </span>
-                <span class="text-crm-caption text-crm-fg">{{ group.count }}</span>
               </div>
-              <div class="flex flex-col gap-1.5">
+              <div class="flex gap-1">
                 <div
                   v-for="stage in group.stages"
                   :key="stage.name"
-                  class="flex items-center justify-between gap-2 text-crm-meta"
+                  class="min-w-0 flex-1"
                 >
-                  <span class="truncate text-crm-muted-fg">{{ stage.name }}</span>
-                  <span class="font-semibold text-crm-fg">{{ stage.count }}</span>
+                  <div class="h-1.5 rounded-[3px]" :class="stageBarClass(group, stage)" />
+                  <div
+                    class="mt-1.5 truncate text-[11.5px] font-semibold leading-[1.45] text-crm-fg"
+                  >
+                    {{ stage.name }}
+                  </div>
+                  <div
+                    class="mt-px whitespace-nowrap text-[11px] leading-[1.45] text-crm-muted-fg"
+                  >
+                    {{ stage.count }}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px]">
-          <!-- Today -->
-          <section
-            v-if="todayItems.length"
-            class="rounded-crm-panel border border-crm-border bg-crm-card"
-          >
+        <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.355fr_1fr]">
+          <section class="rounded-crm-panel border border-crm-border bg-crm-card">
             <div
-              class="flex items-center justify-between gap-2 border-b border-crm-border px-4 py-3"
+              class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
             >
-              <h2 class="m-0 text-crm-body font-semibold text-crm-fg">
+              <h2
+                class="m-0 text-crm-panel font-semibold leading-[21.5px] tracking-[-0.005em] text-crm-fg"
+              >
                 {{ __('Today') }}
               </h2>
+              <span class="relative top-px truncate text-[12.5px] leading-[1.45] text-crm-muted-fg">
+                {{ __('Tasks, calls and meetings on your records') }}
+              </span>
+              <div class="flex-1" />
               <router-link
                 :to="{ name: 'Tasks', params: { viewType: 'list' } }"
-                class="text-crm-meta font-semibold text-crm-primary hover:underline"
+                class="relative top-px inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold leading-[1.45] text-crm-primary hover:underline"
               >
-                {{ __('Open tasks') }} →
+                {{ __('Open tasks') }}
+                <LucideChevronRight class="size-3.5" aria-hidden="true" />
               </router-link>
             </div>
-            <ul class="relative m-0 list-none p-0">
-              <li
-                v-for="item in todayItems"
-                :key="item.name + (item.kind || '')"
-                class="grid grid-cols-[52px_1fr] gap-3 border-b border-crm-border px-4 py-3 last:border-b-0"
-              >
-                <span class="pt-0.5 text-crm-meta font-semibold text-crm-muted-fg">
-                  {{ item.time_label || '—' }}
-                </span>
-                <div class="min-w-0">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="truncate text-crm-label font-semibold text-crm-fg">
-                      {{ item.title }}
-                    </span>
-                    <AstraBadge
-                      :label="item.badge"
-                      :tone="todayBadgeTone(item)"
-                    />
-                  </div>
-                  <p
-                    v-if="item.record_label"
-                    class="mt-0.5 truncate text-crm-meta text-crm-muted-fg"
+            <ul v-if="todayRows.length" class="m-0 list-none p-0">
+              <template v-for="row in todayRows" :key="row.key">
+                <li
+                  v-if="row.now"
+                  class="flex h-[22px] items-center gap-2 border-t border-crm-border pl-[18px] pr-4 text-[11px] font-semibold text-crm-danger first:border-t-0"
+                >
+                  <span class="size-1.5 shrink-0 rounded-full bg-crm-danger" />
+                  <span class="whitespace-nowrap">{{ row.label }}</span>
+                  <span class="h-px flex-1 bg-crm-danger opacity-[.45]" />
+                </li>
+                <li
+                  v-else
+                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 pt-2.5 text-[12.5px] leading-[1.45] first:border-t-0"
+                >
+                  <span
+                    class="w-[52px] shrink-0 text-[12px] font-semibold text-crm-fg"
                   >
-                    {{ item.record_label }}
-                  </p>
-                </div>
-              </li>
+                    {{ row.item.time_label || '—' }}
+                    <span
+                      v-if="todaySubLabel(row.item)"
+                      class="block text-[11px] font-medium text-crm-faint"
+                    >
+                      {{ todaySubLabel(row.item) }}
+                    </span>
+                  </span>
+                  <span
+                    class="flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px]"
+                    :class="
+                      isDone(row.item)
+                        ? 'border-crm-success bg-crm-success text-white'
+                        : 'border-crm-border-strong'
+                    "
+                    aria-hidden="true"
+                  >
+                    <LucideCheck
+                      v-if="isDone(row.item)"
+                      class="size-2.5 [stroke-width:3.5]"
+                    />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div
+                      class="truncate font-semibold"
+                      :class="
+                        isDone(row.item)
+                          ? 'text-crm-muted-fg line-through'
+                          : 'text-crm-fg'
+                      "
+                    >
+                      {{ row.item.title }}
+                    </div>
+                    <div
+                      v-if="row.item.record_label"
+                      class="truncate text-[11.5px] text-crm-muted-fg"
+                    >
+                      {{ row.item.record_label }}
+                    </div>
+                  </div>
+                  <AstraBadge
+                    v-if="row.item.badge"
+                    :label="row.item.badge"
+                    :tone="todayBadgeTone(row.item)"
+                  />
+                </li>
+              </template>
             </ul>
-          </section>
-          <section
-            v-else
-            class="rounded-crm-panel border border-crm-border bg-crm-card"
-          >
-            <div class="border-b border-crm-border px-4 py-3">
-              <h2 class="m-0 text-crm-body font-semibold text-crm-fg">
-                {{ __('Today') }}
-              </h2>
-            </div>
             <AstraEmptyState
+              v-else
               :title="__('Nothing due today')"
               :body="__('Open tasks with a due date will show up here.')"
             />
           </section>
 
           <div class="flex flex-col gap-4">
-            <!-- Response deadlines -->
             <section
               v-if="deadlines.length"
               class="rounded-crm-panel border border-crm-border bg-crm-card"
             >
               <div
-                class="flex items-center justify-between gap-2 border-b border-crm-border px-4 py-3"
+                class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
               >
-                <h2 class="m-0 text-crm-body font-semibold text-crm-fg">
+                <h2
+                  class="m-0 text-crm-panel font-semibold leading-[21.5px] tracking-[-0.005em] text-crm-fg"
+                >
                   {{ __('Response deadlines') }}
                 </h2>
+                <span class="relative top-px truncate text-[12.5px] leading-[1.45] text-crm-muted-fg">
+                  {{ __('SLA on your leads') }}
+                </span>
+                <div class="flex-1" />
                 <router-link
                   :to="{ name: 'Work Queue' }"
-                  class="text-crm-meta font-semibold text-crm-primary hover:underline"
+                  class="relative top-px inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold leading-[1.45] text-crm-primary hover:underline"
                 >
-                  {{ __('Work queue') }} →
+                  {{ __('Work queue') }}
+                  <LucideChevronRight class="size-3.5" aria-hidden="true" />
                 </router-link>
               </div>
               <ul class="m-0 list-none p-0">
                 <li
                   v-for="row in deadlines"
                   :key="row.name"
-                  class="flex items-center gap-2.5 border-b border-crm-border px-4 py-2.5 last:border-b-0"
+                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 pt-2.5 text-[12.5px] leading-[1.45] first:border-t-0"
                 >
-                  <AstraAvatar :name="row.title" size="md" />
+                  <span
+                    class="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-crm-primary-soft text-[10.5px] font-bold text-crm-primary"
+                    aria-hidden="true"
+                  >
+                    {{ initialsFrom(row.title) }}
+                  </span>
                   <div class="min-w-0 flex-1">
-                    <p class="m-0 truncate text-crm-label font-semibold text-crm-fg">
+                    <div class="truncate font-semibold text-crm-fg">
                       {{ row.title }}
-                    </p>
-                    <p class="m-0 truncate text-crm-meta text-crm-muted-fg">
-                      {{ row.kind }}
-                    </p>
+                    </div>
+                    <div class="truncate text-[11.5px] text-crm-muted-fg">
+                      {{ deadlineSubLabel(row) }}
+                    </div>
                   </div>
                   <span
-                    class="shrink-0 text-crm-meta font-semibold"
+                    class="shrink-0 whitespace-nowrap text-[11.5px] font-semibold"
                     :class="
                       row.state === 'overdue' ? 'text-crm-danger' : 'text-crm-warning'
                     "
                   >
-                    {{ row.label }}
+                    {{ deadlineLabel(row) }}
                   </span>
                   <AstraButton
                     v-if="connectReady"
                     size="sm"
                     :label="__('Call')"
                     @click="callLead(row)"
-                  />
+                  >
+                    <template #prefix>
+                      <LucidePhone class="size-3.5" aria-hidden="true" />
+                    </template>
+                    <template #suffix>
+                      <LucideExternalLink class="size-3.5" aria-hidden="true" />
+                    </template>
+                  </AstraButton>
                 </li>
               </ul>
             </section>
 
-            <!-- Recent -->
             <section
               v-if="recentItems.length"
               class="rounded-crm-panel border border-crm-border bg-crm-card"
             >
-              <div class="border-b border-crm-border px-4 py-3">
-                <h2 class="m-0 text-crm-body font-semibold text-crm-fg">
+              <div
+                class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
+              >
+                <h2
+                  class="m-0 text-crm-panel font-semibold leading-[21.5px] tracking-[-0.005em] text-crm-fg"
+                >
                   {{ __('Recent on your records') }}
                 </h2>
+                <div class="flex-1" />
+                <router-link
+                  :to="{ name: 'Activities' }"
+                  class="relative top-px inline-flex shrink-0 items-center gap-1 text-[12.5px] font-semibold leading-[1.45] text-crm-primary hover:underline"
+                >
+                  {{ __('Activities') }}
+                  <LucideChevronRight class="size-3.5" aria-hidden="true" />
+                </router-link>
               </div>
               <ul class="m-0 list-none p-0">
                 <li
                   v-for="item in recentItems"
                   :key="`${item.activity_type}-${item.name}`"
-                  class="flex gap-2.5 border-b border-crm-border px-4 py-2.5 last:border-b-0"
+                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 pt-2.5 text-[12.5px] leading-[1.45] first:border-t-0"
                 >
                   <span
-                    class="grid size-[30px] shrink-0 place-items-center rounded-lg"
+                    class="grid size-[22px] shrink-0 place-items-center rounded-crm-chip"
                     :class="recentIconClass(item.activity_type)"
                   >
                     <component
@@ -262,24 +346,24 @@
                     />
                   </span>
                   <div class="min-w-0 flex-1">
-                    <p class="m-0 truncate text-crm-label text-crm-fg">
-                      <span class="font-semibold">{{ recentTitle(item) }}</span>
-                      <span
-                        v-if="item.reference_docname"
-                        class="text-crm-muted-fg"
-                      >
-                        · {{ item.reference_docname }}
-                      </span>
-                    </p>
-                    <p
-                      v-if="recentBody(item)"
-                      class="m-0 mt-0.5 truncate text-crm-meta text-crm-muted-fg"
-                    >
-                      {{ recentBody(item) }}
-                    </p>
+                    <div class="truncate font-semibold text-crm-fg">
+                      {{ recentTitle(item) }}
+                    </div>
+                    <div class="truncate text-[11.5px] text-crm-muted-fg">
+                      <template v-if="recentOutcome(item)">
+                        {{ __('Outcome:') }}
+                        <span class="font-semibold">{{ recentOutcome(item) }}</span>
+                        <template v-if="recentDuration(item)">
+                          · {{ recentDuration(item) }}
+                        </template>
+                      </template>
+                      <template v-else>{{ recentBody(item) }}</template>
+                    </div>
                   </div>
-                  <span class="shrink-0 text-crm-micro text-crm-faint">
-                    {{ formatRecentTime(item.creation) }}
+                  <span
+                    class="shrink-0 whitespace-nowrap text-[11.5px] text-crm-faint"
+                  >
+                    {{ recentTime(item) }}
                   </span>
                 </li>
               </ul>
@@ -294,19 +378,23 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { createResource, usePageMeta } from 'frappe-ui'
-import LucideUser from '~icons/lucide/user'
-import LucideIndianRupee from '~icons/lucide/indian-rupee'
-import LucideCalendarCheck from '~icons/lucide/calendar-check'
+import dayjs from 'dayjs'
+import LucideUsers from '~icons/lucide/users'
+import LucideDollarSign from '~icons/lucide/dollar-sign'
+import LucideSquareCheck from '~icons/lucide/square-check'
 import LucidePhone from '~icons/lucide/phone'
 import LucideMail from '~icons/lucide/mail'
 import LucideStickyNote from '~icons/lucide/sticky-note'
-import LucideGitBranch from '~icons/lucide/git-branch'
+import LucideSquareKanban from '~icons/lucide/square-kanban'
+import LucideChevronRight from '~icons/lucide/chevron-right'
+import LucideCheck from '~icons/lucide/check'
+import LucideExternalLink from '~icons/lucide/external-link'
 import {
-  AstraAvatar,
   AstraBadge,
   AstraButton,
   AstraEmptyState,
 } from '@/components/astra'
+import { initialsFrom } from '@/components/astra/format'
 import { formatCompactCurrency } from '@/utils/compactCurrency'
 import { formatDate } from '@/utils'
 import {
@@ -338,7 +426,7 @@ function setPeriod(value) {
 const dateLabel = computed(() => {
   const raw = summary.data?.date
   if (!raw) return ''
-  return formatDate(raw, 'ddd D MMM') + ' · ' + __('your records')
+  return formatDate(raw, 'dddd D MMM') + ' · ' + __('showing your records')
 })
 
 const visibleKpis = computed(() => summary.data?.kpis || [])
@@ -348,14 +436,36 @@ const deadlines = computed(() => summary.data?.response_deadlines || [])
 const recentItems = computed(() => summary.data?.recent || [])
 const connectReady = computed(() => isAstraConnectConfigured())
 
+/** Today agenda with a "Now" marker before the first item still ahead. */
+const todayRows = computed(() => {
+  const items = todayItems.value
+  const rows = items.map((item) => ({
+    key: item.name + (item.kind || ''),
+    item,
+  }))
+  if (period.value !== 'today' || !items.length) return rows
+  const now = summary.data?.now ? dayjs(summary.data.now) : dayjs()
+  const idx = items.findIndex((item) => {
+    const at = item.due_date || item.starts_on
+    return at && dayjs(at).isAfter(now)
+  })
+  if (idx <= 0) return rows
+  rows.splice(idx, 0, {
+    key: '__now__',
+    now: true,
+    label: __('Now · {0}', [now.format('HH:mm')]),
+  })
+  return rows
+})
+
 function kpiIcon(id) {
   return (
     {
-      open_leads: LucideUser,
-      open_pipeline: LucideIndianRupee,
-      due_today: LucideCalendarCheck,
+      open_leads: LucideUsers,
+      open_pipeline: LucideDollarSign,
+      due_today: LucideSquareCheck,
       calls_today: LucidePhone,
-    }[id] || LucideUser
+    }[id] || LucideUsers
   )
 }
 
@@ -377,13 +487,59 @@ function kpiSubtitle(kpi) {
   return kpi.subtitle || ''
 }
 
+/** Leading emphasised fragment of a KPI subtitle ("6 new", "2 overdue"). */
+function kpiLead(kpi) {
+  if (kpi.id === 'open_leads' && kpi.delta) {
+    const lead = __('{0} new', [kpi.delta])
+    return kpiSubtitle(kpi).startsWith(lead) ? lead : ''
+  }
+  if (kpi.subtitle_tone === 'danger') return kpiSubtitle(kpi)
+  return ''
+}
+
+/** Groups share free width by stage count on top of their 22px padding + border. */
+function railGroupStyle(group) {
+  const n = group.stages?.length || 1
+  return { flex: `${n} 1 22px` }
+}
+
+function stageBarClass(group, stage) {
+  if (group.id === 'closed') {
+    return /lost/i.test(stage.name) ? 'bg-crm-border-strong' : 'bg-crm-success'
+  }
+  return stage.count ? 'bg-crm-primary' : 'bg-crm-neutral-soft'
+}
+
+function isDone(item) {
+  return Boolean(item.done) || item.status === 'Done'
+}
+
+function todaySubLabel(item) {
+  if (item.sub_label != null) return item.sub_label
+  if (isDone(item)) return __('Done')
+  if (item.overdue) return __('Overdue')
+  return ''
+}
+
 function todayBadgeTone(item) {
+  const tones = { success: 'ok', warning: 'warn', danger: 'bad' }
+  if (item.badge_tone) return tones[item.badge_tone] || item.badge_tone
+  if (isDone(item)) return 'ok'
   const badge = (item.badge || '').toLowerCase()
   if (badge.includes('overdue')) return 'bad'
-  if (badge.includes('meeting')) return 'blue'
   if (badge.includes('due')) return 'info'
-  if (item.kind === 'meeting') return 'blue'
   return 'mute'
+}
+
+function deadlineSubLabel(row) {
+  if (row.sub_label) return row.sub_label
+  return [row.organization, row.kind].filter(Boolean).join(' · ')
+}
+
+function deadlineLabel(row) {
+  const label = row.label || ''
+  if (row.state === 'overdue' || label.startsWith(__('due'))) return label
+  return __('due {0}', [label])
 }
 
 function recentIcon(type) {
@@ -391,8 +547,7 @@ function recentIcon(type) {
   if (t.includes('call')) return LucidePhone
   if (t.includes('communication') || t.includes('email') || t.includes('mail'))
     return LucideMail
-  if (t.includes('note')) return LucideStickyNote
-  if (t.includes('stage')) return LucideGitBranch
+  if (t.includes('stage') || t.includes('status')) return LucideSquareKanban
   return LucideStickyNote
 }
 
@@ -402,26 +557,45 @@ function recentIconClass(type) {
   if (t.includes('communication') || t.includes('email') || t.includes('mail'))
     return 'bg-crm-blue-soft text-crm-blue'
   if (t.includes('note')) return 'bg-crm-warning-soft text-crm-warning'
-  if (t.includes('stage')) return 'bg-crm-primary-soft text-crm-primary'
+  if (t.includes('stage') || t.includes('status'))
+    return 'bg-crm-primary-soft text-crm-primary'
   return 'bg-crm-neutral-soft text-crm-muted-fg'
 }
 
 function recentTitle(item) {
+  if (item.title) return item.title
   const t = (item.activity_type || '').replace(/_/g, ' ')
-  return t.charAt(0).toUpperCase() + t.slice(1)
+  const label = t.charAt(0).toUpperCase() + t.slice(1)
+  return item.reference_docname ? `${label} · ${item.reference_docname}` : label
+}
+
+function recentOutcome(item) {
+  return item.activity_type === 'call' ? item.data?.outcome || '' : ''
+}
+
+function recentDuration(item) {
+  const secs = Number(item.data?.duration) || 0
+  if (!secs) return ''
+  return __('{0} m {1} s', [Math.floor(secs / 60), secs % 60])
 }
 
 function recentBody(item) {
+  if (item.body) return item.body
   const d = item.data || {}
   if (item.activity_type === 'stage_change') {
     return `${d.from || '—'} → ${d.to || ''}`
   }
-  return d.outcome || d.call_summary || d.subject || d.title || d.content || ''
+  return d.call_summary || d.subject || d.title || d.content || ''
 }
 
-function formatRecentTime(ts) {
-  if (!ts) return ''
-  return formatDate(ts, 'HH:mm')
+function recentTime(item) {
+  if (item.time_label) return item.time_label
+  if (!item.creation) return ''
+  const at = dayjs(item.creation)
+  const now = summary.data?.now ? dayjs(summary.data.now) : dayjs()
+  if (at.isSame(now, 'day')) return at.format('HH:mm')
+  if (at.isSame(now.subtract(1, 'day'), 'day')) return __('Yesterday')
+  return formatDate(item.creation, 'D MMM')
 }
 
 function callLead(row) {
