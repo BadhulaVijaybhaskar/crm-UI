@@ -72,7 +72,25 @@ async function resolveMasks(page, screen) {
         }
       }
     }
-    if (m.fallback) resolved.push({ name: m.name, ...m.fallback })
+    if (m.fallback) {
+      resolved.push({ name: m.name, ...m.fallback })
+      continue
+    }
+    // Absolute rect masks (e.g. shell-nav / shell-app-bar).
+    if (
+      Number.isFinite(m.x) &&
+      Number.isFinite(m.y) &&
+      Number.isFinite(m.width) &&
+      Number.isFinite(m.height)
+    ) {
+      resolved.push({
+        name: m.name,
+        x: m.x,
+        y: m.y,
+        width: m.width,
+        height: m.height,
+      })
+    }
   }
   return resolved
 }

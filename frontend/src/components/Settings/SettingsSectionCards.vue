@@ -11,7 +11,7 @@
           class="overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card"
         >
           <header
-            class="flex h-10 items-center justify-between gap-2 border-b border-crm-border px-3"
+            class="flex items-center justify-between gap-2 border-b border-crm-border px-3.5 py-2.5"
           >
             <div
               class="flex min-w-0 items-center gap-2"
@@ -23,14 +23,14 @@
               <input
                 v-if="section.editingLabel"
                 v-model="section.label"
-                class="min-w-0 flex-1 bg-transparent text-crm-body font-semibold text-crm-fg outline-none"
+                class="min-w-0 flex-1 border-0 bg-transparent text-[13px] font-semibold text-crm-fg outline-none"
                 @click.stop
                 @blur="section.editingLabel = false"
                 @keydown.enter="section.editingLabel = false"
               />
               <span
                 v-else
-                class="truncate text-crm-body font-semibold text-crm-fg"
+                class="truncate text-[13px] font-semibold text-crm-fg"
               >
                 {{ section.label || __('Untitled') }}
               </span>
@@ -68,7 +68,7 @@
               </Dropdown>
             </div>
           </header>
-          <div class="grid grid-cols-2 gap-2 p-3">
+          <div class="grid grid-cols-2 gap-2 px-3.5 py-3">
             <Draggable
               v-for="column in section.columns || []"
               :key="column.name"
@@ -76,16 +76,16 @@
               group="fields"
               item-key="fieldname"
               handle=".field-drag-handle"
-              class="min-h-9"
+              class="min-h-[34px]"
               :class="fieldsClass(section)"
             >
               <template #item="{ element: field }">
                 <div
-                  class="group flex h-9 min-w-0 items-center gap-2 rounded-crm-control bg-crm-card px-2 text-left"
+                  class="group flex h-[34px] min-w-0 items-center gap-2 rounded-[7px] bg-crm-card px-2.5 text-left"
                   :class="
                     selected === field
-                      ? 'shadow-[inset_0_0_0_1.5px_var(--crm-primary)]'
-                      : 'shadow-[inset_0_0_0_1px_var(--crm-border)]'
+                      ? 'border border-crm-primary shadow-[0_0_0_3px_var(--crm-primary-soft)]'
+                      : 'border border-crm-border'
                   "
                   role="button"
                   tabindex="0"
@@ -96,12 +96,12 @@
                     class="field-drag-handle size-3.5 shrink-0 cursor-grab text-crm-faint"
                   />
                   <span
-                    class="min-w-0 flex-1 truncate text-crm-label text-crm-fg"
+                    class="min-w-0 flex-1 truncate text-crm-label font-semibold text-crm-fg"
                   >
                     {{ field.label || field.fieldname }}
                     <span v-if="field.reqd" class="text-crm-danger">*</span>
                   </span>
-                  <span class="shrink-0 text-crm-micro text-crm-faint">
+                  <span class="shrink-0 text-[11.5px] text-crm-faint">
                     {{ field.fieldtype }}
                   </span>
                   <button
@@ -150,10 +150,31 @@ watch(
   sections,
   () => {
     if (fieldExists(selected.value)) return
-    selected.value = firstField()
+    // Figma 23 selects Expected close when present.
+    selected.value =
+      findField('expected_closure_date') ||
+      findField('Expected close') ||
+      firstField()
   },
   { deep: true, immediate: true },
 )
+
+function findField(needle) {
+  const want = String(needle).toLowerCase()
+  for (const section of sections.value || []) {
+    for (const column of section.columns || []) {
+      for (const field of column.fields || []) {
+        if (
+          String(field.fieldname || '').toLowerCase() === want ||
+          String(field.label || '').toLowerCase() === want
+        ) {
+          return field
+        }
+      }
+    }
+  }
+  return null
+}
 
 function fieldsClass(section) {
   if ((section.columns || []).length <= 1) {

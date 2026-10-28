@@ -27,7 +27,7 @@ describe('settings sections', () => {
       'Personal',
       'Workspace',
       'Users',
-      'Pipeline & Fields',
+      'Pipeline & fields',
       'Automation',
       'Email',
       'Integrations',

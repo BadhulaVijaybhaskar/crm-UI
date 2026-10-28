@@ -1,5 +1,5 @@
 <template>
-  <header class="flex items-start justify-between gap-3 px-crm-page-x pb-3.5 pt-[18px]">
+  <header class="flex items-center justify-between gap-3 px-crm-page-x pb-3.5 pt-[18px]">
     <div class="min-w-0">
       <p
         v-if="eyebrow"

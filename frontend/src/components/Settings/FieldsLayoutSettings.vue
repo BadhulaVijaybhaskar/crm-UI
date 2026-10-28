@@ -2,16 +2,18 @@
   <div class="flex h-full min-h-0 flex-col bg-crm-bg text-crm-fg">
     <AstraPageHeader
       :title="__('Fields layout')"
-      :description="__('Choose which fields appear and in what order.')"
+      :description="__('Choose which fields appear and in what order')"
     >
       <template #actions>
         <ExampleDataTag />
         <AstraButton
+          size="sm"
           :label="__('Discard')"
           :disabled="!dirty || saving"
           @click="reload"
         />
         <AstraButton
+          size="sm"
           variant="primary"
           :label="__('Save layout')"
           :loading="saving"
@@ -21,17 +23,21 @@
       </template>
     </AstraPageHeader>
 
-    <div class="flex flex-wrap items-center gap-2 px-crm-page-x pb-4">
-      <div class="flex flex-wrap gap-1" role="group" :aria-label="__('Record')">
+    <div class="flex flex-wrap items-center gap-2 px-crm-page-x pb-4 pt-0">
+      <div
+        class="inline-flex gap-0.5 rounded-lg border border-crm-border bg-crm-muted p-0.5"
+        role="group"
+        :aria-label="__('Record')"
+      >
         <button
           v-for="entity in entities"
           :key="entity.doctype"
           type="button"
-          class="inline-flex h-8 items-center rounded-full px-3 text-crm-label font-medium"
+          class="inline-flex h-[26px] items-center rounded-md px-2.5 text-crm-label font-medium"
           :class="
             doctype === entity.doctype
-              ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]'
-              : 'bg-crm-muted text-crm-muted-fg'
+              ? 'bg-crm-card font-semibold text-crm-fg shadow-[0_0_0_1px_var(--crm-border)]'
+              : 'text-crm-muted-fg'
           "
           :aria-pressed="doctype === entity.doctype"
           @click="switchDoctype(entity.doctype)"
@@ -39,8 +45,9 @@
           {{ entity.label }}
         </button>
       </div>
+      <span class="hidden h-6 w-px bg-crm-border sm:block" aria-hidden="true" />
       <div
-        class="flex flex-wrap gap-1 sm:ml-2"
+        class="inline-flex gap-0.5 rounded-lg border border-crm-border bg-crm-muted p-0.5"
         role="group"
         :aria-label="__('Layout')"
       >
@@ -48,11 +55,11 @@
           v-for="lt in layoutTypes"
           :key="lt.value"
           type="button"
-          class="inline-flex h-8 items-center rounded-crm-control-sm px-3 text-crm-label font-medium"
+          class="inline-flex h-[26px] items-center rounded-md px-2.5 text-crm-label font-medium"
           :class="
             layoutType === lt.value
-              ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]'
-              : 'bg-crm-muted text-crm-muted-fg'
+              ? 'bg-crm-card font-semibold text-crm-fg shadow-[0_0_0_1px_var(--crm-border)]'
+              : 'text-crm-muted-fg'
           "
           :aria-pressed="layoutType === lt.value"
           @click="switchType(lt.value)"
@@ -60,6 +67,15 @@
           {{ lt.label }}
         </button>
       </div>
+      <span class="flex-1" />
+      <button
+        type="button"
+        class="inline-flex h-7 items-center gap-1.5 rounded-[7px] px-2.5 text-crm-label font-medium text-crm-muted-fg hover:bg-crm-muted"
+        @click="preview = !preview"
+      >
+        <Icon :icon="preview ? 'pencil' : 'eye'" class="size-3.5" />
+        {{ preview ? __('Edit') : __('Preview') }}
+      </button>
     </div>
 
     <div class="flex min-h-0 flex-1 gap-4 overflow-hidden px-crm-page-x pb-6">
@@ -99,60 +115,56 @@
       </div>
 
       <aside
-        class="hidden w-[260px] shrink-0 flex-col gap-3 overflow-y-auto lg:flex"
+        class="hidden w-[300px] shrink-0 flex-col gap-3 overflow-y-auto lg:flex"
       >
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 self-end text-crm-label font-medium text-crm-muted-fg"
-          @click="preview = !preview"
-        >
-          <Icon :icon="preview ? 'pencil' : 'eye'" class="size-3.5" />
-          {{ preview ? __('Edit') : __('Preview') }}
-        </button>
         <div
           v-if="selectedField && !preview"
-          class="rounded-crm-panel border border-crm-border bg-crm-card p-4"
+          class="overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card"
         >
-          <div class="flex items-start justify-between gap-2">
-            <h2 class="text-crm-panel font-semibold text-crm-fg">
+          <div
+            class="flex items-start justify-between gap-2 border-b border-crm-border px-[18px] py-3.5"
+          >
+            <h2 class="text-sm font-semibold tracking-tight text-crm-fg">
               {{ selectedField.label || selectedField.fieldname }}
             </h2>
             <span
-              class="shrink-0 rounded-crm-chip bg-crm-neutral-soft px-1.5 py-0.5 text-crm-micro font-medium text-crm-muted-fg"
+              class="shrink-0 rounded-crm-chip bg-crm-neutral-soft px-1.5 py-0.5 text-[11.5px] font-medium text-crm-muted-fg"
             >
               {{ selectedField.fieldtype }}
             </span>
           </div>
-          <div class="mt-4 text-xs font-semibold text-crm-fg">
-            {{ __('Label') }}
+          <div class="px-[18px] py-3.5">
+            <div class="text-xs font-semibold text-crm-fg">
+              {{ __('Label') }}
+            </div>
+            <div
+              class="mt-1 flex h-8 items-center rounded-[7px] px-2.5 text-crm-label text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-primary)]"
+              role="textbox"
+              aria-readonly="true"
+            >
+              {{ selectedField.label || selectedField.fieldname }}
+            </div>
+            <p class="mt-3 text-crm-meta text-crm-muted-fg">
+              {{
+                selectedField.reqd
+                  ? __('Mandatory on this record.')
+                  : __('Optional on this record.')
+              }}
+            </p>
+            <button
+              type="button"
+              class="mt-3 text-crm-label font-semibold text-crm-danger"
+              @click="editorRef?.removeSelected?.()"
+            >
+              {{ __('Remove field') }}
+            </button>
           </div>
-          <div
-            class="mt-1 flex h-8 items-center rounded-crm-control-sm px-2.5 text-crm-label text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-primary)]"
-            role="textbox"
-            aria-readonly="true"
-          >
-            {{ selectedField.label || selectedField.fieldname }}
-          </div>
-          <p class="mt-3 text-crm-meta text-crm-muted-fg">
-            {{
-              selectedField.reqd
-                ? __('Mandatory on this record.')
-                : __('Optional on this record.')
-            }}
-          </p>
-          <button
-            type="button"
-            class="mt-3 text-crm-label font-semibold text-crm-danger"
-            @click="editorRef?.removeSelected?.()"
-          >
-            {{ __('Remove field') }}
-          </button>
         </div>
         <div
-          class="flex gap-2 rounded-crm-panel border border-crm-border bg-crm-card p-3.5"
+          class="flex gap-2.5 rounded-lg border border-crm-border bg-crm-muted px-3 py-2.5 text-crm-label text-crm-muted-fg"
         >
-          <Icon icon="info" class="mt-0.5 size-4 shrink-0 text-crm-faint" />
-          <p class="text-crm-meta text-crm-muted-fg">{{ saveNote }}</p>
+          <Icon icon="info" class="mt-0.5 size-3.5 shrink-0 text-crm-faint" />
+          <p>{{ saveNote }}</p>
         </div>
       </aside>
     </div>
@@ -224,9 +236,10 @@ const saveNote = computed(() => {
       entity,
     ])
   }
-  return __('Changes apply to the new {0} form for everyone after you save.', [
-    entity,
-  ])
+  return __(
+    'Changes apply to the New {0} form for everyone after you save.',
+    [String(entity).toLowerCase()],
+  )
 })
 
 watch(

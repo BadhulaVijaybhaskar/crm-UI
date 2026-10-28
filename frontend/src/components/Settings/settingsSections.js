@@ -139,7 +139,7 @@ export const settingsGroups = [
   },
   {
     id: 'pipeline',
-    label: 'Pipeline & Fields',
+    label: 'Pipeline & fields',
     items: [
       {
         slug: 'pipeline-stages',

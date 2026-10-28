@@ -5,11 +5,11 @@
       class="flex h-[30px] shrink-0 items-center gap-2 border-b border-dashed border-crm-border-strong bg-crm-muted px-6 text-crm-label text-crm-muted-fg"
     >
       <Icon icon="triangle-alert" class="size-3.5 shrink-0 text-crm-warning" />
+      <b class="font-semibold text-crm-fg">{{ __('Concept') }}</b>
       <span>
-        <span class="font-semibold text-crm-fg">{{ __('Concept') }}</span>
         {{
           __(
-            ': In-app stage editor. Stages are real, configurable records today; this editor screen is new and needs backend work.',
+            'In-app stage editor. Stages are real, configurable records today; this editor screen is new and needs backend work.',
           )
         }}
       </span>
@@ -19,25 +19,25 @@
     >
       <nav
         ref="navEl"
-        class="flex max-h-40 shrink-0 flex-col gap-px overflow-y-auto border-b border-crm-border bg-crm-card px-2.5 py-3 sm:max-h-none sm:border-b-0 sm:border-r"
+        class="flex max-h-40 shrink-0 flex-col gap-0.5 overflow-y-auto border-b border-crm-border bg-crm-card px-2.5 py-3 sm:max-h-none sm:border-b-0 sm:border-r"
         :aria-label="__('Settings')"
       >
         <div v-for="group in groups" :key="group.id">
           <div
-            class="px-2.5 pb-1 pt-2.5 text-crm-caps font-bold uppercase tracking-crm-caps text-crm-faint"
+            class="px-2.5 pb-1 pt-2.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-faint"
           >
             {{ __(group.label) }}
           </div>
-          <div class="flex flex-col gap-px">
+          <div class="flex flex-col gap-0.5">
             <button
               v-for="item in group.items"
               :key="item.slug"
               type="button"
-              class="flex h-[30px] w-full items-center rounded-crm-chip px-2.5 text-left text-crm-label font-medium text-crm-muted-fg focus-visible:outline-none focus-visible:shadow-crm-focus"
+              class="flex h-[30px] w-full items-center !rounded-[4px] border-0 px-2.5 text-left text-[12.5px] font-medium text-crm-muted-fg focus-visible:outline-none focus-visible:shadow-crm-focus"
               :class="
                 item.slug === active?.slug
                   ? 'bg-crm-primary-soft font-semibold text-crm-primary'
-                  : 'hover:bg-crm-muted'
+                  : 'bg-transparent hover:bg-crm-muted'
               "
               :data-section="item.slug"
               :aria-current="item.slug === active?.slug ? 'page' : undefined"

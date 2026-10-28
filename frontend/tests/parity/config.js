@@ -36,6 +36,12 @@ const EXAMPLE_DATA_MASK = (fallback) => ({
   fallback,
 })
 
+/** Shell chrome owned by ui/astra-v3-shell — excluded from settings content pass. */
+const SHELL_MASKS = [
+  { name: 'shell-nav', x: 0, y: 0, width: 240, height: 960 },
+  { name: 'shell-app-bar', x: 240, y: 0, width: 1200, height: 52 },
+]
+
 /** Desktop captures are 1440×960 (crm.css .app). Mobile m* are 390×844. */
 export const SCREENS = {
   '04-leads-list': {
@@ -75,7 +81,10 @@ export const SCREENS = {
     viewport: { width: 1440, height: 960 },
     deviceScaleFactor: 1,
     // Concept banner pushes Example data down (~y 112).
-    masks: [EXAMPLE_DATA_MASK({ x: 1115, y: 112, width: 95, height: 24 })],
+    masks: [
+      ...SHELL_MASKS,
+      EXAMPLE_DATA_MASK({ x: 1115, y: 112, width: 95, height: 24 }),
+    ],
     fixture: '21-settings',
   },
   '22-settings-users': {
@@ -92,7 +101,10 @@ export const SCREENS = {
     },
     viewport: { width: 1440, height: 960 },
     deviceScaleFactor: 1,
-    masks: [EXAMPLE_DATA_MASK({ x: 1028, y: 82, width: 97, height: 24 })],
+    masks: [
+      ...SHELL_MASKS,
+      EXAMPLE_DATA_MASK({ x: 1028, y: 82, width: 97, height: 24 }),
+    ],
     fixture: '21-settings',
   },
   '23-settings-fields': {
@@ -109,7 +121,10 @@ export const SCREENS = {
     },
     viewport: { width: 1440, height: 960 },
     deviceScaleFactor: 1,
-    masks: [EXAMPLE_DATA_MASK({ x: 1130, y: 82, width: 95, height: 24 })],
+    masks: [
+      ...SHELL_MASKS,
+      EXAMPLE_DATA_MASK({ x: 1130, y: 82, width: 95, height: 24 }),
+    ],
     fixture: '21-settings',
   },
 }

@@ -2,15 +2,17 @@
   <div class="flex h-full min-h-0 flex-col bg-crm-bg text-crm-fg">
     <AstraPageHeader
       :title="__('Users')"
-      :description="__('Who can sign in and what they can see.')"
+      :description="__('Who can sign in and what they can see')"
     >
       <template #actions>
         <ExampleDataTag />
         <AstraButton
+          size="sm"
           :label="__('Add existing user')"
           @click="showAddExistingModal = true"
         />
         <AstraButton
+          size="sm"
           variant="primary"
           :label="__('Invite new user')"
           @click="openSettings('invite-user')"
@@ -24,35 +26,46 @@
 
     <div
       v-if="showDirectory"
-      class="flex flex-wrap items-center gap-2 px-crm-page-x pb-3"
+      class="flex flex-wrap items-center gap-2 px-crm-page-x pb-2.5 pt-0"
     >
       <AstraInput
         v-model="search"
-        class="w-full max-w-xs"
+        class="w-[280px] max-w-full"
         :placeholder="__('Search user')"
       >
         <template #prefix>
-          <Icon icon="search" class="size-4" />
+          <Icon icon="search" class="size-3.5 text-crm-faint" />
         </template>
       </AstraInput>
-      <div class="flex flex-wrap gap-1.5" role="group" :aria-label="__('Role')">
+      <div
+        class="inline-flex gap-0.5 rounded-lg border border-crm-border bg-crm-muted p-0.5"
+        role="group"
+        :aria-label="__('Role')"
+      >
         <button
           v-for="chip in roleFilters"
           :key="chip.value"
           type="button"
-          class="inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-crm-meta font-medium"
+          class="inline-flex h-[26px] items-center gap-1.5 rounded-md px-2.5 text-crm-label font-medium"
           :class="
             currentRole === chip.value
-              ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]'
-              : 'bg-crm-muted text-crm-muted-fg'
+              ? 'bg-crm-card font-semibold text-crm-fg shadow-[0_0_0_1px_var(--crm-border)]'
+              : 'text-crm-muted-fg'
           "
           :aria-pressed="currentRole === chip.value"
           @click="currentRole = chip.value"
         >
           {{ chip.label }}
-          <span class="text-crm-micro font-semibold text-crm-faint">
+          <em
+            class="not-italic text-[11px] font-semibold"
+            :class="
+              currentRole === chip.value
+                ? 'text-crm-primary'
+                : 'text-crm-faint'
+            "
+          >
             {{ chip.count }}
-          </span>
+          </em>
         </button>
       </div>
     </div>
@@ -78,7 +91,7 @@
           <div class="overflow-x-auto">
             <div class="min-w-0">
               <div
-                class="grid h-crm-th grid-cols-[minmax(180px,1.6fr)_120px_96px_100px_32px] items-center gap-2 bg-crm-muted px-4 text-crm-meta font-semibold text-crm-muted-fg"
+                class="grid h-crm-th grid-cols-[minmax(0,1fr)_150px_90px_90px_16px] items-center gap-3 bg-crm-muted px-4 text-[11.5px] font-semibold text-crm-muted-fg"
               >
                 <span>{{ __('Name') }}</span>
                 <span>{{ __('Role') }}</span>
@@ -96,7 +109,7 @@
                 <li
                   v-for="user in usersList"
                   :key="user.invited ? `invite-${user.name}` : user.name"
-                  class="grid h-[46px] grid-cols-[minmax(180px,1.6fr)_120px_96px_100px_32px] items-center gap-2 border-t border-crm-border px-4"
+                  class="grid h-[52px] grid-cols-[minmax(0,1fr)_150px_90px_90px_16px] items-center gap-3 border-t border-crm-border px-4"
                 >
                   <div class="flex min-w-0 items-center gap-2.5">
                     <AstraAvatar
@@ -106,13 +119,13 @@
                     />
                     <div class="min-w-0">
                       <div
-                        class="truncate text-crm-label font-medium text-crm-fg"
+                        class="truncate text-crm-label font-semibold text-crm-fg"
                       >
                         {{ displayName(user) }}
                       </div>
                       <div
                         v-if="user.email && user.email !== user.full_name"
-                        class="truncate text-crm-micro text-crm-faint"
+                        class="truncate text-[11.5px] text-crm-faint"
                       >
                         {{ user.email }}
                       </div>
@@ -122,18 +135,19 @@
                   <div>
                     <span
                       v-if="user.invited || isLockedAdmin(user)"
-                      class="inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-crm-meta font-semibold"
-                      :class="
-                        user.role === 'System Manager'
-                          ? 'bg-crm-primary-soft text-crm-primary'
-                          : 'bg-crm-muted text-crm-fg'
-                      "
+                      class="inline-flex h-7 w-[140px] items-center gap-1.5 rounded-[7px] border border-crm-border-strong bg-crm-card py-0 pl-2.5 pr-2"
                     >
-                      {{ roleMap[user.role] || user.role }}
+                      <span
+                        class="inline-flex h-[22px] items-center rounded-crm-chip px-2 text-[11.5px] font-semibold"
+                        :class="roleTone(user.role)"
+                      >
+                        {{ roleMap[user.role] || user.role }}
+                      </span>
+                      <span class="flex-1" />
                       <Icon
                         v-if="isLockedAdmin(user)"
                         icon="lock"
-                        class="size-3"
+                        class="size-3.5 text-crm-faint"
                       />
                     </span>
                     <Dropdown
@@ -144,12 +158,18 @@
                       <template #default>
                         <button
                           type="button"
-                          class="inline-flex h-7 items-center gap-1 rounded-full bg-crm-muted px-2.5 text-crm-meta font-semibold text-crm-fg"
+                          class="inline-flex h-7 w-[140px] items-center gap-1.5 rounded-[7px] border border-crm-border-strong bg-crm-card py-0 pl-2.5 pr-2"
                         >
-                          {{ roleMap[user.role] || user.role }}
+                          <span
+                            class="inline-flex h-[22px] items-center rounded-crm-chip px-2 text-[11.5px] font-semibold"
+                            :class="roleTone(user.role)"
+                          >
+                            {{ roleMap[user.role] || user.role }}
+                          </span>
+                          <span class="flex-1" />
                           <Icon
                             icon="chevron-down"
-                            class="size-3 text-crm-faint"
+                            class="size-3.5 text-crm-faint"
                           />
                         </button>
                       </template>
@@ -158,7 +178,7 @@
 
                   <div>
                     <span
-                      class="inline-flex h-[22px] items-center gap-1.5 rounded-full px-2 text-crm-micro font-semibold"
+                      class="inline-flex h-[22px] items-center gap-1.5 rounded-crm-chip px-2 text-[11.5px] font-semibold"
                       :class="
                         user.invited
                           ? 'bg-crm-warning-soft text-crm-warning'
@@ -170,7 +190,7 @@
                     </span>
                   </div>
 
-                  <span class="text-crm-label text-crm-muted-fg">
+                  <span class="text-crm-label tabular-nums text-crm-muted-fg">
                     {{ lastActiveLabel(user) }}
                   </span>
 
@@ -178,10 +198,10 @@
                     <template #default>
                       <button
                         type="button"
-                        class="inline-flex size-7 items-center justify-center rounded-crm-chip text-crm-faint hover:bg-crm-muted"
+                        class="inline-flex size-4 items-center justify-center text-crm-faint hover:text-crm-muted-fg"
                         :aria-label="__('More')"
                       >
-                        <Icon icon="more-horizontal" class="size-4" />
+                        <Icon icon="more-horizontal" class="size-3.5" />
                       </button>
                     </template>
                   </Dropdown>
@@ -201,35 +221,37 @@
           </div>
         </div>
 
-        <aside class="hidden w-[260px] shrink-0 lg:block">
-          <div
-            class="rounded-crm-panel border border-crm-border bg-crm-card p-4"
+        <aside class="hidden w-[280px] shrink-0 flex-col gap-3 lg:flex">
+          <section
+            class="overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card"
           >
-            <h2 class="text-crm-panel font-semibold text-crm-fg">
-              {{ __('What each role sees') }}
-            </h2>
-            <dl class="mt-3 flex flex-col gap-3">
-              <div
-                v-for="note in roleNotes"
-                :key="note.role"
-                class="grid grid-cols-[92px_minmax(0,1fr)] gap-2 text-crm-label"
-              >
-                <dt class="text-crm-muted-fg">{{ note.role }}</dt>
-                <dd class="text-crm-fg">{{ note.detail }}</dd>
-              </div>
-            </dl>
-            <p
-              class="mt-4 flex gap-2 border-t border-crm-border pt-3 text-crm-meta text-crm-muted-fg"
+            <div
+              class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
             >
-              <Icon icon="lock" class="mt-0.5 size-3.5 shrink-0" />
-              <span>
-                {{
-                  __(
-                    "The role of a user with Admin access can't be changed here.",
-                  )
-                }}
-              </span>
-            </p>
+              <h2 class="text-sm font-semibold tracking-tight text-crm-fg">
+                {{ __('What each role sees') }}
+              </h2>
+            </div>
+            <dl
+              class="grid grid-cols-[86px_minmax(0,1fr)] gap-x-3 gap-y-2.5 px-[18px] py-3.5 text-crm-label"
+            >
+              <template v-for="note in roleNotes" :key="note.role">
+                <dt class="text-crm-muted-fg">{{ note.role }}</dt>
+                <dd class="whitespace-normal text-crm-fg">{{ note.detail }}</dd>
+              </template>
+            </dl>
+          </section>
+          <div
+            class="flex gap-2.5 rounded-lg border border-crm-border bg-crm-muted px-3 py-2.5 text-crm-label text-crm-muted-fg"
+          >
+            <Icon icon="lock" class="mt-0.5 size-3.5 shrink-0 text-crm-faint" />
+            <span>
+              {{
+                __(
+                  "The role of a user with Admin access can't be changed here.",
+                )
+              }}
+            </span>
           </div>
         </aside>
       </div>
@@ -270,6 +292,12 @@ const roleMap = {
   'Sales User': __('Sales User'),
 }
 
+function roleTone(role) {
+  if (role === 'System Manager') return 'bg-crm-teal-soft text-crm-teal'
+  if (role === 'Sales Manager') return 'bg-crm-primary-soft text-crm-primary'
+  return 'bg-crm-neutral-soft text-crm-muted-fg'
+}
+
 const roleNotes = [
   {
     role: __('Sales User'),
@@ -303,7 +331,7 @@ const inviteRows = computed(() =>
   (pendingInvitations.data || []).map((invite) => ({
     name: invite.name,
     email: invite.email,
-    full_name: invite.email,
+    full_name: invite.full_name || invite.email,
     role: invite.role,
     invited: true,
     user_image: null,
