@@ -555,7 +555,7 @@ class TestGetDealContacts(IntegrationTestCase):
 		else:
 			user = frappe.get_doc("User", email)
 		user.add_roles("Test CRM Deal Access", "Test Contact Access", "Test CRM Organization Access")
-		frappe.db.commit()
+		# No commit — tearDown rolls back; avoid leaking deals into dashboard suite.
 		frappe.clear_cache(user=email)
 		for doctype in ("CRM Deal", "Contact", "CRM Organization"):
 			frappe.clear_cache(doctype=doctype)
@@ -654,8 +654,9 @@ def create_test_user_with_role(email, doctype, create=0):
 	else:
 		user = frappe.get_doc("User", email)
 	user.add_roles(role)
-	# Role / DocPerm caches must refresh before set_user + has_permission.
-	frappe.db.commit()
+	# Do NOT commit — committing here persists deals created by callers and
+	# leaks rows into later suites (dashboard averages). Same-connection
+	# DocPerm / Has Role rows are visible without commit; refresh caches only.
 	frappe.clear_cache(user=email)
 	frappe.clear_cache(doctype=doctype)
 	return email

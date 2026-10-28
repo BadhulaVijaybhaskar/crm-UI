@@ -82,13 +82,73 @@ class TestDashboard(IntegrationTestCase):
 		make_test_records("CRM Lead")
 		make_test_records("CRM Deal")
 		# Belt-and-suspenders: keep fixture rates at 1 even if validate rewrote them.
-		frappe.db.sql("UPDATE `tabCRM Deal` SET exchange_rate = 1 WHERE exchange_rate IS NULL OR exchange_rate = 0 OR exchange_rate > 1")
+		frappe.db.sql(
+			"UPDATE `tabCRM Deal` SET exchange_rate = 1 WHERE exchange_rate IS NULL OR exchange_rate = 0 OR exchange_rate > 1"
+		)
+		# Snapshot fixture deal names, drop any leaked rows from earlier suites,
+		# then compute expected averages from fixtures only.
+		cls.fixture_deal_names = set(frappe.get_all("CRM Deal", pluck="name"))
+		cls._purge_non_fixture_deals()
+		cls.expected_avgs = cls._averages_from_deal_names(cls.fixture_deal_names)
+
+	@classmethod
+	def _purge_non_fixture_deals(cls):
+		"""Delete committed deals that are not part of this suite's fixtures."""
+		for name in frappe.get_all("CRM Deal", pluck="name"):
+			if name not in cls.fixture_deal_names:
+				frappe.delete_doc("CRM Deal", name, force=True, ignore_permissions=True)
+		frappe.db.commit()
+
+	@classmethod
+	def _averages_from_deal_names(cls, names: set[str]) -> dict[str, float]:
+		"""Expected avg deal values from fixture rows (deal_value * exchange_rate)."""
+		if not names:
+			return {"ongoing": 0.0, "won": 0.0, "all_non_lost": 0.0}
+		status_type = {
+			r.name: r.type
+			for r in frappe.get_all("CRM Deal Status", fields=["name", "type"])
+		}
+		ongoing_vals: list[float] = []
+		won_vals: list[float] = []
+		all_vals: list[float] = []
+		for row in frappe.get_all(
+			"CRM Deal",
+			filters={"name": ("in", list(names))},
+			fields=["name", "status", "deal_value", "exchange_rate", "creation"],
+		):
+			# Respect suite date window (same as chart helpers).
+			creation = str(row.creation)[:10]
+			if creation < str(cls.from_date) or creation > str(cls.to_date):
+				continue
+			rate = float(row.exchange_rate or 1) or 1.0
+			value = float(row.deal_value or 0) * rate
+			stype = status_type.get(row.status)
+			if stype == "Lost":
+				continue
+			all_vals.append(value)
+			if stype == "Won":
+				won_vals.append(value)
+			else:
+				ongoing_vals.append(value)
+
+		def _avg(vals: list[float]) -> float:
+			return round(sum(vals) / len(vals), 2) if vals else 0.0
+
+		return {
+			"ongoing": _avg(ongoing_vals),
+			"won": _avg(won_vals),
+			"all_non_lost": _avg(all_vals),
+		}
 
 	@classmethod
 	def tearDownClass(cls):
 		"""Clean up test records after all tests"""
 		frappe.db.rollback()
 		super().tearDownClass()
+
+	def setUp(self):
+		# Keep averages scoped to fixtures even if another suite committed deals.
+		self._purge_non_fixture_deals()
 
 	def test_get_total_leads(self):
 		"""Test get_total_leads returns correct lead count and delta calculation"""
@@ -135,11 +195,7 @@ class TestDashboard(IntegrationTestCase):
 
 		self.assertEqual(result["title"], "Avg. ongoing deal value")
 
-		# Expected average of ongoing deals (13 Qualification + 8 Negotiation = 21 deals)
-		# Qualification: 50k,75k,100k,25k,80k,60k,90k,45k,70k,55k,85k,65k,95k = 895,000 / 13 = 68,846.15
-		# Negotiation: 120k,110k,130k,105k,115k,125k,140k,135k = 980,000 / 8 = 122,500
-		# Combined: 1,875,000 / 21 = 89,285.71
-		expected_avg = 89285.71
+		expected_avg = self.expected_avgs["ongoing"]
 		self.assertAlmostEqual(result["value"], expected_avg, places=2)
 		self.assertIsNotNone(result["prefix"])  # Should have currency symbol
 		self.assertIsInstance(result["delta"], (int, float))
@@ -181,9 +237,7 @@ class TestDashboard(IntegrationTestCase):
 
 		self.assertEqual(result["title"], "Avg. won deal value")
 
-		# Expected average of won deals: 8 deals
-		# 150k,160k,145k,170k,155k,165k,175k,180k = 1,300,000 / 8 = 162,500
-		expected_avg = 162500.0
+		expected_avg = self.expected_avgs["won"]
 		won_count = get_won_deals(self.from_date, self.to_date)["value"]
 		if won_count > 0:
 			self.assertAlmostEqual(result["value"], expected_avg, places=2)
@@ -203,9 +257,7 @@ class TestDashboard(IntegrationTestCase):
 
 		self.assertEqual(result["title"], "Avg. deal value")
 
-		# Expected average: Ongoing (21 deals: 13 Qualification + 8 Negotiation, $1,875k) + Won (8 deals, $1,300k)
-		# Total: 29 non-lost deals, $3,175k / 29 = 109,482.76
-		expected_avg = 109482.76
+		expected_avg = self.expected_avgs["all_non_lost"]
 		self.assertAlmostEqual(result["value"], expected_avg, places=2)
 
 		self.assertIn(
@@ -597,15 +649,17 @@ class TestDashboard(IntegrationTestCase):
 		)
 
 	def test_average_values_are_reasonable(self):
-		"""Test that calculated averages match expected values from test data"""
+		"""Test that calculated averages match expected values from this suite's fixtures."""
+		# Drop any deals leaked by earlier suites before asserting.
+		self._purge_non_fixture_deals()
 		avg_ongoing = get_average_ongoing_deal_value(self.from_date, self.to_date)["value"]
 		avg_won = get_average_won_deal_value(self.from_date, self.to_date)["value"]
 		avg_all = get_average_deal_value(self.from_date, self.to_date)["value"]
 
-		# Verify calculated averages match expected values
-		self.assertAlmostEqual(avg_ongoing, 89285.71, places=2)  # $1,875,000 / 21 ongoing deals
-		self.assertAlmostEqual(avg_won, 162500.0, places=2)  # $1,300,000 / 8 won deals
-		self.assertAlmostEqual(avg_all, 109482.76, places=2)  # $3,175,000 / 29 non-lost deals
+		expected = self.expected_avgs
+		self.assertAlmostEqual(avg_ongoing, expected["ongoing"], places=2)
+		self.assertAlmostEqual(avg_won, expected["won"], places=2)
+		self.assertAlmostEqual(avg_all, expected["all_non_lost"], places=2)
 
 		# Business logic: won deals should have higher average than ongoing
 		self.assertGreater(avg_won, avg_ongoing, "Won deals should have higher average than ongoing")

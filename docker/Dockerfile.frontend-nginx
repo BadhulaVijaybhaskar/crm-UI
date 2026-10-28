@@ -26,4 +26,6 @@ RUN chmod +x /usr/local/bin/strip-sourcemaps.sh \
       find -L /usr/share/nginx/html /assets /var/www/html -type f -name '*.map' >&2; \
       exit 1; \
     fi
-# Leave USER as root for the RUN above; base image ENTRYPOINT/CMD decides runtime user.
+
+# Runtime must be frappe so the process can read /home/frappe asset trees.
+USER frappe
