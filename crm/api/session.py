@@ -34,6 +34,15 @@ USER_FIELDS = [
 ]
 
 
+def user_query_fields():
+	fields = list(USER_FIELDS)
+	meta = frappe.get_meta("User")
+	for name in ("last_active", "last_login"):
+		if meta.has_field(name):
+			fields.append(name)
+	return fields
+
+
 @frappe.whitelist()
 def get_users(include_all: bool = False):
 	"""Return (users, crm_users) for the CRM frontend.
@@ -74,7 +83,7 @@ def get_users(include_all: bool = False):
 
 	users = frappe.qb.get_query(
 		"User",
-		fields=USER_FIELDS,
+		fields=user_query_fields(),
 		order_by="full_name asc",
 		filters=user_filters,
 	).run(as_dict=1)

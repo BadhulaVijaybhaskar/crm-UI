@@ -36,8 +36,8 @@ describe('settings sections', () => {
 
   it('resolves slugs and the labels callers already pass', () => {
     expect(sectionFromSlug('users')?.label).toBe('Users')
-    expect(sectionFromSlug('pipeline-stages')?.label).toBe('Pipeline Stages')
-    expect(sectionFromSlug('fields-layout')?.label).toBe('Fields Layout')
+    expect(sectionFromSlug('pipeline-stages')?.label).toBe('Pipeline stages')
+    expect(sectionFromSlug('fields-layout')?.label).toBe('Fields layout')
     expect(slugFromLabel('Invite User')).toBe('invite-user')
     expect(slugFromLabel('invite-user')).toBe('invite-user')
     expect(slugFromLabel('Accounts')).toBe('accounts')
@@ -62,12 +62,12 @@ describe('settings sections', () => {
         'Home Actions',
         'Users',
         'Invite User',
-        'Sales Hierarchy',
-        'Pipeline Stages',
-        'Fields Layout',
-        'Workflow Automations',
-        'Assignment Rules',
-        'SLA Policies',
+        'Sales hierarchy',
+        'Pipeline stages',
+        'Fields layout',
+        'Workflow automations',
+        'Assignment rules',
+        'SLA policies',
         'Forms',
         'Enrichment',
         'Accounts',
@@ -77,7 +77,7 @@ describe('settings sections', () => {
         'Telephony',
         'WhatsApp',
         'ERP',
-        'Lead Syncing',
+        'Lead syncing',
       ]),
     )
   })

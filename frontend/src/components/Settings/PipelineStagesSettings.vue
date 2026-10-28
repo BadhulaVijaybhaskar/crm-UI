@@ -1,190 +1,333 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col text-ink-gray-8">
-    <div class="flex items-start justify-between gap-4 px-6 pt-6 pb-3">
-      <div class="flex min-w-0 flex-col gap-1">
-        <h2 class="text-2xl-semibold leading-none">
-          {{ __('Pipeline stages') }}
-        </h2>
-        <p class="text-p-base text-ink-gray-6">
-          {{
-            __(
-              'Order, type, probability and colour drive the board, the stage path and reports.',
-            )
-          }}
-        </p>
-      </div>
-      <div class="flex shrink-0 items-center gap-2">
-        <Button
+  <div class="flex h-full min-h-0 flex-col bg-crm-bg text-crm-fg">
+    <div
+      class="mx-crm-page-x mt-0 flex h-[30px] items-center gap-2 border-b border-dashed border-crm-border-strong bg-crm-muted px-0 text-crm-label text-crm-muted-fg"
+      style="
+        margin-left: var(--crm-page-x, 24px);
+        margin-right: var(--crm-page-x, 24px);
+      "
+    >
+      <Icon icon="triangle-alert" class="size-3.5 shrink-0 text-crm-warning" />
+      <span>
+        <span class="font-semibold text-crm-fg">{{ __('Concept') }}</span>
+        {{
+          __(
+            ': In-app stage editor. Stages are real, configurable records today; this editor screen is new and needs backend work.',
+          )
+        }}
+      </span>
+    </div>
+    <AstraPageHeader
+      :title="__('Pipeline stages')"
+      :description="
+        __(
+          'Order, type, probability and colour drive the board, the stage path and reports.',
+        )
+      "
+    >
+      <template #actions>
+        <ExampleDataTag />
+        <AstraButton
           :label="__('Discard')"
           :disabled="!dirty || saving"
           @click="discard"
         />
-        <Button
-          variant="solid"
+        <AstraButton
+          variant="primary"
           :label="__('Save changes')"
           :loading="saving"
           :disabled="!dirty"
           @click="save"
         />
-      </div>
-    </div>
+      </template>
+    </AstraPageHeader>
 
-    <div class="flex items-center gap-2 px-6 pb-4">
+    <div
+      class="flex items-center gap-1 border-b border-crm-border px-crm-page-x"
+      role="tablist"
+    >
       <button
         v-for="tab in tabs"
         :key="tab.parent"
         type="button"
-        class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+        role="tab"
+        class="inline-flex h-[38px] items-center gap-1.5 border-b-2 px-2.5 text-crm-body font-medium"
         :class="
           activeParent === tab.parent
-            ? 'bg-[var(--crm-primary-soft,var(--surface-gray-3))] text-[var(--crm-primary,var(--ink-gray-9))]'
-            : 'text-ink-gray-6 hover:bg-surface-gray-2'
+            ? 'border-crm-primary font-semibold text-crm-fg'
+            : 'border-transparent text-crm-muted-fg'
         "
         :aria-selected="activeParent === tab.parent"
         @click="switchTab(tab.parent)"
       >
         {{ tab.label }}
-        <span class="ml-1 text-ink-gray-5">({{ tab.count }})</span>
+        <span
+          class="inline-flex h-4 min-w-4 items-center justify-center rounded bg-crm-neutral-soft px-1 text-crm-micro font-semibold text-crm-muted-fg"
+        >
+          {{ tab.count }}
+        </span>
       </button>
     </div>
 
-    <div class="flex min-h-0 flex-1 gap-4 overflow-hidden px-6 pb-6">
-      <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+    <div class="min-h-0 flex-1 overflow-y-auto px-crm-page-x pb-6 pt-4">
+      <div
+        v-if="loading"
+        class="py-16 text-center text-crm-body text-crm-muted-fg"
+      >
+        {{ __('Loading…') }}
+      </div>
+      <div v-else class="flex items-start gap-4">
         <div
-          v-if="loading"
-          class="flex flex-1 items-center justify-center text-ink-gray-5"
+          class="min-w-0 flex-1 overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card"
         >
-          {{ __('Loading…') }}
-        </div>
-        <template v-else>
-          <div
-            class="mb-2 hidden grid-cols-[28px_36px_minmax(0,1.4fr)_120px_100px_72px_88px_40px] gap-2 px-2 text-[11.5px] font-semibold text-ink-gray-5 sm:grid"
-          >
-            <span />
-            <span>#</span>
-            <span>{{ __('Stage') }}</span>
-            <span>{{ __('Type') }}</span>
-            <span>{{ isDeal ? __('Probability') : '' }}</span>
-            <span>{{ __('Colour') }}</span>
-            <span>{{ __('In use') }}</span>
-            <span />
-          </div>
-          <Draggable
-            :list="draft"
-            item-key="_key"
-            handle=".stage-drag-handle"
-            class="flex flex-col gap-1.5 overflow-y-auto pr-1"
-            @end="renumber"
-          >
-            <template #item="{ element: stage, index }">
+          <div class="overflow-x-auto">
+            <div class="min-w-0">
               <div
-                class="grid grid-cols-[28px_minmax(0,1fr)] items-center gap-2 rounded-lg border border-outline-gray-2 bg-surface-white px-2 py-2 sm:grid-cols-[28px_36px_minmax(0,1.4fr)_120px_100px_72px_88px_40px]"
+                class="grid h-crm-th items-center gap-2 bg-crm-muted px-4 text-crm-meta font-semibold text-crm-muted-fg"
+                :class="rowGridClass"
               >
-                <button
-                  type="button"
-                  class="stage-drag-handle flex h-8 w-7 cursor-grab items-center justify-center text-ink-gray-4"
-                  :aria-label="__('Drag to reorder')"
-                >
-                  <span
-                    class="lucide-grip-vertical h-4 w-4"
-                    aria-hidden="true"
-                  />
-                </button>
-                <div class="flex flex-col gap-2 sm:contents">
-                  <span class="hidden text-sm text-ink-gray-5 sm:block">{{
-                    index + 1
-                  }}</span>
-                  <TextInput
-                    v-model="stage.label"
-                    class="w-full"
-                    :placeholder="__('Stage name')"
-                  />
-                  <FormControl
-                    v-model="stage.type"
-                    type="select"
-                    :options="typeOptions"
-                  />
-                  <FormControl
-                    v-if="isDeal"
-                    v-model="stage.probability"
-                    type="select"
-                    :options="probabilityOptions"
-                  />
-                  <span v-else class="hidden sm:block" />
-                  <div class="relative">
+                <span />
+                <span>#</span>
+                <span>{{ __('Stage') }}</span>
+                <span>{{ __('Type') }}</span>
+                <span v-if="isDeal">{{ __('Probability') }}</span>
+                <span>{{ __('Colour') }}</span>
+                <span>{{ __('In use') }}</span>
+                <span />
+              </div>
+              <Draggable
+                :list="draft"
+                item-key="_key"
+                handle=".stage-drag-handle"
+                @end="renumber"
+              >
+                <template #item="{ element: stage, index }">
+                  <div
+                    class="grid h-[46px] items-center gap-2 border-t border-crm-border px-4"
+                    :class="[
+                      rowGridClass,
+                      highlightedKey === stage._key
+                        ? 'bg-crm-row-selected shadow-[inset_0_0_0_1.5px_var(--crm-primary)]'
+                        : 'bg-crm-card',
+                    ]"
+                    @click="selectedKey = stage._key"
+                  >
                     <button
                       type="button"
-                      class="flex h-8 w-8 items-center justify-center rounded-full border border-outline-gray-2"
-                      :style="stageColourStyle(stage.color, stage.label)"
-                      :aria-label="__('Pick colour')"
-                      @click.stop="togglePalette(stage._key)"
-                    />
-                    <div
-                      v-if="openPaletteKey === stage._key"
-                      class="absolute left-0 top-9 z-20 grid grid-cols-5 gap-1.5 rounded-lg border border-outline-gray-2 bg-surface-white p-2 shadow-md"
+                      class="stage-drag-handle flex size-7 cursor-grab items-center justify-center text-crm-faint"
+                      :aria-label="__('Drag to reorder')"
+                      @click.stop
                     >
-                      <button
-                        v-for="c in ASTRA_STAGE_COLOURS"
-                        :key="c"
-                        type="button"
-                        class="h-6 w-6 rounded-full border border-outline-gray-1"
-                        :class="
-                          stage.color === c
-                            ? 'ring-2 ring-[var(--crm-primary,#0a7393)]'
-                            : ''
-                        "
-                        :style="stageColourStyle(c)"
-                        :title="c"
-                        @click.stop="pickColour(stage, c)"
+                      <Icon icon="grip-vertical" class="size-4" />
+                    </button>
+                    <span
+                      class="inline-flex size-6 items-center justify-center rounded-crm-mini bg-crm-muted text-crm-micro font-semibold text-crm-muted-fg"
+                    >
+                      {{ index + 1 }}
+                    </span>
+                    <label
+                      class="flex h-8 min-w-0 items-center gap-2 rounded-crm-control-sm bg-crm-card px-2 shadow-[inset_0_0_0_1px_var(--crm-border)]"
+                    >
+                      <span
+                        class="size-[7px] shrink-0 rounded-[2px]"
+                        :style="stageColourStyle(stage.color, stage.label)"
                       />
+                      <input
+                        v-model="stage.label"
+                        class="min-w-0 flex-1 bg-transparent text-crm-label text-crm-fg outline-none"
+                        :placeholder="__('Stage name')"
+                        @click.stop
+                      />
+                    </label>
+                    <label
+                      class="relative inline-flex h-[22px] max-w-full items-center rounded-crm-chip px-2"
+                      :class="typeTone(stage.type)"
+                      @click.stop
+                    >
+                      <select
+                        v-model="stage.type"
+                        class="w-full cursor-pointer appearance-none bg-transparent pr-4 text-crm-meta font-semibold outline-none"
+                      >
+                        <option
+                          v-for="type in typeOptions"
+                          :key="type"
+                          :value="type"
+                        >
+                          {{ __(type) }}
+                        </option>
+                      </select>
+                      <Icon
+                        icon="chevron-down"
+                        class="pointer-events-none absolute right-1.5 size-3"
+                      />
+                    </label>
+                    <label
+                      v-if="isDeal"
+                      class="relative inline-flex h-[22px] items-center rounded-crm-chip bg-crm-muted px-2 text-crm-fg"
+                      @click.stop
+                    >
+                      <select
+                        v-model="stage.probability"
+                        class="w-full cursor-pointer appearance-none bg-transparent pr-4 text-crm-meta font-semibold outline-none"
+                      >
+                        <option
+                          v-for="option in probabilityOptions"
+                          :key="option.value"
+                          :value="option.value"
+                        >
+                          {{ option.label }}
+                        </option>
+                      </select>
+                      <Icon
+                        icon="chevron-down"
+                        class="pointer-events-none absolute right-1.5 size-3 text-crm-faint"
+                      />
+                    </label>
+                    <div class="relative" @click.stop>
+                      <button
+                        type="button"
+                        class="size-4 rounded-full border border-crm-border"
+                        :style="stageColourStyle(stage.color, stage.label)"
+                        :aria-label="__('Pick colour')"
+                        @click="togglePalette(stage._key)"
+                      />
+                      <div
+                        v-if="openPaletteKey === stage._key"
+                        class="absolute left-0 top-7 z-20 grid grid-cols-5 gap-1.5 rounded-crm-control border border-crm-border bg-crm-card p-2 shadow-crm-modal"
+                      >
+                        <button
+                          v-for="c in ASTRA_STAGE_COLOURS"
+                          :key="c"
+                          type="button"
+                          class="size-6 rounded-full border border-crm-border"
+                          :class="
+                            stage.color === c ? 'ring-2 ring-crm-primary' : ''
+                          "
+                          :style="stageColourStyle(c)"
+                          :title="c"
+                          @click="pickColour(stage, c)"
+                        />
+                      </div>
                     </div>
+                    <span class="truncate text-crm-meta text-crm-muted-fg">
+                      {{ inUseLabel(stage) }}
+                    </span>
+                    <Dropdown :options="rowOptions(stage)" align="end">
+                      <template #default>
+                        <button
+                          type="button"
+                          class="inline-flex size-7 items-center justify-center rounded-crm-chip text-crm-faint hover:bg-crm-muted"
+                          :aria-label="__('More')"
+                          @click.stop
+                        >
+                          <Icon icon="more-horizontal" class="size-4" />
+                        </button>
+                      </template>
+                    </Dropdown>
                   </div>
-                  <span class="truncate text-xs text-ink-gray-5">
-                    {{ inUseLabel(stage) }}
-                  </span>
-                  <Dropdown :options="rowOptions(stage)" align="end">
-                    <template #default>
-                      <Button variant="ghost" icon="lucide-more-horizontal" />
-                    </template>
-                  </Dropdown>
-                </div>
-              </div>
-            </template>
-          </Draggable>
+                </template>
+              </Draggable>
+            </div>
+          </div>
           <button
             type="button"
-            class="mt-3 flex h-11 items-center justify-center gap-2 rounded-lg border border-dashed border-outline-gray-3 text-sm font-medium text-ink-gray-6 hover:border-[var(--crm-primary,#0a7393)] hover:text-[var(--crm-primary,#0a7393)]"
+            class="mx-3 mb-3 mt-3 flex h-11 w-[calc(100%-1.5rem)] items-center justify-center gap-1.5 rounded-crm-control border border-dashed border-crm-border-strong text-crm-label font-semibold text-crm-primary hover:bg-crm-primary-soft"
             @click="addStage"
           >
-            <span class="lucide-plus h-4 w-4" aria-hidden="true" />
+            <Icon icon="plus" class="size-4" />
             {{ __('Add stage') }}
           </button>
-        </template>
-      </div>
+        </div>
 
-      <aside class="hidden w-64 shrink-0 flex-col gap-3 lg:flex">
-        <div
-          class="rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3 text-sm text-ink-gray-6"
-        >
-          <div class="mb-1 font-semibold text-ink-gray-8">
-            {{ __('How types group stages') }}
+        <aside class="hidden w-[260px] shrink-0 flex-col gap-3 lg:flex">
+          <div
+            class="rounded-crm-panel border border-crm-border bg-crm-card p-3.5"
+          >
+            <h2 class="text-crm-panel font-semibold text-crm-fg">
+              {{ __('How types group stages') }}
+            </h2>
+            <div class="mt-3 flex flex-col gap-3">
+              <div class="flex gap-2">
+                <span
+                  class="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-crm-muted text-crm-micro font-semibold text-crm-muted-fg"
+                >
+                  1
+                </span>
+                <div>
+                  <div class="text-crm-label font-semibold text-crm-fg">
+                    {{ __('Open · Ongoing · On Hold') }}
+                  </div>
+                  <p class="mt-0.5 text-crm-meta text-crm-muted-fg">
+                    {{
+                      __(
+                        'Shown as columns on the board and steps on the stage path.',
+                      )
+                    }}
+                  </p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <span
+                  class="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-crm-muted text-crm-micro font-semibold text-crm-muted-fg"
+                >
+                  2
+                </span>
+                <div>
+                  <div class="text-crm-label font-semibold text-crm-fg">
+                    {{ __('Won · Lost') }}
+                  </div>
+                  <p class="mt-0.5 text-crm-meta text-crm-muted-fg">
+                    {{
+                      __('Collapsed into the Closed lane, used for win rate.')
+                    }}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          {{
-            __(
-              'Open · Ongoing · On Hold show as columns on the board. Won · Lost collapse into the Closed lane.',
-            )
-          }}
-        </div>
-        <div
-          class="rounded-lg border border-outline-gray-2 bg-surface-gray-1 p-3 text-sm text-ink-gray-6"
-        >
-          {{
-            __(
-              'Colours are limited to the Astra palette so stages stay readable in light and dark.',
-            )
-          }}
-        </div>
-      </aside>
+
+          <div
+            v-if="moveNotice"
+            class="rounded-crm-panel border border-crm-border bg-crm-card p-3.5"
+          >
+            <div class="flex gap-2">
+              <Icon
+                icon="triangle-alert"
+                class="mt-0.5 size-4 shrink-0 text-crm-warning"
+              />
+              <div>
+                <p class="text-crm-label font-semibold text-crm-fg">
+                  {{
+                    __('Moving {0} above {1}', [
+                      moveNotice.stage.label,
+                      moveNotice.above.label,
+                    ])
+                  }}
+                </p>
+                <p class="mt-1 text-crm-meta text-crm-muted-fg">
+                  {{ moveDetail }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="flex gap-2 rounded-crm-panel border border-crm-border bg-crm-card p-3.5"
+          >
+            <Icon
+              icon="palette"
+              class="mt-0.5 size-4 shrink-0 text-crm-faint"
+            />
+            <p class="text-crm-meta text-crm-muted-fg">
+              {{
+                __(
+                  'Colours are limited to the Astra palette so stages stay readable in light and dark.',
+                )
+              }}
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
 
     <Dialog v-model="showRemap" :options="{ title: __('Move records first') }">
@@ -222,21 +365,17 @@
 </template>
 
 <script setup>
+import ExampleDataTag from '@/components/astra/ExampleDataTag.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import AstraPageHeader from '@/components/astra/AstraPageHeader.vue'
+import Icon from '@/components/Icon.vue'
 import {
   ASTRA_STAGE_COLOURS,
   stageColourStyle,
   toAstraStageColour,
 } from '@/utils/stageColours'
 import { statusesStore } from '@/stores/statuses'
-import {
-  Button,
-  Dialog,
-  Dropdown,
-  FormControl,
-  TextInput,
-  call,
-  toast,
-} from 'frappe-ui'
+import { Dialog, Dropdown, FormControl, call, toast } from 'frappe-ui'
 import Draggable from 'vuedraggable'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
@@ -251,6 +390,14 @@ const probabilityOptions = [0, 10, 25, 50, 70, 90, 100].map((n) => ({
   value: String(n),
 }))
 
+const TYPE_TONE = {
+  Open: 'bg-crm-neutral-soft text-crm-muted-fg',
+  Ongoing: 'bg-crm-blue-soft text-crm-blue',
+  'On Hold': 'bg-crm-warning-soft text-crm-warning',
+  Won: 'bg-crm-success-soft text-crm-success',
+  Lost: 'bg-crm-danger-soft text-crm-danger',
+}
+
 const activeParent = ref(PARENTS.deal)
 const draft = ref([])
 const original = ref([])
@@ -261,11 +408,18 @@ const openPaletteKey = ref(null)
 const showRemap = ref(false)
 const pendingDelete = ref(null)
 const remapTo = ref('')
+const selectedKey = ref(null)
 let keySeq = 0
 
 const { dealStatuses, leadStatuses } = statusesStore()
 
 const isDeal = computed(() => activeParent.value === PARENTS.deal)
+
+const rowGridClass = computed(() =>
+  isDeal.value
+    ? 'grid-cols-[24px_28px_minmax(0,1.6fr)_108px_76px_36px_72px_28px]'
+    : 'grid-cols-[24px_28px_minmax(0,1.6fr)_108px_36px_72px_28px]',
+)
 
 const tabs = computed(() => [
   {
@@ -290,6 +444,40 @@ const dirty = computed(
   () => JSON.stringify(draft.value) !== JSON.stringify(original.value),
 )
 
+const moveNotice = computed(() => {
+  const before = original.value.map((stage) => stage._key)
+  const after = draft.value
+    .map((stage) => stage._key)
+    .filter((key) => before.includes(key))
+  const beforeExisting = before.filter((key) => after.includes(key))
+  for (let i = 0; i < after.length; i++) {
+    const prev = beforeExisting.indexOf(after[i])
+    if (prev <= i) continue
+    const stage = draft.value.find((row) => row._key === after[i])
+    const above = draft.value.find((row) => row._key === after[i + 1])
+    if (stage && above) return { stage, above }
+  }
+  return null
+})
+
+const highlightedKey = computed(
+  () => moveNotice.value?.stage._key || selectedKey.value,
+)
+
+const moveDetail = computed(() => {
+  const notice = moveNotice.value
+  if (!notice) return ''
+  const n = notice.stage.in_use || 0
+  const kept = isDeal.value
+    ? n === 1
+      ? __('1 deal keeps its stage.')
+      : __('{0} deals keep their stage.', [n])
+    : n === 1
+      ? __('1 lead keeps its stage.')
+      : __('{0} leads keep their stage.', [n])
+  return `${kept} ${__('Board columns and stage path update for everyone after you save.')}`
+})
+
 const remapOptions = computed(() =>
   draft.value
     .filter((s) => s.name && s.name !== pendingDelete.value?.name)
@@ -304,6 +492,10 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', closePaletteOnOutside)
 })
+
+function typeTone(type) {
+  return TYPE_TONE[type] || TYPE_TONE.Open
+}
 
 function closePaletteOnOutside() {
   openPaletteKey.value = null
@@ -329,6 +521,7 @@ function normalizeRow(row) {
 
 async function load() {
   loading.value = true
+  selectedKey.value = null
   try {
     const rows = await call('crm.api.pipeline_stages.get_pipeline_stages', {
       parent_doctype: activeParent.value,
@@ -436,6 +629,7 @@ async function confirmDelete() {
 
 function discard() {
   draft.value = JSON.parse(JSON.stringify(original.value))
+  selectedKey.value = null
 }
 
 function payload() {
