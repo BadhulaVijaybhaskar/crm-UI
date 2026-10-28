@@ -20,14 +20,16 @@
             @click="isSidebarCollapsed = false"
           >
             <img
-              :src="brandLogo"
+              :src="brandLogo.src"
+              :srcset="brandLogo.srcset"
               :alt="brand.name || 'Astra CRM'"
               class="astra-brand-mark size-7 object-contain"
             />
           </button>
           <img
             v-else
-            :src="brandLogo"
+            :src="brandLogo.src"
+            :srcset="brandLogo.srcset"
             :alt="brand.name || 'Astra CRM'"
             class="h-6 max-w-[168px] object-contain"
           />
@@ -266,7 +268,13 @@ import {
   getNavigationSections,
 } from '@/utils/navigation'
 import { openAstraConnect } from '@/utils/astraConnect'
-import { ASTRA_LOGO_ON_DARK, ASTRA_MARK } from '@/assets/brand'
+import {
+  ASTRA_NAV_LOCKUP,
+  ASTRA_NAV_LOCKUP_SRCSET,
+  ASTRA_NAV_MARK,
+  ASTRA_NAV_MARK_SRCSET,
+} from '@/assets/brand'
+import { navCountMap } from '@/stores/navCounts'
 import { viewsStore } from '@/stores/views'
 import {
   unreadNotificationsCount,
@@ -319,11 +327,20 @@ const isFCSite = ref(window.is_fc_site)
 const isDemoSite = ref(window.is_demo_site)
 
 const brandLogo = computed(() => {
-  if (settings.value?.brand_logo) return settings.value.brand_logo
-  return isCollapsed.value ? ASTRA_MARK : ASTRA_LOGO_ON_DARK
+  if (settings.value?.brand_logo) {
+    return { src: settings.value.brand_logo, srcset: undefined }
+  }
+  if (isCollapsed.value) {
+    return { src: ASTRA_NAV_MARK, srcset: ASTRA_NAV_MARK_SRCSET }
+  }
+  return { src: ASTRA_NAV_LOCKUP, srcset: ASTRA_NAV_LOCKUP_SRCSET }
 })
 
 function navLinkFromItem(link) {
+  const count =
+    link.countKey && navCountMap.value[link.countKey] != null
+      ? navCountMap.value[link.countKey]
+      : null
   if (link.connect) {
     return {
       label: link.label,
@@ -331,7 +348,7 @@ function navLinkFromItem(link) {
       key: `connect:${link.connect}`,
       external: true,
       connect: link.connect,
-      count: link.count,
+      count: null,
     }
   }
   if (link.action === 'settings') {
@@ -340,6 +357,7 @@ function navLinkFromItem(link) {
       icon: link.icon,
       key: 'settings',
       action: 'settings',
+      count: null,
     }
   }
   return {
@@ -347,7 +365,7 @@ function navLinkFromItem(link) {
     icon: link.icon,
     key: link.route,
     to: { name: link.route },
-    count: link.count,
+    count,
     external: !!link.external,
   }
 }

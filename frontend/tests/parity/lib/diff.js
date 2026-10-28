@@ -233,3 +233,34 @@ export function shellRealPercent(builtPath, figmaPath, shellRegions = []) {
   }
   return shellTotal ? (shellReal / shellTotal) * 100 : 0
 }
+
+/**
+ * Full-page (or region) real % between two screenshots — used for Vue↔sourceHtml
+ * mode (a) and sourceHtml↔PNG floor.
+ */
+export function realPercent(builtPath, refPath, masks = [], regions = []) {
+  let built = loadPng(builtPath)
+  let ref = loadPng(refPath)
+  const width = ref.width
+  const height = ref.height
+  built = ensureSize(built, width, height)
+  const builtM = applyMasks(built, masks)
+  const refM = applyMasks(ref, masks)
+
+  if (!regions.length) {
+    const total = width * height
+    const real = realDifferenceCount(builtM, refM, width, height, 0.1)
+    return (real / total) * 100
+  }
+
+  let shellReal = 0
+  let shellTotal = 0
+  for (const region of regions) {
+    const b = crop(builtM, region)
+    const f = crop(refM, region)
+    const r = realDifferenceCount(b, f, region.width, region.height, 0.1)
+    shellReal += r
+    shellTotal += region.width * region.height
+  }
+  return shellTotal ? (shellReal / shellTotal) * 100 : 0
+}

@@ -220,60 +220,36 @@ body {
   flex: none;
 }
 
-/* Login chrome (structure owned elsewhere; colours follow tokens) */
-.astra-login-page {
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: var(--crm-bg);
+/* Login chrome lives in Login.vue + website astra-login.css (shared tokens). */
+
+/* Mobile / tablet drawer shell — only the content column scrolls */
+.astra-shell--mobile {
+  display: flex;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
 }
 
-.astra-login-card {
-  width: min(100%, 400px);
-  padding: 40px;
-  border-radius: 12px;
-  background: var(--crm-card);
-  color: var(--crm-fg);
-  border: 1px solid var(--crm-border);
-  box-shadow: var(--crm-shadow-modal);
+.astra-shell--mobile .astra-shell__main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-.astra-login-card .astra-login-logo {
-  height: 50px;
-  width: auto;
-  max-width: 275px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 24px;
+.astra-shell__topbar--mobile {
+  padding: 0 14px 0 0;
+  gap: 0;
 }
 
-.astra-login-card .btn-primary,
-.astra-login-card button[type='submit'] {
-  width: 100%;
-  min-height: 40px;
-  border: 0;
-  border-radius: 999px;
-  color: var(--crm-primary-fg);
-  font: 600 0.875rem var(--font-sans);
-  background: var(--crm-primary);
-  cursor: pointer;
+.astra-shell__topbar--mobile #app-header {
+  flex: 1;
+  min-width: 0;
 }
 
-.astra-login-card input {
-  width: 100%;
-  padding: 0.62rem 0.875rem;
-  border-radius: 7px;
-  border: 1px solid var(--crm-border-strong);
-  background: var(--crm-card);
-  color: var(--crm-fg);
-  font: 400 12.5px var(--font-sans);
-}
-
-.astra-login-card input:focus {
-  outline: none;
-  border-color: var(--crm-primary);
-  box-shadow: var(--crm-input-focus);
+.astra-shell__content {
+  -webkit-overflow-scrolling: touch;
 }
 
 :focus-visible {

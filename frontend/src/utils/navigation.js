@@ -19,15 +19,12 @@ import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
 
 /**
- * Flip these when the real page ships.
- * Items with ready:false are omitted from the sidebar and command palette.
- */
-export const NAV_FEATURE_READY = Object.freeze({
-  Conversations: true,
-})
-
-/**
  * Sidebar registry — labels/order/icons match Figma CRM v1 (p-*.html / crm.css).
+ * Counts come from `crm.api.nav.get_nav_counts` via `countKey` (never hard-coded).
+ * Items whose `route` is not registered are hidden.
+ *
+ * Work queue currently lands on Activities until the dedicated Work Queue route
+ * ships; Conversations is registered on this branch.
  */
 export const navigationItems = [
   {
@@ -35,71 +32,77 @@ export const navigationItems = [
     icon: FigmaHomeIcon,
     route: 'Dashboard',
     section: 'main',
+    countKey: null,
   },
   {
     label: 'Work queue',
     icon: FigmaWorkQueueIcon,
     route: 'Activities',
     section: 'main',
-    count: 12,
+    countKey: 'work_queue',
   },
   {
     label: 'Conversations',
     icon: FigmaConversationsIcon,
     route: 'Conversations',
-    ready: NAV_FEATURE_READY.Conversations,
     section: 'main',
+    countKey: null,
   },
   {
     label: 'Leads',
     icon: FigmaLeadsIcon,
     route: 'Leads',
     section: 'records',
-    count: 42,
+    countKey: 'leads',
   },
   {
     label: 'Deals',
     icon: FigmaDealsIcon,
     route: 'Deals',
     section: 'records',
-    count: 14,
+    countKey: 'deals',
   },
   {
     label: 'Contacts',
     icon: FigmaContactsIcon,
     route: 'Contacts',
     section: 'records',
+    countKey: null,
   },
   {
     label: 'Companies',
     icon: FigmaCompaniesIcon,
     route: 'Organizations',
     section: 'records',
+    countKey: null,
   },
   {
     label: 'Tasks',
     icon: FigmaTasksIcon,
     route: 'Tasks',
     section: 'activity',
-    count: 7,
+    countKey: 'tasks',
   },
   {
     label: 'Notes',
     icon: FigmaNotesIcon,
     route: 'Notes',
     section: 'activity',
+    countKey: null,
   },
   {
     label: 'Call logs',
     icon: FigmaCallLogsIcon,
     route: 'Call Logs',
     section: 'activity',
+    countKey: null,
   },
   {
     label: 'Reports',
     icon: FigmaReportsIcon,
     route: 'Reports',
     section: 'insights',
+    countKey: null,
   },
   {
     label: 'AI Calling',
@@ -108,6 +111,7 @@ export const navigationItems = [
     requiresConnect: true,
     section: 'connect',
     external: true,
+    countKey: null,
   },
   {
     label: 'Messages',
@@ -116,6 +120,7 @@ export const navigationItems = [
     requiresConnect: true,
     section: 'connect',
     external: true,
+    countKey: null,
   },
   {
     label: 'AI Employees',
@@ -124,12 +129,14 @@ export const navigationItems = [
     requiresConnect: true,
     section: 'connect',
     external: true,
+    countKey: null,
   },
   {
     label: 'Settings',
     icon: FigmaSettingsIcon,
     action: 'settings',
     section: 'footer',
+    countKey: null,
   },
 ]
 

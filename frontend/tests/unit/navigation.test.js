@@ -1,10 +1,30 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getNavigationItems,
   isNavItemAvailable,
-  NAV_FEATURE_READY,
   navigationItems,
 } from '@/utils/navigation'
+
+vi.mock('@/router', () => {
+  const routes = new Set([
+    'Dashboard',
+    'Activities',
+    'Conversations',
+    'Leads',
+    'Deals',
+    'Contacts',
+    'Organizations',
+    'Tasks',
+    'Notes',
+    'Call Logs',
+    'Reports',
+  ])
+  return {
+    default: {
+      hasRoute: (name) => routes.has(name),
+    },
+  }
+})
 
 describe('navigationItems', () => {
   afterEach(() => {
@@ -13,7 +33,7 @@ describe('navigationItems', () => {
     delete window.boot
   })
 
-  it('keeps the Figma v1 sidebar registry order', () => {
+  it('keeps the Astra CRM sidebar registry order (SHELL_SPEC / Figma v1)', () => {
     const labels = navigationItems.map((item) => item.label)
     expect(labels).toEqual([
       'Home',
@@ -34,9 +54,21 @@ describe('navigationItems', () => {
     ])
   })
 
+  it('points Home at the Dashboard route', () => {
+    const home = navigationItems.find((item) => item.label === 'Home')
+    expect(home.route).toBe('Dashboard')
+  })
+
+  it('does not hard-code Figma example counts', () => {
+    for (const item of navigationItems) {
+      expect(item.count, `${item.label} must not ship a static count`).toBeUndefined()
+    }
+  })
+
   it('does not surface WhatsApp inbox in the sidebar registry', () => {
     const labels = navigationItems.map((item) => item.label.toLowerCase())
     expect(labels.some((l) => l.includes('whatsapp'))).toBe(false)
+    expect(labels.some((l) => l === 'inbox')).toBe(false)
   })
 
   it('fails if any nav item is a placeholder / Soon stub', () => {
@@ -49,13 +81,14 @@ describe('navigationItems', () => {
     }
   })
 
-  it('shows Conversations and Reports when ready', () => {
-    expect(NAV_FEATURE_READY.Conversations).toBe(true)
+  it('shows Work queue and Conversations when their routes exist', () => {
     const labels = getNavigationItems().map((item) => item.label)
-    expect(labels).toContain('Conversations')
-    expect(labels).toContain('Reports')
     expect(labels).toContain('Work queue')
+    expect(labels).toContain('Conversations')
     expect(labels).toContain('Home')
+    expect(labels).toContain('Notes')
+    expect(labels).toContain('Call logs')
+    expect(labels).toContain('Reports')
   })
 
   it('hides Connect destinations until Settings is enabled with a base URL', () => {
@@ -97,5 +130,15 @@ describe('navigationItems', () => {
       false,
     )
     expect(isNavItemAvailable({ label: 'Leads', route: 'Leads' })).toBe(true)
+    expect(
+      isNavItemAvailable({ label: 'Missing', route: 'DoesNotExist' }),
+    ).toBe(false)
+  })
+
+  it('uses icon components (no unicode glyph icons)', () => {
+    for (const item of navigationItems) {
+      expect(item.icon, `${item.label} needs an icon`).toBeTruthy()
+      expect(typeof item.icon).not.toBe('string')
+    }
   })
 })

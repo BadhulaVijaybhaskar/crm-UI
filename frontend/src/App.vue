@@ -35,7 +35,8 @@ const DesktopLayout = defineAsyncComponent(
   () => import('./components/Layouts/DesktopLayout.vue'),
 )
 const Layout = computed(() => {
-  if (window.innerWidth < 640) {
+  // Match SHELL_SPEC mobile / tablet: drawer nav below 768.
+  if (window.innerWidth < 768) {
     return MobileLayout
   } else {
     return DesktopLayout

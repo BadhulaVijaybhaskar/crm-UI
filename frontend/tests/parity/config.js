@@ -19,8 +19,8 @@ export const PATHS = {
   dist: join(REPO, 'crm/public/frontend'),
   figmaDir: join(HERE, 'figma'),
   figmaFallback: '/tmp/crm-figma-v1-all',
-  /** Exact HTML/CSS the Figma MCP capture used (from uploads/crm-figma-src.tgz). */
-  figmaSrc: '/tmp/crm-figma-src/figma-crm',
+  /** Exact HTML/CSS the Figma MCP capture used (local copy + /tmp fallback). */
+  figmaSrc: join(HERE, 'figma-src'),
   artifacts: '/opt/cursor/artifacts/parity',
   fixtures: join(HERE, 'fixtures'),
   screens: join(HERE, 'screens'),
@@ -28,6 +28,40 @@ export const PATHS = {
 
 /** Desktop captures are 1440×960 (crm.css .app). Mobile m* are 390×844. */
 export const SCREENS = {
+  '01-login': {
+    id: '01-login',
+    route: '/crm/login',
+    /** Source HTML floor (authored to match Figma 01; no separate forgot/email-link PNGs). */
+    sourceHtml: {
+      light: 'p-01-login-light.html',
+      dark: 'p-01-login-dark.html',
+    },
+    figma: {
+      light: '01-login-light.png',
+      dark: '01-login-dark.png',
+    },
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    /** Guest session — login is unauthenticated. */
+    guest: true,
+    /** Match Figma sample credentials after mount (not baked into Login.vue). */
+    fills: {
+      '#login_email': 'rohan.mehta@example.in',
+      '#login_password': 'password123',
+    },
+    /** Only the design-only Example data tag is masked; login has none. */
+    masks: [
+      {
+        name: 'Example data tag',
+        selector: '[data-parity-mask="example-data"]',
+      },
+    ],
+    /** Full-page region — login has no nav/app-bar chrome. */
+    shellRegions: [
+      { name: 'login', x: 0, y: 0, width: 1440, height: 960 },
+    ],
+    fixture: '01-login',
+  },
   '04-leads-list': {
     id: '04-leads-list',
     route: '/crm/leads/view/list',

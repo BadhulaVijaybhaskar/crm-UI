@@ -1,8 +1,29 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getFooterNavItems,
   getNavigationSections,
 } from '@/utils/navigation'
+
+vi.mock('@/router', () => {
+  const routes = new Set([
+    'Dashboard',
+    'Activities',
+    'Conversations',
+    'Leads',
+    'Deals',
+    'Contacts',
+    'Organizations',
+    'Tasks',
+    'Notes',
+    'Call Logs',
+    'Reports',
+  ])
+  return {
+    default: {
+      hasRoute: (name) => routes.has(name),
+    },
+  }
+})
 
 describe('navigation sections', () => {
   afterEach(() => {
@@ -10,7 +31,7 @@ describe('navigation sections', () => {
     delete window.astra_connect_url
   })
 
-  it('matches Figma v1 main + records / activity / insights labels', () => {
+  it('groups main / records / activity / insights for the shell', () => {
     const sections = getNavigationSections()
     const ids = sections.map((s) => s.id)
     expect(ids).toEqual(
@@ -35,15 +56,6 @@ describe('navigation sections', () => {
       'Notes',
       'Call logs',
     ])
-  })
-
-  it('exposes design-default nav counts from Figma', () => {
-    const sections = getNavigationSections()
-    const flat = sections.flatMap((s) => s.views)
-    expect(flat.find((v) => v.label === 'Work queue')?.count).toBe(12)
-    expect(flat.find((v) => v.label === 'Leads')?.count).toBe(42)
-    expect(flat.find((v) => v.label === 'Deals')?.count).toBe(14)
-    expect(flat.find((v) => v.label === 'Tasks')?.count).toBe(7)
   })
 
   it('pins Settings in the footer, not the scrolling list', () => {

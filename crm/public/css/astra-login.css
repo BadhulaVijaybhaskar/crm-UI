@@ -1,53 +1,47 @@
 /* Astra CRM login / website chrome. Loaded via hooks.web_include_css.
-   Login card follows the active color scheme (dark card in dark mode).
-   Fonts are self-hosted under /assets/crm/fonts/ (no Google Fonts). */
+   Split-pane Sign in (Figma screen 01). Self-hosted fonts only — no Google Fonts.
+   Auth field IDs / login.js section classes are preserved. */
 
 @font-face {
-  font-family: "Plus Jakarta Sans";
+  font-family: "Inter";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/assets/crm/fonts/PlusJakartaSans-400.woff2") format("woff2");
+  src: url("/assets/crm/fonts/Inter-400.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Plus Jakarta Sans";
+  font-family: "Inter";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/assets/crm/fonts/PlusJakartaSans-500.woff2") format("woff2");
+  src: url("/assets/crm/fonts/Inter-500.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Plus Jakarta Sans";
+  font-family: "Inter";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("/assets/crm/fonts/PlusJakartaSans-600.woff2") format("woff2");
+  src: url("/assets/crm/fonts/Inter-600.woff2") format("woff2");
 }
-@font-face {
-  font-family: "Plus Jakarta Sans";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/assets/crm/fonts/PlusJakartaSans-700.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Plus Jakarta Sans";
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url("/assets/crm/fonts/PlusJakartaSans-800.woff2") format("woff2");
-}
+/* No separate 700/800 faces — match Vue (astra-theme only ships 400/500/600). */
 
 :root {
   --ac: #0a7393;
   --acm: #08627e;
   --ac2: #0e8f83;
-  --astra-grad: linear-gradient(135deg, #0a7393 0%, #08627e 55%, #0e8f83 100%);
   --astra-bg: #f3f6f8;
+  --astra-form-bg: #f3f6f8;
   --astra-surface: #ffffff;
   --astra-text: #0b1324;
   --astra-muted: #5b6478;
   --astra-border: #e1e7ec;
+  --astra-border-strong: #d0d9e0;
+  --astra-panel: #07161f;
+  --astra-panel-fg: #e6eef2;
+  --astra-panel-muted: #97a9b4;
+  --astra-primary-fg: #ffffff;
+  --astra-lockout-bg: #eef1f6;
+  --astra-input-focus: 0 0 0 3px #e4f2f6;
 }
 
 html.dark,
@@ -56,110 +50,387 @@ body.dark {
   --ac: #3fbad9;
   --acm: #62c8e2;
   --ac2: #2dd4bf;
-  --astra-grad: linear-gradient(135deg, #3fbad9 0%, #62c8e2 55%, #2dd4bf 100%);
   --astra-bg: #081218;
+  --astra-form-bg: #081218;
   --astra-surface: #0d1a22;
   --astra-text: #e6eef2;
   --astra-muted: #97a9b4;
   --astra-border: #1a2c37;
+  --astra-border-strong: #26404d;
+  --astra-panel: #050f15;
+  --astra-panel-fg: #e6eef2;
+  --astra-panel-muted: #97a9b4;
+  --astra-primary-fg: #04141b;
+  --astra-lockout-bg: #11212b;
+  --astra-input-focus: 0 0 0 3px #0e2f3b;
 }
 
-/* Fallback when data-theme was not set yet (no localStorage / first visit) */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
     --ac: #3fbad9;
     --acm: #62c8e2;
     --ac2: #2dd4bf;
-    --astra-grad: linear-gradient(135deg, #3fbad9 0%, #62c8e2 55%, #2dd4bf 100%);
     --astra-bg: #081218;
+    --astra-form-bg: #081218;
     --astra-surface: #0d1a22;
     --astra-text: #e6eef2;
     --astra-muted: #97a9b4;
     --astra-border: #1a2c37;
+    --astra-border-strong: #26404d;
+    --astra-panel: #050f15;
+    --astra-panel-fg: #e6eef2;
+    --astra-panel-muted: #97a9b4;
+    --astra-primary-fg: #04141b;
+    --astra-lockout-bg: #11212b;
+    --astra-input-focus: 0 0 0 3px #0e2f3b;
   }
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  background: var(--astra-form-bg) !important;
+  color: var(--astra-text);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
 }
 
-.for-login,
-.page-card,
-.login-content,
-.form-signin {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+/* Hide website chrome on login */
+.web-footer,
+.navbar,
+.page-header-actions-block,
+.breadcrumb {
+  display: none !important;
 }
 
-.page-card {
-  background: var(--astra-surface) !important;
-  color: var(--astra-text) !important;
-  border: 1px solid color-mix(in srgb, var(--astra-border) 70%, transparent) !important;
-  border-radius: 22px !important;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 1px 2px rgba(11, 19, 36, 0.04), 0 8px 24px -12px rgba(11, 19, 36, 0.1) !important;
+.astra-login {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 100dvh;
+  width: 100%;
+  background: var(--astra-form-bg);
 }
 
-html.dark .page-card,
-[data-theme="dark"] .page-card,
-body.dark .page-card {
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 10px 30px -12px rgba(0, 0, 0, 0.6) !important;
+.astra-login__form-pane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  min-width: 0;
+  background: var(--astra-form-bg);
 }
 
-.page-card .page-card-head img,
-.for-login .app-logo,
-.login-content .app-logo {
-  max-height: 50px;
-  max-width: 275px;
-  width: auto;
-  object-fit: contain;
+.astra-login__panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+  padding: 56px 48px;
+  background: var(--astra-panel);
+  color: var(--astra-panel-fg);
+  order: 2;
 }
 
-.btn-login,
-.btn-primary.btn-login,
-.page-card .btn-primary,
-form.form-login button[type="submit"],
-.for-login button[type="submit"],
-.login-content button[type="submit"],
-.page-card button[type="submit"] {
+.astra-login__eyebrow {
+  margin: 0;
+  font: 600 11px/1.3 "Inter", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ac2);
+}
+
+.astra-login__headline {
+  margin: 0;
+  max-width: 22ch;
+  font-family: "Inter", "Noto Sans Telugu", "Noto Sans Devanagari", ui-sans-serif,
+    system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-feature-settings: "cv11", "ss01";
+  color: #fff;
+}
+
+.astra-login__features {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.astra-login__features li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.astra-login__feature-icon {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #0f2a36;
+  color: var(--ac2);
+}
+
+.astra-login__features strong {
+  display: block;
+  font: 600 14px/1.35 "Inter", sans-serif;
+  color: #fff;
+}
+
+.astra-login__features span {
+  display: block;
+  margin-top: 2px;
+  font: 400 13px/1.45 "Inter", sans-serif;
+  color: var(--astra-panel-muted);
+}
+
+/* Card / form — Frappe section classes kept for login.js */
+.astra-login .page-card,
+.astra-login__card {
+  width: min(100%, 380px) !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  background: transparent !important;
   border: 0 !important;
-  border-radius: 999px !important;
-  color: #fff !important;
-  min-height: 44px !important;
-  background-image: var(--astra-grad) !important;
-  background-color: transparent !important;
-  box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--ac) 55%, transparent);
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--astra-text) !important;
+  box-sizing: border-box !important;
 }
 
-.for-login label,
-.page-card label,
-.login-content label,
-form.form-login label {
+.astra-login__head {
+  text-align: left !important;
+  margin-bottom: 28px !important;
+}
+
+.astra-login__head h1,
+.astra-login__head h4 {
+  margin: 20px 0 6px !important;
+  font: 600 28px/1.2 "Inter", sans-serif !important;
+  letter-spacing: -0.02em;
   color: var(--astra-text) !important;
 }
 
-.for-login .form-control,
-.page-card .form-control,
-form.form-login input,
-.login-content input[type="email"],
-.login-content input[type="password"],
-.login-content input[type="text"] {
-  min-height: 44px !important;
-  border-radius: 12px !important;
+.astra-login__sub {
+  margin: 0 !important;
+  font: 400 13px/1.45 "Inter", sans-serif;
+  color: var(--astra-muted) !important;
+}
+
+.astra-login-logo,
+.astra-login .app-logo {
+  display: block;
+  height: 28px !important;
+  width: auto !important;
+  max-width: 180px;
+  object-fit: contain;
+  margin: 0 !important;
+}
+
+.astra-login-logo--dark {
+  display: none !important;
+}
+
+html.dark .astra-login-logo--light,
+[data-theme="dark"] .astra-login-logo--light,
+body.dark .astra-login-logo--light {
+  display: none !important;
+}
+
+html.dark .astra-login-logo--dark,
+[data-theme="dark"] .astra-login-logo--dark,
+body.dark .astra-login-logo--dark {
+  display: block !important;
+}
+
+.astra-login .form-group {
+  margin-bottom: 16px;
+}
+
+.astra-login .page-card-body,
+.astra-login .page-card-actions {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.astra-login .btn-sm {
+  padding: 0 !important;
+  line-height: 1.3 !important;
+}
+
+.astra-login label.form-label,
+.astra-login .form-label {
+  display: block !important;
+  margin-bottom: 6px !important;
+  font: 600 12px/1.3 "Inter", sans-serif !important;
+  color: var(--astra-text) !important;
+  clip: auto !important;
+  height: auto !important;
+  width: auto !important;
+  position: static !important;
+  overflow: visible !important;
+}
+
+.astra-login__label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.astra-login__label-row .form-label {
+  margin-bottom: 0 !important;
+}
+
+.astra-login__forgot {
+  font: 500 12.5px/1.3 "Inter", sans-serif;
+  color: var(--ac) !important;
+  text-decoration: none;
+}
+
+.astra-login__forgot:hover {
+  color: var(--acm) !important;
+  text-decoration: underline;
+}
+
+.astra-login .form-control,
+.astra-login input[type="email"],
+.astra-login input[type="password"],
+.astra-login input[type="text"] {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  border-radius: 8px !important;
   background: var(--astra-surface) !important;
   color: var(--astra-text) !important;
-  border-color: var(--astra-border) !important;
+  border: 1px solid var(--astra-border-strong) !important;
+  padding: 0 12px !important;
+  font: 400 13px/1.45 "Inter", sans-serif !important;
+  box-shadow: none !important;
+  margin: 0 !important;
 }
 
-@media (max-width: 390px) {
-  .page-card {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
+.astra-login .form-control:focus,
+.astra-login input:focus {
+  outline: none !important;
+  border-color: var(--ac) !important;
+  box-shadow: var(--astra-input-focus) !important;
+}
+
+.astra-login .password-field {
+  position: relative;
+}
+
+.astra-login .toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  color: var(--astra-muted);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.astra-login .password-field .form-control,
+.astra-login .password-field input {
+  padding-right: 36px !important;
+}
+
+.astra-login .field-icon {
+  display: none !important;
+}
+
+.astra-login .btn-login,
+.astra-login .btn-forgot,
+.astra-login .btn-login-with-email-link,
+.astra-login .btn-primary,
+.astra-login button[type="submit"] {
+  display: block !important;
+  width: 100% !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  color: var(--astra-primary-fg) !important;
+  min-height: 40px !important;
+  margin-top: 8px;
+  font: 600 13px/1.3 "Inter", sans-serif !important;
+  background: var(--ac) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.astra-login .btn-login:hover,
+.astra-login .btn-forgot:hover,
+.astra-login .btn-primary:hover,
+.astra-login button[type="submit"]:hover {
+  background: var(--acm) !important;
+}
+
+.astra-login__lockout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--astra-lockout-bg);
+  border: 1px solid var(--astra-border);
+  font: 400 12.5px/1.45 "Inter", sans-serif;
+  color: var(--astra-muted);
+}
+
+.astra-login__lock-icon {
+  flex: 0 0 14px;
+  margin-top: 2px;
+  color: var(--astra-muted);
+}
+
+.astra-login .sign-up-message a {
+  color: var(--ac) !important;
+}
+
+/* Frappe login.js toggles these sections via hash */
+.astra-login .for-signup,
+.astra-login .for-forgot,
+.astra-login .for-login-with-email-link {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .astra-login {
+    grid-template-columns: 1fr;
+  }
+
+  .astra-login__panel {
+    display: none;
+  }
+
+  .astra-login__form-pane {
     min-height: 100dvh;
-    display: flex;
-    align-content: center;
-    flex-wrap: wrap;
+    padding: 32px 20px;
   }
 }

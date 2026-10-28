@@ -160,6 +160,21 @@ export function sessionInitScript(email) {
 `
 }
 
+/** Guest cookies for public screens (login). */
+export function guestSessionInitScript() {
+  return `
+(() => {
+  document.cookie = 'user_id=Guest; path=/';
+  document.cookie = 'system_user=no; path=/';
+  document.cookie = 'full_name=Guest; path=/';
+  document.cookie = 'user_image=; path=/';
+  try {
+    localStorage.setItem('crm_setup_completed', '1');
+  } catch (e) {}
+})();
+`
+}
+
 export function themeInitScript(theme) {
   return `
 (() => {
