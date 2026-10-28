@@ -55,9 +55,14 @@ describe('Astra CRM official tokens', () => {
     expect(astraTw).toMatch(/'crm-nav':\s*'240px'/)
   })
 
-  it('keeps Plus Jakarta Sans as the app font', () => {
+  it('self-hosts Inter 400/500/600 (OFL) as the app font', () => {
     const theme = read('src/astra-theme.css')
-    expect(theme).toMatch(/Plus Jakarta Sans/)
-    expect(theme).toMatch(/--font-sans/)
+    expect(theme).not.toMatch(/Plus Jakarta Sans/)
+    expect(theme).toMatch(/font-family: 'Inter'/)
+    expect(theme).toMatch(/Inter-400\.woff2/)
+    expect(theme).toMatch(/Inter-500\.woff2/)
+    expect(theme).toMatch(/Inter-600\.woff2/)
+    expect(theme).toMatch(/font-feature-settings:\s*'cv11',\s*'ss01'/)
+    expect(theme).toMatch(/--font-sans:\s*'Inter'/)
   })
 })

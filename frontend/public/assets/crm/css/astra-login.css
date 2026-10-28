@@ -1,7 +1,8 @@
 /* Astra CRM login / website chrome. Loaded via hooks.web_include_css.
    Colours match frontend/src/astra-crm-tokens.css (official Figma v1). */
 
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+/* Inter is self-hosted in the SPA (astra-theme.css). Login website chrome
+   falls back to system UI so we never pull Plus Jakarta or a CDN font. */
 
 :root {
   --ac: #0a7393;
@@ -30,14 +31,16 @@ body.dark {
 }
 
 body {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
 }
 
 .for-login,
 .page-card,
 .login-content,
 .form-signin {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 .page-card {

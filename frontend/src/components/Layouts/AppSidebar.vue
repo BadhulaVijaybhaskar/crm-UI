@@ -7,37 +7,34 @@
       collapsed-width="64px"
     >
       <div class="flex h-full flex-col">
+        <!-- crm.css: .nav .brand { height:56px; padding:0 18px } — no collapse control in Figma -->
         <div
-          class="flex h-14 shrink-0 items-center gap-2 px-[18px]"
+          class="flex h-14 shrink-0 items-center gap-2 border-b border-[color:var(--crm-nav-border)] px-[18px]"
           :class="isCollapsed && 'justify-center px-0'"
         >
-          <img
-            :src="brandLogo"
-            :alt="brand.name || 'Astra CRM'"
-            class="object-contain"
-            :class="isCollapsed ? 'astra-brand-mark size-7' : 'h-6 max-w-[168px]'"
-          />
           <button
-            v-if="!mobile && !isCollapsed"
-            type="button"
-            class="ml-auto inline-flex size-7 items-center justify-center rounded-crm-chip text-[color:var(--crm-nav-faint)] hover:text-white"
-            :aria-label="__('Collapse')"
-            @click="isSidebarCollapsed = true"
-          >
-            <CollapseSidebar class="size-4" />
-          </button>
-          <button
-            v-else-if="!mobile && isCollapsed"
+            v-if="!mobile && isCollapsed"
             type="button"
             class="inline-flex size-7 items-center justify-center rounded-crm-chip text-[color:var(--crm-nav-faint)] hover:text-white"
             :aria-label="__('Expand')"
             @click="isSidebarCollapsed = false"
           >
-            <CollapseSidebar class="size-4 [transform:rotateY(180deg)]" />
+            <img
+              :src="brandLogo"
+              :alt="brand.name || 'Astra CRM'"
+              class="astra-brand-mark size-7 object-contain"
+            />
           </button>
+          <img
+            v-else
+            :src="brandLogo"
+            :alt="brand.name || 'Astra CRM'"
+            class="h-6 max-w-[168px] object-contain"
+          />
         </div>
 
-        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5 pb-2">
+        <!-- crm.css: .nav ul { padding:6px 10px; gap:1px } — each section is its own ul -->
+        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <SidebarItem
             v-if="mobile"
             id="notifications-btn"
@@ -60,18 +57,14 @@
             />
           </SidebarItem>
 
-          <section
-            v-for="section in navSections"
-            :key="section.id"
-            class="mt-1"
-          >
+          <section v-for="section in navSections" :key="section.id">
             <div
               v-if="!section.hideLabel && !isCollapsed"
               class="px-5 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[color:var(--crm-nav-faint)]"
             >
               {{ __(section.label) }}
             </div>
-            <nav class="flex flex-col gap-px">
+            <nav class="flex flex-col gap-px px-2.5 py-1.5">
               <SidebarItem
                 v-for="link in section.views"
                 :key="link.key"
@@ -89,16 +82,20 @@
                   :hoverDelay="1500"
                   :disabled="isCollapsed"
                 >
-                  <span class="truncate text-[13px] font-medium">
-                    {{ __(link.label) }}
+                  <span class="flex min-w-0 flex-1 items-center gap-2 truncate text-[13px] font-medium">
+                    <span class="truncate">{{ __(link.label) }}</span>
+                    <span
+                      v-if="link.count != null && !isCollapsed"
+                      class="astra-shell__nav-count"
+                    >
+                      {{ link.count }}
+                    </span>
+                    <FigmaExternalIcon
+                      v-if="link.external && !isCollapsed"
+                      class="astra-shell__nav-ext !size-3"
+                    />
                   </span>
                 </Tooltip>
-                <template v-if="link.external && !isCollapsed" #suffix>
-                  <span
-                    class="lucide-external-link size-3 text-[color:var(--crm-nav-faint)]"
-                    aria-hidden="true"
-                  />
-                </template>
               </SidebarItem>
             </nav>
           </section>
@@ -146,8 +143,9 @@
           </CollapsibleSection>
         </div>
 
-        <div class="mt-auto flex flex-col gap-1 px-2.5 pb-2 pt-2">
-          <div v-if="!mobile" class="mb-1 flex flex-col gap-2">
+        <!-- Figma: settings ul { margin-top:auto } then .foot { margin-top:0; padding:14px 16px } -->
+        <div class="mt-auto flex flex-col">
+          <div v-if="!mobile" class="flex flex-col gap-2 px-2.5">
             <SignupBanner
               v-if="isDemoSite && isFCSite"
               :isSidebarCollapsed="isCollapsed"
@@ -167,7 +165,7 @@
           <SidebarItem
             v-if="!mobile && isManager() && isDemoDataCreated"
             :label="__('Clear Demo Data')"
-            class="!text-crm-danger"
+            class="!text-crm-danger mx-2.5"
             @click="() => clearDemoData()"
           >
             <template #prefix>
@@ -175,42 +173,38 @@
             </template>
           </SidebarItem>
 
-          <SidebarItem
-            v-if="!mobile && isOnboardingStepsCompleted"
-            :label="__('Help')"
-            @click="toggleHelpModal"
-          >
-            <template #prefix>
-              <HelpIcon class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
-            </template>
-          </SidebarItem>
-
-          <SidebarItem
-            v-for="link in footerLinks"
-            :key="link.key"
-            :label="__(link.label)"
-            :active="link.action === 'settings' && showSettings"
-            @click="onNavClick($event, link)"
-          >
-            <template #prefix>
-              <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
-            </template>
-            <span class="truncate text-[13px] font-medium">{{ __(link.label) }}</span>
-          </SidebarItem>
+          <nav class="flex flex-col gap-px px-2.5 py-1.5">
+            <SidebarItem
+              v-for="link in footerLinks"
+              :key="link.key"
+              :label="__(link.label)"
+              :active="link.action === 'settings' && showSettings"
+              @click="onNavClick($event, link)"
+            >
+              <template #prefix>
+                <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
+              </template>
+              <span class="truncate text-[13px] font-medium">{{ __(link.label) }}</span>
+            </SidebarItem>
+          </nav>
 
           <div
-            class="mt-1 flex items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-1 py-3.5"
+            class="flex items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-4 py-3.5"
             :class="isCollapsed && 'justify-center px-0'"
           >
             <AstraAvatar
               :name="currentUser.full_name || currentUser.email || '?'"
-              size="md"
+              size="foot"
+              nav-foot
             />
             <div v-if="!isCollapsed" class="min-w-0 flex-1">
-              <div class="truncate text-[12.5px] font-semibold text-[#E8EDF5]">
+              <div class="truncate text-[12.5px] font-semibold leading-tight text-[#E8EDF5]">
                 {{ currentUser.full_name || currentUser.email }}
               </div>
-              <div class="truncate text-[11.5px] text-[color:var(--crm-nav-faint)]">
+              <div
+                class="whitespace-nowrap text-[11.5px] leading-tight text-[color:var(--crm-nav-faint)]"
+                :title="userRole"
+              >
                 {{ userRole }}
               </div>
             </div>
@@ -260,13 +254,13 @@ import NoteIcon from '@/components/Icons/NoteIcon.vue'
 import OrganizationsIcon from '@/components/Icons/OrganizationsIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import TaskIcon from '@/components/Icons/TaskIcon.vue'
-import CollapseSidebar from '@/components/Icons/CollapseSidebar.vue'
 import NotificationsIcon from '@/components/Icons/NotificationsIcon.vue'
 import HelpIcon from '@/components/Icons/HelpIcon.vue'
 import Notifications from '@/components/Notifications.vue'
 import Settings from '@/components/Settings/Settings.vue'
 import AstraAvatar from '@/components/astra/AstraAvatar.vue'
 import AstraThemeToggle from '@/components/astra/AstraThemeToggle.vue'
+import { FigmaExternalIcon } from '@/components/Icons/FigmaNavIcons'
 import {
   getFooterNavItems,
   getNavigationSections,
@@ -337,6 +331,7 @@ function navLinkFromItem(link) {
       key: `connect:${link.connect}`,
       external: true,
       connect: link.connect,
+      count: link.count,
     }
   }
   if (link.action === 'settings') {
@@ -352,6 +347,8 @@ function navLinkFromItem(link) {
     icon: link.icon,
     key: link.route,
     to: { name: link.route },
+    count: link.count,
+    external: !!link.external,
   }
 }
 
