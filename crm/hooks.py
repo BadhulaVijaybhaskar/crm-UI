@@ -185,6 +185,8 @@ permission_query_conditions = {
 	"CRM Notification": "crm.fcrm.doctype.crm_notification.crm_notification.get_permission_query_conditions",
 	"CRM Enrichment Run": "crm.domain_enrichment.doctype.crm_enrichment_run.crm_enrichment_run.get_permission_query_conditions",
 	"CRM View Settings": "crm.fcrm.doctype.crm_view_settings.crm_view_settings.get_permission_query_conditions",
+	"CRM Report Dashboard": "crm.fcrm.doctype.crm_report_dashboard.crm_report_dashboard.get_permission_query_conditions",
+	"CRM Report KPI": "crm.fcrm.doctype.crm_report_kpi.crm_report_kpi.get_permission_query_conditions",
 }
 
 has_permission = {
@@ -197,6 +199,8 @@ has_permission = {
 	"CRM Notification": "crm.fcrm.doctype.crm_notification.crm_notification.has_permission",
 	"CRM Enrichment Run": "crm.domain_enrichment.doctype.crm_enrichment_run.crm_enrichment_run.has_permission",
 	"CRM View Settings": "crm.fcrm.doctype.crm_view_settings.crm_view_settings.has_permission",
+	"CRM Report Dashboard": "crm.fcrm.doctype.crm_report_dashboard.crm_report_dashboard.has_permission",
+	"CRM Report KPI": "crm.fcrm.doctype.crm_report_kpi.crm_report_kpi.has_permission",
 }
 
 # Automation Engine
