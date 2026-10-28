@@ -8,9 +8,12 @@
  *   <screen>-<theme>-vs-html.png  — built | source HTML | diff
  *   <screen>-<theme>-vs-png.png   — built | Figma PNG  | diff
  *
- * Pass bar (shell regions when configured; else full page):
- *   (a) real vs HTML (1px / 0.1) === 0%
- *   (b) real vs PNG  ≤ floor, where floor = source HTML vs PNG (same Chrome)
+ * Pass bar (full page after Example-data mask; shellRegions optional):
+ *   (a) real vs unedited HTML === 0% on pixels where HTML agrees with PNG
+ *   (b) real vs PNG ≤ 0.75%
+ *
+ * p-*.html and Figma PNGs are READ-ONLY. Never edit them to close a diff.
+ * Where HTML layout disagrees with the PNG, the PNG is the approved design.
  *
  * Nothing here is imported by production src/.
  */
@@ -30,13 +33,17 @@ import {
   sessionInitScript,
   themeInitScript,
 } from './lib/mocks.js'
-import { compareImages, shellRealPercent } from './lib/diff.js'
+import {
+  compareImages,
+  htmlAgreementRealPercent,
+  shellRealPercent,
+} from './lib/diff.js'
 import { screenshotSourceHtml } from './lib/sourceShot.js'
 
-/** Shell pass (a) must be exactly 0; tiny float noise only. */
+/** (a) Vue vs HTML on HTML∩PNG agreement must be exactly 0. */
 const HTML_PASS_EPS = 1e-9
-/** (b) may sit on the floor; allow 0.01% measurement slack. */
-const PNG_FLOOR_EPS = 0.01
+/** (b) Vue vs PNG hard ceiling (design floor ≈ 0.75%). */
+const PNG_PASS_MAX = 0.75
 
 function usage() {
   console.error(`Usage: yarn parity <screen-id>
@@ -97,8 +104,10 @@ async function runTheme({ screen, theme, origin, browser }) {
   })
   const page = await context.newPage()
 
+  const sessionEmail =
+    screen.sessionEmail || 'priya.nair@example.com'
   await page.addInitScript(clockInitScript(PARITY_CLOCK))
-  await page.addInitScript(sessionInitScript('priya.nair@example.com'))
+  await page.addInitScript(sessionInitScript(sessionEmail))
   await page.addInitScript(themeInitScript(theme))
 
   await installParityMocks(page, { fixture: screen.fixture || screen.id })
@@ -121,7 +130,15 @@ async function runTheme({ screen, theme, origin, browser }) {
 
   if (!screen.sourceHtml?.[theme]) {
     throw new Error(
-      `Screen ${screen.id} missing sourceHtml.${theme} — required for dual-ref parity`,
+      `Screen ${screen.id} missing sourceHtml.${theme} — required (read-only p-*.html)`,
+    )
+  }
+
+  const htmlFile = screen.sourceHtml[theme]
+  const htmlSrcPath = path.join(PATHS.figmaSrc, htmlFile)
+  if (!fs.existsSync(htmlSrcPath)) {
+    throw new Error(
+      `Read-only source HTML missing: ${htmlSrcPath}. Unpack uploads/crm-figma-src.tgz — do not invent or edit p-*.html.`,
     )
   }
 
@@ -131,7 +148,7 @@ async function runTheme({ screen, theme, origin, browser }) {
   )
   await screenshotSourceHtml({
     browser,
-    htmlFile: screen.sourceHtml[theme],
+    htmlFile,
     theme,
     viewport: screen.viewport,
     outPath: htmlPath,
@@ -162,7 +179,7 @@ async function runTheme({ screen, theme, origin, browser }) {
     shellRegions,
   })
 
-  // Floor: source HTML rendered in Chrome vs Figma MCP PNG (shell crop).
+  // Informational: HTML↔PNG floor (MCP raster / layout drift). Not the pass ceiling.
   const floorPct = hasShell
     ? shellRealPercent(htmlPath, figmaPath, shellRegions)
     : compareImages({
@@ -176,16 +193,36 @@ async function runTheme({ screen, theme, origin, browser }) {
         shellRegions: [],
       }).realPct
 
+  // Reported numbers: full-page (or shell crop when configured) real %.
   const realVsHtmlPct = hasShell ? vsHtml.shellRealPct : vsHtml.realPct
   const realVsPngPct = hasShell ? vsPng.shellRealPct : vsPng.realPct
 
-  const passA = realVsHtmlPct <= HTML_PASS_EPS
-  const passB = realVsPngPct <= floorPct + PNG_FLOOR_EPS
+  // Pass (a): Vue vs HTML only where unedited HTML agrees with PNG.
+  const agreed = htmlAgreementRealPercent({
+    builtPath,
+    htmlPath,
+    pngPath: figmaPath,
+    masks,
+    shellRegions,
+  })
+  const realVsHtmlAgreedPct = agreed.realVsHtmlAgreedPct
+
+  const passA = realVsHtmlAgreedPct <= HTML_PASS_EPS
+  const passB = realVsPngPct <= PNG_PASS_MAX
   const pass = passA && passB
 
-  const remaining = passA
-    ? '—'
-    : `shell vs HTML ${realVsHtmlPct.toFixed(4)}%`
+  const remainingParts = []
+  if (!passA) {
+    remainingParts.push(
+      `HTML-agree ${realVsHtmlAgreedPct.toFixed(4)}% (need 0)`,
+    )
+  }
+  if (!passB) {
+    remainingParts.push(
+      `PNG ${realVsPngPct.toFixed(4)}% (need ≤ ${PNG_PASS_MAX})`,
+    )
+  }
+  const remaining = remainingParts.length ? remainingParts.join('; ') : '—'
 
   for (const p of [builtPath, htmlPath]) {
     try {
@@ -206,6 +243,7 @@ async function runTheme({ screen, theme, origin, browser }) {
     screen: screen.id,
     theme,
     realVsHtmlPct,
+    realVsHtmlAgreedPct,
     realVsPngPct,
     floorPct,
     pass,
@@ -213,9 +251,8 @@ async function runTheme({ screen, theme, origin, browser }) {
     passB,
     masked: masks.map((m) => m.name),
     remaining,
-    // Full-page (masked) for screen-agent context
-    fullRealVsHtmlPct: vsHtml.realPct,
-    fullRealVsPngPct: vsPng.realPct,
+    htmlPngDisagreePx: agreed.htmlPngDisagree,
+    agreeTotal: agreed.agreeTotal,
     shell: {
       vsHtml: vsHtml.shell,
       vsPng: vsPng.shell,
@@ -286,7 +323,7 @@ async function main() {
       })
       results.push(row)
       console.log(
-        `[parity] ${screen.id}/${theme}: vsHTML=${fmt(row.realVsHtmlPct)} vsPNG=${fmt(row.realVsPngPct)} floor=${fmt(row.floorPct)} pass=${row.pass}`,
+        `[parity] ${screen.id}/${theme}: vsHTML=${fmt(row.realVsHtmlPct)} (agree ${fmt(row.realVsHtmlAgreedPct)}) vsPNG=${fmt(row.realVsPngPct)} floor=${fmt(row.floorPct)} pass=${row.pass}`,
       )
     } finally {
       await browser.close()
@@ -298,8 +335,9 @@ async function main() {
     clock: PARITY_CLOCK,
     generatedAt: new Date().toISOString(),
     passBar: {
-      a: 'shell real vs source HTML (1px/0.1) === 0%',
-      b: 'shell real vs Figma PNG ≤ floor (HTML in Chrome vs PNG)',
+      a: 'real vs unedited HTML === 0% on pixels where HTML agrees with PNG',
+      b: `real vs PNG ≤ ${PNG_PASS_MAX}%`,
+      refs: 'p-*.html and Figma PNGs are read-only; PNG wins on layout disagreement',
     },
     results,
   }
@@ -325,11 +363,12 @@ async function main() {
     '',
     '## Notes',
     '',
-    '- **real vs HTML %** — shell crop (nav + app bar) of Vue vs capture HTML in Chrome; pass (a) requires 0%.',
-    '- **real vs PNG %** — same crop vs Figma MCP PNG; pass (b) requires ≤ **floor %**.',
-    '- **floor %** — capture HTML in Chrome vs the Figma PNG (MCP rasterisation noise ≈ 0.75%).',
+    '- **real vs HTML %** — Vue vs unedited capture HTML in Chrome (reported).',
+    '- **pass (a)** — same comparison restricted to pixels where HTML **agrees** with the PNG must be **0%**.',
+    `- **real vs PNG %** — Vue vs Figma PNG; pass (b) requires ≤ **${PNG_PASS_MAX}%**.`,
+    '- **floor %** — HTML in Chrome vs PNG (informational MCP/layout drift).',
+    '- Refs (`p-*.html`, PNGs) are **read-only**. Where HTML layout disagrees with PNG, match the PNG.',
     '- Full-page mask: only the design-only **Example data** tag box.',
-    '- Page-content differences remain until screen agents restyle list/record pages.',
     '',
   ].join('\n')
   fs.writeFileSync(mdPath, md)

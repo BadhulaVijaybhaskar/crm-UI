@@ -1,0 +1,71 @@
+{
+  "message": [
+    {
+      "name": "priya.n@example.in",
+      "email": "priya.n@example.in",
+      "full_name": "Priya Nair",
+      "user_image": "",
+      "enabled": 1,
+      "user_type": "System User",
+      "role": "System Manager",
+      "roles": [
+        "System Manager",
+        "Sales Manager"
+      ],
+      "session_user": true,
+      "last_active": "2026-10-28 09:12:00"
+    },
+    {
+      "name": "rohan.mehta@example.in",
+      "email": "rohan.mehta@example.in",
+      "full_name": "Rohan Mehta",
+      "user_image": "",
+      "enabled": 1,
+      "user_type": "System User",
+      "role": "Sales User",
+      "roles": [
+        "Sales User"
+      ],
+      "last_active": "2026-10-28 08:40:00"
+    },
+    {
+      "name": "sameer.k@example.in",
+      "email": "sameer.k@example.in",
+      "full_name": "Sameer Khan",
+      "user_image": "",
+      "enabled": 1,
+      "user_type": "System User",
+      "role": "Sales User",
+      "roles": [
+        "Sales User"
+      ],
+      "last_active": "2026-10-27 16:05:00"
+    },
+    {
+      "name": "anjali.v@example.in",
+      "email": "anjali.v@example.in",
+      "full_name": "Anjali Verma",
+      "user_image": "",
+      "enabled": 1,
+      "user_type": "System User",
+      "role": "Sales Manager",
+      "roles": [
+        "Sales Manager"
+      ],
+      "last_active": "2026-10-26 11:00:00"
+    },
+    {
+      "name": "nikhil.j@example.in",
+      "email": "nikhil.j@example.in",
+      "full_name": "Nikhil Jain",
+      "user_image": "",
+      "enabled": 1,
+      "user_type": "System User",
+      "role": "Sales User",
+      "roles": [
+        "Sales User"
+      ],
+      "last_active": "2026-10-25 15:20:00"
+    }
+  ]
+}

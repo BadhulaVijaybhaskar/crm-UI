@@ -233,3 +233,105 @@ export function shellRealPercent(builtPath, figmaPath, shellRegions = []) {
   }
   return shellTotal ? (shellReal / shellTotal) * 100 : 0
 }
+
+/**
+ * Build a per-pixel map of "real difference" (1 = differs) using the same
+ * 1px-neighbour / threshold 0.1 rule as realDifferenceCount.
+ */
+function realDifferenceMap(a, b, width, height, threshold = 0.1) {
+  const diffMap = new Uint8Array(width * height)
+  const raw = new Uint8Array(width * height)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (width * y + x) << 2
+      if (colorDist(a.data, b.data, i, i) > threshold) {
+        raw[width * y + x] = 1
+      }
+    }
+  }
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!raw[width * y + x]) continue
+      const bi = (width * y + x) << 2
+      let near = false
+      for (let dy = -1; dy <= 1 && !near; dy++) {
+        for (let dx = -1; dx <= 1 && !near; dx++) {
+          const nx = x + dx
+          const ny = y + dy
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
+          const fi = (width * ny + nx) << 2
+          if (colorDist(a.data, b.data, bi, fi) <= threshold) near = true
+        }
+      }
+      if (!near) diffMap[width * y + x] = 1
+    }
+  }
+  return diffMap
+}
+
+/**
+ * Vue vs HTML real % counted only where unedited HTML agrees with the PNG.
+ * HTML/PNG layout disagreements are excluded (PNG is the approved design).
+ * Refs are read-only — never mutate HTML or PNG to close this gap.
+ */
+export function htmlAgreementRealPercent({
+  builtPath,
+  htmlPath,
+  pngPath,
+  masks = [],
+  shellRegions = [],
+  threshold = 0.1,
+}) {
+  let built = loadPng(builtPath)
+  let html = loadPng(htmlPath)
+  let png = loadPng(pngPath)
+  const width = png.width
+  const height = png.height
+  built = ensureSize(built, width, height)
+  html = ensureSize(html, width, height)
+
+  const builtM = applyMasks(built, masks)
+  const htmlM = applyMasks(html, masks)
+  const pngM = applyMasks(png, masks)
+
+  const htmlVsPng = realDifferenceMap(htmlM, pngM, width, height, threshold)
+  const vueVsHtml = realDifferenceMap(builtM, htmlM, width, height, threshold)
+
+  // Optional crop: only pixels inside shellRegions (nav/app-bar) participate.
+  const inRegion = new Uint8Array(width * height)
+  if (shellRegions.length) {
+    for (const region of shellRegions) {
+      const x0 = Math.max(0, Math.floor(region.x))
+      const y0 = Math.max(0, Math.floor(region.y))
+      const x1 = Math.min(width, Math.ceil(region.x + region.width))
+      const y1 = Math.min(height, Math.ceil(region.y + region.height))
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          inRegion[width * y + x] = 1
+        }
+      }
+    }
+  } else {
+    inRegion.fill(1)
+  }
+
+  let agreeTotal = 0
+  let agreeMismatch = 0
+  let htmlPngDisagree = 0
+  for (let i = 0; i < width * height; i++) {
+    if (!inRegion[i]) continue
+    if (htmlVsPng[i]) {
+      htmlPngDisagree++
+      continue // HTML disagrees with PNG — exclude from pass (a)
+    }
+    agreeTotal++
+    if (vueVsHtml[i]) agreeMismatch++
+  }
+
+  return {
+    realVsHtmlAgreedPct: agreeTotal ? (agreeMismatch / agreeTotal) * 100 : 0,
+    agreeMismatch,
+    agreeTotal,
+    htmlPngDisagree,
+  }
+}

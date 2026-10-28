@@ -1,0 +1,65 @@
+[
+  {
+    "name": "Qualification",
+    "label": "Qualification",
+    "type": "Open",
+    "color": "c6",
+    "position": 1,
+    "probability": 10,
+    "in_use": 3
+  },
+  {
+    "name": "Demo/Making",
+    "label": "Demo/Making",
+    "type": "Ongoing",
+    "color": "c4",
+    "position": 2,
+    "probability": 25,
+    "in_use": 4
+  },
+  {
+    "name": "Proposal/Quotation",
+    "label": "Proposal/Quotation",
+    "type": "Ongoing",
+    "color": "c2",
+    "position": 3,
+    "probability": 50,
+    "in_use": 3
+  },
+  {
+    "name": "Negotiation",
+    "label": "Negotiation",
+    "type": "Ongoing",
+    "color": "c5",
+    "position": 4,
+    "probability": 70,
+    "in_use": 2
+  },
+  {
+    "name": "Ready to Close",
+    "label": "Ready to Close",
+    "type": "Ongoing",
+    "color": "c1",
+    "position": 5,
+    "probability": 90,
+    "in_use": 1
+  },
+  {
+    "name": "Won",
+    "label": "Won",
+    "type": "Won",
+    "color": "success",
+    "position": 6,
+    "probability": 100,
+    "in_use": 4
+  },
+  {
+    "name": "Lost",
+    "label": "Lost",
+    "type": "Lost",
+    "color": "danger",
+    "position": 7,
+    "probability": 0,
+    "in_use": 2
+  }
+]

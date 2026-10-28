@@ -1,5 +1,42 @@
 <template>
-  <div class="flex flex-col gap-5.5">
+  <div v-if="appearance === 'settings'" class="flex flex-col gap-3">
+    <div
+      v-if="tabs.length > 1"
+      class="flex flex-wrap items-center gap-1"
+      role="tablist"
+    >
+      <button
+        v-for="(tab, i) in tabs"
+        :key="tab.name || i"
+        type="button"
+        class="inline-flex h-8 items-center rounded-crm-control-sm px-3 text-crm-label font-medium"
+        :class="
+          tabIndex === i
+            ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]'
+            : 'bg-crm-muted text-crm-muted-fg'
+        "
+        @click="tabIndex = i"
+      >
+        {{ tab.label || __('Untitled') }}
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-8 items-center px-2 text-crm-label font-semibold text-crm-primary"
+        @click="addTab"
+      >
+        {{ __('Add tab') }}
+      </button>
+    </div>
+    <SettingsSectionCards
+      v-if="tabs[tabIndex]"
+      ref="cardsRef"
+      v-model="tabs[tabIndex].sections"
+      v-model:selected="selected"
+      :field-options="fields"
+      :section-options="settingsSectionOptions"
+    />
+  </div>
+  <div v-else class="flex flex-col gap-5.5">
     <div
       class="flex items-center justify-between gap-2 text-base bg-surface-gray-2 rounded-4 py-2 px-2.5 overflow-x-auto max-w-full"
     >
@@ -273,6 +310,7 @@
 </template>
 <script setup>
 import DragVerticalIcon from '@/components/Icons/DragVerticalIcon.vue'
+import SettingsSectionCards from '@/components/Settings/SettingsSectionCards.vue'
 import Draggable from 'vuedraggable'
 import { getRandom } from '@/utils'
 import { getMeta } from '@/stores/meta'
@@ -283,9 +321,12 @@ import { ref, computed, watch, nextTick } from 'vue'
 const props = defineProps({
   doctype: { type: String, default: 'CRM Lead' },
   onlyRequired: { type: Boolean, default: false },
+  appearance: { type: String, default: 'default' },
 })
 
 const tabs = defineModel({ type: Array, default: () => [] })
+const selected = defineModel('selected', { type: Object, default: null })
+const cardsRef = ref(null)
 
 const { $dialog } = globalStore()
 
@@ -294,6 +335,10 @@ const isDragging = ref(false)
 const tabItemRefs = ref([])
 
 watch(tabIndex, (idx) => {
+  const tab = tabs.value[idx]
+  if (props.appearance === 'settings' && tab && !Array.isArray(tab.sections)) {
+    tab.sections = []
+  }
   nextTick(() => {
     tabItemRefs.value[idx]?.scrollIntoView({
       behavior: 'smooth',
@@ -347,9 +392,22 @@ const fields = computed(() => {
         value: field.fieldname,
         fieldname: field.fieldname,
         fieldtype: field.fieldtype,
+        reqd: field.reqd,
       }
     })
 })
+
+function settingsSectionOptions(section) {
+  const tab = tabs.value[tabIndex.value]
+  if (!tab?.sections) return []
+  return getSectionOptions(tab.sections.indexOf(section), section, tab)
+}
+
+function removeSelected() {
+  cardsRef.value?.removeSelected?.()
+}
+
+defineExpose({ removeSelected })
 
 function addTab() {
   if (tabs.value.length == 1 && !tabs.value[0].label) {

@@ -1,5 +1,12 @@
 <template>
-  <div>
+  <SettingsSectionCards
+    v-if="appearance === 'settings'"
+    ref="cardsRef"
+    v-model="sections"
+    v-model:selected="selected"
+    :field-options="settingsFieldOptions"
+  />
+  <div v-else>
     <Draggable :list="sections" item-key="name" class="flex flex-col gap-5.5">
       <template #item="{ element: section }">
         <div class="flex flex-col gap-3">
@@ -140,18 +147,22 @@
 </template>
 <script setup>
 import EditIcon from '@/components/Icons/EditIcon.vue'
+import SettingsSectionCards from '@/components/Settings/SettingsSectionCards.vue'
 import DragVerticalIcon from '@/components/Icons/DragVerticalIcon.vue'
 import { getRandom } from '@/utils'
 import { getMeta } from '@/stores/meta'
 import Draggable from 'vuedraggable'
 import { Combobox, TextInput } from 'frappe-ui'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   doctype: { type: String, default: 'CRM Lead' },
+  appearance: { type: String, default: 'default' },
 })
 
 const sections = defineModel({ type: Array, default: () => [] })
+const selected = defineModel('selected', { type: Object, default: null })
+const cardsRef = ref(null)
 
 const restrictedFieldTypes = [
   'Section Break',
@@ -176,12 +187,29 @@ const fields = computed(() => {
       value: field.fieldname,
       fieldname: field.fieldname,
       fieldtype: field.fieldtype,
+      reqd: field.reqd,
     }
   })
+})
+
+const settingsFieldOptions = computed(() => {
+  const used = new Set()
+  for (const section of sections.value || []) {
+    for (const column of section.columns || []) {
+      for (const field of column.fields || []) used.add(field.fieldname)
+    }
+  }
+  return fields.value.filter((field) => !used.has(field.fieldname))
 })
 
 function addField(section, field) {
   if (!field) return
   section.columns[0].fields.push(field)
 }
+
+function removeSelected() {
+  cardsRef.value?.removeSelected?.()
+}
+
+defineExpose({ removeSelected })
 </script>

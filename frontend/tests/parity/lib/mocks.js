@@ -74,14 +74,19 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
 
     // POST body may carry method name for /api/method
     let method = parsed.name || ''
+    let post = {}
     if (req.method() === 'POST') {
       try {
-        const post = req.postDataJSON?.() || JSON.parse(req.postData() || '{}')
+        post = req.postDataJSON?.() || JSON.parse(req.postData() || '{}')
         if (post.cmd) method = post.cmd
       } catch {
         /* plain */
       }
     }
+
+    const stagesDoc = readJson(fixture, 'stages.json', null)
+    const layoutDoc = readJson(fixture, 'fields-layout.json', null)
+    const invitationsDoc = readJson(fixture, 'invitations.json', null)
 
     if (
       method.includes('get_users') ||
@@ -112,11 +117,25 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       url.includes('get_single_value')
     ) {
       body = ok(1) // setup_completed
+    } else if (method.includes('get_pipeline_stages')) {
+      body = Array.isArray(stagesDoc) ? ok(stagesDoc) : ok([])
+    } else if (method.includes('get_fields_layout')) {
+      body = Array.isArray(layoutDoc) ? ok(layoutDoc) : ok([])
     } else if (
       method.includes('frappe.client.get_list') ||
       method.includes('frappe.desk.reportview.get')
     ) {
-      body = leads.message !== undefined ? leads : ok(leads)
+      if (post.doctype === 'CRM Invitation' && Array.isArray(invitationsDoc)) {
+        body = ok(invitationsDoc)
+      } else if (
+        (post.doctype === 'CRM Deal Status' ||
+          post.doctype === 'CRM Lead Status') &&
+        Array.isArray(stagesDoc)
+      ) {
+        body = ok(stagesDoc)
+      } else {
+        body = leads.message !== undefined ? leads : ok(leads)
+      }
     } else if (url.includes('/api/resource/CRM Lead')) {
       body = leads.message !== undefined ? leads : ok(leads)
     } else if (

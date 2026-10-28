@@ -3,6 +3,10 @@
  *
  * Clock: Figma HTML shows “Today” / “28 Oct” on the leads list capture day.
  * Freeze to 2026-10-28T11:00:00+05:30 (IST) to match design relative dates.
+ *
+ * p-*.html under PATHS.figmaSrc and PNGs under figma/ are READ-ONLY references.
+ * Never edit them to close a parity diff. Where HTML layout disagrees with the
+ * PNG, match the PNG (approved design).
  */
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -26,6 +30,12 @@ export const PATHS = {
   screens: join(HERE, 'screens'),
 }
 
+const EXAMPLE_DATA_MASK = (fallback) => ({
+  name: 'Example data tag',
+  selector: '[data-parity-mask="example-data"]',
+  fallback,
+})
+
 /** Desktop captures are 1440×960 (crm.css .app). Mobile m* are 390×844. */
 export const SCREENS = {
   '04-leads-list': {
@@ -42,22 +52,65 @@ export const SCREENS = {
     },
     viewport: { width: 1440, height: 960 },
     deviceScaleFactor: 1,
-    /** Design-only tag; only this box is masked in the full-page diff. */
-    masks: [
-      {
-        name: 'Example data tag',
-        // Approximate box from p-04 ph2 row (right side before New lead).
-        // Harness also tries [data-parity-mask="example-data"] if present.
-        selector: '[data-parity-mask="example-data"]',
-        fallback: { x: 1188, y: 70, width: 118, height: 28 },
-      },
-    ],
-    /** Regions owned by the shell agent — driven to 0% real difference. */
+    masks: [EXAMPLE_DATA_MASK({ x: 1188, y: 70, width: 118, height: 28 })],
+    /** Regions owned by the shell agent. */
     shellRegions: [
       { name: 'nav', x: 0, y: 0, width: 240, height: 960 },
       { name: 'app-bar', x: 240, y: 0, width: 1200, height: 52 },
     ],
     fixture: '04-leads-list',
+  },
+  '21-settings-stages': {
+    id: '21-settings-stages',
+    route: '/crm/settings/pipeline-stages',
+    sessionEmail: 'priya.n@example.in',
+    sourceHtml: {
+      light: 'p-21-settings-stages-light.html',
+      dark: 'p-21-settings-stages-dark.html',
+    },
+    figma: {
+      light: '21-settings-stages-light.png',
+      dark: '21-settings-stages-dark.png',
+    },
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    // Concept banner pushes Example data down (~y 112).
+    masks: [EXAMPLE_DATA_MASK({ x: 1115, y: 112, width: 95, height: 24 })],
+    fixture: '21-settings',
+  },
+  '22-settings-users': {
+    id: '22-settings-users',
+    route: '/crm/settings/users',
+    sessionEmail: 'priya.n@example.in',
+    sourceHtml: {
+      light: 'p-22-settings-users-light.html',
+      dark: 'p-22-settings-users-dark.html',
+    },
+    figma: {
+      light: '22-settings-users-light.png',
+      dark: '22-settings-users-dark.png',
+    },
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    masks: [EXAMPLE_DATA_MASK({ x: 1028, y: 82, width: 97, height: 24 })],
+    fixture: '21-settings',
+  },
+  '23-settings-fields': {
+    id: '23-settings-fields',
+    route: '/crm/settings/fields-layout',
+    sessionEmail: 'priya.n@example.in',
+    sourceHtml: {
+      light: 'p-23-settings-fields-light.html',
+      dark: 'p-23-settings-fields-dark.html',
+    },
+    figma: {
+      light: '23-settings-fields-light.png',
+      dark: '23-settings-fields-dark.png',
+    },
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    masks: [EXAMPLE_DATA_MASK({ x: 1130, y: 82, width: 95, height: 24 })],
+    fixture: '21-settings',
   },
 }
 

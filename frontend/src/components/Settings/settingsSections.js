@@ -124,7 +124,7 @@ export const settingsGroups = [
       },
       {
         slug: 'sales-hierarchy',
-        label: 'Sales Hierarchy',
+        label: 'Sales hierarchy',
         icon: markRaw(LucideNetwork),
         component: load(
           () => import('@/components/Settings/Hierarchy/Hierarchy.vue'),
@@ -138,7 +138,7 @@ export const settingsGroups = [
     items: [
       {
         slug: 'pipeline-stages',
-        label: 'Pipeline Stages',
+        label: 'Pipeline stages',
         icon: 'list-tree',
         component: load(
           () => import('@/components/Settings/PipelineStagesSettings.vue'),
@@ -147,7 +147,7 @@ export const settingsGroups = [
       },
       {
         slug: 'fields-layout',
-        label: 'Fields Layout',
+        label: 'Fields layout',
         icon: 'columns-2',
         component: load(
           () => import('@/components/Settings/FieldsLayoutSettings.vue'),
@@ -163,7 +163,7 @@ export const settingsGroups = [
     items: [
       {
         slug: 'workflow-automations',
-        label: 'Workflow Automations',
+        label: 'Workflow automations',
         icon: markRaw(LucideWorkflow),
         component: load(
           () =>
@@ -174,7 +174,7 @@ export const settingsGroups = [
       },
       {
         slug: 'assignment-rules',
-        label: 'Assignment Rules',
+        label: 'Assignment rules',
         icon: markRaw(SettingsIcon2),
         iconClass: 'rotate-90',
         component: load(
@@ -186,7 +186,7 @@ export const settingsGroups = [
       },
       {
         slug: 'sla-policies',
-        label: 'SLA Policies',
+        label: 'SLA policies',
         icon: markRaw(ShieldCheck),
         component: load(() => import('@/components/Settings/Sla/SlaConfig.vue')),
       },
@@ -281,7 +281,7 @@ export const settingsGroups = [
       },
       {
         slug: 'lead-syncing',
-        label: 'Lead Syncing',
+        label: 'Lead syncing',
         icon: 'refresh-cw',
         component: load(
           () =>
