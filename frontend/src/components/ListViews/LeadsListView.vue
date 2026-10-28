@@ -274,24 +274,16 @@ const bulkBarActions = computed(() => {
   const unselectAll = () => clearSelections()
   const all =
     listBulkActionsRef.value?.bulkActions(selections, unselectAll) || []
+  const assign = all.find(
+    (a) => a.label === __('Assign To') || a.label === 'Assign To',
+  )
+  const edit = all.find((a) => a.label === __('Edit') || a.label === 'Edit')
   const allowed = []
-  for (const action of all) {
-    const label = String(action.label || '')
-    if (label === __('Assign To') || label === 'Assign To') {
-      allowed.push({ label: __('Assign'), onClick: action.onClick })
-    } else if (label === __('Edit') || label === 'Edit') {
-      allowed.push({ label: __('Set status'), onClick: action.onClick })
-    }
-  }
+  if (assign) allowed.push({ label: __('Assign'), onClick: assign.onClick })
+  if (edit) allowed.push({ label: __('Set status'), onClick: edit.onClick })
   allowed.push({
     label: __('Set temperature'),
-    onClick: () => {
-      /* visual parity action — edit modal covers field changes */
-      const edit = all.find(
-        (a) => a.label === __('Edit') || a.label === 'Edit',
-      )
-      edit?.onClick?.()
-    },
+    onClick: () => edit?.onClick?.(),
   })
   if (canUseCrmCsvExport('CRM Lead') && selectedKeys.value.length) {
     allowed.push({
@@ -349,10 +341,25 @@ defineExpose({
 </script>
 
 <style scoped>
+.astra-leads-table :deep(table) {
+  border-collapse: collapse;
+}
 .astra-leads-table :deep(th) {
+  height: 34px;
+  padding: 0 10px;
   letter-spacing: 0.06em;
+  font-size: 11px;
 }
 .astra-leads-table :deep(td) {
+  height: 44px;
+  max-height: 44px;
+  padding: 0 10px;
   font-size: 12.5px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.astra-leads-table :deep(tr.bg-crm-row-selected),
+.astra-leads-table :deep(tr[class*='bg-crm-row-selected']) {
+  background: var(--crm-row-selected);
 }
 </style>

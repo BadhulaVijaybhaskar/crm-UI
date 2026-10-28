@@ -27,7 +27,7 @@
       />
       <AstraButton
         variant="primary"
-        :label="__('+ New lead')"
+        :label="__('New lead')"
         @click="showLeadModal = true"
       >
         <template #prefix>

@@ -325,6 +325,7 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       body = buildGetData(fixture, doctype || post.doctype || 'CRM Lead', views)
     } else if (
       method.includes('frappe.client.get_list') ||
+      method.includes('frappe.client.get_count') ||
       method.includes('frappe.desk.reportview.get') ||
       method.includes('frappe.desk.reportview.get_count')
     ) {

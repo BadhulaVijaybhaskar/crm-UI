@@ -7,6 +7,13 @@ import { useRoute, useRouter } from 'vue-router'
  * Counts come from the live list total for the active view, and
  * frappe.client.get_count for other saved views' filters.
  */
+function asCount(value) {
+  if (value == null || value === '') return undefined
+  if (Array.isArray(value)) return undefined
+  const n = Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
 export function useRecordsViews({
   doctype,
   list,
@@ -37,7 +44,7 @@ export function useRecordsViews({
         view: null,
         type: 'list',
         // Prefer unfiltered get_count / fixture parity_count — not the page total.
-        count: viewCounts.value.__all ?? allParity,
+        count: asCount(viewCounts.value.__all) ?? asCount(allParity),
       },
     ]
     for (const view of savedViews.value) {
@@ -57,10 +64,10 @@ export function useRecordsViews({
         view,
         type: view.type || 'list',
         count:
-          viewCounts.value[view.name] ??
-          view.parity_count ??
+          asCount(viewCounts.value[view.name]) ??
+          asCount(view.parity_count) ??
           (activeView.value === String(view.name)
-            ? list.value?.data?.total_count
+            ? asCount(list.value?.data?.total_count)
             : undefined),
       })
     }
@@ -87,13 +94,28 @@ export function useRecordsViews({
             filters = {}
           }
         }
+        // Saved views often store filters as Frappe condition arrays.
+        if (Array.isArray(filters)) {
+          const asObj = { ...defaultFilters() }
+          for (const rule of filters) {
+            if (!Array.isArray(rule) || rule.length < 3) continue
+            const [field, op, value] = rule
+            asObj[field] = op === '=' ? value : [op, value]
+          }
+          filters = asObj
+        } else {
+          filters = { ...defaultFilters(), ...filters }
+        }
         try {
-          next[view.name] = await call('frappe.client.get_count', {
+          const count = await call('frappe.client.get_count', {
             doctype,
-            filters: { ...defaultFilters(), ...filters },
+            filters,
           })
+          const n = asCount(count)
+          if (n != null) next[view.name] = n
+          else if (view.parity_count != null) next[view.name] = view.parity_count
         } catch {
-          /* keep prior */
+          if (view.parity_count != null) next[view.name] = view.parity_count
         }
       }),
     )
