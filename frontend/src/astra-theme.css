@@ -230,7 +230,8 @@ body {
 .astra-shell__sidebar [aria-current='page'] .astra-shell__nav-count,
 .astra-shell__sidebar [data-active='true'] .astra-shell__nav-count,
 .astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] .astra-shell__nav-count {
-  color: #c4d2da;
+  /* app.css .nav li.on .cnt */
+  color: #c9d3e6;
 }
 
 /* External-link glyph on Connect items — crm.css .nav li .ext (12×12) */

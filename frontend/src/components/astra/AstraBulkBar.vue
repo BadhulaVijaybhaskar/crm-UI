@@ -8,10 +8,11 @@
     <div
       class="pointer-events-auto inline-flex h-[42px] items-center gap-2 rounded-crm-rail bg-crm-bulk-bg px-3 text-crm-label text-crm-bulk-fg shadow-crm-bulk"
     >
+      <!-- crm.css .bulk .bb is font-weight 600; PNG tints count with primary -->
       <span
         class="inline-flex h-7 items-center gap-1.5 rounded-crm-chip px-2.5 font-semibold text-crm-primary"
       >
-        <b>{{ __('{0} selected', [count]) }}</b>
+        {{ __('{0} selected', [count]) }}
       </span>
       <template v-for="action in actions" :key="action.label">
         <button

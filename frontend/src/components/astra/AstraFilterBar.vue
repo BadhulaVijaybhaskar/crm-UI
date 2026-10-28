@@ -19,9 +19,10 @@
           <span v-if="filter.value" class="font-semibold text-crm-primary">
             {{ filter.value }}
           </span>
-          <!-- crm.css .fchip svg { color: var(--faint) } even when .on -->
+          <!-- PNG paints the dismiss X in primary on .on chips (HTML faint disagrees). -->
           <svg
-            class="size-3.5 text-crm-faint"
+            class="size-3.5"
+            :class="filter.active ? 'text-crm-primary' : 'text-crm-faint'"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
