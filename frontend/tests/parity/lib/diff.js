@@ -214,3 +214,22 @@ export function compareImages({
     tripletPath: outTripletPath,
   }
 }
+
+/** Shell-only real % (nav + app bar), same 1px / 0.1 rule as full-page real %. */
+export function shellRealPercent(builtPath, figmaPath, shellRegions = []) {
+  const built = loadPng(builtPath)
+  const figma = loadPng(figmaPath)
+  const width = figma.width
+  const height = figma.height
+  const builtSized = ensureSize(built, width, height)
+  let shellReal = 0
+  let shellTotal = 0
+  for (const region of shellRegions) {
+    const b = crop(builtSized, region)
+    const f = crop(figma, region)
+    const r = realDifferenceCount(b, f, region.width, region.height, 0.1)
+    shellReal += r
+    shellTotal += region.width * region.height
+  }
+  return shellTotal ? (shellReal / shellTotal) * 100 : 0
+}

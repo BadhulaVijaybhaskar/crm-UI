@@ -19,6 +19,8 @@ export const PATHS = {
   dist: join(REPO, 'crm/public/frontend'),
   figmaDir: join(HERE, 'figma'),
   figmaFallback: '/tmp/crm-figma-v1-all',
+  /** Exact HTML/CSS the Figma MCP capture used (from uploads/crm-figma-src.tgz). */
+  figmaSrc: '/tmp/crm-figma-src/figma-crm',
   artifacts: '/opt/cursor/artifacts/parity',
   fixtures: join(HERE, 'fixtures'),
   screens: join(HERE, 'screens'),
@@ -29,6 +31,11 @@ export const SCREENS = {
   '04-leads-list': {
     id: '04-leads-list',
     route: '/crm/leads/view/list',
+    /** Source HTML captured into the Figma PNG (same basename as p-*.html). */
+    sourceHtml: {
+      light: 'p-04-leads-list-light.html',
+      dark: 'p-04-leads-list-dark.html',
+    },
     figma: {
       light: '04-leads-list-light.png',
       dark: '04-leads-list-dark.png',

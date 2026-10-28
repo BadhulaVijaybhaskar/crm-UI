@@ -1,18 +1,20 @@
-import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
-import DealsIcon from '@/components/Icons/DealsIcon.vue'
-import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
-import OrganizationsIcon from '@/components/Icons/OrganizationsIcon.vue'
-import TaskIcon from '@/components/Icons/TaskIcon.vue'
-import NoteIcon from '@/components/Icons/NoteIcon.vue'
-import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
-import LucideHouse from '~icons/lucide/house'
-import LucideListChecks from '~icons/lucide/list-checks'
-import LucideInbox from '~icons/lucide/inbox'
-import LucidePhone from '~icons/lucide/phone'
-import LucideMessagesSquare from '~icons/lucide/messages-square'
-import LucideBot from '~icons/lucide/bot'
-import LucideChartColumn from '~icons/lucide/chart-column'
-import LucideSettings from '~icons/lucide/settings'
+import {
+  FigmaHomeIcon,
+  FigmaWorkQueueIcon,
+  FigmaConversationsIcon,
+  FigmaLeadsIcon,
+  FigmaDealsIcon,
+  FigmaContactsIcon,
+  FigmaCompaniesIcon,
+  FigmaTasksIcon,
+  FigmaNotesIcon,
+  FigmaCallLogsIcon,
+  FigmaReportsIcon,
+  FigmaAICallingIcon,
+  FigmaMessagesIcon,
+  FigmaAIEmployeesIcon,
+  FigmaSettingsIcon,
+} from '@/components/Icons/FigmaNavIcons'
 import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
 
@@ -25,87 +27,83 @@ export const NAV_FEATURE_READY = Object.freeze({
 })
 
 /**
- * Sidebar registry — labels/order match Figma CRM v1 (p-*.html / crm.css).
- * - { route } — in-app vue-router name
- * - { connect, requiresConnect: true } — Astra Connect path
- * - { action: 'settings' } — opens the settings modal
- * Optional `count` is a static design default; live counts can override later.
+ * Sidebar registry — labels/order/icons match Figma CRM v1 (p-*.html / crm.css).
  */
 export const navigationItems = [
   {
     label: 'Home',
-    icon: LucideHouse,
+    icon: FigmaHomeIcon,
     route: 'Dashboard',
     section: 'main',
   },
   {
     label: 'Work queue',
-    icon: LucideListChecks,
+    icon: FigmaWorkQueueIcon,
     route: 'Activities',
     section: 'main',
     count: 12,
   },
   {
     label: 'Conversations',
-    icon: LucideInbox,
+    icon: FigmaConversationsIcon,
     route: 'Conversations',
     ready: NAV_FEATURE_READY.Conversations,
     section: 'main',
   },
   {
     label: 'Leads',
-    icon: LeadsIcon,
+    icon: FigmaLeadsIcon,
     route: 'Leads',
     section: 'records',
     count: 42,
   },
   {
     label: 'Deals',
-    icon: DealsIcon,
+    icon: FigmaDealsIcon,
     route: 'Deals',
     section: 'records',
     count: 14,
   },
   {
     label: 'Contacts',
-    icon: ContactsIcon,
+    icon: FigmaContactsIcon,
     route: 'Contacts',
     section: 'records',
   },
   {
     label: 'Companies',
-    icon: OrganizationsIcon,
+    icon: FigmaCompaniesIcon,
     route: 'Organizations',
     section: 'records',
   },
   {
     label: 'Tasks',
-    icon: TaskIcon,
+    icon: FigmaTasksIcon,
     route: 'Tasks',
     section: 'activity',
     count: 7,
   },
   {
     label: 'Notes',
-    icon: NoteIcon,
+    icon: FigmaNotesIcon,
     route: 'Notes',
     section: 'activity',
   },
   {
     label: 'Call logs',
-    icon: PhoneIcon,
+    icon: FigmaCallLogsIcon,
     route: 'Call Logs',
     section: 'activity',
   },
   {
     label: 'Reports',
-    icon: LucideChartColumn,
+    icon: FigmaReportsIcon,
     route: 'Reports',
     section: 'insights',
   },
   {
     label: 'AI Calling',
-    icon: LucidePhone,
+    icon: FigmaAICallingIcon,
     connect: 'calls',
     requiresConnect: true,
     section: 'connect',
@@ -113,7 +111,7 @@ export const navigationItems = [
   },
   {
     label: 'Messages',
-    icon: LucideMessagesSquare,
+    icon: FigmaMessagesIcon,
     connect: 'messages',
     requiresConnect: true,
     section: 'connect',
@@ -121,7 +119,7 @@ export const navigationItems = [
   },
   {
     label: 'AI Employees',
-    icon: LucideBot,
+    icon: FigmaAIEmployeesIcon,
     connect: 'employees',
     requiresConnect: true,
     section: 'connect',
@@ -129,7 +127,7 @@ export const navigationItems = [
   },
   {
     label: 'Settings',
-    icon: LucideSettings,
+    icon: FigmaSettingsIcon,
     action: 'settings',
     section: 'footer',
   },

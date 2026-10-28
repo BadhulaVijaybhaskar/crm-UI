@@ -90,12 +90,21 @@ body {
   border: 0;
 }
 
-/* crm.css: .nav li { height:32px; border-radius:6px; padding:0 10px } — frappe-ui uses h-7 */
+/* crm.css: .nav li { height:32px; border-radius:6px; padding:0 10px; font-weight:500 }
+   Kill frappe-ui SidebarItem surface/ink utilities — they paint light-theme greys on the ink nav. */
 .astra-shell__sidebar [data-slot='sidebar-item'] {
   height: var(--astra-nav-item-h) !important;
   min-height: var(--astra-nav-item-h);
   border-radius: 6px;
   font-weight: 500;
+  color: var(--crm-nav-fg) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.astra-shell__sidebar [data-slot='sidebar-item']:hover {
+  background: rgba(15, 42, 54, 0.55) !important;
+  color: #ffffff !important;
 }
 
 .astra-shell__sidebar [data-slot='sidebar-item'] > a,
@@ -103,6 +112,11 @@ body {
   padding-left: 10px !important;
   padding-right: 10px !important;
   gap: 10px;
+  color: inherit !important;
+}
+
+.astra-shell__sidebar [data-slot='sidebar-item'] .astra-nav-icon {
+  color: var(--crm-nav-faint) !important;
 }
 
 .astra-shell__main {

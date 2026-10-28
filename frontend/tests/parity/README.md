@@ -15,7 +15,9 @@ yarn parity 04-leads-list
 Artifacts land in `/opt/cursor/artifacts/parity/`:
 
 - `<screen>-<theme>.png` — triplet (built | figma | diff)
-- `<screen>-report.json` / `.md` — raw %, real % (1px / threshold 0.1), shell real %
+- `<screen>-report.json` / `.md` — raw %, real % (1px / threshold 0.1), shell real %, shell floor, shell attributable %
+
+**Shell pass:** `shell attributable % ≈ 0`, where attributable = max(0, vue↔png_shell − sourceHtml↔png_shell). The Figma MCP PNGs are not Chrome pixels; even the capture HTML retains a small floor vs the PNG.
 
 ## How a screen agent adds a new screen
 

@@ -33,7 +33,8 @@
           />
         </div>
 
-        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5 pb-2">
+        <!-- crm.css: .nav ul { padding:6px 10px; gap:1px } — each section is its own ul -->
+        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <SidebarItem
             v-if="mobile"
             id="notifications-btn"
@@ -56,18 +57,14 @@
             />
           </SidebarItem>
 
-          <section
-            v-for="section in navSections"
-            :key="section.id"
-            class="mt-1"
-          >
+          <section v-for="section in navSections" :key="section.id">
             <div
               v-if="!section.hideLabel && !isCollapsed"
               class="px-5 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[color:var(--crm-nav-faint)]"
             >
               {{ __(section.label) }}
             </div>
-            <nav class="flex flex-col gap-px px-0">
+            <nav class="flex flex-col gap-px px-2.5 py-1.5">
               <SidebarItem
                 v-for="link in section.views"
                 :key="link.key"
@@ -93,10 +90,9 @@
                     >
                       {{ link.count }}
                     </span>
-                    <span
+                    <FigmaExternalIcon
                       v-if="link.external && !isCollapsed"
-                      class="astra-shell__nav-ext lucide-external-link"
-                      aria-hidden="true"
+                      class="astra-shell__nav-ext !size-3"
                     />
                   </span>
                 </Tooltip>
@@ -147,8 +143,9 @@
           </CollapsibleSection>
         </div>
 
-        <div class="mt-auto flex flex-col gap-1 px-2.5 pb-2 pt-2">
-          <div v-if="!mobile" class="mb-1 flex flex-col gap-2">
+        <!-- Figma: settings ul { margin-top:auto } then .foot { margin-top:0; padding:14px 16px } -->
+        <div class="mt-auto flex flex-col">
+          <div v-if="!mobile" class="flex flex-col gap-2 px-2.5">
             <SignupBanner
               v-if="isDemoSite && isFCSite"
               :isSidebarCollapsed="isCollapsed"
@@ -168,7 +165,7 @@
           <SidebarItem
             v-if="!mobile && isManager() && isDemoDataCreated"
             :label="__('Clear Demo Data')"
-            class="!text-crm-danger"
+            class="!text-crm-danger mx-2.5"
             @click="() => clearDemoData()"
           >
             <template #prefix>
@@ -176,35 +173,38 @@
             </template>
           </SidebarItem>
 
-          <!-- Help is opened from Settings / command palette — not in Figma v1 nav -->
+          <nav class="flex flex-col gap-px px-2.5 py-1.5">
+            <SidebarItem
+              v-for="link in footerLinks"
+              :key="link.key"
+              :label="__(link.label)"
+              :active="link.action === 'settings' && showSettings"
+              @click="onNavClick($event, link)"
+            >
+              <template #prefix>
+                <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
+              </template>
+              <span class="truncate text-[13px] font-medium">{{ __(link.label) }}</span>
+            </SidebarItem>
+          </nav>
 
-          <SidebarItem
-            v-for="link in footerLinks"
-            :key="link.key"
-            :label="__(link.label)"
-            :active="link.action === 'settings' && showSettings"
-            @click="onNavClick($event, link)"
-          >
-            <template #prefix>
-              <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
-            </template>
-            <span class="truncate text-[13px] font-medium">{{ __(link.label) }}</span>
-          </SidebarItem>
-
-          <!-- crm.css: .nav .foot { padding:14px 16px; gap:10px } -->
           <div
-            class="mt-1 flex items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-4 py-3.5"
+            class="flex items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-4 py-3.5"
             :class="isCollapsed && 'justify-center px-0'"
           >
             <AstraAvatar
               :name="currentUser.full_name || currentUser.email || '?'"
               size="foot"
+              nav-foot
             />
             <div v-if="!isCollapsed" class="min-w-0 flex-1">
-              <div class="truncate text-[12.5px] font-semibold text-[#E8EDF5]">
+              <div class="truncate text-[12.5px] font-semibold leading-tight text-[#E8EDF5]">
                 {{ currentUser.full_name || currentUser.email }}
               </div>
-              <div class="truncate text-[11.5px] text-[color:var(--crm-nav-faint)]">
+              <div
+                class="whitespace-nowrap text-[11.5px] leading-tight text-[color:var(--crm-nav-faint)]"
+                :title="userRole"
+              >
                 {{ userRole }}
               </div>
             </div>
@@ -260,6 +260,7 @@ import Notifications from '@/components/Notifications.vue'
 import Settings from '@/components/Settings/Settings.vue'
 import AstraAvatar from '@/components/astra/AstraAvatar.vue'
 import AstraThemeToggle from '@/components/astra/AstraThemeToggle.vue'
+import { FigmaExternalIcon } from '@/components/Icons/FigmaNavIcons'
 import {
   getFooterNavItems,
   getNavigationSections,
