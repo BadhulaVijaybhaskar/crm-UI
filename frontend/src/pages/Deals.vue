@@ -110,9 +110,6 @@
 <script setup>
 import GroupSummaryTable from '@/components/GroupSummaryTable.vue'
 import CustomActions from '@/components/CustomActions.vue'
-import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
-import NoteIcon from '@/components/Icons/NoteIcon.vue'
-import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
@@ -122,31 +119,22 @@ import AstraDealsBoard from '@/components/Kanban/AstraDealsBoard.vue'
 import DealModal from '@/components/Modals/DealModal.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
-import { useDoctypeModal } from '@/composables/doctypeModal'
 import { useRecordsViews } from '@/composables/useRecordsViews'
 import { getMeta } from '@/stores/meta'
-import { globalStore } from '@/stores/global'
 import { usersStore } from '@/stores/users'
 import { organizationsStore } from '@/stores/organizations'
 import { statusesStore } from '@/stores/statuses'
-import { callEnabled } from '@/composables/telephony'
 import { formatDate, timeAgo, website, formatTime } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
-import { useTelemetry } from '@framework/ui/telemetry'
 import { useBroadcast } from '@/composables/useBroadcast'
-import { useCrmOnboarding } from '@/composables/onboarding'
 import { useRoute, useRouter } from 'vue-router'
 import { ref, reactive, computed, h } from 'vue'
 
 const { getFormattedPercent, getFormattedFloat, getFormattedCurrency } =
   getMeta('CRM Deal')
-const { makeCall } = globalStore()
 const { getUser, isManager, isAdmin } = usersStore()
 const { getOrganization } = organizationsStore()
 const { getDealStatus } = statusesStore()
-const { completeStep } = useCrmOnboarding()
-const { capture } = useTelemetry()
-const { showModal } = useDoctypeModal()
 const { on } = useBroadcast()
 
 const route = useRoute()
@@ -208,16 +196,6 @@ const {
 })
 
 const filterChips = computed(() => filterChipsFromList())
-
-function getRow(name, field) {
-  function getValue(value) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value
-    }
-    return { label: value }
-  }
-  return getValue(rows.value?.find((row) => row.name == name)[field])
-}
 
 // Rows
 const rows = computed(() => {
@@ -414,70 +392,5 @@ function onNewClick(column) {
   }
 
   showDealModal.value = true
-}
-
-function actions(itemName) {
-  let mobile_no = getRow(itemName, 'mobile_no')?.label || ''
-  let actions = [
-    {
-      icon: h(PhoneIcon, { class: 'h-4 w-4' }),
-      label: __('Make a Call'),
-      onClick: () => makeCall(mobile_no),
-      condition: () => mobile_no && callEnabled.value,
-    },
-    {
-      icon: h(NoteIcon, { class: 'h-4 w-4' }),
-      label: __('New Note'),
-      onClick: () => showNote(itemName),
-    },
-    {
-      icon: h(TaskIcon, { class: 'h-4 w-4' }),
-      label: __('New Task'),
-      onClick: () => showTask(itemName),
-    },
-  ]
-  return actions.filter((action) =>
-    action.condition ? action.condition() : true,
-  )
-}
-
-function showNote(name) {
-  showModal({
-    doctype: 'FCRM Note',
-    title: 'Note',
-    defaults: {
-      reference_doctype: 'CRM Deal',
-      reference_docname: name,
-    },
-    callbacks: {
-      afterInsert: (d) => after(d, true),
-      afterUpdate: after,
-    },
-  })
-}
-
-function showTask(name) {
-  showModal({
-    doctype: 'CRM Task',
-    title: 'Task',
-    defaults: {
-      reference_doctype: 'CRM Deal',
-      reference_docname: name,
-    },
-    callbacks: {
-      afterInsert: (d) => after(d, true),
-      afterUpdate: after,
-    },
-  })
-}
-
-function after(d, isNew = false) {
-  let a = d.doctype == 'CRM Task' ? 'task' : 'note'
-  if (isNew) {
-    completeStep('create_first_' + a)
-    capture(a + '_created')
-  } else {
-    capture(a + '_updated')
-  }
 }
 </script>

@@ -45,8 +45,8 @@
     </div>
   <KanbanView
     v-if="route.params.viewType == 'kanban'"
-    class="min-h-0 flex-1"
     v-model="leads"
+    class="min-h-0 flex-1"
     :options="{
       getRoute: (row) => getRoute(row.name),
       onNewClick: (column) => onNewClick(column),

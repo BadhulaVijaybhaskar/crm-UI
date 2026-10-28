@@ -41,7 +41,7 @@
             :delay="isTouchScreenDevice() ? 200 : 0"
             :data-column="column.column.name"
             ghost-class="astra-kanban-ghost"
-            @start="dragging = true"
+            @start="(evt) => onDragStart(evt)"
             @end="(evt) => onCardMove(evt)"
           >
             <template #item="{ element: fields }">
@@ -364,6 +364,11 @@ function serializeColumns() {
     if (column.page_length) delete column.page_length
     return column
   })
+}
+
+function onDragStart(d) {
+  dragging.value = true
+  draggingName.value = d?.item?.dataset?.name || ''
 }
 
 function onCardMove(d) {
