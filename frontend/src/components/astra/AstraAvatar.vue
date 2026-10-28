@@ -56,7 +56,8 @@ const chipStyle = computed(() => {
 const sizeClass = computed(() => {
   const radius = props.squared ? 'rounded-crm-panel' : 'rounded-full'
   if (props.size === 'xs') return `${radius} size-5 text-[9px]`
-  if (props.size === 'sm') return `${radius} size-[20px] text-[9px]`
+  // crm.css .av2.sm — 20×20, 9px; use 600 (self-hosted Inter has no 700)
+  if (props.size === 'sm') return `${radius} size-[20px] text-[9px] font-semibold`
   // crm.css / app.css .nav .foot .av — 30×30, font 11px / 600
   if (props.size === 'foot') return `${radius} size-[30px] text-[11px] font-semibold`
   if (props.size === 'lg') return `${radius} size-[42px] text-[15px]`
