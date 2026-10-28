@@ -220,17 +220,32 @@ Every accepted delivery is stored as **Astra Connect Event** (`event_id` = Deliv
 
 ## Background worker (required on deploy)
 
-Inbox rows are processed on the dedicated RQ queue **`astra_connect`**.
+Connect prefers the RQ queue **`astra_connect`**. Declare it in `common_site_config.json` (or site config) so `frappe.enqueue` accepts it:
 
-Deploys must run a worker that listens to that queue, for example:
+```json
+{
+  "workers": {
+    "astra_connect": { "timeout": 300 }
+  }
+}
+```
+
+Then run a worker that listens to it:
 
 ```bash
 bench worker --queue astra_connect
-# or include it alongside short/default:
+# or alongside other queues:
 bench worker --queue astra_connect,short,default
 ```
 
-Without a worker on `astra_connect`, events stay `Received` / `Processing` until a worker picks them up. A scheduler job (`*/2 * * * *` → `sweep_stale_processing`) resets `Processing` rows older than **N minutes** (default **5**, configurable on **Astra Connect Settings** / site_config `astra_connect_stale_processing_minutes`) back to `Received` and re-enqueues them.
+If `astra_connect` is **not** configured, CRM falls back to the **`default`** queue automatically (so inbox rows are not stranded after `receive()` commits). Prefer declaring the dedicated queue in production.
+
+The scheduler must be running (`bench schedule` / supervisor). Every **2 minutes** `sweep_stale_processing`:
+
+1. Resets stale **`Processing`** rows (older than **N minutes**, default **5**) back to **`Received`** and re-enqueues them with a **fresh RQ job_id** (so a SIGKILL-left `started` job cannot block recovery).
+2. Re-enqueues orphaned **`Received`** rows older than N minutes (failed enqueue / undeclared queue / skipped dedupe).
+
+N is configurable on **Astra Connect Settings** → Stale Processing Minutes, or site_config `astra_connect_stale_processing_minutes`.
 
 ## Out-of-order deliveries
 

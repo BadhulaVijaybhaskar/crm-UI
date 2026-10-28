@@ -156,9 +156,26 @@ def _column_has_unique_index(table: str, column: str) -> bool:
 		as_dict=True,
 	)
 	for idx in indexes or []:
-		if int(idx.get("Non_unique", 1) or 1) == 0:
+		# Non_unique is 0 for UNIQUE indexes. Do NOT use ``x or 1`` — that turns 0 into 1.
+		try:
+			non_unique = int(idx.get("Non_unique"))
+		except (TypeError, ValueError):
+			non_unique = 1
+		if non_unique == 0:
 			return True
 	return False
+
+
+def ensure_indexes() -> None:
+	"""Idempotent ensure of Connect unique indexes (after_install / after_migrate)."""
+	_ensure_unique_index("tabAstra Connect Event", "event_id", "unique_event_id")
+	if frappe.db.has_column("FCRM Note", "astra_call_id"):
+		# Dedupe first so fresh/partial installs never 1062.
+		_dedupe_notes_by_astra_call_id()
+		frappe.db.commit()
+		_ensure_unique_index("tabFCRM Note", "astra_call_id", "unique_astra_call_id")
+	_ensure_call_log_id_unique()
+	frappe.db.commit()
 
 
 def _ensure_unique_index(table: str, column: str, index_name: str) -> None:

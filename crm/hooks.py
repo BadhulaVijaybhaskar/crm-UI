@@ -135,6 +135,7 @@ before_request = ["crm.overrides.desk.redirect_sales_users_from_desk"]
 before_install = "crm.install.before_install"
 after_install = [
 	"crm.install.after_install",
+	"crm.patches.v1_0.astra_connect_inbox_unique_indexes.ensure_indexes",
 	"frappe.search.sqlite_search.build_index_in_background",
 ]
 
@@ -516,6 +517,7 @@ after_migrate = [
 	"crm.install.add_web_form_custom_fields",
 	"crm.install.ensure_contact_sales_permissions",
 	"crm.install_india.ensure_india_defaults",
+	"crm.patches.v1_0.astra_connect_inbox_unique_indexes.ensure_indexes",
 ]
 
 sqlite_search = ["crm.search_sqlite.CRMSearch"]

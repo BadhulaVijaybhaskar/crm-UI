@@ -1089,3 +1089,158 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		if frappe.db.has_column("FCRM Note", "astra_call_id"):
 			self.assertEqual(frappe.db.count("FCRM Note", {"astra_call_id": "call-patch-1"}), 1)
 			self.assertTrue(patch._column_has_unique_index("tabFCRM Note", "astra_call_id"))
+
+	def test_column_has_unique_index_treats_zero_as_unique(self):
+		"""Non_unique=0 must count as unique (``x or 1`` would wrongly flip it)."""
+		from crm.patches.v1_0 import astra_connect_inbox_unique_indexes as patch_mod
+
+		with patch.object(
+			patch_mod.frappe.db,
+			"sql",
+			return_value=[{"Non_unique": 0, "Key_name": "unique_event_id", "Column_name": "event_id"}],
+		):
+			self.assertTrue(patch_mod._column_has_unique_index("tabAstra Connect Event", "event_id"))
+		with patch.object(
+			patch_mod.frappe.db,
+			"sql",
+			return_value=[{"Non_unique": 1, "Key_name": "event_id", "Column_name": "event_id"}],
+		):
+			self.assertFalse(patch_mod._column_has_unique_index("tabAstra Connect Event", "event_id"))
+
+	def test_enqueue_uses_fresh_job_id_despite_stuck_started_record(self):
+		"""After SIGKILL leaves an RQ job 'started', recovery must still enqueue.
+
+		Simulates frappe's deduplicate skip for a fixed job_id, then asserts our
+		fresh job_id path actually calls enqueue (and the sweeper recovers orphans).
+		"""
+		from crm.integrations.astra_connect import api as connect_api
+
+		self.process_lead_created(
+			{
+				"leadId": "lead-stuck-rq-1",
+				"name": "Stuck RQ Lead",
+				"phone": "+919888889999",
+				"status": "new",
+			}
+		)
+		payload = {
+			"type": "call.completed",
+			"callId": "call-stuck-rq-1",
+			"contactId": "ctc-stuck",
+			"employeeId": "emp-stuck",
+			"direction": "outbound",
+			"phone": "+919888889999",
+			"outcome": "interested",
+			"qualified": False,
+			"summary": "Recover after kill",
+			"endedAt": "2026-10-27T12:00:00Z",
+		}
+		self._track_call("call-stuck-rq-1")
+		eid = "dlv-stuck-rq-1"
+		event = frappe.get_doc(
+			{
+				"doctype": "Astra Connect Event",
+				"event_id": eid,
+				"event_type": "call.completed",
+				"payload": payload,
+				"status": "Received",
+				"attempts": 1,
+			}
+		).insert(ignore_permissions=True)
+		self._created_event_ids.append(eid)
+		# Age the row so the Received-orphan sweeper picks it up.
+		stale_at = add_to_date(now_datetime(), minutes=-30)
+		frappe.db.sql(
+			"UPDATE `tabAstra Connect Event` SET modified=%s WHERE name=%s",
+			(stale_at, event.name),
+		)
+		frappe.db.commit()
+
+		seen_job_ids: list[str] = []
+		stuck_id = f"astra-connect-{eid}"  # old fixed id left in 'started'
+
+		def fake_enqueue(method, **kwargs):
+			jid = kwargs.get("job_id")
+			# Simulate background_jobs.py skipping when the sticky started id is reused.
+			if jid == stuck_id and kwargs.get("deduplicate"):
+				return None
+			seen_job_ids.append(jid)
+			# Run the worker inline for the test.
+			if method == connect_api.WORKER_PATH or method == connect_api.process_inbox_event:
+				connect_api.process_inbox_event(kwargs.get("event_name") or event.name)
+			return jid
+
+		# Force the async enqueue path (bypass in_test sync shortcut).
+		with patch.object(connect_api.frappe.flags, "in_test", False):
+			with patch.dict(connect_api.frappe.conf, {"astra_connect_sync_processing": 0}, clear=False):
+				with patch.object(connect_api.frappe, "enqueue", side_effect=fake_enqueue):
+					# Direct recovery enqueue (retry_event / sweeper path).
+					jid1 = connect_api._enqueue_processing(event.name, eid, attempts=1)
+					self.assertIsNotNone(jid1)
+					self.assertNotEqual(jid1, stuck_id)
+					self.assertFalse(jid1.startswith(stuck_id + ":") and jid1 == stuck_id)
+					self.assertIn(jid1, seen_job_ids)
+					self.assertEqual(self._event_status(eid), "Processed")
+
+		# Second scenario: orphaned Received recovered by sweeper with fresh job ids.
+		eid2 = "dlv-stuck-rq-2"
+		event2 = frappe.get_doc(
+			{
+				"doctype": "Astra Connect Event",
+				"event_id": eid2,
+				"event_type": "call.completed",
+				"payload": {**payload, "callId": "call-stuck-rq-2"},
+				"status": "Received",
+				"attempts": 0,
+			}
+		).insert(ignore_permissions=True)
+		self._created_event_ids.append(eid2)
+		self._track_call("call-stuck-rq-2")
+		frappe.db.sql(
+			"UPDATE `tabAstra Connect Event` SET modified=%s WHERE name=%s",
+			(stale_at, event2.name),
+		)
+		frappe.db.commit()
+
+		seen_job_ids.clear()
+		with patch.object(connect_api.frappe.flags, "in_test", False):
+			with patch.dict(connect_api.frappe.conf, {"astra_connect_sync_processing": 0}, clear=False):
+				with patch.object(connect_api.frappe, "enqueue", side_effect=fake_enqueue):
+					result = connect_api.sweep_stale_processing()
+					self.assertGreaterEqual(result.get("reenqueued", 0), 1)
+					self.assertTrue(seen_job_ids)
+					self.assertTrue(all(j and j != f"astra-connect-{eid2}" for j in seen_job_ids))
+					self.assertEqual(self._event_status(eid2), "Processed")
+
+	def test_enqueue_falls_back_when_astra_connect_queue_missing(self):
+		"""Undeclared astra_connect queue must not leave the inbox row stranded."""
+		from crm.integrations.astra_connect import api as connect_api
+
+		calls: list[dict] = []
+
+		def boom_then_ok(method, **kwargs):
+			calls.append(dict(kwargs))
+			if kwargs.get("queue") == "astra_connect":
+				raise Exception("(417) Queue astra_connect not found")
+			return kwargs.get("job_id")
+
+		with patch.object(connect_api, "_configured_queue_names", return_value={"default", "short", "long"}):
+			self.assertEqual(connect_api._resolve_connect_queue(), "default")
+
+		with patch.object(
+			connect_api, "_configured_queue_names", return_value={"default", "astra_connect"}
+		):
+			self.assertEqual(connect_api._resolve_connect_queue(), "astra_connect")
+
+		# Even if resolve prefers astra_connect, enqueue must fall back on error.
+		with patch.object(connect_api.frappe.flags, "in_test", False):
+			with patch.dict(connect_api.frappe.conf, {"astra_connect_sync_processing": 0}, clear=False):
+				with patch.object(connect_api, "_resolve_connect_queue", return_value="astra_connect"):
+					with patch.object(connect_api.frappe, "enqueue", side_effect=boom_then_ok):
+						jid = connect_api._enqueue_processing("EVT-X", "dlv-fallback-1", attempts=0)
+						self.assertIsNotNone(jid)
+						self.assertEqual(len(calls), 2)
+						self.assertEqual(calls[0]["queue"], "astra_connect")
+						self.assertEqual(calls[1]["queue"], "default")
+						self.assertNotEqual(calls[0]["job_id"], calls[1]["job_id"])
+						self.assertFalse(calls[1].get("deduplicate"))
