@@ -18,6 +18,7 @@
     <GlobalModals />
   </div>
 </template>
+
 <script setup>
 import AppSidebar from '@/components/Layouts/AppSidebar.vue'
 import AppHeader from '@/components/Layouts/AppHeader.vue'
@@ -25,7 +26,6 @@ import GlobalModals from '@/components/Modals/GlobalModals.vue'
 import { availabilityStore } from '@/stores/availability'
 import { useStorage } from '@vueuse/core'
 
-// listen for status changes from the start, not only once a picker opens
 availabilityStore()
 
 const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)

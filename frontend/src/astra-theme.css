@@ -1,171 +1,42 @@
-/* Astra CRM theme — maps Astra Connect tokens onto frappe-ui CSS variables.
-   Dark mode uses [data-theme="dark"] (frappe-ui). Login card follows the theme
-   (unlike Connect console's white-on-dark login bug). */
+/* Astra CRM theme shell — fonts + layout.
+   Colour tokens live in astra-crm-tokens.css (--crm-*). Do not enable the
+   optional frappe-ui remapping block there; shell chrome uses --crm-* directly.
 
-/* Self-hosted Plus Jakarta Sans (no Google Fonts) */
+   Font: self-hosted Inter (OFL) 400/500/600 — matches app.css / Figma captures.
+   Licence: src/assets/fonts/Inter-OFL.txt (not shown in UI). */
+
 @font-face {
-  font-family: 'Plus Jakarta Sans';
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-400.woff2') format('woff2');
+  src: url('./assets/fonts/Inter-400.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Plus Jakarta Sans';
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-500.woff2') format('woff2');
+  src: url('./assets/fonts/Inter-500.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Plus Jakarta Sans';
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-600.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-700.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url('./assets/fonts/PlusJakartaSans-800.woff2') format('woff2');
+  src: url('./assets/fonts/Inter-600.woff2') format('woff2');
 }
 
 :root {
-  --ac: #145cf6;
-  --acm: #0e8bd6;
-  --ac2: #09b5a4;
-  --ac-l: #7fa6ff;
-  --night: #0a1426;
-  --astra-grad: linear-gradient(135deg, var(--ac) 0%, var(--acm) 55%, var(--ac2) 100%);
-  --astra-shadow-primary: 0 8px 24px -8px color-mix(in srgb, var(--ac) 70%, transparent);
+  /* app.css: Inter, system-ui, sans-serif — keep Indic fallbacks for CRM locales */
+  --font-sans: 'Inter', 'Noto Sans Telugu', 'Noto Sans Devanagari', ui-sans-serif,
+    system-ui, sans-serif;
+  /* crm.css shell metrics (override older app.css 232/64 values) */
   --astra-nav-w: 240px;
   --astra-nav-w-collapsed: 64px;
-
-  --font-sans: 'Plus Jakarta Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari',
-    ui-sans-serif, system-ui, sans-serif;
-
-  --surface-base: #f3f6fa;
-  --surface-gray-1: #ffffff;
-  --surface-gray-2: #f7f9fc;
-  --surface-gray-3: #eff3f8;
-  --surface-gray-4: #e3e9f1;
-  --surface-gray-5: #cbd5e1;
-  --surface-gray-6: #94a3b8;
-  --surface-gray-7: #64748b;
-  --surface-gray-8: #475569;
-  --surface-gray-9: #1e293b;
-  --surface-gray-10: #0f172a;
-  --surface-sidebar: #0a1426;
-  --surface-elevation-1: #ffffff;
-  --surface-elevation-2: #f7f9fc;
-  --surface-elevation-3: #eff3f8;
-  --surface-alpha-gray-1: rgba(11, 19, 36, 0.03);
-  --surface-alpha-gray-2: rgba(11, 19, 36, 0.05);
-  --surface-alpha-gray-3: rgba(11, 19, 36, 0.08);
-  --surface-alpha-gray-4: rgba(11, 19, 36, 0.11);
-  --surface-alpha-gray-5: rgba(11, 19, 36, 0.14);
-  --surface-alpha-elevation-1: rgba(255, 255, 255, 0.92);
-  --surface-alpha-elevation-2: rgba(255, 255, 255, 0.96);
-  --surface-alpha-elevation-3: rgba(255, 255, 255, 1);
-  --nav-active-bg: color-mix(in srgb, #145cf6 28%, #0a1426);
-  --nav-active-shadow: inset 0 0 0 1px color-mix(in srgb, #145cf6 35%, transparent);
-
-  --ink-gray-1: #e3e9f1;
-  --ink-gray-2: #cbd5e1;
-  --ink-gray-3: #94a3b8;
-  --ink-gray-4: #94a3b8;
-  --ink-gray-5: #64748b;
-  --ink-gray-6: #64748b;
-  --ink-gray-7: #475569;
-  --ink-gray-8: #1e293b;
-  --ink-gray-9: #0b1324;
-
-  --outline-gray-1: #e3e9f1;
-  --outline-gray-2: #e3e9f1;
-  --outline-gray-3: #cbd5e1;
-  --outline-gray-4: #94a3b8;
-  --outline-gray-5: #64748b;
-
-  --ink-blue-2: #145cf6;
-  --ink-blue-3: #0e8bd6;
-  --surface-blue-1: color-mix(in srgb, #145cf6 8%, #fff);
-  --surface-blue-2: color-mix(in srgb, #145cf6 14%, #fff);
-
-  --radius-2: 8px;
-  --radius-3: 10px;
-  --radius-4: 12px;
-  --radius-5: 14px;
-  --radius-6: 16px;
-  --radius-7: 20px;
-  --radius-8: 22px;
-
-  --elevation-sm: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 1px 2px rgba(11, 19, 36, 0.04), 0 8px 24px -12px rgba(11, 19, 36, 0.1);
-  --elevation-md: 0 1px 2px rgba(11, 19, 36, 0.05),
-    0 18px 40px -16px rgba(11, 19, 36, 0.22);
-}
-
-[data-theme='dark'],
-html.dark {
-  --surface-base: #070b14;
-  --surface-gray-1: #0f1626;
-  --surface-gray-2: #131b2c;
-  --surface-gray-3: #182235;
-  --surface-gray-4: #232f47;
-  --surface-gray-5: #34425e;
-  --surface-gray-6: #7c89a3;
-  --surface-gray-7: #98a3b8;
-  --surface-gray-8: #b3bdcc;
-  --surface-gray-9: #e1e6ee;
-  --surface-gray-10: #f1f4f8;
-  --surface-sidebar: #0a1426;
-  --surface-elevation-1: #0f1626;
-  --surface-elevation-2: #131b2c;
-  --surface-elevation-3: #182235;
-  --surface-alpha-gray-1: rgba(232, 237, 245, 0.04);
-  --surface-alpha-gray-2: rgba(232, 237, 245, 0.06);
-  --surface-alpha-gray-3: rgba(232, 237, 245, 0.08);
-  --surface-alpha-gray-4: rgba(232, 237, 245, 0.11);
-  --surface-alpha-gray-5: rgba(232, 237, 245, 0.14);
-  --surface-alpha-elevation-1: rgba(15, 22, 38, 0.92);
-  --surface-alpha-elevation-2: rgba(19, 27, 44, 0.96);
-  --surface-alpha-elevation-3: rgba(24, 34, 53, 1);
-
-  --ink-gray-1: #232f47;
-  --ink-gray-2: #34425e;
-  --ink-gray-3: #7c89a3;
-  --ink-gray-4: #7c89a3;
-  --ink-gray-5: #98a3b8;
-  --ink-gray-6: #98a3b8;
-  --ink-gray-7: #b3bdcc;
-  --ink-gray-8: #e1e6ee;
-  --ink-gray-9: #e8edf5;
-
-  --outline-gray-1: #232f47;
-  --outline-gray-2: #232f47;
-  --outline-gray-3: #34425e;
-  --outline-gray-4: #7c89a3;
-  --outline-gray-5: #98a3b8;
-
-  --ink-blue-2: #4d94ff;
-  --ink-blue-3: #7fa6ff;
-  --surface-blue-1: #12305e;
-  --surface-blue-2: color-mix(in srgb, #145cf6 28%, #0f1626);
-
-  --elevation-sm: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 10px 30px -12px rgba(0, 0, 0, 0.6);
-  --elevation-md: 0 18px 44px -14px rgba(0, 0, 0, 0.75);
-
-  color-scheme: dark;
+  --astra-topbar-h: 52px;
+  --astra-brand-h: 56px;
+  --astra-nav-item-h: 32px;
 }
 
 html,
@@ -178,18 +49,12 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: var(--font-sans);
-  background-color: var(--surface-base);
-  color: var(--ink-gray-9);
-  background-image: radial-gradient(
-      1000px 520px at 88% -12%,
-      color-mix(in srgb, var(--ac) 10%, transparent),
-      transparent 60%
-    ),
-    radial-gradient(
-      800px 520px at -8% 112%,
-      color-mix(in srgb, var(--ac2) 9%, transparent),
-      transparent 60%
-    );
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--crm-fg, #0b1324);
+  background-color: var(--crm-bg, #f3f6f8);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 /* Shell: fixed full-height left nav; only the content column scrolls */
@@ -198,6 +63,7 @@ body {
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
+  background: var(--crm-bg);
 }
 
 .astra-shell__sidebar {
@@ -207,21 +73,9 @@ body {
   position: sticky;
   top: 0;
   overflow: hidden;
-  background: var(--surface-sidebar);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  /* Scope rc.2 elevation/ink tokens on the dark rail — no !important class wars */
-  --surface-elevation-1: color-mix(in srgb, #145cf6 14%, #0f1626);
-  --surface-elevation-2: var(--surface-elevation-1);
-  --surface-elevation-3: color-mix(in srgb, #145cf6 20%, #0f1626);
-  --surface-alpha-gray-2: rgba(255, 255, 255, 0.05);
-  --surface-alpha-gray-3: rgba(255, 255, 255, 0.08);
-  --surface-gray-1: color-mix(in srgb, #145cf6 14%, #0f1626);
-  --ink-gray-9: #ffffff;
-  --ink-gray-8: #ffffff;
-  --ink-gray-7: rgba(255, 255, 255, 0.72);
-  --ink-gray-5: rgba(255, 255, 255, 0.55);
-  --ink-gray-4: rgba(255, 255, 255, 0.35);
-  --outline-gray-2: rgba(255, 255, 255, 0.08);
+  background: var(--crm-nav);
+  border-right: 1px solid var(--crm-nav-border);
+  color: var(--crm-nav-fg);
 }
 
 .astra-shell__sidebar[data-collapsed='true'] {
@@ -231,7 +85,38 @@ body {
 
 .astra-shell__sidebar [data-slot='sidebar'] {
   width: 100% !important;
+  height: 100%;
   background: transparent;
+  border: 0;
+}
+
+/* crm.css: .nav li { height:32px; border-radius:6px; padding:0 10px; font-weight:500 }
+   Kill frappe-ui SidebarItem surface/ink utilities — they paint light-theme greys on the ink nav. */
+.astra-shell__sidebar [data-slot='sidebar-item'] {
+  height: var(--astra-nav-item-h) !important;
+  min-height: var(--astra-nav-item-h);
+  border-radius: 6px;
+  font-weight: 500;
+  color: var(--crm-nav-fg) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.astra-shell__sidebar [data-slot='sidebar-item']:hover {
+  background: rgba(15, 42, 54, 0.55) !important;
+  color: #ffffff !important;
+}
+
+.astra-shell__sidebar [data-slot='sidebar-item'] > a,
+.astra-shell__sidebar [data-slot='sidebar-item'] > button {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  gap: 10px;
+  color: inherit !important;
+}
+
+.astra-shell__sidebar [data-slot='sidebar-item'] .astra-nav-icon {
+  color: var(--crm-nav-faint) !important;
 }
 
 .astra-shell__main {
@@ -242,7 +127,26 @@ body {
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-  background: var(--surface-base);
+  background: var(--crm-bg);
+}
+
+/* crm.css: .abar { height:52px; gap:10px; padding:0 24px } */
+.astra-shell__topbar {
+  flex: 0 0 var(--astra-topbar-h);
+  height: var(--astra-topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 24px;
+  background: var(--crm-card);
+  border-bottom: 1px solid var(--crm-border);
+  z-index: 20;
+}
+
+.astra-shell__page-header {
+  flex: 0 0 auto;
+  background: var(--crm-card);
+  border-bottom: 1px solid var(--crm-border);
 }
 
 .astra-shell__content {
@@ -252,66 +156,87 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   max-width: 100%;
+  background: var(--crm-bg);
 }
 
-/* List pages at 390px: keep columns from forcing sideways scroll */
 .astra-shell__content .list-view,
 .astra-shell__content [data-list-view],
 .astra-shell__content table {
   max-width: 100%;
 }
 
-/* Primary actions: rc.2 solid buttons use bg-surface-gray-10 */
-button.bg-surface-gray-10,
-button[class*='bg-surface-gray-10'],
-.bg-surface-gray-10.text-ink-white {
-  background-image: var(--astra-grad);
-  background-color: transparent;
-  color: var(--ink-white, #fff);
-  box-shadow: var(--astra-shadow-primary);
-  border: 0;
+/* Active nav — exactly one item, inset teal indicator (crm.css .nav li.on) */
+.astra-shell__sidebar [aria-current='page'],
+.astra-shell__sidebar [data-active='true'],
+.astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] {
+  background: var(--crm-nav-active) !important;
+  box-shadow: inset 3px 0 0 var(--crm-nav-indicator) !important;
+  color: #ffffff !important;
+  border-radius: 6px;
 }
 
-button.bg-surface-gray-10:hover,
-button[class*='bg-surface-gray-10']:hover {
-  filter: brightness(1.05);
+.astra-shell__sidebar [aria-current='page'] *,
+.astra-shell__sidebar [data-active='true'] *,
+.astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] * {
+  color: inherit;
 }
 
-/* Cards / panels — avoid dead v0 token bg-surface-cards */
-.astra-card,
-.rounded-lg.border.bg-surface-white,
-.rounded-lg.border.bg-surface-menus,
-.rounded-6.border {
-  border-radius: 20px;
+.astra-shell__sidebar [aria-current='page'] .astra-nav-icon,
+.astra-shell__sidebar [data-active='true'] .astra-nav-icon,
+.astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] .astra-nav-icon {
+  color: var(--crm-nav-indicator) !important;
 }
 
-/* Login (Frappe /login and in-app mock): card follows theme — dark in dark mode */
+.astra-shell__sidebar[data-collapsed='true'] img[alt],
+.astra-shell__sidebar .astra-brand-mark {
+  background: transparent !important;
+  box-shadow: none !important;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* Nav count badge — crm.css .nav li .cnt */
+.astra-shell__nav-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--crm-nav-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.astra-shell__sidebar [aria-current='page'] .astra-shell__nav-count,
+.astra-shell__sidebar [data-active='true'] .astra-shell__nav-count,
+.astra-shell__sidebar [data-slot='sidebar-item'][data-state='active'] .astra-shell__nav-count {
+  color: #c4d2da;
+}
+
+/* External-link glyph on Connect items — crm.css .nav li .ext */
+.astra-shell__nav-ext {
+  margin-left: auto;
+  width: 12px;
+  height: 12px;
+  color: var(--crm-nav-faint);
+  flex: none;
+}
+
+/* Login chrome (structure owned elsewhere; colours follow tokens) */
 .astra-login-page {
   min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
-  background: var(--surface-base);
-  background-image: radial-gradient(
-      1000px 520px at 88% -12%,
-      color-mix(in srgb, var(--ac) 10%, transparent),
-      transparent 60%
-    ),
-    radial-gradient(
-      800px 520px at -8% 112%,
-      color-mix(in srgb, var(--ac2) 9%, transparent),
-      transparent 60%
-    );
+  background: var(--crm-bg);
 }
 
 .astra-login-card {
   width: min(100%, 400px);
   padding: 40px;
-  border-radius: 22px;
-  background: var(--surface-gray-1);
-  color: var(--ink-gray-9);
-  border: 1px solid color-mix(in srgb, var(--outline-gray-2) 70%, transparent);
-  box-shadow: var(--elevation-sm);
+  border-radius: 12px;
+  background: var(--crm-card);
+  color: var(--crm-fg);
+  border: 1px solid var(--crm-border);
+  box-shadow: var(--crm-shadow-modal);
 }
 
 .astra-login-card .astra-login-logo {
@@ -329,81 +254,34 @@ button[class*='bg-surface-gray-10']:hover {
   min-height: 40px;
   border: 0;
   border-radius: 999px;
-  color: #fff;
+  color: var(--crm-primary-fg);
   font: 600 0.875rem var(--font-sans);
-  background-image: linear-gradient(115deg, #0e63e0, #1677ff 55%, #3b8eff);
-  box-shadow: var(--astra-shadow-primary);
+  background: var(--crm-primary);
   cursor: pointer;
 }
 
 .astra-login-card input {
   width: 100%;
   padding: 0.62rem 0.875rem;
-  border-radius: 12px;
-  border: 1px solid var(--outline-gray-2);
-  background: var(--surface-gray-1);
-  color: var(--ink-gray-9);
-  font: 400 0.875rem var(--font-sans);
+  border-radius: 7px;
+  border: 1px solid var(--crm-border-strong);
+  background: var(--crm-card);
+  color: var(--crm-fg);
+  font: 400 12.5px var(--font-sans);
 }
 
 .astra-login-card input:focus {
   outline: none;
-  border-color: var(--ac);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 10%, transparent);
+  border-color: var(--crm-primary);
+  box-shadow: var(--crm-input-focus);
 }
 
-/* Active nav item — keyed on aria-current so rc.2 elevation classes stay navy */
-.astra-shell__sidebar [aria-current='page'],
-.astra-shell__sidebar [data-active='true'] {
-  background: var(--nav-active-bg);
-  box-shadow: var(--nav-active-shadow);
-  color: #fff;
-}
-
-.astra-shell__sidebar [aria-current='page'] *,
-.astra-shell__sidebar [data-active='true'] * {
-  color: #fff;
-}
-
-/* Collapsed brand mark: transparent tile (no white square) */
-.astra-shell__sidebar[data-collapsed='true'] img[alt],
-.astra-shell__sidebar .astra-brand-mark {
-  background: transparent !important;
-  box-shadow: none !important;
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-.astra-placeholder-banner {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #7fa6ff;
-  background: rgba(127, 166, 255, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(127, 166, 255, 0.22);
-}
-
-/* Avatars visible on light surfaces */
-.avatar,
-[class*='Avatar'] {
-  --avatar-bg: var(--surface-gray-3);
-  background-color: var(--surface-gray-3);
-  box-shadow: inset 0 0 0 1px var(--outline-gray-2);
-}
-
-/* Global focus ring */
 :focus-visible {
-  outline: 2px solid var(--ac);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--crm-focus);
   border-radius: inherit;
 }
 
-/* Mobile lists: avoid sideways scroll; pin the leading name cell */
 @media (max-width: 639px) {
   .list-table,
   table.frappe-list,
@@ -418,6 +296,6 @@ button[class*='bg-surface-gray-10']:hover {
     position: sticky;
     left: 0;
     z-index: 1;
-    background: var(--surface-base);
+    background: var(--crm-bg);
   }
 }
