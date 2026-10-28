@@ -34,6 +34,17 @@ export function dealCardChips(row = {}) {
     })
   }
 
+  const nextActivity =
+    (typeof row.next_activity === 'object'
+      ? row.next_activity?.label || row.next_activity?.timeAgo
+      : row.next_activity) ||
+    (typeof row.next_activity_at === 'object'
+      ? row.next_activity_at?.label || row.next_activity_at?.timeAgo
+      : row.next_activity_at) ||
+    (typeof row._next_activity === 'object'
+      ? row._next_activity?.label || row._next_activity?.timeAgo
+      : row._next_activity) ||
+    ''
   const nextStep =
     (typeof row.next_step === 'object' ? row.next_step?.label : row.next_step) ||
     ''
@@ -44,7 +55,9 @@ export function dealCardChips(row = {}) {
   )
   const hasOpenTask = Number.isFinite(taskCount) ? taskCount > 0 : false
 
-  if (nextStep) {
+  if (nextActivity) {
+    chips.push({ label: String(nextActivity), tone: 'info' })
+  } else if (nextStep) {
     chips.push({ label: String(nextStep), tone: 'info' })
   } else if (!hasOpenTask) {
     chips.push({ label: __('No next step'), tone: 'warn' })

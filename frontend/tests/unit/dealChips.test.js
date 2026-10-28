@@ -28,6 +28,16 @@ describe('dealCardChips', () => {
     expect(chips.some((c) => c.label === 'Call CFO')).toBe(true)
   })
 
+  it('prefers next activity time over next_step when both exist', () => {
+    const chips = dealCardChips({
+      next_activity: 'Tomorrow 10:00',
+      next_step: 'Call CFO',
+      _task_count: 1,
+    })
+    expect(chips.some((c) => c.label === 'Tomorrow 10:00')).toBe(true)
+    expect(chips.some((c) => c.label === 'Call CFO')).toBe(false)
+  })
+
   it('adds Quiet N d from last activity date', () => {
     const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString()
     const chips = dealCardChips({

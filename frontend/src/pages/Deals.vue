@@ -44,10 +44,22 @@
         }"
       />
       <div
-        v-if="viewType !== 'kanban' && canExportDeals"
+        v-if="viewType !== 'kanban'"
         class="flex shrink-0 items-center gap-2"
       >
         <AstraButton
+          variant="secondary"
+          size="sm"
+          :label="__('Import')"
+          @click="
+            router.push({
+              name: 'NewDataImport',
+              params: { doctype: 'CRM Deal' },
+            })
+          "
+        />
+        <AstraButton
+          v-if="canExportDeals"
           variant="secondary"
           size="sm"
           :label="__('Export')"
