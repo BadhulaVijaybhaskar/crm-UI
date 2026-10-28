@@ -1,77 +1,90 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <ViewBreadcrumbs v-model="viewControls" routeName="Organizations" />
-    </template>
-    <template #right-header>
+  <RecordsListChrome
+    :title="__('Companies')"
+    :description="__('Accounts you sell to.')"
+    :create-label="__('+ New company')"
+    :view-tabs="viewTabs"
+    :active-view="activeView"
+    :show-save-view="true"
+    :show-view-switch="false"
+    :filter-chips="filterChips"
+    :show-filter-bar="filterChips.length > 0"
+    @create="showOrganizationModal = true"
+    @select-view="selectView"
+    @save-view="saveView"
+    @remove-filter="removeFilterChip"
+  >
+    <template #actions>
       <CustomActions
         v-if="organizationsListView?.customListActions"
         :actions="organizationsListView.customListActions"
       />
-      <Button
-        variant="solid"
-        :label="__('Create')"
-        iconLeft="lucide-plus"
+      <AstraButton
+        variant="primary"
+        :label="__('+ New company')"
         @click="showOrganizationModal = true"
       />
     </template>
-  </LayoutHeader>
-  <ViewControls
-    ref="viewControls"
-    v-model="organizations"
-    v-model:loadMore="loadMore"
-    v-model:resizeColumn="triggerResize"
-    v-model:updatedPageCount="updatedPageCount"
-    doctype="CRM Organization"
-  />
-  <OrganizationsListView
-    v-if="organizations.data && rows.length"
-    ref="organizationsListView"
-    v-model="organizations.data.page_length_count"
-    v-model:list="organizations"
-    :rows="rows"
-    :columns="columns"
-    :options="{
-      showTooltip: false,
-      resizeColumn: true,
-      rowCount: organizations.data.row_count,
-      totalCount: organizations.data.total_count,
-    }"
-    @loadMore="() => loadMore++"
-    @columnWidthUpdated="() => triggerResize++"
-    @updatePageCount="(count) => (updatedPageCount = count)"
-    @applyFilter="(data) => viewControls.applyFilter(data)"
-    @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
-    @likeDoc="(data) => viewControls.likeDoc(data)"
-    @selectionsChanged="
-      (selections) => viewControls.updateSelections(selections)
-    "
-  />
-  <EmptyState
-    v-else-if="organizations.data && !rows.length"
-    name="Organizations"
-    :icon="OrganizationsIcon"
-    :title="__('No organizations yet')"
-    :description="
-      __('Organizations are the companies your contacts and deals belong to.')
-    "
-    :filtered="!!Object.keys(organizations.params?.filters || {}).length"
-    importDoctype="CRM Organization"
-    @create="showOrganizationModal = true"
-  />
-  <OrganizationModal
-    v-if="showOrganizationModal"
-    v-model="showOrganizationModal"
-  />
+    <div class="astra-records-vc border-b border-crm-border bg-crm-card">
+      <ViewControls
+        ref="viewControls"
+        v-model="organizations"
+        v-model:loadMore="loadMore"
+        v-model:resizeColumn="triggerResize"
+        v-model:updatedPageCount="updatedPageCount"
+        doctype="CRM Organization"
+      />
+    </div>
+    <OrganizationsListView
+      v-if="organizations.data && rows.length"
+      ref="organizationsListView"
+      v-model="organizations.data.page_length_count"
+      v-model:list="organizations"
+      :rows="rows"
+      :columns="columns"
+      :options="{
+        showTooltip: false,
+        resizeColumn: true,
+        rowCount: organizations.data.row_count,
+        totalCount: organizations.data.total_count,
+      }"
+      @loadMore="() => loadMore++"
+      @columnWidthUpdated="() => triggerResize++"
+      @updatePageCount="(count) => (updatedPageCount = count)"
+      @applyFilter="(data) => viewControls.applyFilter(data)"
+      @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
+      @likeDoc="(data) => viewControls.likeDoc(data)"
+      @selectionsChanged="
+        (selections) => viewControls.updateSelections(selections)
+      "
+    />
+    <EmptyState
+      v-else-if="organizations.data && !rows.length"
+      name="Organizations"
+      :icon="OrganizationsIcon"
+      :title="__('No organizations yet')"
+      :description="
+        __('Organizations are the companies your contacts and deals belong to.')
+      "
+      :filtered="!!Object.keys(organizations.params?.filters || {}).length"
+      importDoctype="CRM Organization"
+      @create="showOrganizationModal = true"
+    />
+    <OrganizationModal
+      v-if="showOrganizationModal"
+      v-model="showOrganizationModal"
+    />
+  </RecordsListChrome>
 </template>
 <script setup>
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import OrganizationsIcon from '@/components/Icons/OrganizationsIcon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
 import OrganizationsListView from '@/components/ListViews/OrganizationsListView.vue'
+import RecordsListChrome from '@/components/ListViews/RecordsListChrome.vue'
 import ViewControls from '@/components/ViewControls.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import { useRecordsViews } from '@/composables/useRecordsViews'
 import { getMeta } from '@/stores/meta'
 import { formatDate, website } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
@@ -90,6 +103,22 @@ const loadMore = ref(1)
 const triggerResize = ref(1)
 const updatedPageCount = ref(20)
 const viewControls = ref(null)
+
+const {
+  activeView,
+  viewTabs,
+  selectView,
+  saveView,
+  filterChipsFromList,
+  removeFilterChip,
+} = useRecordsViews({
+  doctype: 'CRM Organization',
+  list: organizations,
+  viewControls,
+  allLabel: __('All companies'),
+})
+
+const filterChips = computed(() => filterChipsFromList())
 
 const rows = computed(() => {
   if (

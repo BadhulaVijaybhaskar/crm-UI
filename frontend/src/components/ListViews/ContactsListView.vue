@@ -1,5 +1,6 @@
 <template>
   <ListView
+    class="astra-list-view"
     :class="$attrs.class"
     :columns="columns"
     :rows="rows"
@@ -14,10 +15,10 @@
       resizeColumn: options.resizeColumn,
     }"
     row-key="name"
-    @update:selections="(selections) => emit('selectionsChanged', selections)"
+    @update:selections="onSelectionsChanged"
   >
     <ListHeader
-      class="mx-3 sm:mx-5"
+      class="astra-list-header sm:mx-5 mx-3"
       @columnWidthUpdated="emit('columnWidthUpdated')"
     >
       <ListHeaderItem
@@ -40,29 +41,27 @@
       </ListHeaderItem>
     </ListHeader>
     <ListRows
-      v-slot="{ idx, column, item, row }"
-      class="mx-3 sm:mx-5"
+      v-slot="{ idx, column, item, row, isVisited }"
       :rows="rows"
       doctype="Contact"
     >
       <ListRowItem :item="item" :align="column.align" class="overflow-hidden">
         <template #prefix>
           <div v-if="column.key === 'full_name'">
-            <Avatar
+            <AstraAvatar
               v-if="item.label"
-              class="flex items-center"
-              :image="item.image"
-              :label="item.image_label"
-              size="sm"
+              :name="item.image_label || item.label"
+              :src="item.image"
+              size="md"
             />
           </div>
           <div v-else-if="column.key === 'company_name'">
-            <Avatar
+            <AstraAvatar
               v-if="item.label"
-              class="flex items-center"
-              :image="item.logo"
-              :label="item.label"
-              size="sm"
+              :name="item.label"
+              :src="item.logo"
+              size="md"
+              squared
             />
           </div>
           <div v-else-if="column.key === 'mobile_no' && item">
@@ -73,6 +72,9 @@
           <div
             v-if="['modified', 'creation'].includes(column.key)"
             class="truncate text-base"
+            :class="
+              isVisited ? 'text-ink-gray-6' : 'font-medium text-ink-gray-9'
+            "
             @click="
               (event) =>
                 emit('applyFilter', {
@@ -105,7 +107,15 @@
             >
               <HeartIcon
                 class="h-4 w-4"
-                :class="isLiked(item) ? 'fill-red-500 text-red-500' : ''"
+                :class="
+                  isLiked(item)
+                    ? isVisited
+                      ? 'fill-red-400 text-red-400'
+                      : 'fill-red-500 text-red-500'
+                    : isVisited
+                      ? 'text-ink-gray-6'
+                      : 'text-ink-gray-9'
+                "
               />
             </Button>
           </div>
@@ -129,6 +139,9 @@
           <div
             v-else-if="label"
             class="truncate text-base"
+            :class="
+              isVisited ? 'text-ink-gray-6' : 'font-medium text-ink-gray-9'
+            "
             @click="
               (event) =>
                 emit('applyFilter', {
@@ -145,34 +158,23 @@
         </template>
       </ListRowItem>
     </ListRows>
-    <ListSelectBanner>
-      <template #actions="{ selections, unselectAll }">
-        <Dropdown
-          :options="listBulkActionsRef.bulkActions(selections, unselectAll)"
-        >
-          <Button icon="lucide-more-horizontal" variant="ghost" />
-        </Dropdown>
-      </template>
-    </ListSelectBanner>
   </ListView>
+  <AstraBulkBar
+    :count="selectedKeys.length"
+    :actions="bulkBarActions"
+    @clear="clearSelections"
+  />
   <ListFooter
     v-if="pageLengthCount"
     v-model="pageLengthCount"
-    class="border-t px-3 py-2 sm:px-5"
+    class="border-t border-crm-border bg-crm-card sm:px-5 px-3 py-2 text-crm-meta text-crm-muted-fg"
     :options="{
       rowCount: options.rowCount,
       totalCount: options.totalCount,
     }"
     @loadMore="emit('loadMore')"
   />
-  <ListBulkActions
-    ref="listBulkActionsRef"
-    v-model="list"
-    doctype="Contact"
-    :options="{
-      hideAssign: true,
-    }"
-  />
+  <ListBulkActions ref="listBulkActionsRef" v-model="list" doctype="Contact" />
 </template>
 <script setup>
 import HeartIcon from '@/components/Icons/HeartIcon.vue'
@@ -180,13 +182,15 @@ import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import RatingInput from '@/components/Controls/RatingInput.vue'
 import ListBulkActions from '@/components/ListBulkActions.vue'
 import ListRows from '@/components/ListViews/ListRows.vue'
+import AstraAvatar from '@/components/astra/AstraAvatar.vue'
+import AstraBulkBar from '@/components/astra/AstraBulkBar.vue'
 import { isTranslatable, formatDuration } from '@/utils'
-import { Avatar, Tooltip, Dropdown } from 'frappe-ui'
+import { canUseCrmCsvExport, crmCsvExportUrl } from '@/utils/csvExport'
+import { Tooltip } from 'frappe-ui'
 import {
   ListView,
   ListHeader,
   ListHeaderItem,
-  ListSelectBanner,
   ListRowItem,
   ListFooter,
 } from 'frappe-ui/experimental'
@@ -254,6 +258,57 @@ watch(pageLengthCount, (val, old_value) => {
 })
 
 const listBulkActionsRef = ref(null)
+const selectedKeys = ref([])
+
+function onSelectionsChanged(selections) {
+  const keys =
+    selections instanceof Set ? [...selections] : [...(selections || [])]
+  selectedKeys.value = keys
+  emit('selectionsChanged', selections)
+}
+
+function clearSelections() {
+  selectedKeys.value = []
+  emit('selectionsChanged', new Set())
+}
+
+const bulkBarActions = computed(() => {
+  const selections = new Set(selectedKeys.value)
+  const unselectAll = () => clearSelections()
+  const all =
+    listBulkActionsRef.value?.bulkActions(selections, unselectAll) || []
+  const allowed = []
+  for (const action of all) {
+    const label = String(action.label || '')
+    if (label === __('Assign To') || label === 'Assign To') {
+      allowed.push({ label: __('Assign'), onClick: action.onClick })
+    } else if (label === __('Edit') || label === 'Edit') {
+      allowed.push({ label: __('Set status'), onClick: action.onClick })
+    } else if (label === __('Delete') || label === 'Delete') {
+      allowed.push({ label: __('Delete'), onClick: action.onClick })
+    }
+  }
+  if (canUseCrmCsvExport('Contact') && selectedKeys.value.length) {
+    allowed.push({
+      label: __('Export'),
+      onClick: () => {
+        const fields = (list.value?.data?.columns || []).map((c) => c.key)
+        window.location.href = crmCsvExportUrl({
+          doctype: 'Contact',
+          fields,
+          filters: {
+            ...(list.value?.params?.filters || {}),
+            name: ['in', selectedKeys.value],
+          },
+          orderBy: list.value?.params?.order_by,
+          limit: selectedKeys.value.length,
+          title: 'Contact',
+        })
+      },
+    })
+  }
+  return allowed
+})
 
 defineExpose({
   customListActions: computed(
@@ -261,3 +316,37 @@ defineExpose({
   ),
 })
 </script>
+
+<style scoped>
+.astra-list-view :deep(thead th) {
+  height: 34px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--crm-muted-fg);
+  background: var(--crm-muted);
+  border-bottom: 1px solid var(--crm-border);
+}
+.astra-list-view :deep(tbody td) {
+  height: 44px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--crm-border);
+  white-space: nowrap;
+}
+.astra-list-view :deep(tbody tr:hover) {
+  background: var(--crm-row-hover);
+}
+.astra-list-view :deep(input[type='checkbox']) {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  accent-color: var(--crm-primary);
+}
+.astra-list-view :deep(input[type='checkbox']:focus-visible) {
+  box-shadow: var(--crm-focus);
+  outline: none;
+}
+</style>
