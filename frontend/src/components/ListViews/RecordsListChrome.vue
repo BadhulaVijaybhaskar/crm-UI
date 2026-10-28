@@ -47,25 +47,26 @@
           <button
             v-if="showSaveView"
             type="button"
-            class="inline-flex h-[38px] items-center px-2.5 text-crm-body font-semibold text-crm-primary"
+            class="inline-flex h-[38px] items-center gap-1 px-2.5 text-crm-body font-semibold text-crm-primary"
             @click="$emit('save-view')"
           >
-            + {{ __('Save view') }}
+            <span class="lucide-plus size-3.5" aria-hidden="true" />
+            {{ __('Save view') }}
           </button>
         </div>
       </div>
       <div
         v-if="showViewSwitch"
-        class="flex shrink-0 items-center gap-0.5 rounded-crm-control-sm bg-crm-muted p-0.5"
+        class="flex shrink-0 items-center gap-0.5 rounded-crm-control bg-crm-muted p-[3px] shadow-[inset_0_0_0_1px_var(--crm-border)]"
         role="group"
         :aria-label="__('View type')"
       >
         <button
           type="button"
-          class="inline-flex h-7 items-center rounded-crm-control-sm px-2.5 text-crm-label font-semibold"
+          class="inline-flex h-[26px] items-center rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             viewType === 'list'
-              ? 'bg-crm-card text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
+              ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
               : 'text-crm-muted-fg'
           "
           @click="$emit('set-view-type', 'list')"
@@ -74,10 +75,10 @@
         </button>
         <button
           type="button"
-          class="inline-flex h-7 items-center rounded-crm-control-sm px-2.5 text-crm-label font-semibold"
+          class="inline-flex h-[26px] items-center rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             viewType === 'kanban'
-              ? 'bg-crm-card text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
+              ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
               : 'text-crm-muted-fg'
           "
           @click="$emit('set-view-type', 'kanban')"
@@ -90,23 +91,14 @@
     <AstraFilterBar
       v-if="showFilterBar"
       :filters="filterChips"
-      :show-add="false"
+      :sort-label="sortLabel"
+      :show-add="showAddFilter"
+      :add-label="__('Filter')"
+      @add-filter="$emit('add-filter')"
       @remove-filter="(f) => $emit('remove-filter', f)"
+      @sort="$emit('sort')"
     >
-      <template #filters>
-        <button
-          v-for="chip in filterChips"
-          :key="chip.id || chip.label"
-          type="button"
-          class="inline-flex h-crm-control-sm items-center gap-1 rounded-crm-control-sm bg-crm-primary-soft pl-2.5 pr-2 text-crm-label shadow-[inset_0_0_0_1px_var(--crm-primary)]"
-          @click="$emit('remove-filter', chip)"
-        >
-          <span class="text-crm-muted-fg">{{ chip.key || chip.label }}</span>
-          <span v-if="chip.value" class="font-semibold text-crm-fg">
-            {{ chip.value }}
-          </span>
-          <span class="text-crm-faint" aria-hidden="true">×</span>
-        </button>
+      <template v-if="$slots.filters" #filters>
         <slot name="filters" />
       </template>
       <template #actions>
@@ -137,6 +129,8 @@ defineProps({
   viewType: { type: String, default: 'list' },
   filterChips: { type: Array, default: () => [] },
   showFilterBar: { type: Boolean, default: true },
+  showAddFilter: { type: Boolean, default: true },
+  sortLabel: { type: String, default: '' },
 })
 
 defineEmits([
@@ -145,5 +139,7 @@ defineEmits([
   'save-view',
   'set-view-type',
   'remove-filter',
+  'add-filter',
+  'sort',
 ])
 </script>

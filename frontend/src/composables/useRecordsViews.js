@@ -27,30 +27,41 @@ export function useRecordsViews({
   })
 
   const viewTabs = computed(() => {
+    const allParity = savedViews.value.find(
+      (v) => v.is_default || v.name === 'all-leads' || v.name === 'all-deals',
+    )?.parity_count
     const tabs = [
       {
         value: 'list',
         label: allLabel || __('All'),
         view: null,
         type: 'list',
-        // Prefer the unfiltered get_count so chips/filters don't rewrite the All tab.
-        count:
-          viewCounts.value.__all ??
-          (activeView.value === 'list'
-            ? list.value?.data?.total_count
-            : undefined),
+        // Prefer unfiltered get_count / fixture parity_count — not the page total.
+        count: viewCounts.value.__all ?? allParity,
       },
     ]
     for (const view of savedViews.value) {
+      // Synthetic "All" tab already covers the default/all-* saved view.
+      if (
+        view.is_default ||
+        view.name === 'all-leads' ||
+        view.name === 'all-deals' ||
+        view.name === 'all-contacts' ||
+        view.name === 'all-companies'
+      ) {
+        continue
+      }
       tabs.push({
         value: String(view.name),
         label: view.label || view.name,
         view,
         type: view.type || 'list',
         count:
-          activeView.value === String(view.name)
+          viewCounts.value[view.name] ??
+          view.parity_count ??
+          (activeView.value === String(view.name)
             ? list.value?.data?.total_count
-            : viewCounts.value[view.name],
+            : undefined),
       })
     }
     return tabs

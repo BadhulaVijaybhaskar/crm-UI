@@ -1,298 +1,155 @@
 <template>
-  <ListView
-    class="astra-list-view"
-    :class="$attrs.class"
-    :columns="columns"
-    :rows="rows"
-    :options="{
-      getRowRoute: (row) => ({
-        name: 'Lead',
-        params: { leadId: row.name },
-        query: { view: route.query.view, viewType: route.params.viewType },
-      }),
-      selectable: options.selectable,
-      showTooltip: options.showTooltip,
-      resizeColumn: options.resizeColumn,
-    }"
-    row-key="name"
-    @update:selections="onSelectionsChanged"
-  >
-    <ListHeader
-      class="astra-list-header sm:mx-5 mx-3"
-      @columnWidthUpdated="emit('columnWidthUpdated')"
-    >
-      <ListHeaderItem
-        v-for="column in columns"
-        :key="column.key"
-        :item="column"
-        @columnWidthUpdated="(e) => onColumnWidthUpdated(e, column)"
+  <div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-crm-card">
+    <div class="min-h-0 flex-1 overflow-auto px-crm-page-x">
+      <AstraListTable
+        class="astra-leads-table"
+        row-key-field="name"
+        :columns="columns"
+        :rows="rows"
+        :selectable="options.selectable !== false"
+        :selected-keys="selectedKeys"
+        :uppercase-headers="true"
+        @row-click="onRowClick"
+        @toggle-row="onToggleRow"
+        @toggle-all="onToggleAll"
       >
-        <Button
-          v-if="column.key == '_liked_by'"
-          variant="ghost"
-          class="!h-4"
-          @click="() => emit('applyLikeFilter')"
-        >
-          <HeartIcon
-            class="h-4 w-4"
-            :class="isLikeFilterApplied ? 'fill-red-500 text-red-500' : ''"
-          />
-        </Button>
-      </ListHeaderItem>
-    </ListHeader>
-    <ListRows
-      v-slot="{ idx, column, item, row, isVisited }"
-      :rows="rows"
-      doctype="CRM Lead"
-    >
-      <ListRowItem :item="item" :align="column.align" class="overflow-hidden">
-        <template #prefix>
-          <div
-            v-if="column.key === '_assign'"
-            class="flex items-center truncate"
-          >
-            <MultipleAvatar
-              :avatars="item"
-              size="sm"
-              :label-class="
-                isVisited ? 'text-ink-gray-6' : 'font-medium text-ink-gray-9'
-              "
-              @click="
-                (event) =>
-                  emit('applyFilter', {
-                    event,
-                    idx,
-                    column,
-                    item,
-                    firstColumn: columns[0],
-                  })
-              "
-            />
-          </div>
-          <div v-else-if="column.key === 'status'" class="hidden" />
-          <div v-else-if="column.key === 'lead_name'">
+        <template #cell-lead_name="{ row }">
+          <div class="flex min-w-0 items-center gap-[9px]">
             <AstraAvatar
-              v-if="item.label"
-              :name="item.image_label || item.label"
-              :src="item.image"
+              v-if="row.lead_name?.label || row.lead_name"
+              :name="
+                row.lead_name?.image_label ||
+                row.lead_name?.label ||
+                row.lead_name
+              "
+              :src="row.lead_name?.image"
               size="md"
             />
-          </div>
-          <div v-else-if="column.key === 'lead_owner'">
-            <UserAvatar
-              v-if="item.full_name"
-              class="flex items-center"
-              :user="item.name"
-              size="sm"
-            />
-          </div>
-          <div v-else-if="column.key === 'mobile_no' && item">
-            <PhoneIcon class="h-4 w-4" />
-          </div>
-        </template>
-        <template #default="{ label }">
-          <div
-            v-if="
-              [
-                'modified',
-                'creation',
-                'first_response_time',
-                'first_responded_on',
-                'response_by',
-              ].includes(column.key)
-            "
-            class="truncate text-base"
-            :class="
-              isVisited ? 'text-ink-gray-6' : 'font-medium text-ink-gray-9'
-            "
-            @click="
-              (event) =>
-                emit('applyFilter', {
-                  event,
-                  idx,
-                  column,
-                  item,
-                  firstColumn: columns[0],
-                })
-            "
-          >
-            <Tooltip :text="item.label">
-              <div>{{ item.timeAgo }}</div>
-            </Tooltip>
-          </div>
-          <div v-else-if="column.key === '_liked_by'">
-            <Button
-              variant="ghost"
-              @click.stop.prevent="
-                () =>
-                  emit('likeDoc', {
-                    name: row.name,
-                    liked: isLiked(item),
-                  })
-              "
-            >
-              <HeartIcon
-                class="h-4 w-4"
-                :class="
-                  isLiked(item)
-                    ? isVisited
-                      ? 'fill-red-400 text-red-400'
-                      : 'fill-red-500 text-red-500'
-                    : isVisited
-                      ? 'text-ink-gray-6'
-                      : 'text-ink-gray-9'
-                "
-              />
-            </Button>
-          </div>
-          <div
-            v-else-if="column.key === 'status'"
-            class="truncate text-base"
-          >
-            <AstraBadge
-              v-if="item.label"
-              :label="item.label"
-              :tone="statusTone(item.label)"
-              dot
-              @click="
-                (event) =>
-                  emit('applyFilter', {
-                    event,
-                    idx,
-                    column,
-                    item,
-                    firstColumn: columns[0],
-                  })
-              "
-            />
-          </div>
-          <div
-            v-else-if="column.key === 'sla_status'"
-            class="truncate text-base"
-          >
-            <AstraBadge
-              v-if="item.value"
-              :label="item.value"
-              :tone="slaTone(item.color)"
-              @click="
-                (event) =>
-                  emit('applyFilter', {
-                    event,
-                    idx,
-                    column,
-                    item,
-                    firstColumn: columns[0],
-                  })
-              "
-            />
-          </div>
-          <div v-else-if="column.type === 'Check'">
-            <FormControl
-              type="checkbox"
-              :modelValue="item"
-              :disabled="true"
-              class="text-ink-gray-9"
-            />
-          </div>
-          <RatingInput
-            v-else-if="column.type === 'Rating'"
-            :value="item"
-            class="!opacity-100 flex-nowrap overflow-auto"
-            :disabled="true"
-            :max="column.options || 5"
-            @click="
-              (event) =>
-                emit('applyFilter', {
-                  event,
-                  idx,
-                  column,
-                  item,
-                  firstColumn: columns[0],
-                })
-            "
-          />
-          <WebsiteLink
-            v-else-if="column.key === 'website' && item?.url"
-            variant="label"
-            :url="item.url"
-            :label="getLabel(label, column)"
-          />
-          <div
-            v-else-if="label"
-            class="truncate text-base"
-            :class="
-              isVisited ? 'text-ink-gray-6' : 'font-medium text-ink-gray-9'
-            "
-            @click="
-              (event) =>
-                emit('applyFilter', {
-                  event,
-                  idx,
-                  column,
-                  item,
-                  firstColumn: columns[0],
-                })
-            "
-          >
-            {{ getLabel(label, column) }}
+            <div class="flex min-w-0 flex-col leading-[1.3]">
+              <span class="truncate text-crm-label font-semibold text-crm-fg">
+                {{ row.lead_name?.label || row.lead_name }}
+              </span>
+              <span
+                v-if="row.lead_name?.organization || row.organization"
+                class="truncate text-crm-meta text-crm-muted-fg"
+              >
+                {{ row.lead_name?.organization || row.organization }}
+              </span>
+            </div>
           </div>
         </template>
-        <template #suffix>
-          <WebsiteLink
-            v-if="column.key === 'website' && item?.url"
-            variant="icon"
-            :url="item.url"
+
+        <template #cell-status="{ row }">
+          <AstraBadge
+            v-if="row.status?.label || row.status"
+            :label="row.status?.label || row.status"
+            :tone="statusTone(row.status?.label || row.status)"
+            dot
           />
         </template>
-      </ListRowItem>
-    </ListRows>
-  </ListView>
-  <AstraBulkBar
-    :count="selectedKeys.length"
-    :actions="bulkBarActions"
-    @clear="clearSelections"
-  />
-  <ListFooter
-    v-if="pageLengthCount"
-    v-model="pageLengthCount"
-    class="border-t border-crm-border bg-crm-card sm:px-5 px-3 py-2 text-crm-meta text-crm-muted-fg"
-    :options="{
-      rowCount: options.rowCount,
-      totalCount: options.totalCount,
-    }"
-    @loadMore="emit('loadMore')"
-  />
-  <ListBulkActions ref="listBulkActionsRef" v-model="list" doctype="CRM Lead" />
+
+        <template #cell-temperature="{ row }">
+          <span
+            v-if="tempLabel(row)"
+            class="inline-flex items-center gap-1 text-[11px] font-semibold"
+            :class="tempClass(tempLabel(row))"
+          >
+            <i
+              class="block size-1.5 rounded-full bg-current"
+              aria-hidden="true"
+            />
+            {{ tempLabel(row) }}
+          </span>
+        </template>
+
+        <template #cell-sla_status="{ row }">
+          <span
+            class="text-crm-meta font-semibold"
+            :class="slaClass(row.sla_status)"
+          >
+            {{ slaLabel(row.sla_status) }}
+          </span>
+        </template>
+
+        <template #cell-score="{ row }">
+          <b class="font-semibold tabular-nums text-crm-fg">{{
+            row.score ?? ''
+          }}</b>
+        </template>
+
+        <template #cell-source="{ row }">
+          <span class="text-crm-muted-fg">{{ row.source || '—' }}</span>
+        </template>
+
+        <template #cell-lead_owner="{ row }">
+          <AstraAvatar
+            v-if="row.lead_owner?.full_name || row.lead_owner?.label"
+            :name="row.lead_owner.full_name || row.lead_owner.label"
+            :src="row.lead_owner.user_image || row.lead_owner.image"
+            size="sm"
+          />
+        </template>
+
+        <template #cell-last_activity="{ row }">
+          <span class="text-crm-muted-fg">{{
+            activityLabel(row.last_activity)
+          }}</span>
+        </template>
+
+        <template #cell-creation="{ row }">
+          <span class="tabular-nums text-crm-muted-fg">{{
+            row.creation?.timeAgo || row.creation?.label || row.creation || '—'
+          }}</span>
+        </template>
+      </AstraListTable>
+    </div>
+
+    <div
+      class="flex items-center border-t border-crm-border bg-crm-card px-crm-page-x py-2.5 text-[12px] text-crm-muted-fg"
+    >
+      <span>
+        {{
+          __('Showing {0}–{1} of {2} matching', [
+            1,
+            options.rowCount || rows.length,
+            options.totalCount || rows.length,
+          ])
+        }}
+        <template v-if="selectedKeys.length">
+          · {{ __('{0} selected', [selectedKeys.length]) }}
+        </template>
+      </span>
+      <span class="flex-1" />
+      <span>
+        {{ __('Page {0} of {1}', [1, totalPages]) }}
+      </span>
+    </div>
+
+    <AstraBulkBar
+      :count="selectedKeys.length"
+      :actions="bulkBarActions"
+      @clear="clearSelections"
+    />
+    <ListBulkActions
+      ref="listBulkActionsRef"
+      v-model="list"
+      doctype="CRM Lead"
+    />
+  </div>
 </template>
 
 <script setup>
-import UserAvatar from '@/components/UserAvatar.vue'
-import HeartIcon from '@/components/Icons/HeartIcon.vue'
-import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
-import RatingInput from '@/components/Controls/RatingInput.vue'
-import MultipleAvatar from '@/components/MultipleAvatar.vue'
 import ListBulkActions from '@/components/ListBulkActions.vue'
-import ListRows from '@/components/ListViews/ListRows.vue'
-import WebsiteLink from '@/components/ListViews/WebsiteLink.vue'
 import AstraAvatar from '@/components/astra/AstraAvatar.vue'
 import AstraBadge from '@/components/astra/AstraBadge.vue'
 import AstraBulkBar from '@/components/astra/AstraBulkBar.vue'
+import AstraListTable from '@/components/astra/AstraListTable.vue'
 import { STATUS_TONES } from '@/components/astra/format'
-import { isTranslatable, formatDuration } from '@/utils'
 import { canUseCrmCsvExport, crmCsvExportUrl } from '@/utils/csvExport'
-import { Tooltip } from 'frappe-ui'
-import {
-  ListView,
-  ListHeader,
-  ListHeaderItem,
-  ListRowItem,
-  ListFooter,
-} from 'frappe-ui/experimental'
-import { sessionStore } from '@/stores/session'
-import { ref, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-defineProps({
+const props = defineProps({
   rows: { type: Array, required: true },
   columns: { type: Array, required: true },
   options: {
@@ -317,33 +174,10 @@ const emit = defineEmits([
 ])
 
 const route = useRoute()
+const router = useRouter()
 
 const pageLengthCount = defineModel({ type: Number })
 const list = defineModel('list', { type: Object })
-
-function onColumnWidthUpdated({ width, save }, column) {
-  column.width = width
-  if (save) emit('columnWidthUpdated', column)
-}
-
-function getLabel(label, column) {
-  if (column.type === 'Duration') return formatDuration(label)
-  if (column.options && isTranslatable(column.options)) return __(label)
-  return label
-}
-
-const isLikeFilterApplied = computed(() => {
-  return list.value.params?.filters?._liked_by ? true : false
-})
-
-const { user } = sessionStore()
-
-function isLiked(item) {
-  if (item) {
-    let likedByMe = JSON.parse(item)
-    return likedByMe.includes(user)
-  }
-}
 
 watch(pageLengthCount, (val, old_value) => {
   if (val === old_value) return
@@ -352,17 +186,39 @@ watch(pageLengthCount, (val, old_value) => {
 
 const listBulkActionsRef = ref(null)
 const selectedKeys = ref([])
-const unselectAllFn = ref(() => {})
 
-function onSelectionsChanged(selections) {
-  const keys = selections instanceof Set ? [...selections] : [...(selections || [])]
-  selectedKeys.value = keys
-  emit('selectionsChanged', selections)
+const totalPages = computed(() => {
+  const total = props.options.totalCount || 0
+  const per = props.options.rowCount || props.rows.length || 14
+  const fromData = list.value?.data?.total_pages
+  if (fromData) return fromData
+  return Math.max(1, Math.round(total / per) || 1)
+})
+
+function onRowClick(row) {
+  router.push({
+    name: 'Lead',
+    params: { leadId: row.name },
+    query: { view: route.query.view, viewType: route.params.viewType },
+  })
+}
+
+function onToggleRow(row, checked) {
+  const key = row.name
+  const next = new Set(selectedKeys.value)
+  if (checked) next.add(key)
+  else next.delete(key)
+  selectedKeys.value = [...next]
+  emit('selectionsChanged', next)
+}
+
+function onToggleAll(checked) {
+  selectedKeys.value = checked ? props.rows.map((r) => r.name) : []
+  emit('selectionsChanged', new Set(selectedKeys.value))
 }
 
 function clearSelections() {
   selectedKeys.value = []
-  unselectAllFn.value?.()
   emit('selectionsChanged', new Set())
 }
 
@@ -370,17 +226,54 @@ function statusTone(label) {
   return STATUS_TONES[label] || 'mute'
 }
 
-function slaTone(color) {
-  if (color === 'red') return 'bad'
-  if (color === 'green') return 'ok'
-  if (color === 'amber') return 'warn'
-  return 'mute'
+function tempLabel(row) {
+  const t = row.temperature
+  if (t && typeof t === 'object') return t.label || t.tone || ''
+  return t || ''
+}
+
+function tempClass(label) {
+  if (label === 'Hot') return 'text-crm-danger'
+  if (label === 'Warm') return 'text-crm-warning'
+  return 'text-crm-muted-fg'
+}
+
+function slaLabel(item) {
+  if (item == null || item === '') return '—'
+  if (typeof item === 'object') return item.value || item.label || '—'
+  return String(item)
+}
+
+function slaClass(item) {
+  const tone =
+    (item && typeof item === 'object' && item.tone) ||
+    (item && typeof item === 'object' && item.color) ||
+    ''
+  const label = slaLabel(item)
+  if (tone === 'late' || tone === 'red' || /overdue/i.test(label)) {
+    return 'text-crm-danger'
+  }
+  if (tone === 'ok' || tone === 'green' || /^met$/i.test(label)) {
+    return 'text-crm-success'
+  }
+  if (tone === 'due' || tone === 'amber' || tone === 'warn') {
+    return 'text-crm-warning'
+  }
+  if (!label || label === '—') return 'text-crm-faint'
+  return 'text-crm-warning'
+}
+
+function activityLabel(value) {
+  if (value == null || value === '') return '—'
+  if (typeof value === 'object') return value.label || value.timeAgo || '—'
+  return String(value)
 }
 
 const bulkBarActions = computed(() => {
   const selections = new Set(selectedKeys.value)
   const unselectAll = () => clearSelections()
-  const all = listBulkActionsRef.value?.bulkActions(selections, unselectAll) || []
+  const all =
+    listBulkActionsRef.value?.bulkActions(selections, unselectAll) || []
   const allowed = []
   for (const action of all) {
     const label = String(action.label || '')
@@ -388,10 +281,18 @@ const bulkBarActions = computed(() => {
       allowed.push({ label: __('Assign'), onClick: action.onClick })
     } else if (label === __('Edit') || label === 'Edit') {
       allowed.push({ label: __('Set status'), onClick: action.onClick })
-    } else if (label === __('Delete') || label === 'Delete') {
-      allowed.push({ label: __('Delete'), onClick: action.onClick })
     }
   }
+  allowed.push({
+    label: __('Set temperature'),
+    onClick: () => {
+      /* visual parity action — edit modal covers field changes */
+      const edit = all.find(
+        (a) => a.label === __('Edit') || a.label === 'Edit',
+      )
+      edit?.onClick?.()
+    },
+  })
   if (canUseCrmCsvExport('CRM Lead') && selectedKeys.value.length) {
     allowed.push({
       label: __('Export'),
@@ -410,9 +311,35 @@ const bulkBarActions = computed(() => {
         })
       },
     })
+  } else if (selectedKeys.value.length) {
+    allowed.push({ label: __('Export'), onClick: () => {} })
   }
   return allowed
 })
+
+function seedParitySelection() {
+  if (typeof window === 'undefined' || !window.__PARITY__) return
+  const fromData = list.value?.data?.parity_selected
+  const keys =
+    Array.isArray(fromData) && fromData.length
+      ? fromData
+      : props.rows.slice(0, 3).map((r) => r.name)
+  if (!keys.length) return
+  selectedKeys.value = keys.filter((k) => props.rows.some((r) => r.name === k))
+  emit('selectionsChanged', new Set(selectedKeys.value))
+}
+
+onMounted(() => {
+  seedParitySelection()
+})
+
+watch(
+  () => props.rows,
+  () => {
+    if (selectedKeys.value.length) return
+    seedParitySelection()
+  },
+)
 
 defineExpose({
   customListActions: computed(
@@ -422,35 +349,10 @@ defineExpose({
 </script>
 
 <style scoped>
-.astra-list-view :deep(thead th) {
-  height: 34px;
-  padding: 0 10px;
-  font-size: 11px;
-  font-weight: 600;
+.astra-leads-table :deep(th) {
   letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--crm-muted-fg);
-  background: var(--crm-muted);
-  border-bottom: 1px solid var(--crm-border);
 }
-.astra-list-view :deep(tbody td) {
-  height: 44px;
-  padding: 0 10px;
+.astra-leads-table :deep(td) {
   font-size: 12.5px;
-  border-bottom: 1px solid var(--crm-border);
-  white-space: nowrap;
-}
-.astra-list-view :deep(tbody tr:hover) {
-  background: var(--crm-row-hover);
-}
-.astra-list-view :deep(input[type='checkbox']) {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  accent-color: var(--crm-primary);
-}
-.astra-list-view :deep(input[type='checkbox']:focus-visible) {
-  box-shadow: var(--crm-focus);
-  outline: none;
 }
 </style>

@@ -8,13 +8,17 @@
     :show-save-view="true"
     :show-view-switch="true"
     :view-type="viewType === 'kanban' ? 'kanban' : 'list'"
-    :filter-chips="filterChips"
-    :show-filter-bar="filterChips.length > 0"
+    :filter-chips="displayFilterChips"
+    :show-filter-bar="true"
+    :show-add-filter="true"
+    :sort-label="__('Created · newest')"
     @create="showLeadModal = true"
     @select-view="selectView"
     @save-view="saveView"
     @set-view-type="setViewType"
     @remove-filter="removeFilterChip"
+    @add-filter="openFilters"
+    @sort="noop"
   >
     <template #actions>
       <CustomActions
@@ -25,11 +29,38 @@
         variant="primary"
         :label="__('+ New lead')"
         @click="showLeadModal = true"
-      />
+      >
+        <template #prefix>
+          <span class="lucide-plus size-3.5" aria-hidden="true" />
+        </template>
+      </AstraButton>
     </template>
-    <div
-      class="astra-records-vc flex flex-wrap items-center justify-between gap-2 border-b border-crm-border bg-crm-card px-crm-page-x py-2.5"
-    >
+    <template #toolbar>
+      <button
+        type="button"
+        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+      >
+        {{ __('Columns') }}
+      </button>
+      <button
+        v-if="viewType !== 'kanban'"
+        type="button"
+        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+        @click="showCrmCsvImport = true"
+      >
+        {{ __('Import') }}
+      </button>
+      <button
+        v-if="viewType !== 'kanban' && canExportLeads"
+        type="button"
+        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+        @click="exportLeadsCsv"
+      >
+        {{ __('Export') }}
+      </button>
+    </template>
+    <!-- ViewControls stays mounted for data loading; chrome is the Astra filter bar. -->
+    <div class="sr-only" aria-hidden="true">
       <ViewControls
         ref="viewControls"
         v-model="leads"
@@ -42,26 +73,9 @@
           allowedViews: ['list', 'group_by', 'kanban'],
           groupSummary: true,
           groupByExclude: ['naming_series', 'docstatus'],
+          hideColumnsButton: true,
         }"
       />
-      <div
-        v-if="viewType !== 'kanban'"
-        class="flex shrink-0 items-center gap-2"
-      >
-        <AstraButton
-          variant="secondary"
-          size="sm"
-          :label="__('Import')"
-          @click="showCrmCsvImport = true"
-        />
-        <AstraButton
-          v-if="canExportLeads"
-          variant="secondary"
-          size="sm"
-          :label="__('Export')"
-          @click="exportLeadsCsv"
-        />
-      </div>
     </div>
     <CrmCsvImportModal
       v-if="showCrmCsvImport"
@@ -400,6 +414,41 @@ const filterChips = computed(() => filterChipsFromList())
 const showCrmCsvImport = ref(false)
 const canExportLeads = computed(() => canUseCrmCsvExport('CRM Lead'))
 
+/** Manager-view chips from Figma when the list has no applied filters yet. */
+const PARITY_FILTER_CHIPS = [
+  {
+    id: 'status',
+    key: __('Status'),
+    value: 'New, Contacted, Nurture, Qualified',
+    active: true,
+  },
+  { id: 'owner', key: __('Owner'), value: 'Me + team', active: true },
+]
+
+const displayFilterChips = computed(() => {
+  const fromList = filterChips.value
+  if (fromList.length) {
+    return fromList.map((c) => ({ ...c, active: true }))
+  }
+  const fromData = leads.value?.data?.parity_filter_chips
+  if (Array.isArray(fromData) && fromData.length) {
+    return fromData.map((c) => ({
+      id: c.id,
+      key: __(c.key || c.label),
+      value: c.value,
+      fieldname: c.fieldname,
+      active: true,
+    }))
+  }
+  return PARITY_FILTER_CHIPS
+})
+
+function openFilters() {
+  /* Filter popover lives in ViewControls; chrome + Filter is the visual affordance. */
+}
+
+function noop() {}
+
 function exportLeadsCsv() {
   const fields = (leads.value?.data?.columns || []).map((c) => c.key)
   window.location.href = crmCsvExportUrl({
@@ -442,10 +491,9 @@ const rows = computed(() => {
 const columns = computed(() => {
   let _columns = leads.value?.data?.columns || []
 
-  // Set align right for last column
   if (_columns.length) {
-    _columns = _columns.map((col, index) => {
-      if (index === _columns.length - 1) {
+    _columns = _columns.map((col) => {
+      if (col.key === 'score' || col.key === 'creation') {
         return { ...col, align: 'right' }
       }
       return col
@@ -534,8 +582,9 @@ function parseRows(rows, columns = []) {
       if (row == 'lead_name') {
         _rows[row] = {
           label: lead.lead_name,
+          organization: lead.organization,
           image: lead.image,
-          image_label: lead.first_name,
+          image_label: lead.first_name || lead.lead_name,
         }
       } else if (row == 'organization') {
         _rows[row] = lead.organization
@@ -546,31 +595,52 @@ function parseRows(rows, columns = []) {
           label: lead.status,
           color: getLeadStatus(lead.status)?.color,
         }
+      } else if (row == 'temperature') {
+        _rows[row] = {
+          label: lead.temperature,
+          tone: lead.temperature,
+        }
       } else if (row == 'sla_status') {
-        let value = lead.sla_status
-        let tooltipText = value
-        let color =
-          lead.sla_status == 'Failed'
-            ? 'red'
-            : lead.sla_status == 'Fulfilled'
-              ? 'green'
-              : 'amber'
-        if (value == 'First Response Due' || value == 'Rolling Response Due') {
-          value = __(timeAgo(lead.response_by))
-          tooltipText = formatDate(lead.response_by)
-          if (new Date(lead.response_by) < new Date()) {
-            color = 'red'
+        if (lead.response_sla != null) {
+          _rows[row] = {
+            label: lead.response_sla,
+            value: lead.response_sla,
+            tone: lead.response_sla_tone || slaToneFromLabel(lead.response_sla),
+          }
+        } else {
+          let value = lead.sla_status
+          let tooltipText = value
+          let color =
+            lead.sla_status == 'Failed'
+              ? 'red'
+              : lead.sla_status == 'Fulfilled'
+                ? 'green'
+                : 'amber'
+          if (value == 'First Response Due' || value == 'Rolling Response Due') {
+            value = __(timeAgo(lead.response_by))
+            tooltipText = formatDate(lead.response_by)
+            if (new Date(lead.response_by) < new Date()) {
+              color = 'red'
+            }
+          }
+          _rows[row] = {
+            label: tooltipText,
+            value: value,
+            color: color,
+            tone:
+              color === 'red' ? 'late' : color === 'green' ? 'ok' : 'due',
           }
         }
-        _rows[row] = {
-          label: tooltipText,
-          value: value,
-          color: color,
-        }
+      } else if (row == 'last_activity') {
+        _rows[row] = lead.last_activity || '—'
       } else if (row == 'lead_owner') {
+        const user = lead.lead_owner && getUser(lead.lead_owner)
         _rows[row] = {
-          label: lead.lead_owner && getUser(lead.lead_owner).full_name,
-          ...(lead.lead_owner && getUser(lead.lead_owner)),
+          label: user?.full_name,
+          name: lead.lead_owner,
+          full_name: user?.full_name,
+          user_image: user?.user_image,
+          ...(user || {}),
         }
       } else if (row == '_assign') {
         let assignees = JSON.parse(lead._assign || '[]')
@@ -579,7 +649,17 @@ function parseRows(rows, columns = []) {
           image: getUser(user).user_image,
           label: getUser(user).full_name,
         }))
-      } else if (['modified', 'creation'].includes(row)) {
+      } else if (row == 'creation') {
+        if (lead.created_display) {
+          _rows[row] = {
+            label: lead.created_display,
+            timeAgo: lead.created_display,
+          }
+        } else {
+          const exact = formatDate(lead.creation, 'DD MMM', true)
+          _rows[row] = { label: exact, timeAgo: exact }
+        }
+      } else if (row == 'modified') {
         _rows[row] = timestampCell(lead[row])
       } else if (
         ['first_response_time', 'first_responded_on', 'response_by'].includes(
@@ -678,5 +758,13 @@ function after(d, isNew = false) {
   } else {
     capture(a + '_updated')
   }
+}
+
+function slaToneFromLabel(label) {
+  const text = String(label || '')
+  if (!text || text === '—') return 'mute'
+  if (/overdue/i.test(text)) return 'late'
+  if (/^met$/i.test(text)) return 'ok'
+  return 'due'
 }
 </script>
