@@ -15,8 +15,13 @@
           }"
           @click="$emit('remove-filter', filter)"
         >
-          <span class="text-crm-muted-fg">{{ filter.key || filter.label }}</span>
-          <span v-if="filter.value" class="font-semibold text-crm-primary">
+          <span class="leading-none text-crm-muted-fg">{{
+            filter.key || filter.label
+          }}</span>
+          <span
+            v-if="filter.value"
+            class="leading-none font-semibold text-crm-primary"
+          >
             {{ filter.value }}
           </span>
           <!-- PNG paints the dismiss X in primary on .on chips (HTML faint disagrees). -->
