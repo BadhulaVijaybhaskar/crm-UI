@@ -29,10 +29,11 @@
               :src="row.lead_name?.image"
               size="md"
             />
-            <!-- PNG name/org baseline sits ~1px lower than Chromium -->
+            <!-- PNG name/org baseline sits ~1px lower; slight negative tracking
+                 matches Inter capture ink density better than default 600. -->
             <div class="tx flex min-w-0 translate-y-px flex-col leading-[1.3]">
               <span
-                class="truncate text-[12.5px] font-semibold leading-[1.3] text-crm-fg"
+                class="truncate text-[12.5px] font-semibold leading-[1.3] tracking-[-0.005em] text-crm-fg"
               >
                 {{ row.lead_name?.label || row.lead_name }}
               </span>
@@ -417,8 +418,8 @@ defineExpose({
 .astra-leads-table :deep(th:nth-child(6)),
 .astra-leads-table :deep(td:nth-child(6)) {
   width: 67px;
-  /* Score/Source/Owner/Activity sit ~2–3px right of PNG */
-  padding-left: 8px;
+  /* Score ink +1px vs PNG after −2 pad */
+  padding-left: 9px;
 }
 .astra-leads-table :deep(th:nth-child(7)),
 .astra-leads-table :deep(td:nth-child(7)) {
@@ -428,20 +429,19 @@ defineExpose({
 .astra-leads-table :deep(th:nth-child(8)),
 .astra-leads-table :deep(td:nth-child(8)) {
   width: 73px;
-  /* Owner avatar was −2px vs PNG after the −2 pad; restore default */
   padding-left: 10px;
 }
 .astra-leads-table :deep(th:nth-child(9)),
 .astra-leads-table :deep(td:nth-child(9)) {
   width: 158px;
-  /* Activity ink sat ~10px left of PNG; +8px pad is shift-sim optimum */
-  padding-left: 16px;
+  /* Activity: +8 was best; +1 more closes remaining 2px */
+  padding-left: 17px;
 }
 .astra-leads-table :deep(th:nth-child(10)),
 .astra-leads-table :deep(td:nth-child(10)) {
   width: 91px;
-  /* Created −3px vs default 10px padding */
-  padding-left: 7px;
+  /* Created was −1px vs PNG at 7px pad */
+  padding-left: 8px;
 }
 .astra-leads-table :deep(td.bg-crm-row-selected) {
   background: var(--crm-row-selected);

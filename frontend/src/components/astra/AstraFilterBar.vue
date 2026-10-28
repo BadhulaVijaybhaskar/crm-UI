@@ -54,10 +54,10 @@
         </button>
       </slot>
     </div>
-    <!-- app.css .btn gap:7px; .btn font-weight:600. Shift-sim prefers −1px more. -->
+    <!-- app.css .btn gap:7px; font-weight:600. −2.5 (10px) — −3 overshot actions. -->
     <div
       v-if="$slots.actions || sortLabel"
-      class="-translate-x-3 flex flex-nowrap items-center gap-[7px]"
+      class="-translate-x-2.5 flex flex-nowrap items-center gap-[7px]"
     >
       <button
         v-if="sortLabel"

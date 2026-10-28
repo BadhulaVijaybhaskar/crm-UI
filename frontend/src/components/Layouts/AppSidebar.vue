@@ -33,8 +33,9 @@
           />
         </div>
 
-        <!-- crm.css: .nav ul { padding:6px 10px; gap:1px } — each section is its own ul -->
-        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <!-- crm.css: .nav ul { padding:6px 10px; gap:1px } — each section is its own ul.
+             PNG mid-nav ink sits ~1px lower than the HTML stack. -->
+        <div class="flex min-h-0 flex-1 translate-y-px flex-col overflow-y-auto">
           <SidebarItem
             v-if="mobile"
             id="notifications-btn"
