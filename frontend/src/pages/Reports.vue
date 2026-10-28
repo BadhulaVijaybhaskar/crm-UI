@@ -36,6 +36,7 @@
         :button="{
           label: current?.title || __('Dashboards'),
           variant: 'outline',
+          iconLeft: 'lucide-layout-grid',
           iconRight: 'lucide-chevron-down',
         }"
       />
@@ -77,7 +78,7 @@
       </button>
       <button
         type="button"
-        class="inline-flex h-[34px] items-center gap-1 px-2 text-[12.5px] font-semibold text-[color:var(--crm-primary,#0a7393)]"
+        class="inline-flex h-[34px] items-center gap-1 px-2 text-[12.5px] font-semibold text-[color:var(--crm-muted-fg,#5b6478)] hover:text-[color:var(--crm-primary,#0a7393)]"
         @click="createDashboard"
       >
         <LucidePlus class="size-3.5" aria-hidden="true" />
@@ -93,23 +94,38 @@
             · {{ __('shared with') }} {{ current.shared_role }}
           </template>
         </span>
-        <Dropdown
-          :options="periodOptions"
-          :button="{
-            label: `${__('Date')} ${periodLabel}`,
-            variant: 'outline',
-            iconRight: 'lucide-chevron-down',
-          }"
-        />
-        <Dropdown
-          v-if="isAdmin() || isManager()"
-          :options="salesUserOptions"
-          :button="{
-            label: `${__('Sales user')} ${salesUserLabel}`,
-            variant: 'outline',
-            iconRight: 'lucide-chevron-down',
-          }"
-        />
+        <button
+          type="button"
+          class="inline-flex h-[34px] items-center gap-1.5 rounded-lg border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px]"
+          @click="cyclePeriod"
+        >
+          <span class="text-[color:var(--crm-muted-fg,#5b6478)]">{{
+            __('Date')
+          }}</span>
+          <b class="font-semibold text-[color:var(--crm-primary,#0a7393)]">{{
+            periodLabel
+          }}</b>
+          <LucideChevronDown
+            class="size-3.5 text-[color:var(--crm-faint,#8a94a6)]"
+            aria-hidden="true"
+          />
+        </button>
+        <button
+          v-if="editing || isAdmin() || isManager()"
+          type="button"
+          class="inline-flex h-[34px] items-center gap-1.5 rounded-lg border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px]"
+        >
+          <span class="text-[color:var(--crm-muted-fg,#5b6478)]">{{
+            __('Sales user')
+          }}</span>
+          <b class="font-semibold text-[color:var(--crm-fg,#0b1324)]">{{
+            salesUserLabel
+          }}</b>
+          <LucideChevronDown
+            class="size-3.5 text-[color:var(--crm-faint,#8a94a6)]"
+            aria-hidden="true"
+          />
+        </button>
         <Button
           v-if="!editing"
           size="sm"
@@ -208,6 +224,7 @@ import ReportGrid from '@/components/reports/ReportGrid.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
 import AstraConceptBanner from '@/components/astra/AstraConceptBanner.vue'
 import AstraPageHeader from '@/components/astra/AstraPageHeader.vue'
+import LucideChevronDown from '~icons/lucide/chevron-down'
 import LucidePenLine from '~icons/lucide/pen-line'
 import LucidePlus from '~icons/lucide/plus'
 import { usersStore } from '@/stores/users'
@@ -270,6 +287,19 @@ const periodOptions = computed(() =>
     },
   })),
 )
+
+const PERIOD_CYCLE = [
+  'this_quarter',
+  'this_month',
+  'this_year',
+  'last_30_days',
+]
+
+function cyclePeriod() {
+  const i = PERIOD_CYCLE.indexOf(period.value)
+  period.value = PERIOD_CYCLE[(i + 1) % PERIOD_CYCLE.length]
+  reloadDashboard()
+}
 
 const salesUserLabel = computed(
   () => userFilter.value || current.value?.shared_role || __('West team'),
