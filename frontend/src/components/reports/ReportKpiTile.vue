@@ -26,18 +26,27 @@
     >
       {{ displayValue }}
     </div>
-    <div
-      v-if="deltaLine"
-      class="mt-1 text-[11.5px] font-semibold"
-      :class="
-        delta?.direction === 'up'
-          ? 'text-[color:var(--crm-success,#0f8a5f)]'
-          : delta?.direction === 'down'
-            ? 'text-[color:var(--crm-danger,#c93b3b)]'
-            : 'text-[color:var(--crm-muted-fg,#5b6478)]'
-      "
-    >
-      {{ deltaLine }}
+    <div v-if="deltaParts.lead || deltaParts.trail" class="mt-1 text-[11.5px]">
+      <span
+        v-if="deltaParts.lead"
+        class="font-semibold"
+        :class="
+          delta?.direction === 'up'
+            ? 'text-[color:var(--crm-success,#0f8a5f)]'
+            : delta?.direction === 'down'
+              ? 'text-[color:var(--crm-danger,#c93b3b)]'
+              : 'text-[color:var(--crm-muted-fg,#5b6478)]'
+        "
+      >
+        {{ deltaParts.lead }}
+      </span>
+      <span
+        v-if="deltaParts.trail"
+        class="text-[color:var(--crm-muted-fg,#5b6478)]"
+        :class="deltaParts.lead ? '' : 'font-semibold'"
+      >
+        {{ deltaParts.trail }}
+      </span>
     </div>
   </div>
 </template>
@@ -72,23 +81,26 @@ const delta = computed(() => {
   return formatDelta(props.data?.delta_pct)
 })
 
-const deltaLine = computed(() => {
-  if (props.data?.delta_label) return props.data.delta_label
-  if (!delta.value) return ''
-  const base = delta.value.text
+/** Figma: coloured lead (▲ 8.2%) + muted trailing copy (vs last quarter / · 4 deals). */
+const deltaParts = computed(() => {
+  if (props.data?.delta_label) {
+    return { lead: '', trail: props.data.delta_label }
+  }
+  if (!delta.value) return { lead: '', trail: '' }
+  const lead = delta.value.text
   if (props.data?.kpi_type === 'calculated' && props.data?.formula) {
     const hint = String(props.data.formula)
       .replace(/[{}]/g, '')
       .replace(/\*/g, '×')
       .replace(/\//g, '÷')
       .replace(/_/g, ' ')
-    return `${base} = ${hint}`
+    return { lead, trail: ` = ${hint}` }
   }
   if (props.data?.secondary) {
-    return `${base} · ${props.data.secondary}`
+    return { lead, trail: ` · ${props.data.secondary}` }
   }
   const compare = props.data?.compare_label
-  if (compare === '') return base
-  return `${base} ${compare || __('vs last quarter')}`
+  if (compare === '') return { lead, trail: '' }
+  return { lead, trail: ` ${compare || __('vs last quarter')}` }
 })
 </script>
