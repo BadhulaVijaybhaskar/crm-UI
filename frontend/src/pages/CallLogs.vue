@@ -1,90 +1,93 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <ViewBreadcrumbs v-model="viewControls" routeName="Call Logs" />
-    </template>
-    <template #right-header>
-      <CustomActions
-        v-if="callLogsListView?.customListActions"
-        :actions="callLogsListView.customListActions"
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
+    <AstraPageHeader
+      :title="__('Call logs')"
+      :description="__('Calls logged by Astra Connect or by hand.')"
+    >
+      <template #actions>
+        <CustomActions
+          v-if="callLogsListView?.customListActions"
+          :actions="callLogsListView.customListActions"
+        />
+        <AstraButton
+          variant="secondary"
+          :label="__('Log a call')"
+          @click="createCallLog"
+        />
+      </template>
+    </AstraPageHeader>
+
+    <ViewControls
+      ref="viewControls"
+      v-model="callLogs"
+      v-model:loadMore="loadMore"
+      v-model:resizeColumn="triggerResize"
+      v-model:updatedPageCount="updatedPageCount"
+      doctype="CRM Call Log"
+    />
+    <CallLogsListView
+      v-if="callLogs.data && rows.length"
+      ref="callLogsListView"
+      v-model="callLogs.data.page_length_count"
+      v-model:list="callLogs"
+      :rows="rows"
+      :columns="columns"
+      :options="{
+        showTooltip: false,
+        resizeColumn: true,
+        rowCount: callLogs.data.row_count,
+        totalCount: callLogs.data.total_count,
+      }"
+      @showCallLog="showCallLog"
+      @loadMore="() => loadMore++"
+      @columnWidthUpdated="() => triggerResize++"
+      @updatePageCount="(count) => (updatedPageCount = count)"
+      @applyFilter="(data) => viewControls.applyFilter(data)"
+      @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
+      @likeDoc="(data) => viewControls.likeDoc(data)"
+      @selectionsChanged="
+        (selections) => viewControls.updateSelections(selections)
+      "
+    />
+    <AstraEmptyState
+      v-else-if="callLogs.data && !rows.length"
+      :title="__('No call logs yet')"
+      :body="
+        __(
+          'Calls made through Astra Connect are logged here, along with calls you log by hand on a lead or deal.',
+        )
+      "
+    >
+      <AstraButton
+        variant="primary"
+        :label="__('Log a call')"
+        @click="createCallLog()"
       />
-      <Button
-        variant="solid"
-        :label="__('Create')"
-        iconLeft="lucide-plus"
-        @click="createCallLog"
-      />
-    </template>
-  </LayoutHeader>
-  <ViewControls
-    ref="viewControls"
-    v-model="callLogs"
-    v-model:loadMore="loadMore"
-    v-model:resizeColumn="triggerResize"
-    v-model:updatedPageCount="updatedPageCount"
-    doctype="CRM Call Log"
-  />
-  <CallLogsListView
-    v-if="callLogs.data && rows.length"
-    ref="callLogsListView"
-    v-model="callLogs.data.page_length_count"
-    v-model:list="callLogs"
-    :rows="rows"
-    :columns="columns"
-    :options="{
-      showTooltip: false,
-      resizeColumn: true,
-      rowCount: callLogs.data.row_count,
-      totalCount: callLogs.data.total_count,
-    }"
-    @showCallLog="showCallLog"
-    @loadMore="() => loadMore++"
-    @columnWidthUpdated="() => triggerResize++"
-    @updatePageCount="(count) => (updatedPageCount = count)"
-    @applyFilter="(data) => viewControls.applyFilter(data)"
-    @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
-    @likeDoc="(data) => viewControls.likeDoc(data)"
-    @selectionsChanged="
-      (selections) => viewControls.updateSelections(selections)
-    "
-  />
-  <EmptyState
-    v-else-if="callLogs.data && !rows.length"
-    name="Call Logs"
-    :icon="PhoneIcon"
-    :title="__('No call logs yet')"
-    :description="
-      __(
-        'Calls made through Twilio or Exotel are logged here, along with calls you log by hand on a lead or deal.',
-      )
-    "
-    :filtered="!!Object.keys(callLogs.params?.filters || {}).length"
-    @create="createCallLog()"
-  />
-  <CallLogDetailModal
-    v-model="showCallLogDetailModal"
-    v-model:callLog="callLog"
-  />
+    </AstraEmptyState>
+    <CallLogDetailModal
+      v-model="showCallLogDetailModal"
+      v-model:callLog="callLog"
+    />
+  </div>
 </template>
 
 <script setup>
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import CustomActions from '@/components/CustomActions.vue'
-import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import CallLogsListView from '@/components/ListViews/CallLogsListView.vue'
-import EmptyState from '@/components/ListViews/EmptyState.vue'
 import CallLogDetailModal from '@/components/Modals/CallLogDetailModal.vue'
+import { AstraButton, AstraEmptyState, AstraPageHeader } from '@/components/astra'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { getCallLogDetail } from '@/utils/callLog'
 import { useTelemetry } from '@framework/ui/telemetry'
-import { createResource } from 'frappe-ui'
+import { createResource, usePageMeta } from 'frappe-ui'
 import { computed, ref, onMounted } from 'vue'
+import { getSettings } from '@/stores/settings'
+import { ASTRA_FAVICON } from '@/assets/brand'
 
+const { brand } = getSettings()
 const callLogsListView = ref(null)
 
-// callLogs data is loaded in the ViewControls component
 const callLogs = ref({})
 const loadMore = ref(1)
 const triggerResize = ref(1)
@@ -109,7 +112,6 @@ const rows = computed(() => {
 const columns = computed(() => {
   let _columns = callLogs.value?.data?.columns || []
 
-  // Set align right for last column
   if (_columns.length) {
     _columns = _columns.map((col, index) => {
       if (index === _columns.length - 1) {
@@ -165,4 +167,9 @@ const openCallLogFromURL = () => {
 onMounted(() => {
   openCallLogFromURL()
 })
+
+usePageMeta(() => ({
+  title: __('Call logs'),
+  icon: brand?.favicon || ASTRA_FAVICON,
+}))
 </script>

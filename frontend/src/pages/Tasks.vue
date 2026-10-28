@@ -1,220 +1,225 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <ViewBreadcrumbs v-model="viewControls" routeName="Tasks" />
-    </template>
-    <template #right-header>
-      <CustomActions
-        v-if="tasksListView?.customListActions"
-        :actions="tasksListView.customListActions"
-      />
-      <Button
-        variant="solid"
-        :label="__('Create')"
-        iconLeft="lucide-plus"
-        @click="createTask"
-      />
-    </template>
-  </LayoutHeader>
-  <ViewControls
-    ref="viewControls"
-    v-model="tasks"
-    v-model:loadMore="loadMore"
-    v-model:resizeColumn="triggerResize"
-    v-model:updatedPageCount="updatedPageCount"
-    doctype="CRM Task"
-    :options="{
-      allowedViews: ['list', 'kanban'],
-    }"
-  />
-  <KanbanView
-    v-if="$route.params.viewType == 'kanban' && rows.length"
-    v-model="tasks"
-    :options="{
-      onClick: (row) => showTask(row.name),
-      onNewClick: (column) => createTask(column),
-    }"
-    @update="(data) => viewControls.updateKanbanSettings(data)"
-    @loadMore="(columnName) => viewControls.loadMoreKanban(columnName)"
-  >
-    <template #title="{ titleField, itemName }">
-      <div class="flex items-center gap-2">
-        <div v-if="titleField === 'status'">
-          <TaskStatusIcon :status="getRow(itemName, titleField).label" />
-        </div>
-        <div v-else-if="titleField === 'priority'">
-          <TaskPriorityIcon :priority="getRow(itemName, titleField).label" />
-        </div>
-        <div v-else-if="titleField === 'assigned_to'">
-          <UserAvatar
-            v-if="getRow(itemName, titleField).full_name"
-            class="flex items-center"
-            :user="getRow(itemName, titleField).name"
-            size="sm"
-          />
-        </div>
-        <div
-          v-if="['modified', 'creation'].includes(titleField)"
-          class="truncate text-base"
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
+    <AstraPageHeader
+      :title="__('Tasks')"
+      :description="__('Your tasks across leads and deals.')"
+    >
+      <template #actions>
+        <CustomActions
+          v-if="tasksListView?.customListActions"
+          :actions="tasksListView.customListActions"
+        />
+        <AstraButton
+          variant="primary"
+          :label="__('New task')"
+          @click="createTask()"
         >
-          <Tooltip :text="getRow(itemName, titleField).label">
-            <div>{{ getRow(itemName, titleField).timeAgo }}</div>
-          </Tooltip>
-        </div>
-        <div
-          v-else-if="getRow(itemName, titleField).label"
-          class="truncate text-base"
-        >
-          {{ getRow(itemName, titleField).label }}
-        </div>
-        <div v-else class="text-ink-gray-4">{{ __('No Title') }}</div>
-      </div>
-    </template>
-    <template #fields="{ fieldName, itemName }">
-      <div
-        v-if="getRow(itemName, fieldName).label"
-        class="truncate flex items-center gap-2"
-      >
-        <div v-if="fieldName === 'status'">
-          <TaskStatusIcon
-            class="size-3"
-            :status="getRow(itemName, fieldName).label"
-          />
-        </div>
-        <div v-else-if="fieldName === 'priority'">
-          <TaskPriorityIcon :priority="getRow(itemName, fieldName).label" />
-        </div>
-        <div v-else-if="fieldName === 'assigned_to'">
-          <UserAvatar
-            v-if="getRow(itemName, fieldName).full_name"
-            class="flex items-center"
-            :user="getRow(itemName, fieldName).name"
-            size="sm"
-          />
-        </div>
-        <div
-          v-if="['modified', 'creation'].includes(fieldName)"
-          class="truncate text-base"
-        >
-          <Tooltip :text="getRow(itemName, fieldName).label">
-            <div>{{ getRow(itemName, fieldName).timeAgo }}</div>
-          </Tooltip>
-        </div>
-        <div
-          v-else-if="fieldName == 'description'"
-          class="truncate text-base max-h-44"
-        >
-          <!-- content is passed through sanitizeHTML() (DOMPurify) before rendering, so v-html is safe here -->
-          <!-- eslint-disable vue/no-v-html -->
+          <template #prefix>
+            <LucidePlus class="size-3.5" aria-hidden="true" />
+          </template>
+        </AstraButton>
+      </template>
+    </AstraPageHeader>
+
+    <ViewControls
+      ref="viewControls"
+      v-model="tasks"
+      v-model:loadMore="loadMore"
+      v-model:resizeColumn="triggerResize"
+      v-model:updatedPageCount="updatedPageCount"
+      doctype="CRM Task"
+      :options="{
+        allowedViews: ['list', 'kanban'],
+      }"
+    />
+    <KanbanView
+      v-if="$route.params.viewType == 'kanban' && rows.length"
+      v-model="tasks"
+      :options="{
+        onClick: (row) => showTask(row.name),
+        onNewClick: (column) => createTask(column),
+      }"
+      @update="(data) => viewControls.updateKanbanSettings(data)"
+      @loadMore="(columnName) => viewControls.loadMoreKanban(columnName)"
+    >
+      <template #title="{ titleField, itemName }">
+        <div class="flex items-center gap-2">
+          <div v-if="titleField === 'status'">
+            <TaskStatusIcon :status="getRow(itemName, titleField).label" />
+          </div>
+          <div v-else-if="titleField === 'priority'">
+            <TaskPriorityIcon :priority="getRow(itemName, titleField).label" />
+          </div>
+          <div v-else-if="titleField === 'assigned_to'">
+            <UserAvatar
+              v-if="getRow(itemName, titleField).full_name"
+              class="flex items-center"
+              :user="getRow(itemName, titleField).name"
+              size="sm"
+            />
+          </div>
           <div
-            v-if="getRow(itemName, fieldName).label"
-            class="prose-f prose-sm max-w-none flex-1 overflow-hidden"
-            v-html="sanitizeHTML(getRow(itemName, fieldName).label)"
-          />
-          <!-- eslint-enable vue/no-v-html -->
+            v-if="['modified', 'creation'].includes(titleField)"
+            class="truncate text-base"
+          >
+            <Tooltip :text="getRow(itemName, titleField).label">
+              <div>{{ getRow(itemName, titleField).timeAgo }}</div>
+            </Tooltip>
+          </div>
+          <div
+            v-else-if="getRow(itemName, titleField).label"
+            class="truncate text-base"
+          >
+            {{ getRow(itemName, titleField).label }}
+          </div>
+          <div v-else class="text-ink-gray-4">{{ __('No Title') }}</div>
         </div>
-        <div v-else class="truncate text-base">
-          {{ getRow(itemName, fieldName).label }}
-        </div>
-      </div>
-    </template>
-    <template #actions="{ itemName }">
-      <div class="flex gap-2 items-center justify-between">
-        <div>
-          <Button
-            v-if="getRow(itemName, 'reference_docname').label"
-            class="-ml-2"
-            variant="ghost"
-            size="sm"
-            :label="
-              getRow(itemName, 'reference_doctype').label == 'CRM Deal'
-                ? __('Deal')
-                : __('Lead')
-            "
-            :iconRight="ArrowUpRightIcon"
-            @click.stop="
-              redirect(
-                getRow(itemName, 'reference_doctype').label,
-                getRow(itemName, 'reference_docname').label,
-              )
-            "
-          />
-        </div>
-        <Dropdown
-          class="flex items-center gap-2"
-          :options="actions(itemName)"
-          variant="ghost"
+      </template>
+      <template #fields="{ fieldName, itemName }">
+        <div
+          v-if="getRow(itemName, fieldName).label"
+          class="truncate flex items-center gap-2"
         >
-          <Button
-            icon="lucide-more-horizontal"
+          <div v-if="fieldName === 'status'">
+            <TaskStatusIcon
+              class="size-3"
+              :status="getRow(itemName, fieldName).label"
+            />
+          </div>
+          <div v-else-if="fieldName === 'priority'">
+            <TaskPriorityIcon :priority="getRow(itemName, fieldName).label" />
+          </div>
+          <div v-else-if="fieldName === 'assigned_to'">
+            <UserAvatar
+              v-if="getRow(itemName, fieldName).full_name"
+              class="flex items-center"
+              :user="getRow(itemName, fieldName).name"
+              size="sm"
+            />
+          </div>
+          <div
+            v-if="['modified', 'creation'].includes(fieldName)"
+            class="truncate text-base"
+          >
+            <Tooltip :text="getRow(itemName, fieldName).label">
+              <div>{{ getRow(itemName, fieldName).timeAgo }}</div>
+            </Tooltip>
+          </div>
+          <div
+            v-else-if="fieldName == 'description'"
+            class="truncate text-base max-h-44"
+          >
+            <!-- content is passed through sanitizeHTML() (DOMPurify) before rendering, so v-html is safe here -->
+            <!-- eslint-disable vue/no-v-html -->
+            <div
+              v-if="getRow(itemName, fieldName).label"
+              class="prose-f prose-sm max-w-none flex-1 overflow-hidden"
+              v-html="sanitizeHTML(getRow(itemName, fieldName).label)"
+            />
+            <!-- eslint-enable vue/no-v-html -->
+          </div>
+          <div v-else class="truncate text-base">
+            {{ getRow(itemName, fieldName).label }}
+          </div>
+        </div>
+      </template>
+      <template #actions="{ itemName }">
+        <div class="flex gap-2 items-center justify-between">
+          <div>
+            <Button
+              v-if="getRow(itemName, 'reference_docname').label"
+              class="-ml-2"
+              variant="ghost"
+              size="sm"
+              :label="
+                getRow(itemName, 'reference_doctype').label == 'CRM Deal'
+                  ? __('Deal')
+                  : __('Lead')
+              "
+              :iconRight="ArrowUpRightIcon"
+              @click.stop="
+                redirect(
+                  getRow(itemName, 'reference_doctype').label,
+                  getRow(itemName, 'reference_docname').label,
+                )
+              "
+            />
+          </div>
+          <Dropdown
+            class="flex items-center gap-2"
+            :options="actions(itemName)"
             variant="ghost"
-            @click.stop.prevent
-          />
-        </Dropdown>
-      </div>
-    </template>
-  </KanbanView>
-  <TasksListView
-    v-else-if="tasks.data && rows.length"
-    ref="tasksListView"
-    v-model="tasks.data.page_length_count"
-    v-model:list="tasks"
-    :rows="rows"
-    :columns="columns"
-    :options="{
-      showTooltip: false,
-      resizeColumn: true,
-      rowCount: tasks.data.row_count,
-      totalCount: tasks.data.total_count,
-    }"
-    @loadMore="() => loadMore++"
-    @columnWidthUpdated="() => triggerResize++"
-    @updatePageCount="(count) => (updatedPageCount = count)"
-    @showTask="showTask"
-    @applyFilter="(data) => viewControls.applyFilter(data)"
-    @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
-    @likeDoc="(data) => viewControls.likeDoc(data)"
-    @selectionsChanged="
-      (selections) => viewControls.updateSelections(selections)
-    "
-  />
-  <EmptyState
-    v-else-if="tasks.data && !rows.length"
-    name="Tasks"
-    :icon="TaskIcon"
-    :title="__('No tasks yet')"
-    :description="
-      __(
-        'Tasks are to-dos for you and your team, like a follow-up call or sending a quote. Add them here or from a lead or deal.',
-      )
-    "
-    :filtered="!!Object.keys(tasks.params?.filters || {}).length"
-    @create="createTask()"
-  />
-  <DeleteLinkedDocModal
-    v-if="showDeleteTaskModal"
-    v-model="showDeleteTaskModal"
-    name="Tasks"
-    doctype="CRM Task"
-    :docname="taskToDelete"
-    :reload="() => tasks.reload()"
-  />
+          >
+            <Button
+              icon="lucide-more-horizontal"
+              variant="ghost"
+              @click.stop.prevent
+            />
+          </Dropdown>
+        </div>
+      </template>
+    </KanbanView>
+    <TasksListView
+      v-else-if="tasks.data && rows.length"
+      ref="tasksListView"
+      v-model="tasks.data.page_length_count"
+      v-model:list="tasks"
+      :rows="rows"
+      :columns="columns"
+      :options="{
+        showTooltip: false,
+        resizeColumn: true,
+        rowCount: tasks.data.row_count,
+        totalCount: tasks.data.total_count,
+      }"
+      @loadMore="() => loadMore++"
+      @columnWidthUpdated="() => triggerResize++"
+      @updatePageCount="(count) => (updatedPageCount = count)"
+      @showTask="showTask"
+      @applyFilter="(data) => viewControls.applyFilter(data)"
+      @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
+      @likeDoc="(data) => viewControls.likeDoc(data)"
+      @selectionsChanged="
+        (selections) => viewControls.updateSelections(selections)
+      "
+    />
+    <AstraEmptyState
+      v-else-if="tasks.data && !rows.length"
+      :title="__('No tasks yet')"
+      :body="
+        __(
+          'Tasks are to-dos for you and your team, like a follow-up call or sending a quote. Add them here or from a lead or deal.',
+        )
+      "
+    >
+      <AstraButton
+        variant="primary"
+        :label="__('New task')"
+        @click="createTask()"
+      />
+    </AstraEmptyState>
+    <DeleteLinkedDocModal
+      v-if="showDeleteTaskModal"
+      v-model="showDeleteTaskModal"
+      name="Tasks"
+      doctype="CRM Task"
+      :docname="taskToDelete"
+      :reload="() => tasks.reload()"
+    />
+  </div>
 </template>
 
 <script setup>
 import UserAvatar from '@/components/UserAvatar.vue'
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import ArrowUpRightIcon from '@/components/Icons/ArrowUpRightIcon.vue'
 import TaskStatusIcon from '@/components/Icons/TaskStatusIcon.vue'
 import TaskPriorityIcon from '@/components/Icons/TaskPriorityIcon.vue'
-import TaskIcon from '@/components/Icons/TaskIcon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import TasksListView from '@/components/ListViews/TasksListView.vue'
-import EmptyState from '@/components/ListViews/EmptyState.vue'
 import KanbanView from '@/components/Kanban/KanbanView.vue'
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
+import { AstraButton, AstraEmptyState, AstraPageHeader } from '@/components/astra'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { getMeta } from '@/stores/meta'
 import { usersStore } from '@/stores/users'
@@ -222,10 +227,14 @@ import { formatDate, sanitizeHTML } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
 import { useTelemetry } from '@framework/ui/telemetry'
 import { useCrmOnboarding } from '@/composables/onboarding'
-import { Tooltip, Dropdown } from 'frappe-ui'
+import { Tooltip, Dropdown, Button, usePageMeta } from 'frappe-ui'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import LucidePlus from '~icons/lucide/plus'
+import { getSettings } from '@/stores/settings'
+import { ASTRA_FAVICON } from '@/assets/brand'
 
+const { brand } = getSettings()
 const { getFormattedPercent, getFormattedFloat, getFormattedCurrency } =
   getMeta('CRM Task')
 const { getUser } = usersStore()
@@ -236,7 +245,6 @@ const router = useRouter()
 
 const tasksListView = ref(null)
 
-// tasks data is loaded in the ViewControls component
 const tasks = ref({})
 const loadMore = ref(1)
 const triggerResize = ref(1)
@@ -270,7 +278,6 @@ const rows = computed(() => {
 const columns = computed(() => {
   let _columns = tasks.value?.data?.columns || []
 
-  // Set align right for last column
   if (_columns.length) {
     _columns = _columns.map((col, index) => {
       if (index === _columns.length - 1) {
@@ -419,4 +426,9 @@ const openTaskFromURL = () => {
     window.history.replaceState(null, '', window.location.pathname)
   }
 }
+
+usePageMeta(() => ({
+  title: __('Tasks'),
+  icon: brand?.favicon || ASTRA_FAVICON,
+}))
 </script>
