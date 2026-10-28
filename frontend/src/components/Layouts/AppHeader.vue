@@ -39,10 +39,10 @@
           class="absolute right-[7px] top-1.5 size-[7px] rounded-full bg-crm-danger ring-2 ring-crm-card"
         />
       </button>
-
-      <CallUI />
     </div>
   </div>
+  <!-- Teleported so zero-size telephony roots don't consume topbar flex gap -->
+  <CallUI />
 
   <div id="app-header" class="astra-shell__page-header" />
 </template>
