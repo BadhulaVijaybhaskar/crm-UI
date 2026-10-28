@@ -1,0 +1,424 @@
+{
+  "message": {
+    "data": [
+      {
+        "name": "LEAD-TB",
+        "lead_name": "Tarun Bhatia",
+        "organization": "Pinecrest Hotels",
+        "status": "New",
+        "temperature": "Hot",
+        "sla_status": "First Response Due",
+        "response_by": "2026-10-28 11:18:00",
+        "first_response_time": null,
+        "score": 86,
+        "source": "Website",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": null,
+        "modified": "2026-10-28 08:00:00",
+        "creation": "2026-10-28 07:00:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-FS",
+        "lead_name": "Farah Shaikh",
+        "organization": "Saffron Studio",
+        "status": "New",
+        "temperature": "Warm",
+        "sla_status": "First Response Due",
+        "response_by": "2026-10-28 12:05:00",
+        "score": 64,
+        "source": "Referral",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": null,
+        "modified": "2026-10-28 08:10:00",
+        "creation": "2026-10-28 07:10:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-MI",
+        "lead_name": "Meera Iyer",
+        "organization": "Brightpath Schools",
+        "status": "Contacted",
+        "temperature": "Hot",
+        "sla_status": "Failed",
+        "response_by": "2026-10-28 10:18:00",
+        "score": 78,
+        "source": "Referral",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": "Call \u00b7 26 Oct",
+        "modified": "2026-10-26 12:00:00",
+        "creation": "2026-10-24 09:00:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-AK",
+        "lead_name": "Arjun Kapoor",
+        "organization": "Lumen Logistics",
+        "status": "Qualified",
+        "temperature": "Hot",
+        "sla_status": "Fulfilled",
+        "response_by": "2026-10-12 18:00:00",
+        "score": 91,
+        "source": "Trade show",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": "Call \u00b7 today",
+        "modified": "2026-10-28 09:00:00",
+        "creation": "2026-10-12 10:00:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-VS",
+        "lead_name": "Vikram Sethi",
+        "organization": "Orbit Pharma",
+        "status": "Nurture",
+        "temperature": "Warm",
+        "sla_status": "Fulfilled",
+        "score": 58,
+        "source": "Website",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": "Email \u00b7 19 Oct",
+        "modified": "2026-10-19 11:00:00",
+        "creation": "2026-10-09 10:00:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-AD",
+        "lead_name": "Ayesha Dsouza",
+        "organization": "Cedar Clinics",
+        "status": "Contacted",
+        "temperature": "Cold",
+        "sla_status": "Fulfilled",
+        "score": 41,
+        "source": "Cold call",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": "Call \u00b7 20 Oct",
+        "modified": "2026-10-20 15:00:00",
+        "creation": "2026-10-15 10:00:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-RG",
+        "lead_name": "Rahul Gupta",
+        "organization": "Harbor Freight Co",
+        "status": "Nurture",
+        "temperature": "Warm",
+        "sla_status": "Fulfilled",
+        "score": 55,
+        "source": "LinkedIn",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": "Note \u00b7 21 Oct",
+        "modified": "2026-10-21 14:00:00",
+        "creation": "2026-10-05 10:00:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-PJ",
+        "lead_name": "Pooja Joshi",
+        "organization": "Greenleaf Organics",
+        "status": "Contacted",
+        "temperature": "Warm",
+        "sla_status": "First Response Due",
+        "response_by": "2026-10-28 14:00:00",
+        "score": 62,
+        "source": "Website",
+        "lead_owner": "sara.khan@example.com",
+        "last_activity": "Email \u00b7 yesterday",
+        "modified": "2026-10-27 16:00:00",
+        "creation": "2026-10-22 10:00:00",
+        "_assign": "[\"sara.khan@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-DM",
+        "lead_name": "Dev Malhotra",
+        "organization": "Quantum Tiles",
+        "status": "New",
+        "temperature": "Cold",
+        "sla_status": "First Response Due",
+        "response_by": "2026-10-28 15:00:00",
+        "score": 33,
+        "source": "Import",
+        "lead_owner": "sara.khan@example.com",
+        "last_activity": null,
+        "modified": "2026-10-27 08:00:00",
+        "creation": "2026-10-27 07:00:00",
+        "_assign": "[\"sara.khan@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-SR",
+        "lead_name": "Sneha Reddy",
+        "organization": "Bluewave Travel",
+        "status": "Qualified",
+        "temperature": "Hot",
+        "sla_status": "Fulfilled",
+        "score": 88,
+        "source": "Referral",
+        "lead_owner": "sara.khan@example.com",
+        "last_activity": "Meeting \u00b7 23 Oct",
+        "modified": "2026-10-23 11:00:00",
+        "creation": "2026-10-11 10:00:00",
+        "_assign": "[\"sara.khan@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-IK",
+        "lead_name": "Imran Khan",
+        "organization": "Coastal Cement",
+        "status": "Unqualified",
+        "temperature": "Cold",
+        "sla_status": null,
+        "score": 12,
+        "source": "Cold call",
+        "lead_owner": "sara.khan@example.com",
+        "last_activity": "Call \u00b7 18 Oct",
+        "modified": "2026-10-18 10:00:00",
+        "creation": "2026-10-02 10:00:00",
+        "_assign": "[\"sara.khan@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-LN",
+        "lead_name": "Lakshmi Narayan",
+        "organization": "Vista Interiors",
+        "status": "Contacted",
+        "temperature": "Warm",
+        "sla_status": "Fulfilled",
+        "score": 60,
+        "source": "Website",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": "Call \u00b7 25 Oct",
+        "modified": "2026-10-25 13:00:00",
+        "creation": "2026-10-19 10:00:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-GB",
+        "lead_name": "Gaurav Bose",
+        "organization": "Metro Dental",
+        "status": "New",
+        "temperature": "Warm",
+        "sla_status": "First Response Due",
+        "response_by": "2026-10-28 17:00:00",
+        "score": 47,
+        "source": "Website",
+        "lead_owner": "sara.khan@example.com",
+        "last_activity": null,
+        "modified": "2026-10-28 08:30:00",
+        "creation": "2026-10-28 07:30:00",
+        "_assign": "[\"sara.khan@example.com\"]",
+        "image": null
+      },
+      {
+        "name": "LEAD-HP",
+        "lead_name": "Hina Patel",
+        "organization": "Silverline Motors",
+        "status": "Nurture",
+        "temperature": "Cold",
+        "sla_status": "Fulfilled",
+        "score": 38,
+        "source": "Trade show",
+        "lead_owner": "rohan.mehta@example.com",
+        "last_activity": "Email \u00b7 14 Oct",
+        "modified": "2026-10-14 12:00:00",
+        "creation": "2026-09-30 10:00:00",
+        "_assign": "[\"rohan.mehta@example.com\"]",
+        "image": null
+      }
+    ],
+    "columns": [
+      {
+        "label": "Name",
+        "type": "Data",
+        "key": "lead_name",
+        "width": "14rem"
+      },
+      {
+        "label": "Status",
+        "type": "Select",
+        "key": "status",
+        "width": "8rem"
+      },
+      {
+        "label": "Temp.",
+        "type": "Select",
+        "key": "temperature",
+        "width": "5rem"
+      },
+      {
+        "label": "Response SLA",
+        "type": "Data",
+        "key": "sla_status",
+        "width": "11rem"
+      },
+      {
+        "label": "Score",
+        "type": "Int",
+        "key": "score",
+        "width": "4rem"
+      },
+      {
+        "label": "Source",
+        "type": "Data",
+        "key": "source",
+        "width": "7rem"
+      },
+      {
+        "label": "Owner",
+        "type": "Link",
+        "key": "lead_owner",
+        "options": "User",
+        "width": "5rem"
+      },
+      {
+        "label": "Last activity",
+        "type": "Data",
+        "key": "last_activity",
+        "width": "9rem"
+      },
+      {
+        "label": "Created",
+        "type": "Date",
+        "key": "creation",
+        "width": "6rem"
+      }
+    ],
+    "rows": [
+      "name",
+      "lead_name",
+      "organization",
+      "status",
+      "temperature",
+      "sla_status",
+      "response_by",
+      "score",
+      "source",
+      "lead_owner",
+      "last_activity",
+      "modified",
+      "creation",
+      "_assign",
+      "image"
+    ],
+    "fields": [],
+    "column_field": "status",
+    "title_field": "lead_name",
+    "kanban_columns": [],
+    "kanban_fields": [],
+    "group_by_field": null,
+    "page_length": 20,
+    "page_length_count": 20,
+    "is_default": 1,
+    "views": [
+      {
+        "name": "all-leads",
+        "label": "All leads",
+        "route_name": "Leads",
+        "doctype": "CRM Lead",
+        "type": "list",
+        "is_standard": 1,
+        "is_default": 1,
+        "filters": [],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "pinned": 0,
+        "public": 0,
+        "user": "priya.nair@example.com",
+        "parity_count": 248
+      },
+      {
+        "name": "my-open-leads",
+        "label": "My open leads",
+        "route_name": "Leads",
+        "doctype": "CRM Lead",
+        "type": "list",
+        "is_standard": 1,
+        "filters": [
+          [
+            "lead_owner",
+            "=",
+            "@me"
+          ]
+        ],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 42
+      },
+      {
+        "name": "hot-leads",
+        "label": "Hot",
+        "route_name": "Leads",
+        "doctype": "CRM Lead",
+        "type": "list",
+        "is_standard": 1,
+        "filters": [
+          [
+            "temperature",
+            "=",
+            "Hot"
+          ]
+        ],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 11
+      },
+      {
+        "name": "response-due",
+        "label": "Response due",
+        "route_name": "Leads",
+        "doctype": "CRM Lead",
+        "type": "list",
+        "is_standard": 1,
+        "filters": [
+          [
+            "sla_status",
+            "in",
+            [
+              "First Response Due",
+              "Failed"
+            ]
+          ]
+        ],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 6
+      },
+      {
+        "name": "unassigned",
+        "label": "Unassigned",
+        "route_name": "Leads",
+        "doctype": "CRM Lead",
+        "type": "list",
+        "is_standard": 1,
+        "filters": [
+          [
+            "_assign",
+            "is",
+            "not set"
+          ]
+        ],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 9
+      }
+    ],
+    "total_count": 132,
+    "row_count": 14,
+    "form_script": "",
+    "list_script": "",
+    "view_type": "list"
+  }
+}

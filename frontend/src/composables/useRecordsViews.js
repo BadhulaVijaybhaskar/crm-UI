@@ -33,10 +33,12 @@ export function useRecordsViews({
         label: allLabel || __('All'),
         view: null,
         type: 'list',
+        // Prefer the unfiltered get_count so chips/filters don't rewrite the All tab.
         count:
-          activeView.value === 'list'
+          viewCounts.value.__all ??
+          (activeView.value === 'list'
             ? list.value?.data?.total_count
-            : viewCounts.value.__all,
+            : undefined),
       },
     ]
     for (const view of savedViews.value) {

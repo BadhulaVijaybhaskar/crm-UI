@@ -8,11 +8,12 @@
  *
  * Nothing here is imported by production src/.
  *
- * Shell pass criterion: attributable shell real % ≈ 0, where
- *   attributable = max(0, vue↔png_shell − sourceHtml↔png_shell)
- * The Figma MCP capture PNGs are not Chrome pixels; even identical capture
- * HTML retains a small shell floor vs the PNG. Subtracting that floor isolates
- * Vue shell deltas the shell agent owns.
+ * Pass bar (per screen × theme):
+ *   - real vs PNG ≤ 0.75% (Figma PNG is the approved design; 1px + threshold 0.1)
+ *   - real vs unedited p-*.html ≈ 0 wherever that HTML agrees with the PNG
+ *
+ * Reference HTML and Figma PNGs are READ-ONLY — never edit them to pass a diff.
+ * When HTML layout disagrees with the PNG, match the PNG.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -30,8 +31,13 @@ import {
   sessionInitScript,
   themeInitScript,
 } from './lib/mocks.js'
-import { compareImages, shellRealPercent } from './lib/diff.js'
+import { compareImages, realPercent } from './lib/diff.js'
 import { screenshotSourceHtml } from './lib/sourceShot.js'
+
+/** Hard PNG budget. HTML target is ~0 when HTML agrees with PNG. */
+const PNG_BUDGET = 0.75
+const EPS_HTML = 0.05
+const EPS_PNG = 0.05
 
 function usage() {
   console.error(`Usage: yarn parity <screen-id>
@@ -117,9 +123,10 @@ async function runTheme({ screen, theme, origin, browser }) {
     shellRegions: screen.shellRegions || [],
   })
 
-  // Source HTML floor (same engine) — isolates Vue shell deltas from MCP PNG noise
-  let shellSourceFloorPct = null
-  let shellAttributablePct = result.shellRealPct
+  let floorPct = null
+  let realVsHtmlPct = null
+  const remaining = []
+
   if (screen.sourceHtml?.[theme]) {
     const srcPath = path.join(
       PATHS.artifacts,
@@ -132,17 +139,40 @@ async function runTheme({ screen, theme, origin, browser }) {
       viewport: screen.viewport,
       outPath: srcPath,
     })
-    shellSourceFloorPct = shellRealPercent(
-      srcPath,
-      figmaPath,
-      screen.shellRegions || [],
-    )
-    shellAttributablePct = Math.max(0, result.shellRealPct - shellSourceFloorPct)
+    // Unedited HTML ↔ PNG (disagreement / MCP floor). Never edit the HTML.
+    floorPct = realPercent(srcPath, figmaPath, masks)
+    realVsHtmlPct = realPercent(shotPath, srcPath, masks)
     try {
       fs.unlinkSync(srcPath)
     } catch {
       /* keep */
     }
+  } else {
+    remaining.push('sourceHtml missing — real vs HTML not measured')
+  }
+
+  const realVsPngPct = result.realPct
+  const pngOk = realVsPngPct <= PNG_BUDGET + EPS_PNG
+  const htmlAgreesWithPng = floorPct != null && floorPct <= PNG_BUDGET + EPS_PNG
+  const htmlOk =
+    realVsHtmlPct == null
+      ? true
+      : !htmlAgreesWithPng || realVsHtmlPct <= EPS_HTML
+  const pass = pngOk && htmlOk
+
+  if (!pngOk) {
+    remaining.push(
+      `real vs PNG ${realVsPngPct.toFixed(4)}% > ${PNG_BUDGET}% budget`,
+    )
+  }
+  if (realVsHtmlPct != null && htmlAgreesWithPng && realVsHtmlPct > EPS_HTML) {
+    remaining.push(
+      `real vs HTML ${realVsHtmlPct.toFixed(4)}% > 0 (HTML agrees with PNG)`,
+    )
+  } else if (realVsHtmlPct != null && !htmlAgreesWithPng && floorPct != null) {
+    remaining.push(
+      `HTML disagrees with PNG (html↔png ${floorPct.toFixed(4)}%); PNG is approved`,
+    )
   }
 
   try {
@@ -155,8 +185,11 @@ async function runTheme({ screen, theme, origin, browser }) {
     screen: screen.id,
     theme,
     ...result,
-    shellSourceFloorPct,
-    shellAttributablePct,
+    floorPct,
+    realVsHtmlPct,
+    realVsPngPct,
+    pass,
+    remaining,
     masked: masks.map((m) => m.name),
   }
 }
@@ -168,12 +201,12 @@ function fmt(pct) {
 
 function printTable(rows) {
   const lines = [
-    '| screen | theme | raw % | real % (1px/0.1) | shell real % | shell floor (src HTML) | shell attributable % | masked | triplet |',
-    '|---|---|---:|---:|---:|---:|---:|---|---|',
+    '| screen | theme | real vs HTML % | real vs PNG % | floor % | pass | masked | remaining |',
+    '|---|---|---:|---:|---:|---|---|---|',
   ]
   for (const r of rows) {
     lines.push(
-      `| ${r.screen} | ${r.theme} | ${fmt(r.rawPct)} | ${fmt(r.realPct)} | ${fmt(r.shellRealPct)} | ${fmt(r.shellSourceFloorPct)} | ${fmt(r.shellAttributablePct)} | ${(r.masked || []).join('; ') || '—'} | \`${r.tripletPath}\` |`,
+      `| ${r.screen} | ${r.theme} | ${fmt(r.realVsHtmlPct)} | ${fmt(r.realVsPngPct)} | ${fmt(r.floorPct)} | ${r.pass ? 'PASS' : 'FAIL'} | ${(r.masked || []).join('; ') || '—'} | ${(r.remaining || []).join('; ') || '—'} |`,
     )
   }
   return lines.join('\n')
@@ -222,7 +255,7 @@ async function main() {
       })
       results.push(row)
       console.log(
-        `[parity] ${screen.id}/${theme}: raw=${fmt(row.rawPct)} real=${fmt(row.realPct)} shell=${fmt(row.shellRealPct)} floor=${fmt(row.shellSourceFloorPct)} attributable=${fmt(row.shellAttributablePct)}`,
+        `[parity] ${screen.id}/${theme}: html=${fmt(row.realVsHtmlPct)} png=${fmt(row.realVsPngPct)} floor=${fmt(row.floorPct)} pass=${row.pass}`,
       )
     } finally {
       await browser.close()
@@ -233,7 +266,7 @@ async function main() {
   const report = {
     clock: PARITY_CLOCK,
     generatedAt: new Date().toISOString(),
-    note: 'shell attributable % = max(0, shell real vs PNG − source-HTML vs PNG). Figma MCP PNGs are not Chrome pixels.',
+    note: `Pass: real vs PNG ≤ ${PNG_BUDGET}% (PNG is approved design). Real vs unedited HTML ≈ 0 wherever HTML agrees with PNG (html↔png ≤ ${PNG_BUDGET}%). Never edit p-*.html or Figma PNGs.`,
     results,
   }
   const jsonPath = path.join(PATHS.artifacts, `${screenId}-report.json`)
@@ -249,10 +282,9 @@ async function main() {
     '## Notes',
     '',
     '- Full-page mask: only the design-only **Example data** tag box.',
-    '- **shell real %** crops nav (240×960) + app bar (1200×52) vs the Figma PNG.',
-    '- **shell floor** is the same crop of the capture HTML re-rendered in Chrome vs the PNG (Figma MCP rasterisation noise).',
-    '- **shell attributable %** = max(0, shell real − floor). Shell agent target: 0%.',
-    '- Page-content differences remain until screen agents restyle list/record pages.',
+    '- **real vs PNG %** — must be ≤ 0.75% (approved design).',
+    '- **real vs HTML %** — Vue vs unedited p-*.html; must be ~0 when HTML agrees with PNG.',
+    '- **floor %** — unedited HTML ↔ PNG (disagreement / MCP noise). Read-only references.',
     '',
   ].join('\n')
   fs.writeFileSync(mdPath, md)
@@ -260,9 +292,8 @@ async function main() {
   console.log(`Wrote ${jsonPath}`)
   console.log(`Wrote ${mdPath}`)
 
-  // Pass when Vue adds no shell delta beyond the HTML↔PNG floor (ε = 0.05%)
-  const shellFail = results.some((r) => (r.shellAttributablePct ?? r.shellRealPct) > 0.05)
-  process.exit(shellFail ? 1 : 0)
+  const failed = results.some((r) => !r.pass)
+  process.exit(failed ? 1 : 0)
 }
 
 main().catch((err) => {

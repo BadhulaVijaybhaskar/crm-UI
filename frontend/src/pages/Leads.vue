@@ -1,7 +1,7 @@
 <template>
   <RecordsListChrome
     :title="__('Leads')"
-    :description="__('Your open leads and pipeline.')"
+    :description="__('Manager view · you and your team')"
     :create-label="__('+ New lead')"
     :view-tabs="viewTabs"
     :active-view="activeView"

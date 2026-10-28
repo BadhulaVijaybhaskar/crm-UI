@@ -1,0 +1,50 @@
+{
+  "message": [
+    {
+      "name": "all-contacts",
+      "label": "All contacts",
+      "route_name": "Contacts",
+      "doctype": "Contact",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com"
+    },
+    {
+      "name": "on-my-deals",
+      "label": "On my deals",
+      "route_name": "Contacts",
+      "doctype": "Contact",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 0,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0
+    },
+    {
+      "name": "no-email",
+      "label": "No email",
+      "route_name": "Contacts",
+      "doctype": "Contact",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 0,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0
+    }
+  ]
+}

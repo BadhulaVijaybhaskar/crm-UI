@@ -1,0 +1,44 @@
+{
+  "message": {
+    "keys": [
+      "name",
+      "organization",
+      "deal_name",
+      "deal_value",
+      "status",
+      "probability",
+      "expected_closure_date",
+      "contact",
+      "deal_owner",
+      "next_step",
+      "chip",
+      "last_activity",
+      "modified",
+      "creation",
+      "currency",
+      "contacts_label"
+    ],
+    "values": [
+      [
+        "DEAL-LL",
+        "Lumen Logistics",
+        "Fleet telematics rollout",
+        1240000,
+        "Negotiation",
+        70,
+        "2026-11-08",
+        "Sana Qureshi",
+        "rohan.mehta@example.com",
+        "Send revised quote",
+        "Quote today",
+        "Call · today",
+        "2026-10-28 09:14:00",
+        "2026-10-03 10:00:00",
+        "INR",
+        "Sana Qureshi +1"
+      ]
+    ],
+    "user_info": {},
+    "total_count": 1
+  }
+}

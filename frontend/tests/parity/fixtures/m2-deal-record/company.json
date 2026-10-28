@@ -1,0 +1,16 @@
+{
+  "message": {
+    "name": "ORG-LL",
+    "doctype": "CRM Organization",
+    "organization_name": "Lumen Logistics",
+    "website": "lumen.example.in",
+    "industry": "Logistics",
+    "no_of_employees": "501–1000",
+    "annual_revenue": 2400000000,
+    "territory": "West · Mumbai",
+    "currency": "INR",
+    "linkedin": "/company/lumen-logistics",
+    "company_description": "Third-party logistics with 1,400 vehicles across western India. Buying for fleet visibility and fuel savings.",
+    "address_display": "Unit 4, Lumen Park, Andheri East, Mumbai 400069 · Maharashtra"
+  }
+}

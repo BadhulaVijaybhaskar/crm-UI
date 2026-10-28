@@ -3,6 +3,9 @@
  *
  * Clock: Figma HTML shows “Today” / “28 Oct” on the leads list capture day.
  * Freeze to 2026-10-28T11:00:00+05:30 (IST) to match design relative dates.
+ *
+ * Reference p-*.html and Figma PNGs are READ-ONLY — never edit them to pass.
+ * When HTML layout disagrees with the PNG, the PNG is the approved design.
  */
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -26,39 +29,114 @@ export const PATHS = {
   screens: join(HERE, 'screens'),
 }
 
-/** Desktop captures are 1440×960 (crm.css .app). Mobile m* are 390×844. */
-export const SCREENS = {
-  '04-leads-list': {
-    id: '04-leads-list',
-    route: '/crm/leads/view/list',
-    /** Source HTML captured into the Figma PNG (same basename as p-*.html). */
+const DESKTOP = { width: 1440, height: 960 }
+const MOBILE = { width: 390, height: 844 }
+
+function exampleDataMask(fallback) {
+  return [
+    {
+      name: 'Example data tag',
+      selector: '[data-parity-mask="example-data"]',
+      fallback,
+    },
+  ]
+}
+
+function screenEntry({
+  id,
+  route,
+  viewport = DESKTOP,
+  fixture,
+  exampleFallback = { x: 1188, y: 70, width: 118, height: 28 },
+  shellRegions,
+}) {
+  return {
+    id,
+    route,
     sourceHtml: {
-      light: 'p-04-leads-list-light.html',
-      dark: 'p-04-leads-list-dark.html',
+      light: `p-${id}-light.html`,
+      dark: `p-${id}-dark.html`,
     },
     figma: {
-      light: '04-leads-list-light.png',
-      dark: '04-leads-list-dark.png',
+      light: `${id}-light.png`,
+      dark: `${id}-dark.png`,
     },
-    viewport: { width: 1440, height: 960 },
+    viewport,
     deviceScaleFactor: 1,
-    /** Design-only tag; only this box is masked in the full-page diff. */
-    masks: [
-      {
-        name: 'Example data tag',
-        // Approximate box from p-04 ph2 row (right side before New lead).
-        // Harness also tries [data-parity-mask="example-data"] if present.
-        selector: '[data-parity-mask="example-data"]',
-        fallback: { x: 1188, y: 70, width: 118, height: 28 },
-      },
-    ],
-    /** Regions owned by the shell agent — driven to 0% real difference. */
-    shellRegions: [
-      { name: 'nav', x: 0, y: 0, width: 240, height: 960 },
-      { name: 'app-bar', x: 240, y: 0, width: 1200, height: 52 },
-    ],
+    masks: exampleDataMask(exampleFallback),
+    shellRegions:
+      shellRegions ||
+      (viewport.width >= 1440
+        ? [
+            { name: 'nav', x: 0, y: 0, width: 240, height: viewport.height },
+            {
+              name: 'app-bar',
+              x: 240,
+              y: 0,
+              width: viewport.width - 240,
+              height: 52,
+            },
+          ]
+        : []),
+    fixture: fixture || id,
+  }
+}
+
+/** Desktop captures are 1440×960 (crm.css .app). Mobile m* are 390×844. */
+export const SCREENS = {
+  '04-leads-list': screenEntry({
+    id: '04-leads-list',
+    route: '/crm/leads/view/list',
     fixture: '04-leads-list',
-  },
+  }),
+  '05-lead-record': screenEntry({
+    id: '05-lead-record',
+    route: '/crm/leads/LEAD-MI',
+    fixture: '05-lead-record',
+  }),
+  '06-deals-board': screenEntry({
+    id: '06-deals-board',
+    route: '/crm/deals/view/kanban',
+    fixture: '06-deals-board',
+  }),
+  '07-deals-list': screenEntry({
+    id: '07-deals-list',
+    route: '/crm/deals/view/list',
+    fixture: '07-deals-list',
+  }),
+  '08-deal-record': screenEntry({
+    id: '08-deal-record',
+    route: '/crm/deals/DEAL-LL',
+    fixture: '08-deal-record',
+  }),
+  '09-contacts-list': screenEntry({
+    id: '09-contacts-list',
+    route: '/crm/contacts/view/list',
+    fixture: '09-contacts-list',
+  }),
+  '10-contact-record': screenEntry({
+    id: '10-contact-record',
+    route: '/crm/contacts/CONTACT-AK',
+    fixture: '10-contact-record',
+  }),
+  '11-companies-list': screenEntry({
+    id: '11-companies-list',
+    route: '/crm/organizations/view/list',
+    fixture: '11-companies-list',
+  }),
+  '12-company-record': screenEntry({
+    id: '12-company-record',
+    route: '/crm/organizations/ORG-LL',
+    fixture: '12-company-record',
+  }),
+  'm2-deal-record': screenEntry({
+    id: 'm2-deal-record',
+    route: '/crm/deals/DEAL-LL',
+    viewport: MOBILE,
+    fixture: 'm2-deal-record',
+    exampleFallback: { x: 280, y: 12, width: 100, height: 24 },
+    shellRegions: [],
+  }),
 }
 
 export function resolveFigmaPng(screenId, theme) {

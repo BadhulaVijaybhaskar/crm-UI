@@ -14,7 +14,8 @@
       "load_default_columns": 1,
       "pinned": 0,
       "public": 0,
-      "user": "priya.nair@example.com"
+      "user": "priya.nair@example.com",
+      "parity_count": 248
     },
     {
       "name": "my-open-leads",
@@ -23,10 +24,50 @@
       "doctype": "CRM Lead",
       "type": "list",
       "is_standard": 1,
-      "filters": [],
+      "filters": [["lead_owner", "=", "@me"]],
       "columns": [],
       "rows": [],
-      "load_default_columns": 1
+      "load_default_columns": 1,
+      "parity_count": 42
+    },
+    {
+      "name": "hot-leads",
+      "label": "Hot",
+      "route_name": "Leads",
+      "doctype": "CRM Lead",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [["temperature", "=", "Hot"]],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "parity_count": 11
+    },
+    {
+      "name": "response-due",
+      "label": "Response due",
+      "route_name": "Leads",
+      "doctype": "CRM Lead",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [["sla_status", "in", ["First Response Due", "Failed"]]],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "parity_count": 6
+    },
+    {
+      "name": "unassigned",
+      "label": "Unassigned",
+      "route_name": "Leads",
+      "doctype": "CRM Lead",
+      "type": "list",
+      "is_standard": 1,
+      "filters": [["_assign", "is", "not set"]],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "parity_count": 9
     }
   ]
 }

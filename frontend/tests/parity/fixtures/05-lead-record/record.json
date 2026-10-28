@@ -1,0 +1,51 @@
+{
+  "message": {
+    "name": "LEAD-MI",
+    "doctype": "CRM Lead",
+    "lead_name": "Meera Iyer",
+    "first_name": "Meera",
+    "last_name": "Iyer",
+    "organization": "Brightpath Schools",
+    "job_title": "Principal",
+    "status": "Contacted",
+    "temperature": "Hot",
+    "lead_temperature": "Hot",
+    "lead_score": 78,
+    "score": 78,
+    "source": "Referral",
+    "industry": "Education",
+    "no_of_employees": "201–500",
+    "annual_revenue": 180000000,
+    "territory": "South · Bengaluru",
+    "email": "meera.iyer@example.in",
+    "mobile_no": "+91 98•• ••• 412",
+    "website": "brightpath.example.in",
+    "linkedin": "",
+    "lead_owner": "rohan.mehta@example.com",
+    "creation": "2026-10-24 09:00:00",
+    "modified": "2026-10-26 16:20:00",
+    "sla": "Inbound leads",
+    "sla_status": "Rolling response due",
+    "first_response_time": 7800,
+    "first_response_label": "2 h 10 m · met",
+    "response_by": "2026-10-28 11:00:00",
+    "rolling_overdue_label": "Rolling response overdue 42 min",
+    "status_change_log": [
+      {
+        "from": "New",
+        "to": "Contacted",
+        "at": "2026-10-24 15:40:00",
+        "by": "rohan.mehta@example.com"
+      }
+    ],
+    "pipeline": {
+      "lead_in_progress": {
+        "New": "2026-10-21",
+        "Contacted": "since 24 Oct",
+        "Nurture": null
+      },
+      "qualified": null,
+      "deal": null
+    }
+  }
+}

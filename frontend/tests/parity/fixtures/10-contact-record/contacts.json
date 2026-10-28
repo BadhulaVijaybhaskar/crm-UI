@@ -1,0 +1,32 @@
+{
+  "message": {
+    "keys": [
+      "name",
+      "full_name",
+      "designation",
+      "company_name",
+      "email",
+      "mobile_no",
+      "channels",
+      "open_deals_count",
+      "open_deals_value",
+      "last_activity"
+    ],
+    "values": [
+      [
+        "CONTACT-AK",
+        "Arjun Kapoor",
+        "Head of Operations",
+        "Lumen Logistics",
+        "arjun.k@example.in",
+        "+91 97•• ••• 208",
+        "WhatsApp",
+        1,
+        1240000,
+        "Call · today"
+      ]
+    ],
+    "user_info": {},
+    "total_count": 1
+  }
+}

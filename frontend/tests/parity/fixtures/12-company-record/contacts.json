@@ -1,0 +1,58 @@
+{
+  "message": {
+    "keys": [
+      "name",
+      "full_name",
+      "designation",
+      "email",
+      "company_name",
+      "chip",
+      "channels",
+      "last_activity"
+    ],
+    "values": [
+      [
+        "CONTACT-SQ",
+        "Sana Qureshi",
+        "Procurement lead",
+        "sana.q@example.in",
+        "Lumen Logistics",
+        "Primary · deal",
+        "",
+        ""
+      ],
+      [
+        "CONTACT-AK",
+        "Arjun Kapoor",
+        "Head of Operations",
+        "arjun.k@example.in",
+        "Lumen Logistics",
+        "WhatsApp",
+        "WhatsApp",
+        ""
+      ],
+      [
+        "CONTACT-MA",
+        "Mohan Arora",
+        "CFO",
+        "mohan.a@example.in",
+        "Lumen Logistics",
+        "",
+        "",
+        "No activity yet"
+      ],
+      [
+        "CONTACT-RS",
+        "Ritu Sharma",
+        "Fleet manager",
+        "ritu.s@example.in",
+        "Lumen Logistics",
+        "",
+        "",
+        "Email · 02 Oct"
+      ]
+    ],
+    "user_info": {},
+    "total_count": 4
+  }
+}

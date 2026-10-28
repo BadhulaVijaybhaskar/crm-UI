@@ -17,7 +17,11 @@ Artifacts land in `/opt/cursor/artifacts/parity/`:
 - `<screen>-<theme>.png` — triplet (built | figma | diff)
 - `<screen>-report.json` / `.md` — raw %, real % (1px / threshold 0.1), shell real %, shell floor, shell attributable %
 
-**Shell pass:** `shell attributable % ≈ 0`, where attributable = max(0, vue↔png_shell − sourceHtml↔png_shell). The Figma MCP PNGs are not Chrome pixels; even the capture HTML retains a small floor vs the PNG.
+**Pass bar (per screen × theme):**
+- **real vs PNG ≤ 0.75%** — the Figma PNG is the approved design.
+- **real vs unedited HTML ≈ 0** wherever that HTML agrees with the PNG.
+- Reference `p-*.html` and Figma PNGs are **read-only** — never edit them to pass a diff.
+- When HTML layout disagrees with the PNG, match the PNG.
 
 ## How a screen agent adds a new screen
 

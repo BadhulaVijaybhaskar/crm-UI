@@ -1,0 +1,188 @@
+{
+  "message": {
+    "keys": [
+      "name",
+      "full_name",
+      "designation",
+      "company_name",
+      "email",
+      "mobile_no",
+      "channels",
+      "open_deals_count",
+      "open_deals_value",
+      "last_activity"
+    ],
+    "values": [
+      [
+        "CONTACT-SQ",
+        "Sana Qureshi",
+        "Procurement lead",
+        "Lumen Logistics",
+        "sana.q@example.in",
+        "+91 99•• ••• 731",
+        "",
+        1,
+        1240000,
+        "Email · today"
+      ],
+      [
+        "CONTACT-AK",
+        "Arjun Kapoor",
+        "Head of Operations",
+        "Lumen Logistics",
+        "arjun.k@example.in",
+        "+91 97•• ••• 208",
+        "WhatsApp",
+        1,
+        1240000,
+        "Call · today"
+      ],
+      [
+        "CONTACT-KR",
+        "Karthik Rao",
+        "Founder",
+        "Kaveri Foods",
+        "karthik@example.in",
+        "+91 98•• ••• 019",
+        "WhatsApp",
+        1,
+        640000,
+        "Call · yesterday"
+      ],
+      [
+        "CONTACT-NA",
+        "Neha Agarwal",
+        "IT manager",
+        "Northwind Retail",
+        "neha.a@example.in",
+        "+91 90•• ••• 552",
+        "",
+        1,
+        720000,
+        "Note · 22 Oct"
+      ],
+      [
+        "CONTACT-TB",
+        "Tarun Bhatia",
+        "GM",
+        "Pinecrest Hotels",
+        "tarun.b@example.in",
+        "+91 96•• ••• 300",
+        "",
+        1,
+        430000,
+        "Email · today"
+      ],
+      [
+        "CONTACT-VS",
+        "Vikram Sethi",
+        "VP Sales",
+        "Orbit Pharma",
+        "vikram.s@example.in",
+        "+91 98•• ••• 845",
+        "",
+        1,
+        900000,
+        "Email · 19 Oct"
+      ],
+      [
+        "CONTACT-HP",
+        "Hina Patel",
+        "Dealer ops",
+        "Silverline Motors",
+        "hina.p@example.in",
+        "+91 93•• ••• 117",
+        "",
+        1,
+        550000,
+        "Email · 24 Oct"
+      ],
+      [
+        "CONTACT-SR",
+        "Sneha Reddy",
+        "Partner manager",
+        "Bluewave Travel",
+        "sneha.r@example.in",
+        "+91 95•• ••• 640",
+        "WhatsApp",
+        1,
+        360000,
+        "Meeting · 23 Oct"
+      ],
+      [
+        "CONTACT-RG",
+        "Rahul Gupta",
+        "COO",
+        "Harbor Freight Co",
+        "rahul.g@example.in",
+        "+91 91•• ••• 288",
+        "",
+        1,
+        810000,
+        "Email · 26 Oct"
+      ],
+      [
+        "CONTACT-LN",
+        "Lakshmi Narayan",
+        "Owner",
+        "Vista Interiors",
+        "lakshmi@example.in",
+        "+91 94•• ••• 903",
+        "",
+        1,
+        475000,
+        "Call · 25 Oct"
+      ],
+      [
+        "CONTACT-PJ",
+        "Pooja Joshi",
+        "Buyer",
+        "Greenleaf Organics",
+        "pooja.j@example.in",
+        "+91 92•• ••• 476",
+        "",
+        1,
+        210000,
+        "Email · yesterday"
+      ],
+      [
+        "CONTACT-MA",
+        "Mohan Arora",
+        "CFO",
+        "Lumen Logistics",
+        "mohan.a@example.in",
+        "",
+        "",
+        0,
+        0,
+        ""
+      ],
+      [
+        "CONTACT-DK",
+        "Divya Krishnan",
+        "Admin head",
+        "Kaveri Foods",
+        "divya.k@example.in",
+        "+91 99•• ••• 061",
+        "",
+        0,
+        0,
+        "Email · 12 Oct"
+      ],
+      [
+        "CONTACT-AS",
+        "Amit Shah",
+        "Purchase",
+        "Coastal Cement",
+        "amit.s@example.in",
+        "+91 98•• ••• 330",
+        "",
+        1,
+        320000,
+        "Call · 18 Oct"
+      ]
+    ],
+    "user_info": {},
+    "total_count": 24
+  }
+}

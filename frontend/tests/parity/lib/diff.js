@@ -215,6 +215,23 @@ export function compareImages({
   }
 }
 
+/**
+ * Full-page real % between two screenshots (same 1px / 0.1 rule), with optional masks.
+ * Used for: Vue↔sourceHtml and sourceHtml↔PNG (floor / disagreement).
+ */
+export function realPercent(builtPath, refPath, masks = []) {
+  let built = loadPng(builtPath)
+  let ref = loadPng(refPath)
+  const width = ref.width
+  const height = ref.height
+  built = ensureSize(built, width, height)
+  const builtM = applyMasks(built, masks)
+  const refM = applyMasks(ref, masks)
+  const total = width * height
+  const real = realDifferenceCount(builtM, refM, width, height, 0.1)
+  return (real / total) * 100
+}
+
 /** Shell-only real % (nav + app bar), same 1px / 0.1 rule as full-page real %. */
 export function shellRealPercent(builtPath, figmaPath, shellRegions = []) {
   const built = loadPng(builtPath)
