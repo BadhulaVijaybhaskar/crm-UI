@@ -1,0 +1,26 @@
+{
+  "message": [
+    {
+      "name": "TASK-LL-1",
+      "title": "Send revised quote",
+      "priority": "High",
+      "status": "Open",
+      "due_date": "2026-10-28 18:00:00",
+      "due_label": "Today",
+      "assigned_to": "rohan.mehta@example.com",
+      "reference_doctype": "CRM Deal",
+      "reference_docname": "DEAL-LL"
+    },
+    {
+      "name": "TASK-LL-2",
+      "title": "CFO review call",
+      "priority": "Medium",
+      "status": "Open",
+      "due_date": "2026-11-05 11:00:00",
+      "due_label": "05 Nov",
+      "assigned_to": "rohan.mehta@example.com",
+      "reference_doctype": "CRM Deal",
+      "reference_docname": "DEAL-LL"
+    }
+  ]
+}

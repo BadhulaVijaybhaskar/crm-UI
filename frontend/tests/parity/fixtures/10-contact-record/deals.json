@@ -1,0 +1,62 @@
+{
+  "message": {
+    "keys": [
+      "name",
+      "organization",
+      "deal_name",
+      "deal_value",
+      "status",
+      "probability",
+      "expected_closure_date",
+      "contact",
+      "deal_owner",
+      "next_step",
+      "chip",
+      "last_activity",
+      "modified",
+      "creation",
+      "currency",
+      "contacts_label"
+    ],
+    "values": [
+      [
+        "DEAL-LL",
+        "Lumen Logistics",
+        "Fleet telematics rollout",
+        1240000,
+        "Negotiation",
+        70,
+        "2026-11-08",
+        "",
+        "rohan.mehta@example.com",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "INR",
+        ""
+      ],
+      [
+        "DEAL-LL-RP",
+        "Lumen Logistics",
+        "Route planning pilot",
+        620000,
+        "Won",
+        100,
+        "2026-03-14",
+        "",
+        "sara.khan@example.com",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "INR",
+        ""
+      ]
+    ],
+    "user_info": {},
+    "total_count": 2
+  }
+}

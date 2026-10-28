@@ -1,0 +1,188 @@
+{
+  "message": {
+    "keys": [
+      "name",
+      "organization_name",
+      "website",
+      "industry",
+      "no_of_employees",
+      "annual_revenue",
+      "territory",
+      "open_deals_count",
+      "open_deals_value",
+      "contacts_count"
+    ],
+    "values": [
+      [
+        "ORG-LL",
+        "Lumen Logistics",
+        "lumen.example.in",
+        "Logistics",
+        "501–1000",
+        2400000000,
+        "West",
+        2,
+        2050000,
+        4
+      ],
+      [
+        "ORG-KF",
+        "Kaveri Foods",
+        "kaveri.example.in",
+        "Food & beverage",
+        "201–500",
+        850000000,
+        "South",
+        1,
+        640000,
+        3
+      ],
+      [
+        "ORG-OP",
+        "Orbit Pharma",
+        "orbit.example.in",
+        "Pharma",
+        "1000+",
+        12000000000,
+        "North",
+        1,
+        900000,
+        2
+      ],
+      [
+        "ORG-NR",
+        "Northwind Retail",
+        "northwind.example.in",
+        "Retail",
+        "201–500",
+        1400000000,
+        "West",
+        1,
+        720000,
+        2
+      ],
+      [
+        "ORG-HF",
+        "Harbor Freight Co",
+        "harbor.example.in",
+        "Logistics",
+        "51–200",
+        600000000,
+        "West",
+        1,
+        810000,
+        1
+      ],
+      [
+        "ORG-PH",
+        "Pinecrest Hotels",
+        "pinecrest.example.in",
+        "Hospitality",
+        "201–500",
+        1100000000,
+        "South",
+        1,
+        430000,
+        2
+      ],
+      [
+        "ORG-SM",
+        "Silverline Motors",
+        "silverline.example.in",
+        "Automotive",
+        "501–1000",
+        4200000000,
+        "North",
+        1,
+        550000,
+        1
+      ],
+      [
+        "ORG-BT",
+        "Bluewave Travel",
+        "bluewave.example.in",
+        "Travel",
+        "51–200",
+        380000000,
+        "South",
+        1,
+        360000,
+        2
+      ],
+      [
+        "ORG-VI",
+        "Vista Interiors",
+        "vista.example.in",
+        "Interiors",
+        "11–50",
+        120000000,
+        "South",
+        1,
+        475000,
+        1
+      ],
+      [
+        "ORG-GO",
+        "Greenleaf Organics",
+        "greenleaf.example.in",
+        "Agriculture",
+        "51–200",
+        220000000,
+        "East",
+        1,
+        210000,
+        1
+      ],
+      [
+        "ORG-BP",
+        "Brightpath Schools",
+        "brightpath.example.in",
+        "Education",
+        "201–500",
+        180000000,
+        "South",
+        0,
+        0,
+        1
+      ],
+      [
+        "ORG-CC",
+        "Coastal Cement",
+        "coastal.example.in",
+        "Manufacturing",
+        "1000+",
+        9000000000,
+        "West",
+        1,
+        320000,
+        2
+      ],
+      [
+        "ORG-CD",
+        "Cedar Clinics",
+        "cedar.example.in",
+        "Healthcare",
+        "51–200",
+        300000000,
+        "South",
+        0,
+        0,
+        1
+      ],
+      [
+        "ORG-MD",
+        "Metro Dental",
+        "metrodental.example.in",
+        "Healthcare",
+        "11–50",
+        60000000,
+        "North",
+        1,
+        180000,
+        1
+      ]
+    ],
+    "user_info": {},
+    "total_count": 142
+  }
+}

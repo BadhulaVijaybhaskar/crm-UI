@@ -1,0 +1,26 @@
+{
+  "message": [
+    {
+      "name": "CONV-AK-1",
+      "type": "Call",
+      "title": "Interested — send revised quote",
+      "meta": "Outgoing · 6 m 12 s · today 09:14",
+      "creation": "2026-10-28 09:14:00"
+    },
+    {
+      "name": "CONV-AK-2",
+      "type": "WhatsApp",
+      "title": "Sharing the vehicle list now",
+      "meta": "Incoming · via Astra Connect · yesterday 18:40",
+      "action": "Open",
+      "creation": "2026-10-27 18:40:00"
+    },
+    {
+      "name": "CONV-AK-3",
+      "type": "Email",
+      "title": "Pilot timeline",
+      "meta": "Sent by Rohan · 24 Oct",
+      "creation": "2026-10-24 11:00:00"
+    }
+  ]
+}

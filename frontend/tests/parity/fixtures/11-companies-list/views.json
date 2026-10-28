@@ -1,0 +1,50 @@
+{
+  "message": [
+    {
+      "name": "all-companies",
+      "label": "All companies",
+      "route_name": "Organizations",
+      "doctype": "CRM Organization",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "rohan.mehta@example.com"
+    },
+    {
+      "name": "with-open-deals",
+      "label": "With open deals",
+      "route_name": "Organizations",
+      "doctype": "CRM Organization",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 0,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0
+    },
+    {
+      "name": "customers",
+      "label": "Customers",
+      "route_name": "Organizations",
+      "doctype": "CRM Organization",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 0,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "message": [
+    {
+      "name": "ACT-ORG-1",
+      "type": "Call",
+      "title": "Interested — send revised quote",
+      "meta": "Arjun Kapoor · Fleet telematics rollout · today 09:14",
+      "creation": "2026-10-28 09:14:00"
+    },
+    {
+      "name": "ACT-ORG-2",
+      "type": "Email",
+      "title": "Re: Revised proposal for fleet telematics",
+      "meta": "Sana Qureshi · today 08:52",
+      "creation": "2026-10-28 08:52:00"
+    },
+    {
+      "name": "ACT-ORG-3",
+      "type": "Stage",
+      "title": "Cold-chain add-on created in Demo/Making",
+      "meta": "by Rohan · 25 Oct",
+      "creation": "2026-10-25 10:00:00"
+    }
+  ]
+}

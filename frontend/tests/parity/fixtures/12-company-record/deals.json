@@ -1,0 +1,80 @@
+{
+  "message": {
+    "keys": [
+      "name",
+      "organization",
+      "deal_name",
+      "deal_value",
+      "status",
+      "probability",
+      "expected_closure_date",
+      "contact",
+      "deal_owner",
+      "next_step",
+      "chip",
+      "last_activity",
+      "modified",
+      "creation",
+      "currency",
+      "contacts_label"
+    ],
+    "values": [
+      [
+        "DEAL-LL",
+        "Lumen Logistics",
+        "Fleet telematics rollout",
+        1240000,
+        "Negotiation",
+        70,
+        "2026-11-08",
+        "Sana Qureshi",
+        "rohan.mehta@example.com",
+        "Send revised quote",
+        "Quote today",
+        "Call · today",
+        "2026-10-28 09:14:00",
+        "2026-10-03 10:00:00",
+        "INR",
+        "Sana Qureshi +1"
+      ],
+      [
+        "DEAL-LL-CC",
+        "Lumen Logistics",
+        "Cold-chain add-on",
+        810000,
+        "Demo/Making",
+        25,
+        "2027-01-15",
+        "Arjun Kapoor",
+        "rohan.mehta@example.com",
+        "",
+        "",
+        "",
+        "2026-10-25 12:00:00",
+        "2026-10-25 10:00:00",
+        "INR",
+        "Arjun Kapoor"
+      ],
+      [
+        "DEAL-LL-RP",
+        "Lumen Logistics",
+        "Route planning pilot",
+        620000,
+        "Won",
+        100,
+        "2026-03-14",
+        "Arjun Kapoor",
+        "sara.khan@example.com",
+        "",
+        "",
+        "",
+        "2026-03-14 16:00:00",
+        "2026-02-01 10:00:00",
+        "INR",
+        "Arjun Kapoor"
+      ]
+    ],
+    "user_info": {},
+    "total_count": 3
+  }
+}

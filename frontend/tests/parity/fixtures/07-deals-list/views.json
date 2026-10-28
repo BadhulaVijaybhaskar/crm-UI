@@ -1,0 +1,65 @@
+{
+  "message": [
+    {
+      "name": "all-open-deals",
+      "label": "All open deals",
+      "route_name": "Deals",
+      "doctype": "CRM Deal",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 1,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0,
+      "user": "priya.nair@example.com"
+    },
+    {
+      "name": "mine-deals",
+      "label": "Mine",
+      "route_name": "Deals",
+      "doctype": "CRM Deal",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 0,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0
+    },
+    {
+      "name": "closing-this-month",
+      "label": "Closing this month",
+      "route_name": "Deals",
+      "doctype": "CRM Deal",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 0,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0
+    },
+    {
+      "name": "no-next-step",
+      "label": "No next step",
+      "route_name": "Deals",
+      "doctype": "CRM Deal",
+      "type": "list",
+      "is_standard": 1,
+      "is_default": 0,
+      "filters": [],
+      "columns": [],
+      "rows": [],
+      "load_default_columns": 1,
+      "pinned": 0,
+      "public": 0
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "message": [
+    {
+      "name": "Qualification",
+      "deal_status": "Qualification",
+      "color": "blue",
+      "position": 1,
+      "type": "Open",
+      "probability": 10,
+      "count": 3,
+      "total": 595000
+    },
+    {
+      "name": "Demo/Making",
+      "deal_status": "Demo/Making",
+      "color": "purple",
+      "position": 2,
+      "type": "Open",
+      "probability": 25,
+      "count": 4,
+      "total": 2225000
+    },
+    {
+      "name": "Proposal/Quotation",
+      "deal_status": "Proposal/Quotation",
+      "color": "orange",
+      "position": 3,
+      "type": "Open",
+      "probability": 50,
+      "count": 3,
+      "total": 1630000
+    },
+    {
+      "name": "Negotiation",
+      "deal_status": "Negotiation",
+      "color": "amber",
+      "position": 4,
+      "type": "Open",
+      "probability": 70,
+      "count": 2,
+      "total": 2050000
+    },
+    {
+      "name": "Ready to Close",
+      "deal_status": "Ready to Close",
+      "color": "green",
+      "position": 5,
+      "type": "Open",
+      "probability": 90,
+      "count": 1,
+      "total": 430000
+    },
+    {
+      "name": "Won",
+      "deal_status": "Won",
+      "color": "green",
+      "position": 6,
+      "type": "Won",
+      "probability": 100,
+      "count": 4,
+      "total": 920000,
+      "period": "Oct"
+    },
+    {
+      "name": "Lost",
+      "deal_status": "Lost",
+      "color": "red",
+      "position": 7,
+      "type": "Lost",
+      "probability": 0,
+      "count": 2,
+      "total": 310000,
+      "period": "Oct"
+    }
+  ],
+  "metrics": {
+    "open_value": 6360000,
+    "weighted_value": 3520000,
+    "open_label": "10 of 14 open deals · Open ₹63.6 L · weighted ₹35.2 L",
+    "showing": 10,
+    "total_open": 14
+  }
+}

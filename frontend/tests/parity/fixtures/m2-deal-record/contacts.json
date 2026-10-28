@@ -1,0 +1,28 @@
+{
+  "message": [
+    {
+      "name": "CONTACT-SQ",
+      "full_name": "Sana Qureshi",
+      "first_name": "Sana",
+      "last_name": "Qureshi",
+      "designation": "Procurement lead",
+      "email": "sana.q@example.in",
+      "email_id": "sana.q@example.in",
+      "mobile_no": "+91 99•• ••• 731",
+      "company_name": "Lumen Logistics",
+      "is_primary": 1
+    },
+    {
+      "name": "CONTACT-AK",
+      "full_name": "Arjun Kapoor",
+      "first_name": "Arjun",
+      "last_name": "Kapoor",
+      "designation": "Head of Operations",
+      "email": "arjun.k@example.in",
+      "email_id": "arjun.k@example.in",
+      "mobile_no": "+91 97•• ••• 208",
+      "company_name": "Lumen Logistics",
+      "is_primary": 0
+    }
+  ]
+}

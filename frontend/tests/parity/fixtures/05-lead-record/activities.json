@@ -1,0 +1,63 @@
+{
+  "message": [
+    {
+      "name": "ACT-MI-1",
+      "type": "task",
+      "date_group": "TODAY",
+      "title": "Task overdue",
+      "subtitle": "Call back about pricing · High",
+      "due": "11:00",
+      "priority": "High",
+      "status": "Overdue",
+      "owner": "rohan.mehta@example.com",
+      "creation": "2026-10-28 09:00:00"
+    },
+    {
+      "name": "ACT-MI-2",
+      "type": "call",
+      "date_group": "26 OCT",
+      "title": "Outgoing call by Rohan · 4 m 38 s",
+      "chip": "Astra Connect",
+      "time": "16:20",
+      "duration": "4 m 38 s",
+      "outcome": "Callback requested",
+      "disposition": "Interested",
+      "summary": "Runs 6 schools, evaluating for next term. Wants per-school pricing and a reference customer before Thursday.",
+      "recording_note": "Recording & transcript in Astra Connect",
+      "owner": "rohan.mehta@example.com",
+      "creation": "2026-10-26 16:20:00"
+    },
+    {
+      "name": "ACT-MI-3",
+      "type": "email",
+      "date_group": "26 OCT",
+      "title": "Email sent",
+      "subtitle": "Brightpath — intro and brochure",
+      "time": "11:05",
+      "owner": "rohan.mehta@example.com",
+      "creation": "2026-10-26 11:05:00"
+    },
+    {
+      "name": "ACT-MI-4",
+      "type": "status",
+      "date_group": "24 OCT",
+      "title": "Status",
+      "from_status": "New",
+      "to_status": "Contacted",
+      "time": "15:40",
+      "owner": "rohan.mehta@example.com",
+      "creation": "2026-10-24 15:40:00"
+    },
+    {
+      "name": "ACT-MI-5",
+      "type": "note",
+      "date_group": "24 OCT",
+      "title": "Note by Priya Nair",
+      "pinned": true,
+      "time": "10:12",
+      "content": "Referred by Cedar Clinics. Decision maker; budget approved for Q1.",
+      "owner": "priya.nair@example.com",
+      "creation": "2026-10-24 10:12:00"
+    }
+  ]
+}

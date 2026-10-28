@@ -1,0 +1,69 @@
+{
+  "message": {
+    "name": "DEAL-LL",
+    "doctype": "CRM Deal",
+    "organization": "ORG-LL",
+    "organization_name": "Lumen Logistics",
+    "deal_name": "Fleet telematics rollout",
+    "deal_value": 1240000,
+    "expected_deal_value": 868000,
+    "status": "Negotiation",
+    "probability": 70,
+    "expected_closure_date": "2026-11-08",
+    "currency": "INR",
+    "source": "Trade show",
+    "territory": "West · Mumbai",
+    "deal_owner": "rohan.mehta@example.com",
+    "lead": "LEAD-AK",
+    "lead_name": "Arjun Kapoor",
+    "next_step": "Send revised quote with 3-year pricing",
+    "next_step_due": "2026-10-28",
+    "next_step_badge": "Due today",
+    "contact": "CONTACT-SQ",
+    "sla_status": "Fulfilled",
+    "creation": "2026-10-03 10:00:00",
+    "modified": "2026-10-28 09:14:00",
+    "day_in_stage": 6,
+    "status_change_log": [
+      {
+        "status": "Qualification",
+        "at": "2026-10-03"
+      },
+      {
+        "status": "Demo/Making",
+        "at": "2026-10-09"
+      },
+      {
+        "status": "Proposal/Quotation",
+        "at": "2026-10-16"
+      },
+      {
+        "status": "Negotiation",
+        "at": "2026-10-22",
+        "since": true,
+        "from_probability": 50,
+        "to_probability": 70
+      }
+    ],
+    "contacts": [
+      {
+        "name": "CONTACT-SQ",
+        "contact": "CONTACT-SQ",
+        "full_name": "Sana Qureshi",
+        "email": "sana.q@example.in",
+        "mobile_no": "+91 99•• ••• 731",
+        "designation": "Procurement lead",
+        "is_primary": 1
+      },
+      {
+        "name": "CONTACT-AK",
+        "contact": "CONTACT-AK",
+        "full_name": "Arjun Kapoor",
+        "email": "arjun.k@example.in",
+        "mobile_no": "+91 97•• ••• 208",
+        "designation": "Head of Operations",
+        "is_primary": 0
+      }
+    ]
+  }
+}

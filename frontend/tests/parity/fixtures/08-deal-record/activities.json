@@ -1,0 +1,71 @@
+{
+  "message": [
+    {
+      "name": "ACT-LL-1",
+      "type": "call",
+      "date_group": "TODAY",
+      "title": "Outgoing call · Arjun Kapoor",
+      "subtitle": "6 m 12 s",
+      "chip": "Astra Connect",
+      "time": "09:14",
+      "duration": "6 m 12 s",
+      "contact": "Arjun Kapoor",
+      "contact_name": "CONTACT-AK",
+      "outcome": "Interested — send revised quote",
+      "qualified": "Yes",
+      "summary": "Agreed on 120 vehicles in phase 1. Wants 3-year pricing and a 30-day pilot clause. Decision with CFO by 5 Nov.",
+      "recording_note": "Recording & transcript in Astra Connect",
+      "task_created": "Send revised quote",
+      "owner": "rohan.mehta@example.com",
+      "creation": "2026-10-28 09:14:00"
+    },
+    {
+      "name": "ACT-LL-2",
+      "type": "email",
+      "date_group": "TODAY",
+      "title": "Email from Sana Qureshi",
+      "subtitle": "Re: Revised proposal for fleet telematics",
+      "time": "08:52",
+      "contact": "Sana Qureshi",
+      "contact_name": "CONTACT-SQ",
+      "quote": "Thanks Rohan — can you split hardware and subscription in the quote? Our CFO wants to see both lines.",
+      "owner": "CONTACT-SQ",
+      "creation": "2026-10-28 08:52:00"
+    },
+    {
+      "name": "ACT-LL-3",
+      "type": "status",
+      "date_group": "22 OCT",
+      "title": "Stage",
+      "from_status": "Proposal/Quotation",
+      "to_status": "Negotiation",
+      "from_probability": 50,
+      "to_probability": 70,
+      "time": "17:05",
+      "owner": "rohan.mehta@example.com",
+      "creation": "2026-10-22 17:05:00"
+    },
+    {
+      "name": "ACT-LL-4",
+      "type": "note",
+      "date_group": "22 OCT",
+      "title": "Note by Priya Nair",
+      "pinned": true,
+      "time": "11:30",
+      "content": "Competitor quoted 8% lower. Hold price; offer the pilot clause instead of discount.",
+      "owner": "priya.nair@example.com",
+      "creation": "2026-10-22 11:30:00"
+    },
+    {
+      "name": "ACT-LL-5",
+      "type": "task",
+      "date_group": "22 OCT",
+      "title": "Task done",
+      "subtitle": "Share security questionnaire · Rohan",
+      "time": "10:02",
+      "status": "Done",
+      "owner": "rohan.mehta@example.com",
+      "creation": "2026-10-22 10:02:00"
+    }
+  ]
+}
