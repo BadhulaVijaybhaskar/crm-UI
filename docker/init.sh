@@ -38,4 +38,11 @@ bench --site crm.localhost set-config server_script_enabled 1
 bench --site crm.localhost clear-cache
 bench use crm.localhost
 
+# Drop framework/base-image *.map files from sites/assets (no sourcemaps in prod).
+if [ -x /workspace/scripts/strip-sourcemaps.sh ]; then
+	BENCH_PATH="$(pwd)" /workspace/scripts/strip-sourcemaps.sh || true
+elif [ -x /workspace/crm/scripts/strip-sourcemaps.sh ]; then
+	BENCH_PATH="$(pwd)" /workspace/crm/scripts/strip-sourcemaps.sh || true
+fi
+
 bench start

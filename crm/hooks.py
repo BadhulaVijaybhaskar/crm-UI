@@ -106,8 +106,12 @@ website_redirects = [
 	},
 ]
 
-# before_request redirect for sales users hitting /app (Desk)
-before_request = ["crm.overrides.desk.redirect_sales_users_from_desk"]
+# before_request redirect for sales users hitting /app (Desk);
+# also pin login lockout responses to HTTP 429 (SecurityException defaulted to 500).
+before_request = [
+	"crm.overrides.login_lockout.ensure_lockout_returns_429",
+	"crm.overrides.desk.redirect_sales_users_from_desk",
+]
 
 # Generators
 # ----------
@@ -500,6 +504,7 @@ after_migrate = [
 	"crm.install.add_default_scripts",
 	"crm.install.add_web_form_custom_fields",
 	"crm.install.ensure_contact_sales_permissions",
+	"crm.overrides.assets_scrub.after_migrate_strip_sourcemaps",
 ]
 
 sqlite_search = ["crm.search_sqlite.CRMSearch"]
