@@ -1,4 +1,9 @@
-"""Strip vendor-identifying response headers and HTML chrome the CRM app can control."""
+"""Strip vendor-identifying response headers and apply security headers the CRM controls.
+
+Referrer-Policy and X-Content-Type-Options are owned by the edge nginx snippet
+(see docs/nginx-security-headers.md) so we do not set them here — keeps a single
+consistent value (strict-origin-when-cross-origin / nosniff) without duplicates.
+"""
 
 from __future__ import annotations
 
@@ -28,24 +33,54 @@ _HTML_GENERATOR_META = re.compile(
 	re.IGNORECASE,
 )
 
-_SECURITY_HEADERS = {
-	"X-Content-Type-Options": "nosniff",
-	"Referrer-Policy": "strict-origin-when-cross-origin",
-	# Report-only CSP — tighten later; do not break desk/login scripts.
-	"Content-Security-Policy-Report-Only": (
-		"default-src 'self'; "
-		"script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-		"style-src 'self' 'unsafe-inline'; "
-		"img-src 'self' data: blob:; "
-		"font-src 'self' data:; "
-		"connect-src 'self' ws: wss:; "
-		"frame-ancestors 'self'"
-	),
+# Enforcing CSP. unsafe-inline + unsafe-eval on script-src are required by Frappe
+# desk: boot injects inline <script> blocks and several desk/form helpers still
+# use new Function / eval. style-src unsafe-inline is required for desk + the
+# Vue SPA (frappe-ui injects critical CSS). Do not remove those without a
+# nonce/hash migration of desk templates.
+_CSP = (
+	"default-src 'self'; "
+	"script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+	"style-src 'self' 'unsafe-inline'; "
+	"img-src 'self' data: blob:; "
+	"font-src 'self' data:; "
+	"connect-src 'self' ws: wss:; "
+	"media-src 'self' blob:; "
+	"object-src 'none'; "
+	"base-uri 'self'; "
+	"form-action 'self'; "
+	"frame-ancestors 'self'"
+)
+
+_APP_SECURITY_HEADERS = {
+	"Content-Security-Policy": _CSP,
+	"X-Frame-Options": "SAMEORIGIN",
+	# camera blocked; microphone allowed for Connect/Twilio call UI; no geolocation
+	"Permissions-Policy": "camera=(), microphone=(self), geolocation=()",
 }
 
 
+def _request_is_https() -> bool:
+	"""True when the original client request was HTTPS (direct or via proxy)."""
+	try:
+		request = getattr(frappe.local, "request", None)
+		if request is None:
+			return False
+		# Werkzeug / proxy headers
+		fwd = (request.headers.get("X-Forwarded-Proto") or "").split(",")[0].strip().lower()
+		if fwd:
+			return fwd == "https"
+		url = getattr(request, "url", None) or ""
+		if str(url).lower().startswith("https:"):
+			return True
+		environ = getattr(request, "environ", None) or {}
+		return str(environ.get("wsgi.url_scheme", "")).lower() == "https"
+	except Exception:
+		return False
+
+
 def after_request(response):
-	"""Frappe after_request hook: drop vendor-leaking headers and HTML chrome."""
+	"""Frappe after_request hook: drop vendor-leaking headers and set security headers."""
 	try:
 		headers = response.headers
 	except Exception:
@@ -59,9 +94,18 @@ def after_request(response):
 		if name.lower().startswith("x-frappe"):
 			del headers[name]
 
-	for name, value in _SECURITY_HEADERS.items():
-		if name not in headers:
-			headers[name] = value
+	# Drop legacy report-only CSP if an older deploy left it on the response.
+	if "Content-Security-Policy-Report-Only" in headers:
+		del headers["Content-Security-Policy-Report-Only"]
+
+	for name, value in _APP_SECURITY_HEADERS.items():
+		headers[name] = value
+
+	if _request_is_https():
+		headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+	elif "Strict-Transport-Security" in headers:
+		# Never advertise HSTS over cleartext / mis-forwarded HTTP.
+		del headers["Strict-Transport-Security"]
 
 	# .webmanifest under /assets is served by nginx — set the type there
 	# (see docs/nginx-security-headers.md). Python after_request cannot fix it.
