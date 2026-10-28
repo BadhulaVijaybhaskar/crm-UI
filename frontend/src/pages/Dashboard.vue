@@ -10,7 +10,9 @@
           >
             {{ summary.data?.greeting || __('Home') }}
           </h1>
-          <p class="m-0 -mt-px text-[13px] leading-[1.45] text-crm-muted-fg">
+          <p
+            class="m-0 -mt-px text-[13px] leading-[1.45] tracking-[-0.005em] text-crm-muted-fg"
+          >
             {{ dateLabel }}
           </p>
         </div>

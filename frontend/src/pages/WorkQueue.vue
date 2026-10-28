@@ -11,7 +11,7 @@
             {{ __('Work queue') }}
           </h1>
           <p
-            class="relative top-px m-0 -mt-px text-[13px] leading-[1.45] text-crm-muted-fg"
+            class="relative top-px m-0 -mt-px text-[13px] leading-[1.45] tracking-[-0.005em] text-crm-muted-fg"
           >
             {{ __('What needs you next, ranked. Showing your records.') }}
           </p>
@@ -170,7 +170,9 @@
                 </span>
               </div>
               <div class="flex min-w-0 flex-col pt-[5.5px] leading-[1.45]">
-                <b class="truncate text-[12.5px] font-semibold text-crm-fg">
+                <b
+                  class="truncate text-[12.5px] font-semibold tracking-[-0.005em] text-crm-fg"
+                >
                   {{ item.title }}
                 </b>
                 <span
