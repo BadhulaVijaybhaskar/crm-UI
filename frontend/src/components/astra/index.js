@@ -22,6 +22,9 @@ export {
   TEMPERATURE_TONES,
   avatarTone,
   initialsFrom,
+  pipelineSegments,
+  stageSegments,
   stageToken,
+  statusToneFor,
 } from './format'
 export { dealCardChips, quietDaysSince, stageColourVar } from './dealChips'

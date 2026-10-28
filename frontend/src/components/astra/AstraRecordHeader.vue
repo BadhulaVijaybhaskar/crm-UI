@@ -3,18 +3,22 @@
     class="flex flex-col gap-3.5 border-b border-crm-border bg-crm-card px-crm-page-x pb-3.5 pt-4"
   >
     <div class="flex items-start gap-3">
-      <AstraAvatar
-        :name="title"
-        :src="avatarSrc"
-        size="lg"
-        :squared="squaredAvatar"
-      />
+      <slot name="avatar">
+        <AstraAvatar
+          :name="title"
+          :src="avatarSrc"
+          size="lg"
+          :squared="squaredAvatar"
+        />
+      </slot>
       <div class="min-w-0 flex-1">
         <div class="flex flex-wrap items-center gap-2">
           <h1 class="m-0 text-crm-record font-semibold tracking-crm-tight text-crm-fg">
             {{ title }}
           </h1>
-          <AstraBadge v-if="status" :label="status" :tone="statusTone" dot />
+          <slot name="status">
+            <AstraBadge v-if="status" :label="status" :tone="statusTone" dot />
+          </slot>
           <div class="ml-auto flex flex-wrap items-center gap-2">
             <slot name="actions" />
           </div>

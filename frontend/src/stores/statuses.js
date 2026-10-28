@@ -30,7 +30,7 @@ export const statusesStore = defineStore('crm-statuses', () => {
 
   const dealStatuses = createListResource({
     doctype: 'CRM Deal Status',
-    fields: ['name', 'color', 'position', 'type'],
+    fields: ['name', 'color', 'position', 'type', 'probability'],
     orderBy: 'position asc',
     cache: 'deal-statuses',
     initialData: [],

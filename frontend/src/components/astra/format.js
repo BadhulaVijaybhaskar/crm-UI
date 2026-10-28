@@ -55,3 +55,47 @@ export function avatarTone(seed = '') {
 export function stageToken(stage) {
   return STAGE_COLOURS[stage] || 'c6'
 }
+
+export function statusToneFor(status, type = '') {
+  if (type === 'Won') return 'success'
+  if (type === 'Lost') return 'danger'
+  return STATUS_TONES[status] || 'primary'
+}
+
+export function stageSegments(statuses = [], currentName = '') {
+  const rows = (statuses || []).filter((status) => status?.name)
+  const currentIndex = rows.findIndex((status) => status.name === currentName)
+  return rows.map((status, index) => {
+    const type = status.type || ''
+    let bar = 'bg-crm-neutral-soft'
+    if (type === 'Won') bar = 'bg-crm-success'
+    else if (type === 'Lost') {
+      bar = index === currentIndex ? 'bg-crm-danger' : 'bg-crm-border-strong'
+    } else if (currentIndex >= 0 && index < currentIndex) bar = 'bg-crm-primary'
+    else if (index === currentIndex) bar = 'bg-crm-primary shadow-crm-selected'
+    return {
+      name: status.name,
+      current: index === currentIndex,
+      bar,
+      type,
+    }
+  })
+}
+
+export function pipelineSegments(allStatuses = [], currentName = '', allowedNames = []) {
+  const allowed = new Set(allowedNames || [])
+  const rows = (allStatuses || []).filter(
+    (status) => status?.name && (!allowed.size || allowed.has(status.name)),
+  )
+  const current = rows.find((status) => status.name === currentName)
+  const closed = current?.type === 'Won' || current?.type === 'Lost'
+  const open = rows.filter((status) => status.type !== 'Won' && status.type !== 'Lost')
+  const source = open.length ? open : rows
+  const segments = stageSegments(source, closed ? '' : currentName)
+  if (!closed) return segments
+  return segments.map((segment) => ({
+    ...segment,
+    current: false,
+    bar: current.type === 'Lost' ? 'bg-crm-border-strong' : 'bg-crm-primary',
+  }))
+}

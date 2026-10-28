@@ -1,14 +1,41 @@
 <template>
-  <LayoutHeader>
-    <header
-      class="relative flex h-10.5 items-center justify-between gap-2 py-2.5 pl-2"
+  <div
+    v-if="doc.name"
+    class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg"
+  >
+    <nav
+      class="flex items-center gap-1.5 px-3 pt-2.5 text-crm-meta text-crm-muted-fg"
+      aria-label="Breadcrumb"
     >
-      <Breadcrumbs :items="breadcrumbs">
-        <template #prefix="{ item }">
-          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
-        </template>
-      </Breadcrumbs>
-      <div class="shrink-0">
+      <router-link :to="{ name: 'Deals' }" class="hover:text-crm-fg">
+        {{ __('Deals') }}
+      </router-link>
+      <span aria-hidden="true">›</span>
+      <span class="truncate text-crm-fg">{{ title }}</span>
+    </nav>
+
+    <AstraRecordHeader
+      :title="title"
+      :avatar-src="doc.organization_logo || ''"
+      squared-avatar
+      :status="doc.status || ''"
+      status-tone="mute"
+      :meta="dealMeta"
+    >
+      <template #actions>
+        <AssignTo
+          v-model="assignees.data"
+          doctype="CRM Deal"
+          :docname="dealId"
+        />
+        <CustomActions
+          v-if="document._actions?.length"
+          :actions="document._actions"
+        />
+        <CustomActions
+          v-if="document.actions?.length"
+          :actions="document.actions"
+        />
         <Dropdown
           v-if="doc"
           :options="
@@ -33,31 +60,15 @@
             </Button>
           </template>
         </Dropdown>
-      </div>
-    </header>
-  </LayoutHeader>
-  <div
-    v-if="doc.name"
-    class="flex h-12 items-center justify-between gap-2 border-b px-3 py-2.5"
-  >
-    <AssignTo v-model="assignees.data" doctype="CRM Deal" :docname="dealId" />
-    <div class="flex items-center gap-2">
-      <CustomActions
-        v-if="document._actions?.length"
-        :actions="document._actions"
-      />
-      <CustomActions
-        v-if="document.actions?.length"
-        :actions="document.actions"
-      />
-    </div>
-  </div>
-  <div v-if="doc.name" class="flex h-full overflow-hidden">
+      </template>
+    </AstraRecordHeader>
+
+    <div class="flex min-h-0 flex-1 overflow-hidden">
     <Tabs
       v-model="activeTab"
       as="div"
       :tabs="tabs"
-      class="flex flex-1 overflow-auto flex-col [&_[role='tab']]:px-1 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-3 [&_[role='tablist']]:min-h-[45px] [&_[role='tablist']]:gap-[22px] [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+      class="flex flex-1 flex-col overflow-auto [&_[role='tab']]:px-2.5 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:bg-crm-card [&_[role='tablist']]:border-b [&_[role='tablist']]:border-crm-border [&_[role='tablist']]:px-3 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-10 [&_[role='tablist']]:gap-0.5 [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
     >
       <template #tab-panel="{ tab }">
         <div v-if="tab.name == 'Details' && !tab.component">
@@ -234,6 +245,7 @@
         />
       </template>
     </Tabs>
+    </div>
   </div>
   <ErrorPage
     v-else-if="errorTitle"
@@ -276,7 +288,6 @@
 <script setup>
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
-import Icon from '@/components/Icon.vue'
 import DetailsIcon from '@/components/Icons/DetailsIcon.vue'
 import LoadingIndicator from '@/components/Icons/LoadingIndicator.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
@@ -292,7 +303,7 @@ import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import ArrowUpRightIcon from '@/components/Icons/ArrowUpRightIcon.vue'
 import FileTextIcon from '@/components/Icons/FileTextIcon.vue'
 import SuccessIcon from '@/components/Icons/SuccessIcon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
+import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
@@ -305,7 +316,6 @@ import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import { setupCustomizations, isTranslatable } from '@/utils'
 import { withRecipientConfirmation } from '@/utils/whatsappRecipient'
-import { getView } from '@/utils/view'
 import { getSettings } from '@/stores/settings'
 import { globalStore } from '@/stores/global'
 import { statusesStore } from '@/stores/statuses'
@@ -323,20 +333,18 @@ import {
   Dropdown,
   Avatar,
   Tabs,
-  Breadcrumbs,
   call,
   usePageMeta,
   toast,
 } from 'frappe-ui'
 import { ref, computed, h, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
 const { statusOptions, getDealStatus } = statusesStore()
 const { doctypeMeta } = getMeta('CRM Deal')
 
-const route = useRoute()
 const router = useRouter()
 
 const props = defineProps({
@@ -403,38 +411,16 @@ const reload = ref(false)
 const showOrganizationModal = ref(false)
 const _organization = ref({})
 
-const breadcrumbs = computed(() => {
-  let items = [{ label: __('Deals'), route: { name: 'Deals' } }]
-
-  if (route.query.view || route.query.viewType) {
-    let view = getView(route.query.view, route.query.viewType, 'CRM Deal')
-    if (view) {
-      items.push({
-        label: __(view.label),
-        icon: view.icon,
-        route: {
-          name: 'Deals',
-          params: { viewType: route.query.viewType },
-          query: { view: route.query.view },
-        },
-      })
-    }
-  }
-
-  items.push({
-    label: title.value,
-    route: {
-      name: 'Deal',
-      params: { dealId: props.dealId },
-      query: route.query,
-    },
-  })
-  return items
-})
-
 const title = computed(() => {
   let t = doctypeMeta.value?.title_field || 'name'
   return doc.value?.[t] || props.dealId
+})
+
+const dealMeta = computed(() => {
+  const parts = []
+  if (doc.value?.organization) parts.push(doc.value.organization)
+  if (doc.value?.deal_owner) parts.push(doc.value.deal_owner)
+  return parts
 })
 
 usePageMeta(() => {
