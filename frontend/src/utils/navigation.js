@@ -1,64 +1,115 @@
-import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
-import DealsIcon from '@/components/Icons/DealsIcon.vue'
-import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
-import OrganizationsIcon from '@/components/Icons/OrganizationsIcon.vue'
-import TaskIcon from '@/components/Icons/TaskIcon.vue'
-import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
-import LucidePhone from '~icons/lucide/phone'
+import LucideHouse from '~icons/lucide/house'
+import LucideListTodo from '~icons/lucide/list-todo'
 import LucideMessagesSquare from '~icons/lucide/messages-square'
+import LucideUsers from '~icons/lucide/users'
+import LucideHandshake from '~icons/lucide/handshake'
+import LucideContact from '~icons/lucide/contact'
+import LucideBuilding2 from '~icons/lucide/building-2'
+import LucideSquareCheckBig from '~icons/lucide/square-check-big'
+import LucideStickyNote from '~icons/lucide/sticky-note'
+import LucidePhone from '~icons/lucide/phone'
+import LucidePhoneCall from '~icons/lucide/phone-call'
 import LucideBot from '~icons/lucide/bot'
-import LucideActivity from '~icons/lucide/activity'
 import LucideChartColumn from '~icons/lucide/chart-column'
 import LucideSettings from '~icons/lucide/settings'
 import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
 
 /**
- * Flip these when the real page ships (CRM-08 Activities, CRM-09 Reports).
- * Items with ready:false are omitted from the sidebar and command palette.
- */
-export const NAV_FEATURE_READY = Object.freeze({
-  Activities: true,
-  Reports: true,
-})
-
-/**
  * Sidebar registry. Each item is one of:
- * - { route } — in-app vue-router name (must exist and be ready)
+ * - { route } — in-app vue-router name (must exist; hidden otherwise)
  * - { connect, requiresConnect: true } — Astra Connect path (only when configured)
  * - { action: 'settings' } — opens the settings modal
  *
- * `section` groups the rail to match Figma v1. Settings stays in the footer.
- * Rules: every selectable item must work. No placeholder/Soon entries.
+ * `section` groups the rail to match SHELL_SPEC / Figma v1. Settings stays in
+ * the footer. Rules: every selectable item must work. No placeholder/Soon entries.
+ * Work queue / Conversations hide until their routes are registered.
  */
 export const navigationItems = [
   {
-    label: 'Dashboard',
-    icon: LucideLayoutDashboard,
+    label: 'Home',
+    icon: LucideHouse,
     route: 'Dashboard',
     section: 'main',
+    countKey: null,
   },
-  { label: 'Leads', icon: LeadsIcon, route: 'Leads', section: 'records' },
+  {
+    label: 'Work queue',
+    icon: LucideListTodo,
+    route: 'Work Queue',
+    section: 'main',
+    countKey: 'work_queue',
+  },
+  {
+    label: 'Conversations',
+    icon: LucideMessagesSquare,
+    route: 'Conversations',
+    section: 'main',
+    countKey: null,
+  },
+  {
+    label: 'Leads',
+    icon: LucideUsers,
+    route: 'Leads',
+    section: 'records',
+    countKey: 'leads',
+  },
+  {
+    label: 'Deals',
+    icon: LucideHandshake,
+    route: 'Deals',
+    section: 'records',
+    countKey: 'deals',
+  },
   {
     label: 'Contacts',
-    icon: ContactsIcon,
+    icon: LucideContact,
     route: 'Contacts',
     section: 'records',
+    countKey: null,
   },
   {
     label: 'Companies',
-    icon: OrganizationsIcon,
+    icon: LucideBuilding2,
     route: 'Organizations',
     section: 'records',
+    countKey: null,
   },
-  { label: 'Deals', icon: DealsIcon, route: 'Deals', section: 'records' },
-  { label: 'Tasks', icon: TaskIcon, route: 'Tasks', section: 'activity' },
+  {
+    label: 'Tasks',
+    icon: LucideSquareCheckBig,
+    route: 'Tasks',
+    section: 'activity',
+    countKey: 'tasks',
+  },
+  {
+    label: 'Notes',
+    icon: LucideStickyNote,
+    route: 'Notes',
+    section: 'activity',
+    countKey: null,
+  },
+  {
+    label: 'Call logs',
+    icon: LucidePhone,
+    route: 'Call Logs',
+    section: 'activity',
+    countKey: null,
+  },
+  {
+    label: 'Reports',
+    icon: LucideChartColumn,
+    route: 'Reports',
+    section: 'insights',
+    countKey: null,
+  },
   {
     label: 'AI Calling',
-    icon: LucidePhone,
+    icon: LucidePhoneCall,
     connect: 'calls',
     requiresConnect: true,
     section: 'connect',
+    countKey: null,
   },
   {
     label: 'Messages',
@@ -66,6 +117,7 @@ export const navigationItems = [
     connect: 'messages',
     requiresConnect: true,
     section: 'connect',
+    countKey: null,
   },
   {
     label: 'AI Employees',
@@ -73,26 +125,14 @@ export const navigationItems = [
     connect: 'employees',
     requiresConnect: true,
     section: 'connect',
-  },
-  {
-    label: 'Activities',
-    icon: LucideActivity,
-    route: 'Activities',
-    ready: NAV_FEATURE_READY.Activities,
-    section: 'activity',
-  },
-  {
-    label: 'Reports',
-    icon: LucideChartColumn,
-    route: 'Reports',
-    ready: NAV_FEATURE_READY.Reports,
-    section: 'insights',
+    countKey: null,
   },
   {
     label: 'Settings',
     icon: LucideSettings,
     action: 'settings',
     section: 'footer',
+    countKey: null,
   },
 ]
 

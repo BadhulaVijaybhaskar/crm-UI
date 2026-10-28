@@ -1,8 +1,27 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getFooterNavItems,
   getNavigationSections,
 } from '@/utils/navigation'
+
+vi.mock('@/router', () => {
+  const routes = new Set([
+    'Dashboard',
+    'Leads',
+    'Deals',
+    'Contacts',
+    'Organizations',
+    'Tasks',
+    'Notes',
+    'Call Logs',
+    'Reports',
+  ])
+  return {
+    default: {
+      hasRoute: (name) => routes.has(name),
+    },
+  }
+})
 
 describe('navigation sections', () => {
   afterEach(() => {
@@ -10,18 +29,26 @@ describe('navigation sections', () => {
     delete window.astra_connect_url
   })
 
-  it('groups records / activity / insights for the shell', () => {
+  it('groups main / records / activity / insights for the shell', () => {
     const sections = getNavigationSections()
     const ids = sections.map((s) => s.id)
     expect(ids).toEqual(
       expect.arrayContaining(['main', 'records', 'activity', 'insights']),
     )
+    const main = sections.find((s) => s.id === 'main')
+    expect(main.views.map((v) => v.label)).toEqual(['Home'])
     const records = sections.find((s) => s.id === 'records')
     expect(records.views.map((v) => v.label)).toEqual([
       'Leads',
+      'Deals',
       'Contacts',
       'Companies',
-      'Deals',
+    ])
+    const activity = sections.find((s) => s.id === 'activity')
+    expect(activity.views.map((v) => v.label)).toEqual([
+      'Tasks',
+      'Notes',
+      'Call logs',
     ])
   })
 

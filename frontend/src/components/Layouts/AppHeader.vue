@@ -5,7 +5,11 @@
       class="flex h-[34px] w-crm-search items-center gap-2 rounded-crm-control bg-crm-muted px-2.5 text-left text-crm-label text-crm-faint shadow-[inset_0_0_0_1px_var(--crm-border)] hover:text-crm-muted-fg"
       @click="openCommandPalette"
     >
-      <span class="lucide-search size-4 shrink-0" aria-hidden="true" />
+      <Icon
+        icon="lucide-search"
+        class="size-4 shrink-0"
+        aria-hidden="true"
+      />
       <span class="min-w-0 flex-1 truncate">
         {{ __('Search leads, deals, contacts, companies') }}
       </span>
@@ -20,7 +24,12 @@
 
     <div class="flex items-center gap-2">
       <Dropdown :options="newOptions">
-        <AstraButton variant="primary" size="sm" :label="__('+ New')" />
+        <AstraButton variant="primary" size="sm">
+          <template #prefix>
+            <Icon icon="lucide-plus" class="size-4" aria-hidden="true" />
+          </template>
+          {{ __('New') }}
+        </AstraButton>
       </Dropdown>
 
       <button
@@ -29,7 +38,7 @@
         :aria-label="__('Notifications')"
         @click="toggleNotifications"
       >
-        <span class="lucide-bell size-4" aria-hidden="true" />
+        <Icon icon="lucide-bell" class="size-4" aria-hidden="true" />
         <span
           v-if="unreadNotificationsCount"
           class="absolute right-[7px] top-1.5 size-[7px] rounded-full bg-crm-danger ring-2 ring-crm-card"
@@ -46,6 +55,7 @@
 <script setup>
 import CallUI from '@/components/Telephony/CallUI.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
+import Icon from '@/components/Icon.vue'
 import { openCommandPalette } from '@/composables/useCommandPalette'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { useBroadcast } from '@/composables/useBroadcast.js'

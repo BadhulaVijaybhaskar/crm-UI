@@ -12,10 +12,13 @@
           :class="isCollapsed && 'justify-center px-0'"
         >
           <img
-            :src="brandLogo"
+            :src="brandLogo.src"
+            :srcset="brandLogo.srcset"
             :alt="brand.name || 'Astra CRM'"
             class="object-contain"
             :class="isCollapsed ? 'astra-brand-mark size-7' : 'h-6 max-w-[168px]'"
+            height="24"
+            decoding="async"
           />
           <button
             v-if="!mobile && !isCollapsed"
@@ -89,13 +92,21 @@
                   :hoverDelay="1500"
                   :disabled="isCollapsed"
                 >
-                  <span class="truncate text-[13px] font-medium">
+                  <span class="min-w-0 flex-1 truncate text-[13px] font-medium">
                     {{ __(link.label) }}
                   </span>
                 </Tooltip>
-                <template v-if="link.external && !isCollapsed" #suffix>
+                <template v-if="!isCollapsed && (link.external || link.count != null)" #suffix>
                   <span
-                    class="lucide-external-link size-3 text-[color:var(--crm-nav-faint)]"
+                    v-if="link.count != null"
+                    class="text-[11px] font-semibold text-[color:var(--crm-nav-faint)]"
+                  >
+                    {{ link.count }}
+                  </span>
+                  <Icon
+                    v-if="link.external"
+                    icon="lucide-external-link"
+                    class="size-3 text-[color:var(--crm-nav-faint)]"
                     aria-hidden="true"
                   />
                 </template>
@@ -272,8 +283,14 @@ import {
   getNavigationSections,
 } from '@/utils/navigation'
 import { openAstraConnect } from '@/utils/astraConnect'
-import { ASTRA_LOGO_ON_DARK, ASTRA_MARK } from '@/assets/brand'
+import {
+  ASTRA_NAV_LOCKUP,
+  ASTRA_NAV_LOCKUP_SRCSET,
+  ASTRA_NAV_MARK,
+  ASTRA_NAV_MARK_SRCSET,
+} from '@/assets/brand'
 import { viewsStore } from '@/stores/views'
+import { navCountMap } from '@/stores/navCounts'
 import {
   unreadNotificationsCount,
   notificationsStore,
@@ -325,11 +342,20 @@ const isFCSite = ref(window.is_fc_site)
 const isDemoSite = ref(window.is_demo_site)
 
 const brandLogo = computed(() => {
-  if (settings.value?.brand_logo) return settings.value.brand_logo
-  return isCollapsed.value ? ASTRA_MARK : ASTRA_LOGO_ON_DARK
+  if (settings.value?.brand_logo) {
+    return { src: settings.value.brand_logo, srcset: undefined }
+  }
+  if (isCollapsed.value) {
+    return { src: ASTRA_NAV_MARK, srcset: ASTRA_NAV_MARK_SRCSET }
+  }
+  return { src: ASTRA_NAV_LOCKUP, srcset: ASTRA_NAV_LOCKUP_SRCSET }
 })
 
 function navLinkFromItem(link) {
+  const count =
+    link.countKey && navCountMap.value[link.countKey] != null
+      ? navCountMap.value[link.countKey]
+      : null
   if (link.connect) {
     return {
       label: link.label,
@@ -337,6 +363,7 @@ function navLinkFromItem(link) {
       key: `connect:${link.connect}`,
       external: true,
       connect: link.connect,
+      count: null,
     }
   }
   if (link.action === 'settings') {
@@ -345,6 +372,7 @@ function navLinkFromItem(link) {
       icon: link.icon,
       key: 'settings',
       action: 'settings',
+      count: null,
     }
   }
   return {
@@ -352,6 +380,7 @@ function navLinkFromItem(link) {
     icon: link.icon,
     key: link.route,
     to: { name: link.route },
+    count,
   }
 }
 

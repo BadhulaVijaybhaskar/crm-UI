@@ -1,9 +1,13 @@
 <template>
-  <div class="flex h-screen w-screen">
+  <div class="astra-shell astra-shell--mobile">
     <MobileSidebar />
-    <div class="flex h-full flex-1 flex-col overflow-auto bg-surface-base">
-      <MobileAppHeader />
-      <slot />
+    <div class="astra-shell__main">
+      <div class="astra-shell__topbar astra-shell__topbar--mobile">
+        <MobileAppHeader />
+      </div>
+      <div class="astra-shell__content">
+        <slot />
+      </div>
     </div>
     <!-- Outside the drawer so Settings survives drawer close. -->
     <Settings />

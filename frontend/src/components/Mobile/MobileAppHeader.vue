@@ -1,21 +1,20 @@
 <template>
-  <div class="flex pr-3">
-    <div class="z-20 ml-2 flex items-center justify-center">
-      <Button
-        class="size-7"
-        variant="ghost"
-        @click="sidebarOpened = !sidebarOpened"
-      >
-        <MenuIcon class="h-4 text-ink-gray-9" />
-      </Button>
-    </div>
-    <div id="app-header" class="flex-1" />
+  <div class="flex w-full min-w-0 items-center gap-1">
+    <button
+      type="button"
+      class="inline-flex size-[34px] shrink-0 items-center justify-center rounded-crm-control text-crm-muted-fg hover:bg-crm-muted hover:text-crm-fg"
+      :aria-label="__('Open navigation')"
+      @click="sidebarOpened = !sidebarOpened"
+    >
+      <Icon icon="lucide-menu" class="size-4" aria-hidden="true" />
+    </button>
+    <div id="app-header" class="min-w-0 flex-1" />
+    <CallUI class="shrink-0" />
   </div>
-  <CallUI class="mr-3 mt-2" />
 </template>
 
 <script setup>
-import MenuIcon from '@/components/Icons/MenuIcon.vue'
 import CallUI from '@/components/Telephony/CallUI.vue'
+import Icon from '@/components/Icon.vue'
 import { mobileSidebarOpened as sidebarOpened } from '@/composables/settings'
 </script>

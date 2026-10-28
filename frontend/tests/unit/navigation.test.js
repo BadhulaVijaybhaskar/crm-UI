@@ -1,10 +1,28 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getNavigationItems,
   isNavItemAvailable,
-  NAV_FEATURE_READY,
   navigationItems,
 } from '@/utils/navigation'
+
+vi.mock('@/router', () => {
+  const routes = new Set([
+    'Dashboard',
+    'Leads',
+    'Deals',
+    'Contacts',
+    'Organizations',
+    'Tasks',
+    'Notes',
+    'Call Logs',
+    'Reports',
+  ])
+  return {
+    default: {
+      hasRoute: (name) => routes.has(name),
+    },
+  }
+})
 
 describe('navigationItems', () => {
   afterEach(() => {
@@ -13,22 +31,30 @@ describe('navigationItems', () => {
     delete window.boot
   })
 
-  it('keeps the Astra CRM sidebar registry order', () => {
+  it('keeps the Astra CRM sidebar registry order (SHELL_SPEC)', () => {
     const labels = navigationItems.map((item) => item.label)
     expect(labels).toEqual([
-      'Dashboard',
+      'Home',
+      'Work queue',
+      'Conversations',
       'Leads',
+      'Deals',
       'Contacts',
       'Companies',
-      'Deals',
       'Tasks',
+      'Notes',
+      'Call logs',
+      'Reports',
       'AI Calling',
       'Messages',
       'AI Employees',
-      'Activities',
-      'Reports',
       'Settings',
     ])
+  })
+
+  it('points Home at the Dashboard route', () => {
+    const home = navigationItems.find((item) => item.label === 'Home')
+    expect(home.route).toBe('Dashboard')
   })
 
   it('does not surface WhatsApp inbox in the sidebar registry', () => {
@@ -47,11 +73,13 @@ describe('navigationItems', () => {
     }
   })
 
-  it('shows Activities and Reports when ready', () => {
-    expect(NAV_FEATURE_READY.Activities).toBe(true)
-    expect(NAV_FEATURE_READY.Reports).toBe(true)
+  it('hides Work queue and Conversations until their routes exist', () => {
     const labels = getNavigationItems().map((item) => item.label)
-    expect(labels).toContain('Activities')
+    expect(labels).not.toContain('Work queue')
+    expect(labels).not.toContain('Conversations')
+    expect(labels).toContain('Home')
+    expect(labels).toContain('Notes')
+    expect(labels).toContain('Call logs')
     expect(labels).toContain('Reports')
   })
 
@@ -78,11 +106,11 @@ describe('navigationItems', () => {
     expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('includes Dashboard on mobile (settings drawer + mobile menu)', () => {
+  it('includes Home on mobile (settings drawer + mobile menu)', () => {
     const mobileLabels = getNavigationItems({ mobile: true }).map(
       (item) => item.label,
     )
-    expect(mobileLabels).toContain('Dashboard')
+    expect(mobileLabels).toContain('Home')
     expect(mobileLabels).toContain('Leads')
     expect(mobileLabels).toContain('Companies')
     expect(mobileLabels).toContain('Settings')
@@ -94,5 +122,15 @@ describe('navigationItems', () => {
       false,
     )
     expect(isNavItemAvailable({ label: 'Leads', route: 'Leads' })).toBe(true)
+    expect(isNavItemAvailable({ label: 'Work queue', route: 'Work Queue' })).toBe(
+      false,
+    )
+  })
+
+  it('uses lucide icon components (no unicode glyph icons)', () => {
+    for (const item of navigationItems) {
+      expect(item.icon, `${item.label} needs an icon`).toBeTruthy()
+      expect(typeof item.icon).not.toBe('string')
+    }
   })
 })
