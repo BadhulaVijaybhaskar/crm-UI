@@ -44,3 +44,4 @@ crm.patches.v1_0.clear_mcp_agent_instructions
 crm.patches.v1_0.add_availability_statuses
 crm.patches.v1_0.astra_branding_scrub
 crm.patches.v1_0.clear_connect_placeholder_agent_number
+crm.patches.v1_0.astra_connect_inbox_unique_indexes

@@ -12,6 +12,7 @@
   "content",
   "reference_doctype",
   "reference_docname",
+  "astra_call_id",
   "pinned",
   "pinned_by",
   "pinned_on"
@@ -46,6 +47,14 @@
    "options": "reference_doctype"
   },
   {
+   "description": "Connect call id — one summary note per call log (unique, nullable)",
+   "fieldname": "astra_call_id",
+   "fieldtype": "Data",
+   "label": "Astra Call Id",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
    "default": "0",
    "fieldname": "pinned",
    "fieldtype": "Check",
@@ -74,7 +83,7 @@
    "link_fieldname": "note"
   }
  ],
- "modified": "2026-10-13 10:30:00.000000",
+ "modified": "2026-10-28 00:30:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "FCRM Note",
