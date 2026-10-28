@@ -1,8 +1,8 @@
-"""Strip vendor-identifying response headers and apply security headers the CRM controls.
+"""Strip vendor-identifying response headers and apply security headers.
 
-Referrer-Policy and X-Content-Type-Options are owned by the edge nginx snippet
-(see docs/nginx-security-headers.md) so we do not set them here — keeps a single
-consistent value (strict-origin-when-cross-origin / nosniff) without duplicates.
+App always emits nosniff + Referrer-Policy for the bare backend (:8831).
+The in-repo nginx snippet (docker/nginx/security_headers.conf) must NOT
+re-add those — use proxy_hide_header / omit add_header so values stay single.
 """
 
 from __future__ import annotations
@@ -38,13 +38,12 @@ _HTML_GENERATOR_META = re.compile(
 # use new Function / eval. style-src unsafe-inline is required for desk + the
 # Vue SPA (frappe-ui injects critical CSS). Do not remove those without a
 # nonce/hash migration of desk templates.
-_CSP = (
+_CSP_BASE = (
 	"default-src 'self'; "
 	"script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
 	"style-src 'self' 'unsafe-inline'; "
 	"img-src 'self' data: blob:; "
 	"font-src 'self' data:; "
-	"connect-src 'self' ws: wss:; "
 	"media-src 'self' blob:; "
 	"object-src 'none'; "
 	"base-uri 'self'; "
@@ -52,12 +51,51 @@ _CSP = (
 	"frame-ancestors 'self'"
 )
 
-_APP_SECURITY_HEADERS = {
-	"Content-Security-Policy": _CSP,
-	"X-Frame-Options": "SAMEORIGIN",
-	# camera blocked; microphone allowed for Connect/Twilio call UI; no geolocation
-	"Permissions-Policy": "camera=(), microphone=(self), geolocation=()",
-}
+
+def _socketio_connect_sources() -> list[str]:
+	"""Extra connect-src origins when socketio_port is explicitly configured."""
+	extras: list[str] = []
+	try:
+		port = frappe.conf.get("socketio_port")
+		if port in (None, "", 0, "0"):
+			return extras
+		port = str(port).strip()
+		request = getattr(frappe.local, "request", None)
+		host = None
+		if request is not None:
+			fwd = (request.headers.get("X-Forwarded-Host") or "").split(",")[0].strip()
+			raw = fwd or (request.headers.get("Host") or "") or getattr(request, "host", "") or ""
+			host = str(raw).split(":")[0].strip() or None
+		if not host:
+			return extras
+		for scheme in ("http", "https", "ws", "wss"):
+			extras.append(f"{scheme}://{host}:{port}")
+	except Exception:
+		return []
+	return extras
+
+
+def _build_csp() -> str:
+	connect = ["'self'", "ws:", "wss:", *_socketio_connect_sources()]
+	# de-dupe, preserve order
+	seen: set[str] = set()
+	connect_parts = []
+	for c in connect:
+		if c not in seen:
+			seen.add(c)
+			connect_parts.append(c)
+	return f"{_CSP_BASE}; connect-src {' '.join(connect_parts)}"
+
+
+def _app_security_headers() -> dict[str, str]:
+	return {
+		"Content-Security-Policy": _build_csp(),
+		"X-Frame-Options": "SAMEORIGIN",
+		"X-Content-Type-Options": "nosniff",
+		"Referrer-Policy": "strict-origin-when-cross-origin",
+		# camera blocked; microphone allowed for Connect/Twilio call UI; no geolocation
+		"Permissions-Policy": "camera=(), microphone=(self), geolocation=()",
+	}
 
 
 def _request_is_https() -> bool:
@@ -98,7 +136,7 @@ def after_request(response):
 	if "Content-Security-Policy-Report-Only" in headers:
 		del headers["Content-Security-Policy-Report-Only"]
 
-	for name, value in _APP_SECURITY_HEADERS.items():
+	for name, value in _app_security_headers().items():
 		headers[name] = value
 
 	if _request_is_https():

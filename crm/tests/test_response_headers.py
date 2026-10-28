@@ -40,7 +40,8 @@ class TestResponseHeaders(UnitTestCase):
 
 	def test_enforcing_csp_and_frame_permissions(self):
 		resp, request = self._response(https=False)
-		with patch.object(frappe.local, "request", request):
+		# frappe.local may not define request until a WSGI hit — create=True.
+		with patch.object(frappe.local, "request", request, create=True):
 			rh.after_request(resp)
 
 		self.assertIn("Content-Security-Policy", resp.headers)
@@ -48,6 +49,8 @@ class TestResponseHeaders(UnitTestCase):
 		csp = resp.headers["Content-Security-Policy"]
 		self.assertIn("frame-ancestors 'self'", csp)
 		self.assertIn("object-src 'none'", csp)
+		self.assertIn("connect-src", csp)
+		self.assertIn("'self'", csp)
 		# Desk still needs these; documented in module docstring.
 		self.assertIn("'unsafe-inline'", csp)
 		self.assertIn("'unsafe-eval'", csp)
@@ -55,25 +58,38 @@ class TestResponseHeaders(UnitTestCase):
 		self.assertIn("camera=()", resp.headers["Permissions-Policy"])
 		self.assertIn("microphone=(self)", resp.headers["Permissions-Policy"])
 		self.assertIn("geolocation=()", resp.headers["Permissions-Policy"])
-		# Edge owns nosniff / Referrer-Policy — app must not duplicate them.
-		self.assertNotIn("X-Content-Type-Options", resp.headers)
-		self.assertNotIn("Referrer-Policy", resp.headers)
+		# Bare backend always emits these (nginx snippet must not duplicate).
+		self.assertEqual(resp.headers["X-Content-Type-Options"], "nosniff")
+		self.assertEqual(resp.headers["Referrer-Policy"], "strict-origin-when-cross-origin")
 		self.assertNotIn("Server", resp.headers)
 		self.assertNotIn("X-Frappe-Version", resp.headers)
 
 	def test_hsts_only_on_https(self):
 		resp_http, req_http = self._response(https=False)
-		with patch.object(frappe.local, "request", req_http):
+		with patch.object(frappe.local, "request", req_http, create=True):
 			rh.after_request(resp_http)
 		self.assertNotIn("Strict-Transport-Security", resp_http.headers)
 
 		resp_https, req_https = self._response(https=True)
-		with patch.object(frappe.local, "request", req_https):
+		with patch.object(frappe.local, "request", req_https, create=True):
 			rh.after_request(resp_https)
 		self.assertEqual(
 			resp_https.headers["Strict-Transport-Security"],
 			"max-age=31536000; includeSubDomains",
 		)
+
+	def test_csp_includes_configured_socketio_origin(self):
+		resp, request = self._response(https=False)
+		request.headers = {
+			"X-Forwarded-Proto": "http",
+			"Host": "crm.example:8831",
+		}
+		with patch.object(frappe.local, "request", request, create=True):
+			with patch.dict(frappe.conf, {"socketio_port": 9000}, clear=False):
+				rh.after_request(resp)
+		csp = resp.headers["Content-Security-Policy"]
+		self.assertIn("http://crm.example:9000", csp)
+		self.assertIn("ws://crm.example:9000", csp)
 
 
 class TestLoginLockoutStatus(UnitTestCase):
@@ -86,6 +102,7 @@ class TestLoginLockoutStatus(UnitTestCase):
 
 class TestAssetsScrub(UnitTestCase):
 	def test_strip_sourcemaps_removes_map_files(self):
+		import os
 		import tempfile
 		from pathlib import Path
 
@@ -93,13 +110,15 @@ class TestAssetsScrub(UnitTestCase):
 
 		with tempfile.TemporaryDirectory() as tmp:
 			root = Path(tmp)
-			(root / "app.js").write_text("ok")
-			(root / "app.js.map").write_text('{"version":3}')
-			nested = root / "chunk"
-			nested.mkdir()
-			(nested / "x.js.map").write_text("{}")
-			removed = strip_sourcemaps(extra_roots=[root])
-			self.assertGreaterEqual(removed, 2)
-			self.assertTrue((root / "app.js").exists())
-			self.assertFalse((root / "app.js.map").exists())
-			self.assertFalse((nested / "x.js.map").exists())
+			real = root / "real"
+			real.mkdir()
+			(real / "app.js").write_text("ok")
+			(real / "app.js.map").write_text('{"version":3}')
+			# Symlink tree like sites/assets/frappe -> apps/frappe/.../dist
+			link = root / "assets"
+			link.mkdir()
+			os.symlink(real, link / "frappe", target_is_directory=True)
+			removed = strip_sourcemaps(extra_roots=[link])
+			self.assertGreaterEqual(removed, 1)
+			self.assertTrue((real / "app.js").exists())
+			self.assertFalse((real / "app.js.map").exists())

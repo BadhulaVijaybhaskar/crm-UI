@@ -1,49 +1,44 @@
-# Nginx security headers (snippet only)
+# Nginx security headers (in-repo snippets)
 
-CRM-12 ships app-side headers via `crm.overrides.response_headers.after_request`:
-enforcing CSP, `X-Frame-Options`, `Permissions-Policy`, and HSTS only when the
-request is HTTPS (`X-Forwarded-Proto`).
+Ship these files into the **frontend nginx** image (see `docker/Dockerfile.frontend-nginx`):
 
-**Edge owns** `X-Content-Type-Options: nosniff` and
-`Referrer-Policy: strict-origin-when-cross-origin` so those values are set once
-(no app/nginx duplicates). Keep the same literal values if you also set them
-elsewhere.
+| File | Role |
+|---|---|
+| `docker/nginx/security_headers.conf` | Override base-image `/etc/nginx/snippets/security_headers.conf` |
+| `docker/nginx/block-sourcemaps.conf` | `location ~* \.map$ { return 404; }` |
+| `docker/nginx/crm.conf` | Includes the above + `/socket.io` same-origin proxy |
 
-Use the following nginx snippet on the edge if you want defence in depth.
-**Do not apply blindly** — validate CSP against your CDN, analytics, and websocket hosts first.
+## Header ownership (no duplicates)
 
-This repo has no `docker/nginx` (or similar) config checked in. Apply the
-`webmanifest` MIME type on deploy — `/assets/*.webmanifest` is served by nginx,
-not Python, so app-side `Content-Type` overrides never reach the browser.
+| Header | Owner |
+|---|---|
+| `X-Content-Type-Options: nosniff` | **App** (`response_headers.after_request`) |
+| `Referrer-Policy: strict-origin-when-cross-origin` | **App** |
+| `Content-Security-Policy` (enforcing) | **App** |
+| `Permissions-Policy` | **App** |
+| `X-Frame-Options: SAMEORIGIN` | Nginx snippet (single value; app also sets for bare :8831) |
+| `Strict-Transport-Security` | Nginx only when `$http_x_forwarded_proto = https`; app same rule |
 
-After `bench build` / image bake, run `scripts/strip-sourcemaps.sh` (also hooked
-from `after_migrate`) so framework `*.map` files are not left under `sites/assets`.
+The nginx snippet `proxy_hide_header`s nosniff / Referrer-Policy / CSP / Permissions-Policy
+from upstream so edge responses do not double them. Bare backend (:8831, no nginx)
+still emits nosniff + Referrer-Policy itself.
+
+## Source maps
+
+1. **Build strip**: `scripts/strip-sourcemaps.sh` (`find -L`) and `crm.overrides.assets_scrub` (`os.walk(..., followlinks=True)`).
+2. **Images**: `docker/Dockerfile.backend-assets` and `docker/Dockerfile.frontend-nginx` run the strip at bake time.
+3. **Edge**: `block-sourcemaps.conf` returns 404 for `*.map`.
 
 ```nginx
-# Example server / location block additions for the CRM site.
+# Minimal include inside server {}
+include /etc/nginx/snippets/security_headers.conf;
+include /etc/nginx/snippets/block-sourcemaps.conf;
+```
 
-# PWA manifest (default mime.types often maps .webmanifest → octet-stream)
+PWA manifest MIME (when not in the base image):
+
+```nginx
 types {
     application/manifest+json webmanifest;
 }
-# Prefer merging with the stock mime.types include rather than replacing it.
-
-# Block source map downloads (defence in depth; assets scrub also deletes *.map)
-location ~* \.map$ {
-    return 404;
-}
-
-add_header X-Content-Type-Options "nosniff" always;
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-add_header X-Frame-Options "SAMEORIGIN" always;
-
-# Optional defence in depth — app already sends enforcing CSP + Permissions-Policy.
-# add_header Content-Security-Policy "default-src 'self'; frame-ancestors 'self'; ..." always;
-# add_header Permissions-Policy "camera=(), microphone=(self), geolocation=()" always;
-
-# Optional: hide upstream fingerprinting
-proxy_hide_header X-Powered-By;
-proxy_hide_header Server;
 ```
-
-App-side already strips `Server`, `X-Powered-By`, and `X-Frappe-*` response headers where possible.

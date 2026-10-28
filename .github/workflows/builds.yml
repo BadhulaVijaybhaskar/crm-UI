@@ -64,6 +64,27 @@ jobs:
             "FRAPPE_BRANCH=${{ env.FRAPPE_BRANCH }}"
             "APPS_JSON_BASE64=${{ env.APPS_JSON_BASE64 }}"
 
-      # Sourcemaps: the layered image may still ship framework *.map under sites/assets.
-      # Runtime scrub is scripts/strip-sourcemaps.sh (docker/init.sh + after_migrate).
-      # Edge also returns 404 for *.map — see docs/nginx-security-headers.md.
+      # Strip framework *.map and apply Astra nginx snippets on layered images.
+      # Backend: docker/Dockerfile.backend-assets (followlinks / find -L).
+      # Frontend nginx: docker/Dockerfile.frontend-nginx (override security_headers.conf).
+      - name: Bake backend image without sourcemaps
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: .
+          file: docker/Dockerfile.backend-assets
+          tags: >
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}-nosourcemaps
+          build-args: |
+            "BASE_IMAGE=ghcr.io/${{ github.repository }}:${{ github.ref_name }}"
+          platforms: linux/${{ matrix.arch }}
+
+      - name: Bake frontend nginx image (header snippet + no *.map)
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: .
+          file: docker/Dockerfile.frontend-nginx
+          tags: >
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}-frontend-nginx
+          platforms: linux/${{ matrix.arch }}
