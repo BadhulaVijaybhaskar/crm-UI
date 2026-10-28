@@ -2,7 +2,11 @@
   <!-- In-app login for local Vite + parity. Production website auth uses
        crm/www/login.html with the same .astra-login-* chrome. Auth calls
        session.login so redirects and 429 lockouts match production. -->
-  <div class="astra-login" data-testid="astra-login">
+  <div
+    class="astra-login"
+    :class="{ 'astra-login--dark': resolvedColorScheme === 'dark' }"
+    data-testid="astra-login"
+  >
     <aside class="astra-login__panel" aria-hidden="true">
       <p class="astra-login__eyebrow">{{ __('ASTRA CRM') }}</p>
       <h2 class="astra-login__headline">
@@ -390,11 +394,20 @@ async function onForgot() {
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
   background: var(--crm-nav-active, #0f2a36);
+  /* Beat .astra-login__features span color (this node is also a span). */
   color: var(--crm-teal, #0e8f83);
+}
+
+.astra-login__feature-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 .astra-login__features strong {
@@ -403,7 +416,7 @@ async function onForgot() {
   color: #fff;
 }
 
-.astra-login__features span {
+.astra-login__features li > div > span {
   display: block;
   margin-top: 2px;
   font: 400 13px/1.45 var(--font-sans);
@@ -573,8 +586,9 @@ async function onForgot() {
   margin: 20px 0 0;
   padding: 12px 14px;
   border-radius: 8px;
-  background: var(--crm-neutral-soft);
-  border: 1px solid var(--crm-border);
+  /* Match astra-login.css --astra-lockout-bg / --astra-border (not --crm-neutral-soft). */
+  background: #eef1f6;
+  border: 1px solid #e1e7ec;
   font: 400 12.5px/1.45 var(--font-sans);
   color: var(--crm-muted-fg);
 }
@@ -584,6 +598,11 @@ async function onForgot() {
   margin-top: 2px;
   color: var(--crm-muted-fg);
   line-height: 0;
+}
+
+.astra-login--dark .astra-login__lockout {
+  background: #11212b;
+  border-color: #1a2c37;
 }
 
 @media (max-width: 900px) {

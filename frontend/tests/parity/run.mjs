@@ -34,10 +34,12 @@ import {
 import { compareImages, realPercent } from './lib/diff.js'
 import { screenshotSourceHtml } from './lib/sourceShot.js'
 
-/** ε for mode (a): Vue must match source HTML within this real %. */
-const HTML_PASS_EPS = 0.05
+/** Mode (a): real vs HTML must be exactly 0% (no ε). Float noise only. */
+const HTML_PASS_EPS = 0.00005
 /** Soft ceiling when floor is missing — ~0.75% typical MCP noise. */
 const PNG_FLOOR_FALLBACK = 0.75
+/** Mode (b): PNG may sit at the floor; tiny float slack only. */
+const PNG_PASS_EPS = 0.00005
 
 function usage() {
   console.error(`Usage: yarn parity <screen-id>
@@ -180,7 +182,7 @@ async function runTheme({ screen, theme, origin, browser }) {
   const realVsPngPct = result.realPct
   const floorLimit = floorPct != null ? floorPct : PNG_FLOOR_FALLBACK
   const passA = realVsHtmlPct != null ? realVsHtmlPct <= HTML_PASS_EPS : false
-  const passB = realVsPngPct <= floorLimit + HTML_PASS_EPS
+  const passB = realVsPngPct <= floorLimit + PNG_PASS_EPS
   const pass = passA && passB
 
   // Legacy shell metrics (still useful for shell-owned crops)

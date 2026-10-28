@@ -179,11 +179,20 @@ body {
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
   background: #0f2a36;
+  /* Beat .astra-login__features span (feature-icon is also a span). */
   color: var(--ac2);
+}
+
+.astra-login__feature-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 .astra-login__features strong {
@@ -192,7 +201,7 @@ body {
   color: #fff;
 }
 
-.astra-login__features span {
+.astra-login__features li > div > span {
   display: block;
   margin-top: 2px;
   font: 400 13px/1.45 "Inter", sans-serif;

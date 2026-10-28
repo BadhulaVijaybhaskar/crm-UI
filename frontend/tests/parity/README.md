@@ -20,10 +20,13 @@ Artifacts land in `/opt/cursor/artifacts/parity/`:
 
 **Pass bar (per screen × theme):**
 
-1. **(a)** real % vs source HTML (`p-*.html` in Chrome) ≈ **0** (ε = 0.05%)
-2. **(b)** real % vs Figma PNG ≤ **floor** (sourceHtml↔PNG, typically ~0.75%)
+1. **(a)** real % vs source HTML (`p-*.html` in Chrome) = **0.0000%** (exact; 1px / threshold 0.1)
+2. **(b)** real % vs Figma PNG ≤ **floor** (sourceHtml↔PNG)
 
-Figma MCP PNGs are not Chrome pixels; the floor isolates that rasterisation noise.
+Figma MCP PNGs are not Chrome pixels. Floor may also include layout/type deltas
+when the capture HTML is authored (not the original MCP export) — login’s floor
+is ~2.15% for that reason, vs ~0.75% on shell screens whose `p-*.html` is the
+original capture.
 
 ## How a screen agent adds a new screen
 
