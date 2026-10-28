@@ -3,72 +3,101 @@
     v-if="doc.name"
     class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg"
   >
-    <nav
-      class="flex items-center gap-1.5 px-3 pt-2.5 text-crm-meta text-crm-muted-fg"
-      aria-label="Breadcrumb"
+    <header
+      class="flex h-11 items-center gap-1 border-b border-crm-border bg-crm-card px-1"
     >
-      <router-link :to="{ name: 'Deals' }" class="hover:text-crm-fg">
-        {{ __('Deals') }}
-      </router-link>
-      <span aria-hidden="true">›</span>
-      <span class="truncate text-crm-fg">{{ title }}</span>
-    </nav>
+      <button
+        type="button"
+        class="inline-flex size-9 items-center justify-center text-crm-fg"
+        :aria-label="__('Back')"
+        @click="goBack"
+      >
+        <span class="lucide-chevron-left size-5" aria-hidden="true" />
+      </button>
+      <div class="min-w-0 flex-1 truncate text-crm-body font-semibold text-crm-fg">
+        {{ title }}
+      </div>
+      <AssignTo v-model="assignees.data" doctype="CRM Deal" :docname="dealId" />
+      <CustomActions
+        v-if="document._actions?.length"
+        :actions="document._actions"
+      />
+      <CustomActions
+        v-if="document.actions?.length"
+        :actions="document.actions"
+      />
+    </header>
 
-    <AstraRecordHeader
-      :title="title"
-      :avatar-src="doc.organization_logo || ''"
-      squared-avatar
-      :status="doc.status || ''"
-      status-tone="mute"
-      :meta="dealMeta"
-    >
-      <template #actions>
-        <AssignTo
-          v-model="assignees.data"
-          doctype="CRM Deal"
-          :docname="dealId"
-        />
-        <CustomActions
-          v-if="document._actions?.length"
-          :actions="document._actions"
-        />
-        <CustomActions
-          v-if="document.actions?.length"
-          :actions="document.actions"
-        />
-        <Dropdown
-          v-if="doc"
-          :options="
-            statusOptions(
-              'deal',
-              document.statuses?.length
-                ? document.statuses
-                : document._statuses,
-              triggerStatusChange,
-            )
-          "
-        >
+    <div class="border-b border-crm-border bg-crm-card px-4 pb-3">
+      <p class="m-0 pt-3 text-crm-micro text-crm-muted-fg">{{ __('Deal') }}</p>
+      <h1 class="m-0 text-crm-page font-semibold tracking-crm-tight text-crm-fg">
+        {{ title }}
+      </h1>
+      <div class="mt-1 flex flex-wrap items-center gap-2">
+        <span v-if="dealValue" class="text-crm-kpi font-semibold tracking-crm-num text-crm-fg">
+          {{ dealValue }}
+        </span>
+        <Dropdown v-if="doc.status" :options="statuses" align="end">
           <template #default="{ open }">
-            <Button
-              v-if="doc.status"
-              :label="statusLabel(doc.status)"
-              :iconRight="open ? 'lucide-chevron-up' : 'lucide-chevron-down'"
-            >
-              <template #prefix>
-                <IndicatorIcon :class="getDealStatus(doc.status).color" />
-              </template>
-            </Button>
+            <button type="button" class="inline-flex items-center gap-0.5">
+              <AstraBadge
+                :label="statusLabel(doc.status)"
+                tone="mute"
+                dot
+                square
+                :marker-color="stageMarkerColor(doc.status)"
+              />
+              <span
+                class="size-3 text-crm-muted-fg"
+                :class="open ? 'lucide-chevron-up' : 'lucide-chevron-down'"
+                aria-hidden="true"
+              />
+            </button>
           </template>
         </Dropdown>
-      </template>
-    </AstraRecordHeader>
+      </div>
+      <p
+        v-if="dealMeta.length"
+        class="m-0 mt-1 text-crm-label text-crm-muted-fg"
+      >
+        {{ dealMeta.join(' · ') }}
+      </p>
+      <StagePath
+        class="mt-3"
+        :stages="dealStages"
+        :current="doc.status"
+        :dates="stageDates"
+        @select="triggerStatusChange"
+      />
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <ConnectActions
+          record-type="CRM Deal"
+          :record-id="dealId"
+          :phone="doc.mobile_no || doc.phone || ''"
+          show-labels
+        />
+        <AstraButton
+          variant="secondary"
+          size="sm"
+          :label="__('Note')"
+          @click="changeTabTo('notes')"
+        />
+      </div>
+      <div
+        v-if="doc.next_step"
+        class="mt-3 flex items-center gap-2 rounded-crm-control bg-crm-warning-soft px-3 py-2 text-crm-label text-crm-fg"
+      >
+        <span class="font-semibold text-crm-warning">{{ __('Next') }}</span>
+        <span class="min-w-0 truncate">{{ doc.next_step }}</span>
+      </div>
+    </div>
 
     <div class="flex min-h-0 flex-1 overflow-hidden">
     <Tabs
       v-model="activeTab"
       as="div"
       :tabs="tabs"
-      class="flex flex-1 flex-col overflow-auto [&_[role='tab']]:px-2.5 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:bg-crm-card [&_[role='tablist']]:border-b [&_[role='tablist']]:border-crm-border [&_[role='tablist']]:px-3 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-10 [&_[role='tablist']]:gap-0.5 [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+      :class="recordTabsClass({ scroll: true })"
     >
       <template #tab-panel="{ tab }">
         <div v-if="tab.name == 'Details' && !tab.component">
@@ -299,11 +328,19 @@ import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import NoteIcon from '@/components/Icons/NoteIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
-import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import ArrowUpRightIcon from '@/components/Icons/ArrowUpRightIcon.vue'
 import FileTextIcon from '@/components/Icons/FileTextIcon.vue'
 import SuccessIcon from '@/components/Icons/SuccessIcon.vue'
-import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
+import AstraBadge from '@/components/astra/AstraBadge.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
+import StagePath from '@/components/Pipeline/StagePath.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
+import {
+  pipelineStages,
+  stageEnteredOn,
+  stageMarkerColor,
+} from '@/components/Pipeline/stageRail'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
@@ -314,7 +351,7 @@ import Link from '@/components/Controls/Link.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
-import { setupCustomizations, isTranslatable } from '@/utils'
+import { setupCustomizations, formatDate, isTranslatable } from '@/utils'
 import { withRecipientConfirmation } from '@/utils/whatsappRecipient'
 import { getSettings } from '@/stores/settings'
 import { globalStore } from '@/stores/global'
@@ -342,8 +379,8 @@ import { useRouter } from 'vue-router'
 
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
-const { statusOptions, getDealStatus } = statusesStore()
-const { doctypeMeta } = getMeta('CRM Deal')
+const { statusOptions, getDealStatus, dealStatuses } = statusesStore()
+const { doctypeMeta, getFormattedCurrency } = getMeta('CRM Deal')
 
 const router = useRouter()
 
@@ -416,12 +453,46 @@ const title = computed(() => {
   return doc.value?.[t] || props.dealId
 })
 
+const dealValue = computed(() => {
+  if (doc.value?.deal_value == null || doc.value.deal_value === '') return ''
+  return getFormattedCurrency('deal_value', doc.value)
+})
+
 const dealMeta = computed(() => {
   const parts = []
-  if (doc.value?.organization) parts.push(doc.value.organization)
+  if (doc.value?.expected_closure_date) {
+    parts.push(
+      __('Expected close {0}', [formatDate(doc.value.expected_closure_date, '', true)]),
+    )
+  }
+  if (doc.value?.probability != null && doc.value.probability !== '') {
+    parts.push(`${Number(doc.value.probability)}%`)
+  }
   if (doc.value?.deal_owner) parts.push(doc.value.deal_owner)
   return parts
 })
+
+const statuses = computed(() =>
+  statusOptions(
+    'deal',
+    document.statuses?.length ? document.statuses : document._statuses,
+    triggerStatusChange,
+  ),
+)
+
+const dealStages = computed(() => {
+  const allowed = document.statuses?.length ? document.statuses : document._statuses
+  return pipelineStages(dealStatuses.data, allowed).map((stage) => ({
+    ...stage,
+    label: statusLabel(stage.name),
+  }))
+})
+
+const stageDates = computed(() => stageEnteredOn(doc.value?.status_change_log))
+
+function goBack() {
+  router.push({ name: 'Deals' })
+}
 
 usePageMeta(() => {
   return {
@@ -505,7 +576,7 @@ const tabs = computed(() => {
   ]
   return mergeFormTabs(tabOptions, document.tabs)
 })
-const { activeTab } = useActiveTabManager(tabs, 'lastDealTab')
+const { activeTab, changeTabTo } = useActiveTabManager(tabs, 'lastDealTab')
 
 const sections = createResource({
   url: 'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_sidepanel_sections',
