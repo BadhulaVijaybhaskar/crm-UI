@@ -10,7 +10,7 @@ _Generated 2026-10-27. Whitelisted methods under `crm/`._
 | guest-no-rate | Guest endpoint without rate_limit — review |
 
 ## Cross-cutting controls
-- **Security headers**: `crm.overrides.response_headers.after_request` sets `X-Content-Type-Options`, `Referrer-Policy`, CSP report-only with `frame-ancestors 'self'`.
+- **Security headers**: `crm.overrides.response_headers.after_request` sets enforcing CSP (`frame-ancestors 'self'`; `unsafe-inline`/`unsafe-eval` retained for Frappe desk), `X-Frame-Options: SAMEORIGIN`, `Permissions-Policy`, and HSTS only on HTTPS. Edge nginx owns `nosniff` + `Referrer-Policy` (see `docs/nginx-security-headers.md`). `*.map` blocked at nginx and scrubbed from `sites/assets`.
 - **Webhook site binding**: `astra_connect_webhook_secret` is read from `frappe.conf` (per-site). Frappe resolves the site from the Host header before the method runs, so a secret cannot authorize writes on another site.
 - **Sanitisation**: `crm.utils.sanitize` strips scripts from HTML notes/comments and plain-text webhook strings. Applied on `FCRM Note.validate`, `crm.api.comment.add_comment`, and Astra Connect `receive`.
 - **Nginx**: see `docs/nginx-security-headers.md` (snippet only — not applied by this change).
