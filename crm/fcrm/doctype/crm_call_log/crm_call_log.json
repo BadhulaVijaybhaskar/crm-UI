@@ -35,6 +35,7 @@
   "transcript",
   "channel",
   "astra_contact_id",
+  "astra_source_ts",
   "ai_employee_id",
   "section_break_kebz",
   "links"
@@ -161,6 +162,13 @@
    "label": "Astra Contact ID"
   },
   {
+   "description": "Source event timestamp used to ignore stale out-of-order Connect deliveries.",
+   "fieldname": "astra_source_ts",
+   "fieldtype": "Datetime",
+   "label": "Astra Source Timestamp",
+   "read_only": 1
+  },
+  {
    "fieldname": "ai_employee_id",
    "fieldtype": "Data",
    "label": "AI Employee ID"
@@ -218,7 +226,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-30 12:31:44.974374",
+ "modified": "2026-10-28 01:30:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Call Log",
