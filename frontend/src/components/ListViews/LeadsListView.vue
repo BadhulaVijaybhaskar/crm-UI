@@ -428,7 +428,8 @@ defineExpose({
 .astra-leads-table :deep(th:nth-child(8)),
 .astra-leads-table :deep(td:nth-child(8)) {
   width: 73px;
-  padding-left: 10px;
+  /* Owner: shift-sim +1px vs PNG */
+  padding-left: 11px;
 }
 .astra-leads-table :deep(th:nth-child(9)),
 .astra-leads-table :deep(td:nth-child(9)) {
@@ -439,8 +440,8 @@ defineExpose({
 .astra-leads-table :deep(th:nth-child(10)),
 .astra-leads-table :deep(td:nth-child(10)) {
   width: 91px;
-  /* Created was −1px vs PNG at 7px pad */
-  padding-left: 8px;
+  /* Created: shift-sim −2px (8→6) cuts ~175 real px vs PNG */
+  padding-left: 6px;
 }
 .astra-leads-table :deep(td.bg-crm-row-selected) {
   background: var(--crm-row-selected);
