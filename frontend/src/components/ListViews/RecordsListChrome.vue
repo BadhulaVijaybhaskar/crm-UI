@@ -22,7 +22,7 @@
       class="flex items-center gap-2 border-b border-crm-border px-crm-page-x"
     >
       <div class="min-w-0 flex-1 overflow-x-auto">
-        <div class="-translate-y-px flex items-center gap-0.5" role="tablist">
+        <div class="flex items-center gap-0.5" role="tablist">
           <button
             v-for="tab in viewTabs"
             :key="tab.value"

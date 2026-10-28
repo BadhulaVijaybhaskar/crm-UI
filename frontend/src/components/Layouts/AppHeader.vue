@@ -18,8 +18,7 @@
 
     <div class="flex-1" />
 
-    <!-- PNG New/bell sit ~3px left of default flex end packing -->
-    <div class="-translate-x-[3px] flex items-center gap-2.5">
+    <div class="flex items-center gap-2.5">
       <Dropdown :options="newOptions">
         <AstraButton variant="primary" size="sm" :label="__('New')">
           <template #prefix>
