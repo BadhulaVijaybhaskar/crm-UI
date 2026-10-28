@@ -21,8 +21,8 @@ Artifacts land in `/opt/cursor/artifacts/parity/`:
 **Pass bar:**
 
 - **01-login:** real % vs Figma PNG ≤ **0.75%** (both themes). real vs source HTML
-  is informational only — `figma-src/` is read-only and may drift from the PNG
-  (login HTML↔PNG floor ≈ 2.15%).
+  is informational only. `figma-src/p-01-login-*.html` are the original Figma
+  capture files (with `app.css` / `v2.css` / `v3.css` / `crm.css` + `assets/`).
 - **Other screens:** (a) real vs source HTML ≈ 0; (b) real vs PNG ≤ floor
   (sourceHtml↔PNG, typically ~0.75% MCP noise).
 
