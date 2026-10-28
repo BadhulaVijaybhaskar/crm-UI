@@ -1,0 +1,65 @@
+[
+  {
+    "name": "New",
+    "label": "New",
+    "type": "Open",
+    "color": "c6",
+    "position": 1,
+    "probability": 0,
+    "in_use": 5
+  },
+  {
+    "name": "Contacted",
+    "label": "Contacted",
+    "type": "Ongoing",
+    "color": "c4",
+    "position": 2,
+    "probability": 0,
+    "in_use": 8
+  },
+  {
+    "name": "Nurture",
+    "label": "Nurture",
+    "type": "Ongoing",
+    "color": "c2",
+    "position": 3,
+    "probability": 0,
+    "in_use": 4
+  },
+  {
+    "name": "Qualified",
+    "label": "Qualified",
+    "type": "Ongoing",
+    "color": "c1",
+    "position": 4,
+    "probability": 0,
+    "in_use": 6
+  },
+  {
+    "name": "Converted",
+    "label": "Converted",
+    "type": "Won",
+    "color": "success",
+    "position": 5,
+    "probability": 100,
+    "in_use": 3
+  },
+  {
+    "name": "Unqualified",
+    "label": "Unqualified",
+    "type": "Lost",
+    "color": "danger",
+    "position": 6,
+    "probability": 0,
+    "in_use": 2
+  },
+  {
+    "name": "Junk",
+    "label": "Junk",
+    "type": "Lost",
+    "color": "c6",
+    "position": 7,
+    "probability": 0,
+    "in_use": 1
+  }
+]

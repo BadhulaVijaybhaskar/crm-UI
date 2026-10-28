@@ -40,7 +40,10 @@
 </template>
 
 <script setup>
-import { visibleSettingsGroups } from '@/components/Settings/settingsSections'
+import {
+  accessibleSettingsGroups,
+  visibleSettingsGroups,
+} from '@/components/Settings/settingsSections'
 import { usersStore } from '@/stores/users'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -55,7 +58,7 @@ const { users } = usersStore()
 const ready = computed(() => Boolean(users.fetched))
 const groups = computed(() => visibleSettingsGroups())
 const active = computed(() => {
-  const items = groups.value.flatMap((group) => group.items)
+  const items = accessibleSettingsGroups().flatMap((group) => group.items)
   const wanted = props.section || ''
   return items.find((item) => item.slug === wanted) || items[0] || null
 })

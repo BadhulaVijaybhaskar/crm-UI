@@ -56,28 +56,53 @@ describe('settings sections', () => {
         'Profile',
         'Preferences',
         'General',
-        'Dashboard',
         'Defaults',
         'Brand',
-        'Home Actions',
         'Users',
-        'Invite User',
         'Sales hierarchy',
         'Pipeline stages',
         'Fields layout',
+        'Web forms',
         'Workflow automations',
         'Assignment rules',
         'SLA policies',
-        'Forms',
         'Enrichment',
         'Accounts',
         'Templates',
-        'Astra Connect',
-        'API & webhooks',
         'Telephony',
         'WhatsApp',
         'ERP',
         'Lead syncing',
+      ]),
+    )
+    // Still registered for deep links / buttons, but hidden from snav.
+    expect(sectionFromSlug('invite-user')?.nav).toBe(false)
+    expect(sectionFromSlug('dashboard')?.nav).toBe(false)
+  })
+
+  it('hides non-Figma snav rows from visibleSettingsGroups', async () => {
+    const { visibleSettingsGroups } = await import(
+      '@/components/Settings/settingsSections'
+    )
+    const labels = visibleSettingsGroups().flatMap((group) =>
+      group.items.map((item) => item.label),
+    )
+    expect(labels).not.toContain('Invite User')
+    expect(labels).not.toContain('Dashboard')
+    expect(labels).not.toContain('Astra Connect')
+    expect(labels).toContain('Web forms')
+  })
+
+  it('keeps deep-link sections registered', () => {
+    expect(
+      settingsGroups.flatMap((g) => g.items.map((i) => i.label)),
+    ).toEqual(
+      expect.arrayContaining([
+        'Invite User',
+        'Dashboard',
+        'Home Actions',
+        'Astra Connect',
+        'API & webhooks',
       ]),
     )
   })

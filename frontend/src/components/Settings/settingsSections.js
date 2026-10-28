@@ -77,6 +77,8 @@ export const settingsGroups = [
         slug: 'dashboard',
         label: 'Dashboard',
         icon: markRaw(LucideLayoutDashboard),
+        // Not in Figma settings snav — keep route, hide from nav.
+        nav: false,
         component: load(
           () => import('@/components/Settings/DashboardSettings.vue'),
         ),
@@ -99,6 +101,7 @@ export const settingsGroups = [
         slug: 'home-actions',
         label: 'Home Actions',
         icon: 'house',
+        nav: false,
         component: load(() => import('@/components/Settings/HomeActions.vue')),
       },
     ],
@@ -118,6 +121,8 @@ export const settingsGroups = [
         slug: 'invite-user',
         label: 'Invite User',
         icon: 'user-plus',
+        // Opened from Users page actions — not a snav row in Figma.
+        nav: false,
         component: load(
           () => import('@/components/Settings/InviteUserPage.vue'),
         ),
@@ -154,6 +159,15 @@ export const settingsGroups = [
         ),
         condition: admin,
       },
+      {
+        slug: 'forms',
+        label: 'Web forms',
+        icon: markRaw(LucideTextCursorInput),
+        component: load(
+          () => import('@/components/Settings/Forms/FormsSettings.vue'),
+        ),
+        condition: manager,
+      },
     ],
   },
   {
@@ -161,17 +175,6 @@ export const settingsGroups = [
     label: 'Automation',
     condition: manager,
     items: [
-      {
-        slug: 'workflow-automations',
-        label: 'Workflow automations',
-        icon: markRaw(LucideWorkflow),
-        component: load(
-          () =>
-            import(
-              '@/components/Settings/WorkflowAutomations/WorkflowAutomationPage.vue'
-            ),
-        ),
-      },
       {
         slug: 'assignment-rules',
         label: 'Assignment rules',
@@ -191,11 +194,14 @@ export const settingsGroups = [
         component: load(() => import('@/components/Settings/Sla/SlaConfig.vue')),
       },
       {
-        slug: 'forms',
-        label: 'Forms',
-        icon: markRaw(LucideTextCursorInput),
+        slug: 'workflow-automations',
+        label: 'Workflow automations',
+        icon: markRaw(LucideWorkflow),
         component: load(
-          () => import('@/components/Settings/Forms/FormsSettings.vue'),
+          () =>
+            import(
+              '@/components/Settings/WorkflowAutomations/WorkflowAutomationPage.vue'
+            ),
         ),
       },
       {
@@ -236,24 +242,6 @@ export const settingsGroups = [
     label: 'Integrations',
     items: [
       {
-        slug: 'astra-connect',
-        label: 'Astra Connect',
-        icon: markRaw(PhoneIcon),
-        component: load(
-          () => import('@/components/Settings/AstraConnectSettings.vue'),
-        ),
-        condition: manager,
-      },
-      {
-        slug: 'api-webhooks',
-        label: 'API & webhooks',
-        icon: markRaw(LucideKeyRound),
-        component: load(
-          () => import('@/components/Settings/DeveloperAccess.vue'),
-        ),
-        condition: admin,
-      },
-      {
         slug: 'telephony',
         label: 'Telephony',
         icon: markRaw(PhoneIcon),
@@ -289,16 +277,47 @@ export const settingsGroups = [
         ),
         condition: manager,
       },
+      {
+        slug: 'astra-connect',
+        label: 'Astra Connect',
+        icon: markRaw(PhoneIcon),
+        nav: false,
+        component: load(
+          () => import('@/components/Settings/AstraConnectSettings.vue'),
+        ),
+        condition: manager,
+      },
+      {
+        slug: 'api-webhooks',
+        label: 'API & webhooks',
+        icon: markRaw(LucideKeyRound),
+        nav: false,
+        component: load(
+          () => import('@/components/Settings/DeveloperAccess.vue'),
+        ),
+        condition: admin,
+      },
     ],
   },
 ]
 
-export function visibleSettingsGroups() {
+/** All permitted sections (including deep-link-only / nav:false). */
+export function accessibleSettingsGroups() {
   return settingsGroups
     .filter((group) => !group.condition || group.condition())
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => !item.condition || item.condition()),
+    }))
+    .filter((group) => group.items.length)
+}
+
+/** Settings snav only — omits items with `nav: false` (Figma snav set). */
+export function visibleSettingsGroups() {
+  return accessibleSettingsGroups()
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.nav !== false),
     }))
     .filter((group) => group.items.length)
 }

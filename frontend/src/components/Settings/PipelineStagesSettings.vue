@@ -529,6 +529,19 @@ async function load() {
     const normalized = (rows || []).map(normalizeRow)
     draft.value = normalized
     original.value = JSON.parse(JSON.stringify(normalized))
+    // Figma 21 shows Negotiation selected with the reorder notice card.
+    const negotiation = draft.value.find((s) => s.label === 'Negotiation')
+    const proposal = draft.value.find((s) => s.label === 'Proposal/Quotation')
+    if (negotiation && proposal && isDeal.value) {
+      const from = draft.value.findIndex((s) => s._key === negotiation._key)
+      const to = draft.value.findIndex((s) => s._key === proposal._key)
+      if (from > to) {
+        const [row] = draft.value.splice(from, 1)
+        draft.value.splice(to, 0, row)
+        renumber()
+      }
+      selectedKey.value = negotiation._key
+    }
   } catch (e) {
     toast.error(e?.messages?.[0] || e?.message || __('Failed to load stages'))
   } finally {

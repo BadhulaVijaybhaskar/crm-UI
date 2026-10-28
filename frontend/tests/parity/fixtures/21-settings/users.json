@@ -13,7 +13,8 @@
         "Sales Manager"
       ],
       "session_user": true,
-      "last_active": "2026-10-28 09:12:00"
+      "last_active": "2026-10-28 09:12:00",
+      "role_profile_name": "Sales manager - Admin"
     },
     {
       "name": "rohan.mehta@example.in",
@@ -26,7 +27,8 @@
       "roles": [
         "Sales User"
       ],
-      "last_active": "2026-10-28 08:40:00"
+      "last_active": "2026-10-28 08:40:00",
+      "role_profile_name": "Sales User"
     },
     {
       "name": "sameer.k@example.in",
@@ -39,7 +41,8 @@
       "roles": [
         "Sales User"
       ],
-      "last_active": "2026-10-27 16:05:00"
+      "last_active": "2026-10-27 16:05:00",
+      "role_profile_name": "Sales User"
     },
     {
       "name": "anjali.v@example.in",
@@ -52,7 +55,8 @@
       "roles": [
         "Sales Manager"
       ],
-      "last_active": "2026-10-26 11:00:00"
+      "last_active": "2026-10-26 11:00:00",
+      "role_profile_name": "Manager"
     },
     {
       "name": "nikhil.j@example.in",
@@ -65,7 +69,8 @@
       "roles": [
         "Sales User"
       ],
-      "last_active": "2026-10-25 15:20:00"
+      "last_active": "2026-10-25 15:20:00",
+      "role_profile_name": "Sales User"
     }
   ]
 }

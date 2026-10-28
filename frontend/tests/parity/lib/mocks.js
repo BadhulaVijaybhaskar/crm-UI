@@ -85,6 +85,7 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
     }
 
     const stagesDoc = readJson(fixture, 'stages.json', null)
+    const leadStatusesDoc = readJson(fixture, 'lead-statuses.json', null)
     const layoutDoc = readJson(fixture, 'fields-layout.json', null)
     const invitationsDoc = readJson(fixture, 'invitations.json', null)
 
@@ -108,6 +109,11 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
     } else if (method.includes('get_organizations')) {
       body = ok([])
     } else if (
+      method.includes('is_whatsapp_installed') ||
+      method.includes('is_whatsapp_enabled')
+    ) {
+      body = ok(true)
+    } else if (
       method.includes('getdoctype') ||
       url.includes('getdoctype')
     ) {
@@ -118,7 +124,15 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
     ) {
       body = ok(1) // setup_completed
     } else if (method.includes('get_pipeline_stages')) {
-      body = Array.isArray(stagesDoc) ? ok(stagesDoc) : ok([])
+      const parent =
+        post.parent_doctype ||
+        parsed.search?.get?.('parent_doctype') ||
+        ''
+      if (String(parent).includes('Lead') && Array.isArray(leadStatusesDoc)) {
+        body = ok(leadStatusesDoc)
+      } else {
+        body = Array.isArray(stagesDoc) ? ok(stagesDoc) : ok([])
+      }
     } else if (method.includes('get_fields_layout')) {
       body = Array.isArray(layoutDoc) ? ok(layoutDoc) : ok([])
     } else if (
@@ -127,15 +141,26 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
     ) {
       if (post.doctype === 'CRM Invitation' && Array.isArray(invitationsDoc)) {
         body = ok(invitationsDoc)
+      } else if (post.doctype === 'CRM Lead Status') {
+        body = Array.isArray(leadStatusesDoc) ? ok(leadStatusesDoc) : ok([])
       } else if (
-        (post.doctype === 'CRM Deal Status' ||
-          post.doctype === 'CRM Lead Status') &&
+        post.doctype === 'CRM Deal Status' &&
         Array.isArray(stagesDoc)
       ) {
         body = ok(stagesDoc)
       } else {
         body = leads.message !== undefined ? leads : ok(leads)
       }
+    } else if (
+      url.includes('/api/resource/CRM Lead Status') &&
+      Array.isArray(leadStatusesDoc)
+    ) {
+      body = ok(leadStatusesDoc)
+    } else if (
+      url.includes('/api/resource/CRM Deal Status') &&
+      Array.isArray(stagesDoc)
+    ) {
+      body = ok(stagesDoc)
     } else if (url.includes('/api/resource/CRM Lead')) {
       body = leads.message !== undefined ? leads : ok(leads)
     } else if (
@@ -168,6 +193,10 @@ export function sessionInitScript(email) {
   document.cookie = 'system_user=yes; path=/';
   document.cookie = 'full_name=Priya%20Nair; path=/';
   document.cookie = 'user_image=; path=/';
+  // Match Figma settings snav: WhatsApp + ERP rows visible for Admin.
+  window.erp_integration_available = true;
+  if (window.boot) window.boot.erp_integration_available = true;
+  else window.boot = { erp_integration_available: true };
   try {
     localStorage.setItem('isSidebarCollapsed', 'false');
     localStorage.setItem('crm_setup_completed', '1');
