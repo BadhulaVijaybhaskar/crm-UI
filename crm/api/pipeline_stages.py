@@ -115,13 +115,13 @@ def _normalize_type(stage_type: str | None) -> str:
 def _position(raw, index: int) -> int:
 	if raw.get("position") in (None, ""):
 		return index + 1
-	return cint(raw.position)
+	return cint(raw.get("position"))
 
 
 def _probability(raw) -> float | None:
 	if "probability" not in raw or raw.get("probability") in (None, ""):
 		return None
-	return flt(raw.probability)
+	return flt(raw.get("probability"))
 
 
 def _stage_inputs(stages, existing_names: set[str]) -> list[_StageInput]:
