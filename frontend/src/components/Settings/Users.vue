@@ -248,7 +248,7 @@
             <span>
               {{
                 __(
-                  "The role of a user with Admin access can't be changed here.",
+                  'The role of a user with Admin access can’t be changed here.',
                 )
               }}
             </span>
