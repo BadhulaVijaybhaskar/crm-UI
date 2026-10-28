@@ -32,14 +32,6 @@
           'vgl-item--parity-dragging': draggingId && draggingId === tile.id,
         }"
       >
-        <!-- Static drop slot under a mid-drag tile (Figma screen 17) -->
-        <div
-          v-if="layoutReady && draggingId && draggingId === tile.id"
-          class="report-drop-slot"
-          aria-hidden="true"
-        >
-          {{ __('Drop here') }} · {{ tile.layout.w }} × {{ tile.layout.h }}
-        </div>
         <div
           v-if="layoutReady"
           class="h-full w-full"
@@ -169,7 +161,8 @@ function onLayout(newLayout) {
 
 :deep(.vgl-item--dragging) .report-tile-drag-ghost,
 .report-tile-drag-ghost {
-  transform: translate(18px, 14px) rotate(-0.6deg);
+  /* Figma 17: line tile mid-drag — slight tip + primary ring/shadow */
+  transform: rotate(-0.6deg);
   box-shadow: var(
     --crm-shadow-tile-drag,
     0 14px 30px rgba(4, 20, 27, 0.2),
@@ -178,22 +171,9 @@ function onLayout(newLayout) {
   border-radius: 10px;
   position: relative;
   z-index: 2;
-}
-
-.report-drop-slot {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed var(--crm-primary, #0a7393);
-  border-radius: 10px;
-  background: var(--crm-primary-soft, #e4f2f6);
-  color: var(--crm-primary, #0a7393);
-  font-size: 12px;
-  font-weight: 600;
-  pointer-events: none;
-  z-index: 1;
+  background: var(--crm-card, #fff);
+  outline: 2px dashed var(--crm-primary, #0a7393);
+  outline-offset: 6px;
 }
 
 :deep(.vgl-item__resizer) {
