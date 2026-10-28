@@ -76,26 +76,18 @@
                 <template #prefix>
                   <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
                 </template>
-                <Tooltip
-                  :text="__(link.label)"
-                  side="right"
-                  :hoverDelay="1500"
-                  :disabled="isCollapsed"
-                >
-                  <span class="flex min-w-0 flex-1 items-center gap-2 truncate text-[13px] font-medium">
-                    <span class="truncate">{{ __(link.label) }}</span>
-                    <span
-                      v-if="link.count != null && !isCollapsed"
-                      class="astra-shell__nav-count"
-                    >
-                      {{ link.count }}
-                    </span>
-                    <FigmaExternalIcon
-                      v-if="link.external && !isCollapsed"
-                      class="astra-shell__nav-ext !size-3"
-                    />
+                <span class="flex min-w-0 flex-1 items-center truncate text-[13px] font-medium">
+                  <span class="truncate">{{ __(link.label) }}</span>
+                  <span
+                    v-if="link.count != null && !isCollapsed"
+                    class="astra-shell__nav-count"
+                  >
+                    {{ link.count }}
                   </span>
-                </Tooltip>
+                </span>
+                <template v-if="link.external && !isCollapsed" #suffix>
+                  <FigmaExternalIcon class="astra-shell__nav-ext mr-2.5 !size-3" />
+                </template>
               </SidebarItem>
             </nav>
           </section>
@@ -281,7 +273,7 @@ import {
   mobileSidebarOpened,
 } from '@/composables/settings'
 import { useBroadcast } from '@/composables/useBroadcast.js'
-import { call, Sidebar, SidebarItem, Tooltip, Badge } from 'frappe-ui'
+import { call, Sidebar, SidebarItem, Badge } from 'frappe-ui'
 import { SignupBanner } from '@framework/ui/components/SignupBanner'
 import { TrialBanner } from '@framework/ui/components/TrialBanner'
 import {

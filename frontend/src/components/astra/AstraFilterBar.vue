@@ -19,9 +19,9 @@
           <span v-if="filter.value" class="font-semibold text-crm-primary">
             {{ filter.value }}
           </span>
+          <!-- crm.css .fchip svg { color: var(--faint) } even when .on -->
           <svg
-            class="size-3.5"
-            :class="filter.active ? 'text-crm-primary' : 'text-crm-faint'"
+            class="size-3.5 text-crm-faint"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -35,7 +35,7 @@
         <button
           v-if="showAdd"
           type="button"
-          class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm bg-crm-card px-2.5 text-crm-label font-medium text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+          class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm bg-crm-card pl-2.5 pr-2 text-crm-label text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
           @click="$emit('add-filter')"
         >
           <svg

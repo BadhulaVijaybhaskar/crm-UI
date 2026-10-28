@@ -381,19 +381,20 @@ defineExpose({
 }
 /*
  * Column widths tuned to Figma PNG landmarks (HTML auto-layout sits ~7–14px
- * right of PNG from Status onward). Name −7 / Status −7 / Activity +7.
+ * right of PNG from Status onward). Checkbox 34 matches crm.css; Name 200
+ * targets Status ink at PNG ~517 (207 overshot to ~524 / HTML).
  */
 .astra-leads-table :deep(th:nth-child(1)),
 .astra-leads-table :deep(td:nth-child(1)) {
-  width: 35px;
-  min-width: 35px;
-  max-width: 35px;
+  width: 34px;
+  min-width: 34px;
+  max-width: 34px;
 }
 .astra-leads-table :deep(th:nth-child(2)),
 .astra-leads-table :deep(td:nth-child(2)) {
-  width: 199px;
-  min-width: 199px;
-  max-width: 199px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
 }
 .astra-leads-table :deep(th:nth-child(3)),
 .astra-leads-table :deep(td:nth-child(3)) {

@@ -124,6 +124,19 @@ body {
   color: inherit !important;
 }
 
+/* frappe-ui SidebarItem adds ml-2 on the label wrapper; crm.css .nav li is
+   gap:10px only — kill the extra 8px so icons/labels/ext line up with PNG. */
+.astra-shell__sidebar [data-slot='sidebar-item'] > a > span.min-w-0.flex-1,
+.astra-shell__sidebar [data-slot='sidebar-item'] > button > span.min-w-0.flex-1 {
+  margin-left: 0 !important;
+}
+
+/* External-link lives in #suffix (sibling of the row control), matching
+   crm.css `.nav li .ext { margin-left: auto }`. */
+.astra-shell__sidebar [data-slot='sidebar-item-suffix']:not(:empty) {
+  margin-left: 0;
+}
+
 .astra-shell__sidebar [data-slot='sidebar-item'] .astra-nav-icon {
   color: var(--crm-nav-faint) !important;
 }
@@ -220,9 +233,8 @@ body {
   color: #c4d2da;
 }
 
-/* External-link glyph on Connect items — crm.css .nav li .ext */
+/* External-link glyph on Connect items — crm.css .nav li .ext (12×12) */
 .astra-shell__nav-ext {
-  margin-left: auto;
   width: 12px;
   height: 12px;
   color: var(--crm-nav-faint);
