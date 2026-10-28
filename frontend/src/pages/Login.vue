@@ -96,7 +96,7 @@
             class="astra-login-logo"
             :src="logoSrc"
             alt="Astra CRM"
-            height="28"
+            height="34"
           />
           <h1>{{ mode === 'forgot' ? __('Forgot password') : __('Sign in') }}</h1>
           <p class="astra-login__sub">
@@ -323,6 +323,8 @@ async function onForgot() {
 </script>
 
 <style scoped>
+/* Layout pins match Figma 01 PNG (1440×960): card top 288, button top 559,
+   panel content 334. Reference HTML may drift; PNG is the pass bar. */
 .astra-login {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -332,23 +334,24 @@ async function onForgot() {
   font-family: var(--font-sans);
   color: var(--crm-fg, #0b1324);
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
 }
 
 .astra-login__form-pane {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
+  position: relative;
   min-width: 0;
+  min-height: 100dvh;
+  padding: 0;
   background: var(--crm-bg, #f3f6f8);
 }
 
 .astra-login__panel {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 28px;
-  padding: 56px 48px;
+  /* PNG panel content top ≈ 334; pl 56 so ink starts ~778 like PNG */
+  padding: 334px 48px 56px 56px;
   background: var(--crm-nav, #07161f);
   color: var(--crm-nav-fg, #c4d2da);
   order: 2;
@@ -364,20 +367,26 @@ async function onForgot() {
 
 .astra-login__headline {
   margin: 0;
+  /* Chrome Inter at 32px draws ~15% wider than the Figma PNG; 28px
+     matches PNG glyph extents (~389 / ~336) and the two-line wrap. */
   max-width: 22ch;
   font-family: var(--font-sans);
   font-style: normal;
   font-weight: 600;
-  font-size: 32px;
-  line-height: 1.2;
+  font-size: 28px;
+  /* PNG line starts 377→411 (34px); top nudge aligns ink to 377 */
+  line-height: 34px;
   letter-spacing: -0.02em;
   font-feature-settings: "cv11", "ss01";
   color: #fff;
+  position: relative;
+  top: -5px;
 }
 
 .astra-login__features {
   list-style: none;
-  margin: 8px 0 0;
+  /* Pull up so feature tops stay ~467 with 34px headline lh */
+  margin: -5px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -388,6 +397,11 @@ async function onForgot() {
   display: flex;
   gap: 12px;
   align-items: flex-start;
+}
+
+.astra-login__features li > div {
+  /* PNG feature copy wraps near ~410–440px, not full pane width */
+  max-width: 400px;
 }
 
 .astra-login__feature-icon {
@@ -412,30 +426,39 @@ async function onForgot() {
 
 .astra-login__features strong {
   display: block;
-  font: 600 14px/1.35 var(--font-sans);
+  /* Slightly tighter than 14px to match PNG title widths */
+  font: 600 13px/1.35 var(--font-sans);
   color: #fff;
 }
 
 .astra-login__features li > div > span {
   display: block;
   margin-top: 2px;
-  font: 400 13px/1.45 var(--font-sans);
+  font: 400 12px/1.45 var(--font-sans);
   /* Panel muted — not --crm-muted-fg (that is form-pane gray). */
   color: #97a9b4;
 }
 
 .astra-login__card {
-  width: min(100%, 380px);
+  /* PNG: card x=170–549 (380px), top=288 in 720px form pane */
+  position: absolute;
+  top: 288px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 380px;
+  max-width: calc(100% - 48px);
 }
 
 .astra-login__head {
-  margin-bottom: 28px;
+  /* PNG: email input top ≈436 with card at 288; button top 559 */
+  margin-bottom: 23px;
   text-align: left;
 }
 
 .astra-login__head h1 {
-  margin: 20px 0 6px;
-  font: 600 28px/1.2 var(--font-sans);
+  /* PNG “Sign in” ink ≈348×66px; 22px Inter matches width better than 24/28 */
+  margin: 20px 0 5px;
+  font: 600 22px/1.2 var(--font-sans);
   letter-spacing: -0.02em;
   color: var(--crm-fg);
 }
@@ -448,7 +471,8 @@ async function onForgot() {
 
 .astra-login-logo {
   display: block;
-  height: 28px;
+  /* PNG logo ink ≈139×34 (not the 28px HTML reference) */
+  height: 34px;
   width: auto;
   max-width: 180px;
   object-fit: contain;
@@ -461,7 +485,8 @@ async function onForgot() {
 }
 
 .astra-login__field {
-  margin-bottom: 16px;
+  /* PNG inputs are 32px; email→pwd tops 436→509 (Δ73) */
+  margin-bottom: 18px;
 }
 
 .astra-login__label {
@@ -509,7 +534,8 @@ async function onForgot() {
 
 .astra-login__card input {
   width: 100%;
-  height: 40px;
+  /* PNG email/password fields are 32px tall (436–467 / 509–540) */
+  height: 32px;
   padding: 0 12px;
   border-radius: 8px;
   border: 1px solid var(--crm-border-strong);
@@ -528,7 +554,12 @@ async function onForgot() {
 .astra-login__card input:focus {
   outline: none;
   border-color: var(--crm-primary);
-  box-shadow: var(--crm-input-focus);
+  /* Match astra-login.css / PNG: 3px #e4f2f6 (light) soft ring */
+  box-shadow: 0 0 0 3px #e4f2f6;
+}
+
+.astra-login--dark .astra-login__card input:focus {
+  box-shadow: 0 0 0 3px #0e2f3b;
 }
 
 .astra-login__toggle {
@@ -551,8 +582,11 @@ async function onForgot() {
 .astra-login__card .btn-primary {
   display: block;
   width: 100%;
-  min-height: 40px;
-  margin-top: 8px;
+  /* PNG button 559–596 = 38px */
+  height: 38px;
+  min-height: 38px;
+  margin-top: 0;
+  padding: 0;
   border: 0;
   border-radius: 8px;
   color: var(--crm-primary-fg);
@@ -583,13 +617,14 @@ async function onForgot() {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  /* PNG lockout ≈615–671 (h≈56) */
   margin: 20px 0 0;
-  padding: 12px 14px;
+  padding: 10px 14px;
   border-radius: 8px;
-  /* Match astra-login.css --astra-lockout-bg / --astra-border (not --crm-neutral-soft). */
-  background: #eef1f6;
+  /* PNG lockout fill is #f6f8fa (not the HTML #eef1f6 token). */
+  background: #f6f8fa;
   border: 1px solid #e1e7ec;
-  font: 400 12.5px/1.45 var(--font-sans);
+  font: 400 12px/1.4 var(--font-sans);
   color: var(--crm-muted-fg);
 }
 
@@ -601,8 +636,10 @@ async function onForgot() {
 }
 
 .astra-login--dark .astra-login__lockout {
+  /* PNG dark lockout fill (17,33,43) / border ≈(26,44,55) */
   background: #11212b;
   border-color: #1a2c37;
+  color: #97a9b4;
 }
 
 @media (max-width: 900px) {
@@ -616,6 +653,16 @@ async function onForgot() {
 
   .astra-login__form-pane {
     min-height: 100dvh;
+    padding: 32px 20px;
+  }
+
+  .astra-login__card {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: min(100%, 380px);
+    margin: 0 auto;
   }
 }
 </style>

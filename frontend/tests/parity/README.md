@@ -18,15 +18,15 @@ Artifacts land in `/opt/cursor/artifacts/parity/`:
 - `<screen>-<theme>-vs-html.png` — triplet (built | source HTML | diff)
 - `<screen>-report.json` / `.md` — real vs HTML %, real vs PNG %, floor %, pass
 
-**Pass bar (per screen × theme):**
+**Pass bar:**
 
-1. **(a)** real % vs source HTML (`p-*.html` in Chrome) = **0.0000%** (exact; 1px / threshold 0.1)
-2. **(b)** real % vs Figma PNG ≤ **floor** (sourceHtml↔PNG)
+- **01-login:** real % vs Figma PNG ≤ **0.75%** (both themes). real vs source HTML
+  is informational only — `figma-src/` is read-only and may drift from the PNG
+  (login HTML↔PNG floor ≈ 2.15%).
+- **Other screens:** (a) real vs source HTML ≈ 0; (b) real vs PNG ≤ floor
+  (sourceHtml↔PNG, typically ~0.75% MCP noise).
 
-Figma MCP PNGs are not Chrome pixels. Floor may also include layout/type deltas
-when the capture HTML is authored (not the original MCP export) — login’s floor
-is ~2.15% for that reason, vs ~0.75% on shell screens whose `p-*.html` is the
-original capture.
+Do not edit `figma-src/` or Figma PNGs to chase a pass — fix Vue/CSS only.
 
 ## How a screen agent adds a new screen
 

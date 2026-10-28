@@ -264,3 +264,88 @@ export function realPercent(builtPath, refPath, masks = [], regions = []) {
   }
   return shellTotal ? (shellReal / shellTotal) * 100 : 0
 }
+
+/** Named residual buckets for login layout debugging (real-diff survivors). */
+const LOGIN_BUCKETS = [
+  { name: 'form-logo', x: 150, y: 270, w: 420, h: 60 },
+  { name: 'form-title', x: 150, y: 330, w: 420, h: 80 },
+  { name: 'form-fields', x: 150, y: 410, w: 420, h: 140 },
+  { name: 'form-button', x: 150, y: 545, w: 420, h: 60 },
+  { name: 'form-lockout', x: 150, y: 600, w: 420, h: 90 },
+  { name: 'panel-eyebrow', x: 760, y: 320, w: 480, h: 50 },
+  { name: 'panel-headline', x: 760, y: 365, w: 480, h: 90 },
+  { name: 'panel-features', x: 760, y: 455, w: 480, h: 200 },
+  { name: 'panel-icons', x: 770, y: 460, w: 40, h: 180 },
+]
+
+/**
+ * Cluster real-difference survivors into named layout buckets + leftover.
+ * Returns [{ name, pixels, pct }] sorted by pixels desc.
+ */
+export function residualBuckets(builtPath, refPath, masks = []) {
+  let built = loadPng(builtPath)
+  let ref = loadPng(refPath)
+  const width = ref.width
+  const height = ref.height
+  built = ensureSize(built, width, height)
+  const builtM = applyMasks(built, masks)
+  const refM = applyMasks(ref, masks)
+
+  const total = width * height
+  const threshold = 0.1
+  const diffMap = new Uint8Array(width * height)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (width * y + x) << 2
+      if (colorDist(builtM.data, refM.data, i, i) > threshold) {
+        diffMap[width * y + x] = 1
+      }
+    }
+  }
+  const survivors = []
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!diffMap[width * y + x]) continue
+      const bi = (width * y + x) << 2
+      let near = false
+      for (let dy = -1; dy <= 1 && !near; dy++) {
+        for (let dx = -1; dx <= 1 && !near; dx++) {
+          const nx = x + dx
+          const ny = y + dy
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
+          const fi = (width * ny + nx) << 2
+          if (colorDist(builtM.data, refM.data, bi, fi) <= threshold) near = true
+        }
+      }
+      if (!near) survivors.push({ x, y })
+    }
+  }
+
+  const counts = Object.fromEntries(LOGIN_BUCKETS.map((b) => [b.name, 0]))
+  counts.other = 0
+  for (const p of survivors) {
+    let hit = false
+    for (const b of LOGIN_BUCKETS) {
+      if (
+        p.x >= b.x &&
+        p.x < b.x + b.w &&
+        p.y >= b.y &&
+        p.y < b.y + b.h
+      ) {
+        counts[b.name]++
+        hit = true
+        // allow multi-bucket (icons ⊂ features); count in both
+      }
+    }
+    if (!hit) counts.other++
+  }
+
+  return Object.entries(counts)
+    .map(([name, pixels]) => ({
+      name,
+      pixels,
+      pct: (pixels / total) * 100,
+    }))
+    .filter((b) => b.pixels > 0)
+    .sort((a, b) => b.pixels - a.pixels)
+}
