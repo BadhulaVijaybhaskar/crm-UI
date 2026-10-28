@@ -1,47 +1,55 @@
 <template>
-  <!-- The notifications panel is absolutely positioned at `left: 100%`, so it
-       needs a positioning context that is not the Sidebar itself (Sidebar sets
-       overflow-x-hidden, which would clip the panel away).
-
-       It also paints the sidebar surface: Sidebar's own `bg-surface-sidebar` is
-       transparent in dark mode, and nothing behind it sets a background, so the
-       column falls through to the white page canvas. The token cannot be
-       overridden on the Sidebar element itself — `bg-surface-sidebar` is emitted
-       after `bg-surface-gray-1` in the utilities layer and would win. -->
-  <div class="relative flex h-full bg-surface-sidebar text-ink-gray-9">
+  <div class="relative flex h-full text-[color:var(--crm-nav-fg)]">
     <Sidebar
       v-model:collapsed="isSidebarCollapsed"
       :collapsible="!mobile"
       :width="mobile ? '260px' : '240px'"
       collapsed-width="64px"
-      class="border-r border-outline-gray-1"
     >
-      <div class="flex h-full flex-col p-2">
-        <UserDropdown :isCollapsed="isCollapsed" />
+      <div class="flex h-full flex-col">
+        <div
+          class="flex h-14 shrink-0 items-center gap-2 px-[18px]"
+          :class="isCollapsed && 'justify-center px-0'"
+        >
+          <img
+            :src="brandLogo"
+            :alt="brand.name || 'Astra CRM'"
+            class="object-contain"
+            :class="isCollapsed ? 'astra-brand-mark size-7' : 'h-6 max-w-[168px]'"
+          />
+          <button
+            v-if="!mobile && !isCollapsed"
+            type="button"
+            class="ml-auto inline-flex size-7 items-center justify-center rounded-crm-chip text-[color:var(--crm-nav-faint)] hover:text-white"
+            :aria-label="__('Collapse')"
+            @click="isSidebarCollapsed = true"
+          >
+            <CollapseSidebar class="size-4" />
+          </button>
+          <button
+            v-else-if="!mobile && isCollapsed"
+            type="button"
+            class="inline-flex size-7 items-center justify-center rounded-crm-chip text-[color:var(--crm-nav-faint)] hover:text-white"
+            :aria-label="__('Expand')"
+            @click="isSidebarCollapsed = false"
+          >
+            <CollapseSidebar class="size-4 [transform:rotateY(180deg)]" />
+          </button>
+        </div>
 
-        <!-- overflow-y-auto forces overflow-x to clip too, which would slice the
-             active row's shadow. Widen the scroll box to the sidebar edges and
-             pad the content back in so the shadow has room. -->
-        <div class="-mx-2 mt-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2">
+        <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5 pb-2">
           <SidebarItem
+            v-if="mobile"
             id="notifications-btn"
             :label="__('Notifications')"
-            :route="mobile ? { name: 'Notifications' } : undefined"
-            :active="mobile && activeItem === 'Notifications'"
+            :route="{ name: 'Notifications' }"
+            :active="activeItem === 'Notifications'"
             @click="onNotificationsClick"
           >
             <template #prefix>
-              <span class="relative grid size-4 place-items-center">
-                <NotificationsIcon class="size-4 text-ink-gray-7" />
-                <span
-                  v-if="isCollapsed && unreadNotificationsCount"
-                  class="absolute -right-1 -top-1 size-1.5 rounded-full bg-surface-gray-9 ring-1 ring-[var(--surface-gray-1)]"
-                />
-              </span>
+              <NotificationsIcon class="astra-nav-icon size-4" />
             </template>
-            <!-- Not in #suffix: that slot sits outside the button, so a click on
-                 the count would not toggle the panel. -->
-            <span class="flex-1 truncate text-sm leading-tighter">
+            <span class="flex-1 truncate text-[13px] font-medium">
               {{ __('Notifications') }}
             </span>
             <Badge
@@ -52,32 +60,18 @@
             />
           </SidebarItem>
 
-          <CollapsibleSection
-            v-for="section in allViews"
-            :key="section.name"
-            :label="section.name"
-            :hideLabel="section.hideLabel"
-            :opened="section.opened"
+          <section
+            v-for="section in navSections"
+            :key="section.id"
+            class="mt-1"
           >
-            <template #header="{ opened, hide, toggle }">
-              <SidebarLabel
-                v-if="!hide"
-                divider
-                class="mb-1 mt-4 select-none"
-                :class="!isCollapsed && 'cursor-pointer'"
-                @click="toggle()"
-              >
-                <span class="flex items-center gap-1.5">
-                  <span
-                    class="lucide-chevron-right -ml-0.5 size-4 shrink-0 text-ink-gray-9 transition-transform duration-300 ease-in-out"
-                    :class="{ 'rotate-90': opened }"
-                    aria-hidden="true"
-                  />
-                  <span class="truncate">{{ __(section.name) }}</span>
-                </span>
-              </SidebarLabel>
-            </template>
-            <nav class="flex flex-col gap-1">
+            <div
+              v-if="!section.hideLabel && !isCollapsed"
+              class="px-5 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[color:var(--crm-nav-faint)]"
+            >
+              {{ __(section.label) }}
+            </div>
+            <nav class="flex flex-col gap-px">
               <SidebarItem
                 v-for="link in section.views"
                 :key="link.key"
@@ -87,7 +81,7 @@
                 @click="onNavClick($event, link)"
               >
                 <template #prefix>
-                  <Icon :icon="link.icon" class="size-4 text-ink-gray-7" />
+                  <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
                 </template>
                 <Tooltip
                   :text="__(link.label)"
@@ -95,15 +89,65 @@
                   :hoverDelay="1500"
                   :disabled="isCollapsed"
                 >
-                  <span class="truncate text-sm">{{ __(link.label) }}</span>
+                  <span class="truncate text-[13px] font-medium">
+                    {{ __(link.label) }}
+                  </span>
                 </Tooltip>
+                <template v-if="link.external && !isCollapsed" #suffix>
+                  <span
+                    class="lucide-external-link size-3 text-[color:var(--crm-nav-faint)]"
+                    aria-hidden="true"
+                  />
+                </template>
+              </SidebarItem>
+            </nav>
+          </section>
+
+          <CollapsibleSection
+            v-for="section in extraViews"
+            :key="section.name"
+            :label="section.name"
+            :hideLabel="section.hideLabel"
+            :opened="section.opened"
+          >
+            <template #header="{ opened, hide, toggle }">
+              <div
+                v-if="!hide && !isCollapsed"
+                class="cursor-pointer px-5 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[color:var(--crm-nav-faint)]"
+                @click="toggle()"
+              >
+                <span class="inline-flex items-center gap-1">
+                  <span
+                    class="lucide-chevron-right size-3.5 transition-transform"
+                    :class="{ 'rotate-90': opened }"
+                    aria-hidden="true"
+                  />
+                  {{ __(section.name) }}
+                </span>
+              </div>
+            </template>
+            <nav class="flex flex-col gap-px">
+              <SidebarItem
+                v-for="link in section.views"
+                :key="link.key"
+                :route="link.to"
+                :label="__(link.label)"
+                :active="activeItem === link.key"
+                @click="selectItem($event, link.key)"
+              >
+                <template #prefix>
+                  <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
+                </template>
+                <span class="truncate text-[13px] font-medium">
+                  {{ __(link.label) }}
+                </span>
               </SidebarItem>
             </nav>
           </CollapsibleSection>
         </div>
 
-        <div v-if="!mobile" class="mt-auto flex flex-col gap-1 pt-2">
-          <div class="mb-1 flex flex-col gap-2">
+        <div class="mt-auto flex flex-col gap-1 px-2.5 pb-2 pt-2">
+          <div v-if="!mobile" class="mb-1 flex flex-col gap-2">
             <SignupBanner
               v-if="isDemoSite && isFCSite"
               :isSidebarCollapsed="isCollapsed"
@@ -119,44 +163,65 @@
               :isSidebarCollapsed="isCollapsed"
             />
           </div>
+
           <SidebarItem
-            v-if="isManager() && isDemoDataCreated"
+            v-if="!mobile && isManager() && isDemoDataCreated"
             :label="__('Clear Demo Data')"
-            class="!text-ink-red-5 hover:!bg-surface-red-2"
+            class="!text-crm-danger"
             @click="() => clearDemoData()"
           >
             <template #prefix>
               <BrushCleaningIcon class="size-4" />
             </template>
           </SidebarItem>
+
           <SidebarItem
-            v-if="isOnboardingStepsCompleted"
+            v-if="!mobile && isOnboardingStepsCompleted"
             :label="__('Help')"
             @click="toggleHelpModal"
           >
             <template #prefix>
-              <HelpIcon class="size-4 text-ink-gray-7" />
+              <HelpIcon class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
             </template>
           </SidebarItem>
+
           <SidebarItem
-            :label="isCollapsed ? __('Expand') : __('Collapse')"
-            @click="isSidebarCollapsed = !isSidebarCollapsed"
+            v-for="link in footerLinks"
+            :key="link.key"
+            :label="__(link.label)"
+            :active="link.action === 'settings' && showSettings"
+            @click="onNavClick($event, link)"
           >
             <template #prefix>
-              <CollapseSidebar
-                class="size-4 text-ink-gray-7 duration-300 ease-in-out"
-                :class="{ '[transform:rotateY(180deg)]': isCollapsed }"
-              />
+              <Icon :icon="link.icon" class="astra-nav-icon size-4 text-[color:var(--crm-nav-faint)]" />
             </template>
+            <span class="truncate text-[13px] font-medium">{{ __(link.label) }}</span>
           </SidebarItem>
+
+          <div
+            class="mt-1 flex items-center gap-2.5 border-t border-[color:var(--crm-nav-border)] px-1 py-3.5"
+            :class="isCollapsed && 'justify-center px-0'"
+          >
+            <AstraAvatar
+              :name="currentUser.full_name || currentUser.email || '?'"
+              size="md"
+            />
+            <div v-if="!isCollapsed" class="min-w-0 flex-1">
+              <div class="truncate text-[12.5px] font-semibold text-[#E8EDF5]">
+                {{ currentUser.full_name || currentUser.email }}
+              </div>
+              <div class="truncate text-[11.5px] text-[color:var(--crm-nav-faint)]">
+                {{ userRole }}
+              </div>
+            </div>
+            <AstraThemeToggle v-if="!isCollapsed" />
+          </div>
         </div>
       </div>
     </Sidebar>
     <Notifications v-if="!mobile" />
   </div>
 
-  <!-- Desktop only: on mobile, Settings lives in MobileLayout so closing the
-       drawer does not unmount the modal. -->
   <template v-if="!mobile">
     <Settings />
     <HelpModal
@@ -188,9 +253,6 @@ import EmailIcon from '@/components/Icons/EmailIcon.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import Icon from '@/components/Icon.vue'
 import PinIcon from '@/components/Icons/PinIcon.vue'
-import UserDropdown from '@/components/UserDropdown.vue'
-import { getNavigationItems } from '@/utils/navigation'
-import { openAstraConnect } from '@/utils/astraConnect'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
@@ -203,6 +265,14 @@ import NotificationsIcon from '@/components/Icons/NotificationsIcon.vue'
 import HelpIcon from '@/components/Icons/HelpIcon.vue'
 import Notifications from '@/components/Notifications.vue'
 import Settings from '@/components/Settings/Settings.vue'
+import AstraAvatar from '@/components/astra/AstraAvatar.vue'
+import AstraThemeToggle from '@/components/astra/AstraThemeToggle.vue'
+import {
+  getFooterNavItems,
+  getNavigationSections,
+} from '@/utils/navigation'
+import { openAstraConnect } from '@/utils/astraConnect'
+import { ASTRA_LOGO_ON_DARK, ASTRA_MARK } from '@/assets/brand'
 import { viewsStore } from '@/stores/views'
 import {
   unreadNotificationsCount,
@@ -210,13 +280,14 @@ import {
 } from '@/stores/notifications'
 import { usersStore } from '@/stores/users'
 import { sessionStore } from '@/stores/session'
+import { getSettings } from '@/stores/settings'
 import {
   showSettings,
   activeSettingsPage,
   mobileSidebarOpened,
 } from '@/composables/settings'
 import { useBroadcast } from '@/composables/useBroadcast.js'
-import { call, Sidebar, SidebarItem, SidebarLabel, Tooltip } from 'frappe-ui'
+import { call, Sidebar, SidebarItem, Tooltip, Badge } from 'frappe-ui'
 import { SignupBanner } from '@framework/ui/components/SignupBanner'
 import { TrialBanner } from '@framework/ui/components/TrialBanner'
 import {
@@ -240,49 +311,22 @@ const props = defineProps({
 })
 
 const route = useRoute()
-
 const { getPinnedViews, getPublicViews } = viewsStore()
 const { toggle: toggleNotificationPanel } = notificationsStore()
 const { capture } = useTelemetry()
 const { clearDemoData, isDemoDataCreated } = useDemoData()
 const { send } = useBroadcast()
+const { settings, brand } = getSettings()
 
 const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
-
-// The mobile drawer pins the sidebar open, so it is never visually collapsed
-// even when the stored rail state says otherwise.
 const isCollapsed = computed(() => isSidebarCollapsed.value && !props.mobile)
 
 const isFCSite = ref(window.is_fc_site)
 const isDemoSite = ref(window.is_demo_site)
 
-const links = getNavigationItems({ mobile: props.mobile })
-
-const allViews = computed(() => {
-  let _views = [
-    {
-      name: 'All Views',
-      hideLabel: true,
-      opened: true,
-      views: links.map((link) => navLinkFromItem(link)),
-    },
-  ]
-  if (getPublicViews().length) {
-    _views.push({
-      name: 'Public Views',
-      opened: true,
-      views: parseView(getPublicViews()),
-    })
-  }
-
-  if (getPinnedViews().length) {
-    _views.push({
-      name: 'Pinned Views',
-      opened: true,
-      views: parseView(getPinnedViews()),
-    })
-  }
-  return _views
+const brandLogo = computed(() => {
+  if (settings.value?.brand_logo) return settings.value.brand_logo
+  return isCollapsed.value ? ASTRA_MARK : ASTRA_LOGO_ON_DARK
 })
 
 function navLinkFromItem(link) {
@@ -311,24 +355,51 @@ function navLinkFromItem(link) {
   }
 }
 
+const navSections = computed(() =>
+  getNavigationSections({ mobile: props.mobile }).map((section) => ({
+    ...section,
+    views: section.views.map((link) => navLinkFromItem(link)),
+  })),
+)
+
+const footerLinks = computed(() =>
+  getFooterNavItems({ mobile: props.mobile }).map((link) => navLinkFromItem(link)),
+)
+
+const extraViews = computed(() => {
+  const views = []
+  if (getPublicViews().length) {
+    views.push({
+      name: 'Public Views',
+      opened: true,
+      views: parseView(getPublicViews()),
+    })
+  }
+  if (getPinnedViews().length) {
+    views.push({
+      name: 'Pinned Views',
+      opened: true,
+      views: parseView(getPinnedViews()),
+    })
+  }
+  return views
+})
+
 function parseView(views) {
-  return views.map((view) => {
-    return {
-      label: view.label,
-      icon: getIcon(view.route_name, view.icon),
-      key: view.name,
-      to: {
-        name: view.route_name,
-        params: { viewType: view.type || 'list' },
-        query: { view: view.name },
-      },
-    }
-  })
+  return views.map((view) => ({
+    label: view.label,
+    icon: getIcon(view.route_name, view.icon),
+    key: view.name,
+    to: {
+      name: view.route_name,
+      params: { viewType: view.type || 'list' },
+      query: { view: view.name },
+    },
+  }))
 }
 
 function onNavClick(event, link) {
   if (link.connect) {
-    // External Connect destinations must not steal the active nav highlight.
     openAstraConnect(link.connect)
     if (props.mobile) mobileSidebarOpened.value = false
     return
@@ -343,7 +414,6 @@ function onNavClick(event, link) {
 
 function getIcon(routeName, icon) {
   if (icon) return icon
-
   switch (routeName) {
     case 'Leads':
       return LeadsIcon
@@ -362,24 +432,17 @@ function getIcon(routeName, icon) {
   }
 }
 
-// A saved view's key is its name; a plain nav item's key is its route name.
-// Unmapped routes (Legal notices, etc.) clear the highlight.
 function currentRouteKey() {
   const key = route.query.view || route.name
-  const known = links.some(
-    (link) => link.route === key || link.route === route.name,
-  )
-  const knownView = allViews.value
-    ?.flatMap((s) => s.views || [])
-    .some((v) => v.key === key)
-  if (!known && !knownView && key !== 'Notifications') return null
+  const flat = [
+    ...navSections.value.flatMap((s) => s.views || []),
+    ...extraViews.value.flatMap((s) => s.views || []),
+  ]
+  const known = flat.some((v) => v.key === key || v.key === route.name)
+  if (!known && key !== 'Notifications') return null
   return key
 }
 
-// Set the highlight on click rather than waiting for the route, since route
-// components are lazily imported and the first visit waits on a chunk fetch.
-// Modified clicks open a new tab without navigating this one, so they must not
-// move the highlight here.
 const activeItem = ref(currentRouteKey())
 
 function selectItem(event, key) {
@@ -393,11 +456,7 @@ function selectItem(event, key) {
     return
   }
   activeItem.value = key
-  // Selecting the row for the route already open leaves the URL unchanged, so
-  // the drawer's navigation watcher never fires. Close it here too.
-  if (props.mobile) {
-    mobileSidebarOpened.value = false
-  }
+  if (props.mobile) mobileSidebarOpened.value = false
 }
 
 watch(
@@ -418,34 +477,22 @@ function toggleHelpModal() {
   minimize.value = !showHelpModal.value
 }
 
-// onboarding
 const { user } = sessionStore()
-const { users, isManager } = usersStore()
+const { users, isManager, getUser } = usersStore()
 const { isOnboardingStepsCompleted, setUp } = useOnboarding('frappecrm')
 const { flushPendingSteps } = useCrmOnboarding()
 
-// The onboarding composable persists the checklist as a positional
-// [{name, completed}] list, seeds it from the current steps ONLY when empty,
-// and never adds newly introduced steps to an existing list. So once a step is
-// added (e.g. connect_your_email), a saved list is missing it — skip / reset
-// / complete become no-ops (findIndex returns -1) and the total is wrong.
-//
-// Reconcile the saved list to the current steps while never losing progress:
-//   - operate on localStorage, the copy the composable actually reads on load
-//     (checking the server instead would let a reconciled browser and a stale
-//     browser keep overwriting each other);
-//   - order the currently-visible steps to match the UI and preserve their
-//     completion by name; new steps start incomplete;
-//   - keep steps that are saved but not currently visible (e.g. role-only steps
-//     when the role is temporarily absent) so a role change can't erase them;
-//   - skip entirely once onboarding is finished, so a completed checklist is
-//     never rewritten or reopened.
-// It is idempotent: an already-reconciled list produces no change.
+const currentUser = computed(() => getUser() || {})
+const userRole = computed(() => {
+  const u = currentUser.value
+  if (u?.role_profile_name) return u.role_profile_name
+  if (isManager()) return __('Manager')
+  return __('Sales user')
+})
+
 const ONBOARDING_KEY = 'frappecrm_onboarding_status'
 
 async function reconcileOnboarding(currentSteps) {
-  // `user` is the unwrapped session user id string (Pinia unwraps the ref on
-  // destructure) — the same key the composable uses. Not user.value.
   let store
   try {
     store = JSON.parse(localStorage.getItem('onboardingStatus') || '{}')
@@ -453,8 +500,8 @@ async function reconcileOnboarding(currentSteps) {
     return
   }
   const persisted = store?.[user]?.[ONBOARDING_KEY]
-  if (!persisted?.length) return // composable seeds an empty list itself
-  if (persisted.every((s) => s.completed)) return // finished: leave untouched
+  if (!persisted?.length) return
+  if (persisted.every((s) => s.completed)) return
 
   const doneByName = new Map(persisted.map((s) => [s.name, s.completed]))
   const currentNames = new Set(currentSteps.map((s) => s.name))
@@ -462,9 +509,6 @@ async function reconcileOnboarding(currentSteps) {
     name: s.name,
     completed: doneByName.get(s.name) ?? false,
   }))
-  // Preserve saved-but-not-visible steps (e.g. manager-only steps for a user
-  // whose role was removed) so their completion survives role changes.
-  // Drop steps that no longer exist so they can't block completion.
   const knownNames = new Set(steps.map((s) => s.name))
   const hidden = persisted.filter(
     (s) => !currentNames.has(s.name) && knownNames.has(s.name),
@@ -490,9 +534,6 @@ async function reconcileOnboarding(currentSteps) {
   } catch {
     return
   }
-  // Reload once so the composable re-reads the reconciled list. Only reached
-  // while onboarding is unfinished (completed users returned above), so a
-  // finished checklist is never reopened.
   window.location.reload()
 }
 
@@ -504,8 +545,6 @@ async function getFirstDeal() {
   return await getFirstRecord('firstDeal', 'crm.api.onboarding.get_first_deal')
 }
 
-// the cached id may point to a record that was deleted (or a lead that was
-// converted) since it was stored, so let the server validate it and fall back
 async function getFirstRecord(key, method) {
   let storageKey = key + user
   let cached = localStorage.getItem(storageKey)
@@ -623,14 +662,11 @@ onMounted(async () => {
     return true
   })
 
-  // Bring an existing saved checklist in line with the current steps (adds
-  // newly introduced steps, preserves completion). No-op when already aligned.
   await reconcileOnboarding(filteredSteps)
   setUp(filteredSteps)
   flushPendingSteps()
 })
 
-// help center
 const articles = ref([
   {
     title: __('Introduction'),
