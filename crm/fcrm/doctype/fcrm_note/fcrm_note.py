@@ -46,6 +46,9 @@ class FCRMNote(Document):
 			"content",
 			"reference_doctype",
 			"reference_docname",
+			"pinned",
+			"pinned_by",
+			"pinned_on",
 			"owner",
 			"modified",
 		]
