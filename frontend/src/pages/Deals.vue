@@ -27,7 +27,9 @@
         @click="showDealModal = true"
       />
     </template>
-    <div class="astra-records-vc border-b border-crm-border bg-crm-card">
+    <div
+      class="astra-records-vc flex flex-wrap items-center justify-between gap-2 border-b border-crm-border bg-crm-card px-crm-page-x py-2.5"
+    >
       <ViewControls
         ref="viewControls"
         v-model="deals"
@@ -41,6 +43,17 @@
           groupByExclude: ['naming_series', 'docstatus'],
         }"
       />
+      <div
+        v-if="viewType !== 'kanban' && canExportDeals"
+        class="flex shrink-0 items-center gap-2"
+      >
+        <AstraButton
+          variant="secondary"
+          size="sm"
+          :label="__('Export')"
+          @click="exportDealsCsv"
+        />
+      </div>
     </div>
     <AstraDealsBoard
       v-if="route.params.viewType == 'kanban'"
@@ -120,6 +133,7 @@ import DealModal from '@/components/Modals/DealModal.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
 import { useRecordsViews } from '@/composables/useRecordsViews'
+import { canUseCrmCsvExport, crmCsvExportUrl } from '@/utils/csvExport'
 import { getMeta } from '@/stores/meta'
 import { usersStore } from '@/stores/users'
 import { organizationsStore } from '@/stores/organizations'
@@ -196,6 +210,19 @@ const {
 })
 
 const filterChips = computed(() => filterChipsFromList())
+const canExportDeals = computed(() => canUseCrmCsvExport('CRM Deal'))
+
+function exportDealsCsv() {
+  const fields = (deals.value?.data?.columns || []).map((c) => c.key)
+  window.location.href = crmCsvExportUrl({
+    doctype: 'CRM Deal',
+    fields,
+    filters: deals.value?.params?.filters || {},
+    orderBy: deals.value?.params?.order_by,
+    limit: deals.value?.data?.total_count || 100,
+    title: 'CRM Deal',
+  })
+}
 
 // Rows
 const rows = computed(() => {

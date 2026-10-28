@@ -27,7 +27,9 @@
         @click="showLeadModal = true"
       />
     </template>
-    <div class="astra-records-vc border-b border-crm-border bg-crm-card">
+    <div
+      class="astra-records-vc flex flex-wrap items-center justify-between gap-2 border-b border-crm-border bg-crm-card px-crm-page-x py-2.5"
+    >
       <ViewControls
         ref="viewControls"
         v-model="leads"
@@ -42,7 +44,30 @@
           groupByExclude: ['naming_series', 'docstatus'],
         }"
       />
+      <div
+        v-if="viewType !== 'kanban'"
+        class="flex shrink-0 items-center gap-2"
+      >
+        <AstraButton
+          variant="secondary"
+          size="sm"
+          :label="__('Import')"
+          @click="showCrmCsvImport = true"
+        />
+        <AstraButton
+          v-if="canExportLeads"
+          variant="secondary"
+          size="sm"
+          :label="__('Export')"
+          @click="exportLeadsCsv"
+        />
+      </div>
     </div>
+    <CrmCsvImportModal
+      v-if="showCrmCsvImport"
+      v-model="showCrmCsvImport"
+      doctype="CRM Lead"
+    />
   <KanbanView
     v-if="route.params.viewType == 'kanban'"
     v-model="leads"
@@ -300,8 +325,10 @@ import KanbanActivityCounts from '@/components/Kanban/KanbanActivityCounts.vue'
 import LeadModal from '@/components/Modals/LeadModal.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
+import CrmCsvImportModal from '@/components/Modals/CrmCsvImportModal.vue'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { useRecordsViews } from '@/composables/useRecordsViews'
+import { canUseCrmCsvExport, crmCsvExportUrl } from '@/utils/csvExport'
 import { getMeta } from '@/stores/meta'
 import { globalStore } from '@/stores/global'
 import { usersStore } from '@/stores/users'
@@ -370,6 +397,20 @@ const {
 })
 
 const filterChips = computed(() => filterChipsFromList())
+const showCrmCsvImport = ref(false)
+const canExportLeads = computed(() => canUseCrmCsvExport('CRM Lead'))
+
+function exportLeadsCsv() {
+  const fields = (leads.value?.data?.columns || []).map((c) => c.key)
+  window.location.href = crmCsvExportUrl({
+    doctype: 'CRM Lead',
+    fields,
+    filters: leads.value?.params?.filters || { converted: 0 },
+    orderBy: leads.value?.params?.order_by,
+    limit: leads.value?.data?.total_count || 100,
+    title: 'CRM Lead',
+  })
+}
 
 function getRow(name, field) {
   function getValue(value) {
