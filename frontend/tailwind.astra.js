@@ -2,7 +2,7 @@
  * Astra CRM — Tailwind 3 theme extension. Merge into frontend/tailwind.config.js:
  *
  *   import astra from './tailwind.astra.js'
- *   export default { presets: [/* existing UI-kit preset */], …, theme: { extend: astra.extend } }
+ *   export default { presets: [frappeUIPreset], theme: { extend: astra.extend } }
  *
  * Classes are prefixed `crm-` so they never shadow the UI-kit preset names (gray, ink-*, surface-*, outline-*).
  * Dark mode needs no `dark:` variants: the CSS variables in astra-crm-tokens.css swap under [data-theme="dark"].

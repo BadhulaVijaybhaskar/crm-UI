@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Astra CRM shell preview</title>
+    <style>
+      /* inlined from astra-crm-tokens.css — official Figma v1 */
+      :root {
+        --crm-bg: #f3f6f8;
+        --crm-card: #ffffff;
+        --crm-muted: #f6f8fa;
+        --crm-border: #e1e7ec;
+        --crm-border-strong: #d0d9e0;
+        --crm-neutral-soft: #eef1f6;
+        --crm-row-hover: #f7f9fc;
+        --crm-row-selected: #e4f2f6;
+        --crm-fg: #0b1324;
+        --crm-muted-fg: #5b6478;
+        --crm-faint: #8a94a6;
+        --crm-primary: #0a7393;
+        --crm-primary-hover: #08627e;
+        --crm-primary-soft: #e4f2f6;
+        --crm-primary-fg: #ffffff;
+        --crm-ring: #0a7393;
+        --crm-success: #0f8a5f;
+        --crm-success-soft: #e5f5ee;
+        --crm-warning: #a86a0b;
+        --crm-warning-soft: #fff3dc;
+        --crm-danger: #c93b3b;
+        --crm-danger-soft: #fdecec;
+        --crm-nav: #07161f;
+        --crm-nav-fg: #c4d2da;
+        --crm-nav-faint: #748a97;
+        --crm-nav-active: #0f2a36;
+        --crm-nav-border: #122631;
+        --crm-nav-indicator: #2dd4bf;
+        --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+      }
+      [data-theme='dark'] {
+        --crm-bg: #081218;
+        --crm-card: #0d1a22;
+        --crm-muted: #11212b;
+        --crm-border: #1a2c37;
+        --crm-border-strong: #26404d;
+        --crm-neutral-soft: #152733;
+        --crm-row-hover: #11212b;
+        --crm-row-selected: #0c2530;
+        --crm-fg: #e6eef2;
+        --crm-muted-fg: #97a9b4;
+        --crm-faint: #6b808c;
+        --crm-primary: #3fbad9;
+        --crm-primary-hover: #62c8e2;
+        --crm-primary-soft: #0e2f3b;
+        --crm-primary-fg: #04141b;
+        --crm-ring: #6ccde6;
+        --crm-success: #4ade9e;
+        --crm-success-soft: #0e2a22;
+        --crm-warning: #fbbf24;
+        --crm-warning-soft: #2c2210;
+        --crm-danger: #f87171;
+        --crm-danger-soft: #321a1e;
+        --crm-nav: #050f15;
+        --crm-nav-fg: #c4d2da;
+        --crm-nav-faint: #66808d;
+        --crm-nav-active: #0f2733;
+        --crm-nav-border: #10212b;
+        --crm-nav-indicator: #2dd4bf;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 13px/1.45 var(--font-sans);
+        background: var(--crm-bg);
+        color: var(--crm-fg);
+        overflow: hidden;
+      }
+      .shell { display: flex; height: 100dvh; width: 100vw; overflow: hidden; }
+      .nav {
+        width: 240px; background: var(--crm-nav); color: var(--crm-nav-fg);
+        border-right: 1px solid var(--crm-nav-border); display: flex; flex-direction: column;
+      }
+      .brand { height: 56px; display: flex; align-items: center; padding: 0 18px; font-weight: 700; color: #fff; gap: 8px; }
+      .brand-mark {
+        width: 24px; height: 24px; border-radius: 6px;
+        background: linear-gradient(135deg, #0a7393, #2dd4bf);
+      }
+      .sec { padding: 12px 20px 4px; font: 600 10.5px/1.3 var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--crm-nav-faint); }
+      .item {
+        height: 32px; margin: 0 10px; padding: 0 10px; border-radius: 6px;
+        display: flex; align-items: center; gap: 10px; font-weight: 500; color: var(--crm-nav-fg);
+      }
+      .item.active { background: var(--crm-nav-active); color: #fff; box-shadow: inset 3px 0 0 var(--crm-nav-indicator); }
+      .item .ico { width: 16px; height: 16px; opacity: .75; }
+      .item.active .ico { color: var(--crm-nav-indicator); opacity: 1; }
+      .footer {
+        margin-top: auto; border-top: 1px solid var(--crm-nav-border);
+        padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+      }
+      .avatar {
+        width: 30px; height: 30px; border-radius: 999px; background: var(--crm-primary-soft);
+        color: var(--crm-primary); display: grid; place-items: center; font: 700 10.5px var(--font-sans);
+      }
+      .main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--crm-bg); }
+      .topbar {
+        height: 52px; padding: 0 24px; display: flex; align-items: center; gap: 10px;
+        background: var(--crm-card); border-bottom: 1px solid var(--crm-border);
+      }
+      .search {
+        width: 420px; height: 34px; border-radius: 8px; background: var(--crm-muted);
+        border: 1px solid var(--crm-border); padding: 0 10px; display: flex; align-items: center;
+        gap: 8px; color: var(--crm-faint); font-size: 12.5px;
+      }
+      .kbd {
+        margin-left: auto; font: 600 11px var(--font-sans); color: var(--crm-muted-fg);
+        border: 1px solid var(--crm-border-strong); border-radius: 4px; padding: 1px 5px; background: var(--crm-card);
+      }
+      .btn {
+        height: 28px; padding: 0 13px; border-radius: 7px; border: 0; font: 600 12.5px var(--font-sans);
+        background: var(--crm-primary); color: var(--crm-primary-fg); cursor: pointer;
+      }
+      .icon-btn {
+        width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--crm-border);
+        background: var(--crm-card); color: var(--crm-muted-fg);
+      }
+      .content { flex: 1; overflow: auto; }
+      .page-h { padding: 18px 24px 14px; display: flex; justify-content: space-between; align-items: flex-start; }
+      .page-h h1 { margin: 0; font: 600 20px/1.2 var(--font-sans); letter-spacing: -0.015em; }
+      .page-h p { margin: 4px 0 0; color: var(--crm-muted-fg); }
+      .tabs { padding: 0 24px; display: flex; gap: 2px; border-bottom: 1px solid var(--crm-border); background: var(--crm-card); }
+      .tab { height: 38px; padding: 0 10px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--crm-muted-fg); font: 500 13px var(--font-sans); }
+      .tab.active { color: var(--crm-fg); font-weight: 600; border-bottom-color: var(--crm-primary); }
+      .filters { padding: 10px 24px; display: flex; gap: 8px; border-bottom: 1px solid var(--crm-border); background: var(--crm-card); }
+      .chip { height: 28px; padding: 0 8px 0 10px; border-radius: 7px; border: 1px solid var(--crm-border-strong); background: var(--crm-card); font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; }
+      .chip strong { font-weight: 600; }
+      table { width: 100%; border-collapse: collapse; background: var(--crm-card); }
+      th { height: 34px; padding: 0 10px; text-align: left; font: 600 11.5px var(--font-sans); color: var(--crm-muted-fg); background: var(--crm-muted); border-bottom: 1px solid var(--crm-border); }
+      td { height: 44px; padding: 0 10px; font-size: 12.5px; border-bottom: 1px solid var(--crm-border); white-space: nowrap; }
+      tr:hover td { background: var(--crm-row-hover); }
+      .person { display: flex; align-items: center; gap: 9px; }
+      .person .av { width: 26px; height: 26px; border-radius: 999px; background: var(--crm-primary-soft); color: var(--crm-primary); display: grid; place-items: center; font: 700 10.5px var(--font-sans); }
+      .person .name { font-weight: 600; }
+      .person .sub { font-size: 11.5px; color: var(--crm-muted-fg); line-height: 1.3; }
+      .pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 6px; font: 600 11.5px var(--font-sans); }
+      .pill.ok { background: var(--crm-success-soft); color: var(--crm-success); }
+      .pill.warn { background: var(--crm-warning-soft); color: var(--crm-warning); }
+      .pill.mute { background: var(--crm-neutral-soft); color: var(--crm-muted-fg); }
+      .pill.info { background: var(--crm-primary-soft); color: var(--crm-primary); }
+      .dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+      .board { display: flex; gap: 12px; padding: 0 24px 24px; overflow-x: auto; }
+      .col { width: 258px; flex: 0 0 258px; background: var(--crm-muted); border: 1px solid var(--crm-border); border-radius: 10px; }
+      .col-h { padding: 10px 12px 8px; border-bottom: 1px solid var(--crm-border); }
+      .col-h .sub { margin-top: 4px; font-size: 11.5px; color: var(--crm-muted-fg); }
+      .cards { padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+      .card { background: var(--crm-card); border: 1px solid var(--crm-border); border-radius: 8px; padding: 10px 11px; display: flex; flex-direction: column; gap: 7px; }
+      .card .t { font: 600 12.5px var(--font-sans); }
+      .card .v { font: 700 13px var(--font-sans); }
+      .card .f { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--crm-muted-fg); }
+      .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 0 24px 16px; }
+      .kpi { background: var(--crm-card); border: 1px solid var(--crm-border); border-radius: 10px; padding: 12px 14px; }
+      .kpi .l { color: var(--crm-muted-fg); font-size: 12px; }
+      .kpi .n { margin-top: 4px; font: 600 24px/1.1 var(--font-sans); letter-spacing: -0.02em; }
+      .kpi .d { margin-top: 4px; font-size: 11.5px; color: var(--crm-success); font-weight: 600; }
+      .panel { margin: 0 24px 24px; background: var(--crm-card); border: 1px solid var(--crm-border); border-radius: 10px; padding: 14px; }
+      .panel h3 { margin: 0 0 10px; font: 600 14px var(--font-sans); }
+      .hidden { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="nav">
+        <div class="brand"><span class="brand-mark"></span><span>Astra CRM</span></div>
+        <div class="item" data-nav="dashboard"><span class="ico">▣</span>Dashboard</div>
+        <div class="sec">Records</div>
+        <div class="item" data-nav="leads"><span class="ico">◎</span>Leads</div>
+        <div class="item" data-nav="contacts"><span class="ico">☺</span>Contacts</div>
+        <div class="item" data-nav="companies"><span class="ico">⌂</span>Companies</div>
+        <div class="item" data-nav="deals"><span class="ico">◇</span>Deals</div>
+        <div class="sec">Activity</div>
+        <div class="item"><span class="ico">✓</span>Tasks</div>
+        <div class="item"><span class="ico">◔</span>Activities</div>
+        <div class="sec">Insights</div>
+        <div class="item"><span class="ico">▤</span>Reports</div>
+        <div class="sec">Astra Connect</div>
+        <div class="item"><span class="ico">☎</span>AI Calling</div>
+        <div class="item"><span class="ico">✉</span>Messages</div>
+        <div class="item"><span class="ico">⚙</span>AI Employees</div>
+        <div style="margin-top:auto"></div>
+        <div class="item"><span class="ico">⚙</span>Settings</div>
+        <div class="footer">
+          <div class="avatar">RM</div>
+          <div style="min-width:0;flex:1">
+            <div style="font:600 12.5px var(--font-sans);color:#E8EDF5">Rohan Mehta</div>
+            <div style="font-size:11.5px;color:var(--crm-nav-faint)">Sales user</div>
+          </div>
+          <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme" style="width:30px;height:30px;border-radius:7px;border-color:var(--crm-nav-border);background:transparent;color:var(--crm-nav-faint)">◐</button>
+        </div>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <div class="search"><span>⌕</span><span>Search leads, deals, contacts, companies</span><span class="kbd">Ctrl K</span></div>
+          <div style="flex:1"></div>
+          <button class="btn">+ New</button>
+          <button class="icon-btn">🔔</button>
+        </div>
+        <div class="content">
+          <section id="view-leads">
+            <div class="page-h">
+              <div><h1>Leads</h1><p>Manager view · you and your team</p></div>
+              <button class="btn">+ New lead</button>
+            </div>
+            <div class="tabs">
+              <button class="tab active">All leads</button>
+              <button class="tab">My open leads</button>
+              <button class="tab">Hot</button>
+            </div>
+            <div class="filters">
+              <span class="chip">Status: <strong>New, Contacted…</strong> ×</span>
+              <span class="chip">+ Filter</span>
+            </div>
+            <table>
+              <thead><tr><th></th><th>Name</th><th>Status</th><th>Temp</th><th>Owner</th></tr></thead>
+              <tbody>
+                <tr><td>☐</td><td><div class="person"><span class="av">MI</span><div><div class="name">Meera Iyer</div><div class="sub">Lumen Logistics</div></div></div></td><td><span class="pill warn"><span class="dot"></span>Contacted</span></td><td><span class="pill" style="color:var(--crm-danger)"><span class="dot"></span>Hot</span></td><td>RM</td></tr>
+                <tr><td>☐</td><td><div class="person"><span class="av">AK</span><div><div class="name">Arjun Kapoor</div><div class="sub">Kaveri Foods</div></div></div></td><td><span class="pill mute"><span class="dot"></span>New</span></td><td><span class="pill warn"><span class="dot"></span>Warm</span></td><td>SK</td></tr>
+                <tr><td>☐</td><td><div class="person"><span class="av">TB</span><div><div class="name">Tara Bhat</div><div class="sub">Northwind</div></div></div></td><td><span class="pill info"><span class="dot"></span>Nurture</span></td><td><span class="pill mute"><span class="dot"></span>Cold</span></td><td>RM</td></tr>
+                <tr><td>☐</td><td><div class="person"><span class="av">NS</span><div><div class="name">Nisha Shah</div><div class="sub">Orbit Systems</div></div></div></td><td><span class="pill ok"><span class="dot"></span>Qualified</span></td><td><span class="pill warn"><span class="dot"></span>Warm</span></td><td>AP</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="view-deals" class="hidden">
+            <div class="page-h">
+              <div><h1>Deals</h1><p>Open pipeline · board view</p></div>
+              <button class="btn">+ New deal</button>
+            </div>
+            <div class="tabs">
+              <button class="tab active">All open deals</button>
+              <button class="tab">Mine</button>
+            </div>
+            <div class="filters"><span class="chip">Owner: <strong>Me</strong> ×</span></div>
+            <div class="board" style="margin-top:16px">
+              <div class="col">
+                <div class="col-h"><span class="pill mute">Qualification</span> <span style="float:right;color:var(--crm-muted-fg)">4</span><div class="sub">₹18.2 L · 40%</div></div>
+                <div class="cards">
+                  <div class="card"><div class="t">Orbit Systems</div><div class="v">₹4,80,000</div><div class="f"><span class="av" style="width:20px;height:20px;border-radius:999px;background:var(--crm-primary-soft);color:var(--crm-primary);display:grid;place-items:center;font:700 9px var(--font-sans)">RM</span>Rohan · 12 Nov</div></div>
+                  <div class="card"><div class="t">Northwind</div><div class="v">₹2,10,000</div><div class="f">SK · 18 Nov</div></div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="col-h"><span class="pill info">Demo/Making</span> <span style="float:right;color:var(--crm-muted-fg)">3</span><div class="sub">₹22.4 L · 55%</div></div>
+                <div class="cards">
+                  <div class="card"><div class="t">Kaveri Foods</div><div class="v">₹9,50,000</div><div class="f">RM · Demo 12:30</div></div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="col-h"><span class="pill warn">Negotiation</span> <span style="float:right;color:var(--crm-muted-fg)">2</span><div class="sub">₹12.4 L · 70%</div></div>
+                <div class="cards">
+                  <div class="card"><div class="t">Lumen Logistics</div><div class="v">₹12,40,000</div><div class="f">RM · 08 Nov</div></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="view-dashboard" class="hidden">
+            <div class="page-h">
+              <div><h1>Good morning, Rohan</h1><p>Your pipeline at a glance</p></div>
+            </div>
+            <div class="kpis">
+              <div class="kpi"><div class="l">Open leads</div><div class="n">42</div><div class="d">↑ 6 new since yesterday</div></div>
+              <div class="kpi"><div class="l">Open deals</div><div class="n">14</div><div class="d">↑ ₹8.2 L this week</div></div>
+              <div class="kpi"><div class="l">Tasks due</div><div class="n">7</div><div class="d" style="color:var(--crm-danger)">2 overdue</div></div>
+              <div class="kpi"><div class="l">Won MTD</div><div class="n">₹31 L</div><div class="d">↑ 12%</div></div>
+            </div>
+            <div class="panel">
+              <h3>Your pipeline</h3>
+              <div style="display:flex;gap:8px;height:10px;border-radius:999px;overflow:hidden;background:var(--crm-neutral-soft)">
+                <div style="flex:3;background:var(--crm-primary)"></div>
+                <div style="flex:2;background:#14b8a6"></div>
+                <div style="flex:2;background:#d99a1e"></div>
+                <div style="flex:1;background:var(--crm-success)"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <script>
+      const params = new URLSearchParams(location.search)
+      const view = params.get('view') || 'leads'
+      const theme = params.get('theme') || 'light'
+      document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light')
+      document.querySelectorAll('[id^="view-"]').forEach((el) => el.classList.add('hidden'))
+      const section = document.getElementById('view-' + view)
+      if (section) section.classList.remove('hidden')
+      document.querySelectorAll('[data-nav]').forEach((el) => {
+        el.classList.toggle('active', el.dataset.nav === view)
+      })
+      document.getElementById('theme-toggle').onclick = () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+        location.search = '?view=' + view + '&theme=' + next
+      }
+    </script>
+  </body>
+</html>

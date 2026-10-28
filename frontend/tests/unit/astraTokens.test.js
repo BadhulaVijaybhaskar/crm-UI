@@ -26,9 +26,11 @@ describe('Astra CRM official tokens', () => {
 
   it('keeps the frappe-ui remapping block commented off', () => {
     expect(css).toMatch(/OPTIONAL: align stock UI-kit/)
-    const optional = css.slice(css.indexOf('OPTIONAL: align stock UI-kit'))
-    expect(optional).toMatch(/^\/\*/)
-    expect(optional).not.toMatch(/\*\/\s*:root\s*\{/)
+    expect(css).toMatch(
+      /\/\*[\s\S]*--surface-base:\s*var\(--crm-bg\)[\s\S]*\*\//,
+    )
+    const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '')
+    expect(withoutComments).not.toMatch(/--surface-base:\s*var\(--crm-bg\)/)
   })
 
   it('defines light and dark via data-theme', () => {
