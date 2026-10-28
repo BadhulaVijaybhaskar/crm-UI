@@ -1,53 +1,139 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <Breadcrumbs :items="breadcrumbs">
-        <template #prefix="{ item }">
-          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
-        </template>
-      </Breadcrumbs>
-    </template>
-    <template v-if="!errorTitle" #right-header>
-      <CustomActions
-        v-if="document._actions?.length"
-        :actions="document._actions"
-      />
-      <CustomActions
-        v-if="document.actions?.length"
-        :actions="document.actions"
-      />
-      <EnrichFromWebsite
-        doctype="CRM Deal"
-        :docname="dealId"
-        :website="doc.website"
-        @done="onEnriched"
-      />
-      <AssignTo v-model="assignees.data" doctype="CRM Deal" :docname="dealId" />
-      <Dropdown v-if="doc && document.statuses" :options="statuses" align="end">
-        <template #default="{ open }">
-          <Button
-            v-if="doc.status"
-            :label="statusLabel(doc.status)"
-            :iconRight="open ? 'lucide-chevron-up' : 'lucide-chevron-down'"
-          >
+  <div v-if="doc.name" class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
+    <div class="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto xl:grid-cols-crm-record xl:overflow-hidden">
+    <div class="flex min-h-0 min-w-0 flex-col overflow-hidden max-xl:min-h-[24rem]">
+    <nav
+      class="flex min-w-0 items-center gap-1.5 px-crm-page-x pt-3 text-crm-meta text-crm-muted-fg"
+      aria-label="Breadcrumb"
+    >
+      <template v-for="(item, index) in breadcrumbs" :key="item.label + index">
+        <span v-if="index" aria-hidden="true">›</span>
+        <router-link
+          v-if="item.route && index < breadcrumbs.length - 1"
+          :to="item.route"
+          class="truncate hover:text-crm-fg"
+        >
+          {{ item.label }}
+        </router-link>
+        <span
+          v-else
+          class="truncate"
+          :class="index === breadcrumbs.length - 1 ? 'text-crm-fg' : ''"
+        >
+          {{ item.label }}
+        </span>
+      </template>
+    </nav>
+
+    <AstraRecordHeader :title="title" :meta="dealMeta" squared-avatar>
+      <template #avatar>
+        <RecordAvatar
+          :name="title"
+          :src="doc.organization_logo || organization?.organization_logo || ''"
+          :removable="!!doc.organization_logo"
+          @upload="(file) => updateField('organization_logo', file?.file_url || '')"
+          @remove="updateField('organization_logo', '')"
+        />
+      </template>
+      <template #status>
+        <Dropdown v-if="doc.status && document.statuses" :options="statuses" align="end">
+          <template #default="{ open }">
+            <button type="button" class="inline-flex items-center gap-0.5">
+              <AstraBadge
+                :label="statusLabel(doc.status)"
+                :tone="dealStatusTone"
+                :marker-color="stageMarkerColor(doc.status)"
+                square
+                dot
+              />
+              <span
+                class="size-3 text-crm-muted-fg"
+                :class="open ? 'lucide-chevron-up' : 'lucide-chevron-down'"
+                aria-hidden="true"
+              />
+            </button>
+          </template>
+        </Dropdown>
+        <AstraBadge
+          v-else-if="doc.status"
+          :label="statusLabel(doc.status)"
+          :tone="dealStatusTone"
+          :marker-color="stageMarkerColor(doc.status)"
+          square
+          dot
+        />
+      </template>
+      <template #actions>
+        <CustomActions
+          v-if="document._actions?.length"
+          :actions="document._actions"
+        />
+        <CustomActions
+          v-if="document.actions?.length"
+          :actions="document.actions"
+        />
+        <ConnectActions
+          record-type="CRM Deal"
+          :record-id="dealId"
+          :phone="doc.mobile_no || doc.phone || ''"
+          show-labels
+        />
+        <AstraButton
+          v-if="emailTab"
+          variant="secondary"
+          size="sm"
+          :label="__('Email')"
+          @click="
+            doc.email
+              ? openEmailBox()
+              : toast.error(__('Please set an email address to send emails'))
+          "
+        />
+        <EnrichFromWebsite
+          doctype="CRM Deal"
+          :docname="dealId"
+          :website="doc.website"
+          @done="onEnriched"
+        />
+        <AssignTo v-model="assignees.data" doctype="CRM Deal" :docname="dealId" />
+        <Dropdown :options="moreOptions" align="end">
+          <AstraButton variant="secondary" size="sm" icon-only :label="__('More')">
             <template #prefix>
-              <IndicatorIcon :class="getDealStatus(doc.status).color" />
+              <span class="lucide-ellipsis size-4" aria-hidden="true" />
             </template>
-          </Button>
-        </template>
-      </Dropdown>
-    </template>
-  </LayoutHeader>
-  <div v-if="doc.name" class="border-b px-5 py-2">
+          </AstraButton>
+        </Dropdown>
+      </template>
+      <template #stage>
+        <StagePath
+          :stages="dealStages"
+          :current="doc.status"
+          :dates="stageDates"
+          :summary="stageSummary"
+          @select="triggerStatusChange"
+        />
+        <div
+          v-if="doc.next_step"
+          class="flex items-center gap-2 rounded-crm-control bg-crm-warning-soft px-3 py-2 text-crm-label text-crm-fg"
+        >
+          <span class="font-semibold text-crm-warning">{{ __('Next') }}</span>
+          <span class="min-w-0 truncate">{{ doc.next_step }}</span>
+        </div>
+        <StageHistory
+          v-if="doc.status_change_log?.length"
+          :rows="doc.status_change_log"
+        />
+      </template>
+    </AstraRecordHeader>
+
     <ConnectCallSummary doctype="CRM Deal" :name="dealId" />
-  </div>
-  <div v-if="doc.name" class="flex h-full overflow-hidden">
+
     <Tabs
       ref="dealTabsRef"
       v-model="activeTab"
       as="div"
       :tabs="tabs"
-      class="flex flex-1 overflow-hidden flex-col [&_[role='tab']]:px-1 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-5 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-[45px] [&_[role='tablist']]:gap-[22px] [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+      :class="recordTabsClass()"
     >
       <template #tab-panel>
         <Activities
@@ -62,90 +148,20 @@
         />
       </template>
     </Tabs>
-    <Resizer side="right" class="flex flex-col justify-between border-l">
-      <div
-        class="flex h-[45px] cursor-copy items-center border-b px-5 py-2.5 text-lg-medium text-ink-gray-9"
+    </div>
+    <AstraSidePanel stacked>
+      <button
+        type="button"
+        class="w-full border-b border-crm-border px-4 py-2.5 text-left text-crm-label text-crm-muted-fg hover:text-crm-fg"
         @click="copyToClipboard(dealId)"
       >
-        {{ __(dealId) }}
-      </div>
-      <div class="flex items-center justify-start gap-5 border-b p-5">
-        <Tooltip :text="__('Organization Logo')">
-          <div class="group relative size-12">
-            <Avatar
-              size="3xl"
-              class="size-12"
-              :label="title"
-              :image="doc.organization_logo || organization?.organization_logo"
-            />
-          </div>
-        </Tooltip>
-        <div class="flex flex-col gap-2.5 truncate text-ink-gray-9">
-          <Tooltip :text="organization?.name || __('Set an Organization')">
-            <div class="truncate text-3xl-medium">
-              {{ title }}
-            </div>
-          </Tooltip>
-          <div class="flex gap-1.5">
-            <Button
-              v-if="callEnabled"
-              :tooltip="__('Make a Call')"
-              :icon="PhoneIcon"
-              @click="triggerCall"
-            />
-
-            <ConnectActions
-              record-type="CRM Deal"
-              :record-id="dealId"
-              :phone="doc.mobile_no || doc.phone || ''"
-            />
-
-            <Button
-              :tooltip="__('Send an Email')"
-              :disabled="!emailTab"
-              :icon="Email2Icon"
-              @click="
-                doc.email
-                  ? openEmailBox()
-                  : toast.error(
-                      __('Please set an email address to send emails'),
-                    )
-              "
-            />
-
-            <Button
-              :tooltip="__('Go to Website')"
-              :icon="LinkIcon"
-              @click="
-                doc.website
-                  ? openWebsite(doc.website)
-                  : toast.error(__('Please set a website to visit'))
-              "
-            />
-
-            <Button
-              :tooltip="__('Attach a File')"
-              :icon="AttachmentIcon"
-              @click="showFilesUploader = true"
-            />
-
-            <Button
-              v-if="canDelete"
-              :tooltip="__('Delete')"
-              variant="subtle"
-              icon="lucide-trash-2"
-              theme="red"
-              @click="deleteDeal"
-            />
-          </div>
-        </div>
-      </div>
+        {{ dealId }}
+      </button>
       <SLASection
         v-if="doc.sla_status"
         v-model="doc"
         @updateField="updateField"
       />
-      <StageHistory :rows="doc.status_change_log || []" />
       <div
         v-if="sections.data"
         class="flex flex-1 flex-col justify-between overflow-hidden"
@@ -307,7 +323,8 @@
           </template>
         </SidePanelLayout>
       </div>
-    </Resizer>
+    </AstraSidePanel>
+    </div>
   </div>
   <ErrorPage
     v-else-if="errorTitle"
@@ -361,8 +378,7 @@
 <script setup>
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
-import Icon from '@/components/Icon.vue'
-import Resizer from '@/components/Resizer.vue'
+import AstraSidePanel from '@/components/astra/AstraSidePanel.vue'
 import LoadingIndicator from '@/components/Icons/LoadingIndicator.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
 import EmailIcon from '@/components/Icons/EmailIcon.vue'
@@ -373,13 +389,25 @@ import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import NoteIcon from '@/components/Icons/NoteIcon.vue'
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
-import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
-import LinkIcon from '@/components/Icons/LinkIcon.vue'
 import ArrowUpRightIcon from '@/components/Icons/ArrowUpRightIcon.vue'
 import SuccessIcon from '@/components/Icons/SuccessIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import FileTextIcon from '@/components/Icons/FileTextIcon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
+import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import AstraBadge from '@/components/astra/AstraBadge.vue'
+import { statusToneFor } from '@/components/astra/format'
+import RecordAvatar from '@/components/Pipeline/RecordAvatar.vue'
+import StagePath from '@/components/Pipeline/StagePath.vue'
+import StageHistory from '@/components/Pipeline/StageHistory.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
+import {
+  daysSince,
+  openStageStart,
+  pipelineStages,
+  stageEnteredOn,
+  stageMarkerColor,
+} from '@/components/Pipeline/stageRail'
 import ConnectCallSummary from '@/components/ConnectCallSummary.vue'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
@@ -394,14 +422,15 @@ import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
 import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
-import StageHistory from '@/components/Pipeline/StageHistory.vue'
 import {
   openWebsite,
   setupCustomizations,
   copyToClipboard,
+  formatDate,
   isTranslatable,
 } from '@/utils'
 import { getView } from '@/utils/view'
+import { usersStore } from '@/stores/users'
 import { withRecipientConfirmation } from '@/utils/whatsappRecipient'
 import { getSettings } from '@/stores/settings'
 import { globalStore } from '@/stores/global'
@@ -419,10 +448,8 @@ import { useBroadcast } from '@/composables/useBroadcast'
 import {
   createResource,
   Dropdown,
-  Tooltip,
   Avatar,
   Tabs,
-  Breadcrumbs,
   call,
   usePageMeta,
   toast,
@@ -444,8 +471,9 @@ import { useVisitedRecords } from '@/composables/useVisitedRecords'
 const { on } = useBroadcast()
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
-const { statusOptions, getDealStatus } = statusesStore()
-const { doctypeMeta } = getMeta('CRM Deal')
+const { statusOptions, getDealStatus, dealStatuses } = statusesStore()
+const { getUser } = usersStore()
+const { doctypeMeta, getFormattedCurrency } = getMeta('CRM Deal')
 
 const route = useRoute()
 const router = useRouter()
@@ -545,9 +573,13 @@ const showOrganizationModal = ref(false)
 const showFilesUploader = ref(false)
 const _organization = ref({})
 
+const title = computed(() => {
+  let t = doctypeMeta.value?.title_field || 'name'
+  return doc.value?.[t] || props.dealId
+})
+
 const breadcrumbs = computed(() => {
   let items = [{ label: __('Deals'), route: { name: 'Deals' } }]
-
   if (route.query.view || route.query.viewType) {
     let view = getView(route.query.view, route.query.viewType, 'CRM Deal')
     if (view) {
@@ -561,8 +593,9 @@ const breadcrumbs = computed(() => {
         },
       })
     }
+  } else if (doc.value?.status) {
+    items.push({ label: statusLabel(doc.value.status) })
   }
-
   items.push({
     label: title.value,
     route: {
@@ -574,9 +607,103 @@ const breadcrumbs = computed(() => {
   return items
 })
 
-const title = computed(() => {
-  let t = doctypeMeta.value?.title_field || 'name'
-  return doc.value?.[t] || props.dealId
+const dealMeta = computed(() => {
+  const parts = []
+  const amount =
+    doc.value?.deal_value != null && doc.value.deal_value !== ''
+      ? getFormattedCurrency('deal_value', doc.value)
+      : doc.value?.expected_deal_value != null &&
+          doc.value.expected_deal_value !== ''
+        ? getFormattedCurrency('expected_deal_value', doc.value)
+        : ''
+  if (amount) parts.push(amount)
+  if (doc.value?.expected_closure_date) {
+    parts.push(
+      __('Expected close {0}', [
+        formatDate(doc.value.expected_closure_date, '', true),
+      ]),
+    )
+  }
+  if (doc.value?.deal_owner) {
+    parts.push(__('Owner {0}', [getUser(doc.value.deal_owner).full_name]))
+  }
+  if (doc.value?.source) parts.push(doc.value.source)
+  const fromLead = doc.value?.lead_name || doc.value?.lead
+  if (fromLead) parts.push(__('From lead {0}', [fromLead]))
+  return parts
+})
+
+const dealStatusTone = computed(() => {
+  const status = doc.value?.status
+  if (!status) return 'mute'
+  return statusToneFor(status, getDealStatus(status)?.type)
+})
+
+const allowedDealStatuses = computed(() =>
+  document.statuses?.length ? document.statuses : document._statuses,
+)
+
+const dealStages = computed(() =>
+  pipelineStages(dealStatuses.data, allowedDealStatuses.value).map((stage) => ({
+    ...stage,
+    label: statusLabel(stage.name),
+  })),
+)
+
+const stageDates = computed(() => stageEnteredOn(doc.value?.status_change_log))
+
+const stageSummary = computed(() => {
+  const parts = []
+  const probability = doc.value?.probability
+  if (probability != null && probability !== '') parts.push(`${Number(probability)}%`)
+  const days = daysSince(
+    openStageStart(doc.value?.status_change_log, doc.value?.status),
+  )
+  if (days != null && doc.value?.status) {
+    parts.push(__('Day {0} in {1}', [days, statusLabel(doc.value.status)]))
+  }
+  return parts.join(' · ')
+})
+
+const moreOptions = computed(() => {
+  const options = []
+  if (callEnabled.value) {
+    options.push({
+      label: __('Make a Call'),
+      icon: 'lucide-phone',
+      onClick: triggerCall,
+    })
+  }
+  options.push(
+    {
+      label: __('Go to Website'),
+      icon: 'lucide-link',
+      onClick: () => {
+        if (doc.value.website) openWebsite(doc.value.website)
+        else toast.error(__('Please set a website to visit'))
+      },
+    },
+    {
+      label: __('Attach a File'),
+      icon: 'lucide-paperclip',
+      onClick: () => {
+        showFilesUploader.value = true
+      },
+    },
+    {
+      label: __('Copy ID'),
+      icon: 'lucide-copy',
+      onClick: () => copyToClipboard(props.dealId),
+    },
+  )
+  if (canDelete.value) {
+    options.push({
+      label: __('Delete'),
+      icon: 'lucide-trash-2',
+      onClick: deleteDeal,
+    })
+  }
+  return options
 })
 
 const statuses = computed(() => {

@@ -1,6 +1,8 @@
 export { default as AstraAvatar } from './AstraAvatar.vue'
 export { default as AstraBadge } from './AstraBadge.vue'
+export { default as AstraBulkBar } from './AstraBulkBar.vue'
 export { default as AstraButton } from './AstraButton.vue'
+export { default as AstraCheckbox } from './AstraCheckbox.vue'
 export { default as AstraEmptyState } from './AstraEmptyState.vue'
 export { default as AstraFilterBar } from './AstraFilterBar.vue'
 export { default as AstraInput } from './AstraInput.vue'
@@ -21,4 +23,6 @@ export {
   avatarTone,
   initialsFrom,
   stageToken,
+  statusToneFor,
 } from './format'
+export { dealCardChips, quietDaysSince, stageColourVar } from './dealChips'

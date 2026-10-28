@@ -1,202 +1,145 @@
 <template>
-  <LayoutHeader v-if="organization.doc">
-    <template #left-header>
-      <Breadcrumbs :items="breadcrumbs">
-        <template #prefix="{ item }">
-          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
-        </template>
-      </Breadcrumbs>
-    </template>
-    <template #right-header>
-      <CustomActions
-        v-if="organization._actions?.length"
-        :actions="organization._actions"
-      />
-      <EnrichFromWebsite
-        doctype="CRM Organization"
-        :docname="props.organizationId"
-        :website="organization.doc?.website"
-        @done="onEnriched"
-      />
-      <Button
-        v-if="activeTab === 'deals'"
-        :label="__('New Deal')"
-        iconLeft="lucide-plus"
-        @click="showDealModal = true"
-      />
-      <Link
-        v-if="activeTab === 'contacts'"
-        value=""
-        doctype="Contact"
-        :filters="{ company_name: ['!=', props.organizationId] }"
-        :onCreate="
-          (value, close) => {
-            _contact = {
-              first_name: value,
-              company_name: props.organizationId,
+  <div
+    v-if="organization.doc"
+    class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg"
+  >
+    <div class="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto xl:grid-cols-crm-record xl:overflow-hidden">
+    <div class="flex min-h-0 min-w-0 flex-col overflow-hidden max-xl:min-h-[24rem]">
+    <nav
+      class="flex items-center gap-1.5 px-crm-page-x pt-3 text-crm-meta text-crm-muted-fg"
+      aria-label="Breadcrumb"
+    >
+      <router-link :to="{ name: 'Organizations' }" class="hover:text-crm-fg">
+        {{ __('Companies') }}
+      </router-link>
+      <span aria-hidden="true">›</span>
+      <span class="truncate text-crm-fg">{{ title }}</span>
+    </nav>
+
+    <AstraRecordHeader :title="title" :meta="organizationMeta" squared-avatar>
+      <template #avatar>
+        <RecordAvatar
+          :name="title"
+          :src="organization.doc.organization_logo || ''"
+          :removable="!!organization.doc.organization_logo"
+          @upload="changeOrganizationImage"
+          @remove="changeOrganizationImage('')"
+        />
+      </template>
+      <template #actions>
+        <CustomActions
+          v-if="organization._actions?.length"
+          :actions="organization._actions"
+        />
+        <EnrichFromWebsite
+          doctype="CRM Organization"
+          :docname="props.organizationId"
+          :website="organization.doc?.website"
+          @done="onEnriched"
+        />
+        <AstraButton
+          v-if="activeTab === 'deals'"
+          variant="primary"
+          size="sm"
+          :label="__('New Deal')"
+          @click="showDealModal = true"
+        />
+        <Link
+          v-if="activeTab === 'contacts'"
+          value=""
+          doctype="Contact"
+          :filters="{ company_name: ['!=', props.organizationId] }"
+          :onCreate="
+            (value, close) => {
+              _contact = {
+                first_name: value,
+                company_name: props.organizationId,
+              }
+              showContactModal = true
+              close()
             }
-            showContactModal = true
-            close()
-          }
-        "
-        @change="(contact) => addContact(contact)"
+          "
+          @change="(contact) => addContact(contact)"
+        >
+          <template #target="{ togglePopover }">
+            <AstraButton
+              variant="primary"
+              size="sm"
+              :label="__('Add Contact')"
+              @click="togglePopover()"
+            />
+          </template>
+        </Link>
+        <AstraButton
+          variant="secondary"
+          size="sm"
+          :label="__('Open Website')"
+          @click="openWebsite"
+        />
+        <AstraButton
+          v-if="canDelete"
+          variant="negative"
+          size="sm"
+          :label="__('Delete')"
+          @click="deleteOrganization()"
+        />
+      </template>
+    </AstraRecordHeader>
+
+      <Tabs
+        v-model="activeTab"
+        as="div"
+        :tabs="tabs"
+        :class="recordTabsClass()"
       >
-        <template #target="{ togglePopover }">
-          <Button
-            :label="__('Add Contact')"
-            iconLeft="lucide-plus"
-            @click="togglePopover()"
+        <template #tab-label="{ tab }">{{ __(tab.label) }}</template>
+        <template #tab-suffix="{ tab }">
+          <span
+            v-if="tab.count != null && tab.value !== 'details'"
+            class="rounded bg-crm-neutral-soft px-1 text-crm-micro font-semibold text-crm-muted-fg"
+          >
+            {{ tab.count }}
+          </span>
+        </template>
+        <template #tab-panel="{ tab }">
+          <DealsListView
+            v-if="tab.label === 'Deals' && rows.length"
+            class="mt-4"
+            :rows="rows"
+            :columns="columns"
+            :options="{ selectable: false, showTooltip: false }"
+          />
+          <ContactsListView
+            v-if="tab.label === 'Contacts' && rows.length"
+            class="mt-4"
+            :rows="rows"
+            :columns="columns"
+            :options="{ selectable: false, showTooltip: false }"
+          />
+          <EmptyState
+            v-if="!rows.length"
+            :icon="tab.iconLeft"
+            :name="__(tab.label)"
+            :description="
+              tab.value === 'deals'
+                ? __('Use New Deal to create a deal for this organization.')
+                : ''
+            "
           />
         </template>
-      </Link>
-    </template>
-  </LayoutHeader>
-  <div v-if="organization.doc" ref="parentRef" class="flex h-full">
-    <Resizer
-      v-if="organization.doc"
-      :parent="$refs.parentRef"
-      class="flex h-full flex-col overflow-hidden border-r"
-    >
-      <div class="border-b">
-        <FileUploader
-          :validateFile="validateIsImageFile"
-          @success="changeOrganizationImage"
-        >
-          <template #default="{ openFileSelector, error }">
-            <div class="flex flex-col items-start justify-start gap-4 p-5">
-              <div class="flex gap-4 items-center">
-                <div class="group relative h-15.5 w-15.5">
-                  <Avatar
-                    size="3xl"
-                    class="h-15.5 w-15.5"
-                    :label="organization.doc.organization_name"
-                    :image="organization.doc.organization_logo"
-                  />
-                  <component
-                    :is="organization.doc.organization_logo ? Dropdown : 'div'"
-                    v-bind="
-                      organization.doc.organization_logo
-                        ? {
-                            options: [
-                              {
-                                icon: 'lucide-upload',
-                                label: organization.doc.organization_logo
-                                  ? __('Change Image')
-                                  : __('Upload Image'),
-                                onClick: openFileSelector,
-                              },
-                              {
-                                icon: 'lucide-trash-2',
-                                label: __('Remove Image'),
-                                onClick: () => changeOrganizationImage(''),
-                              },
-                            ],
-                          }
-                        : { onClick: openFileSelector }
-                    "
-                    class="!absolute bottom-0 left-0 right-0"
-                  >
-                    <div
-                      class="z-1 absolute bottom-0 left-0 right-0 flex h-14 cursor-pointer items-center justify-center rounded-b-full bg-black bg-opacity-40 pt-5 opacity-0 duration-300 ease-in-out group-hover:opacity-100"
-                      style="
-                        -webkit-clip-path: inset(22px 0 0 0);
-                        clip-path: inset(22px 0 0 0);
-                      "
-                    >
-                      <CameraIcon class="h-6 w-6 cursor-pointer text-white" />
-                    </div>
-                  </component>
-                </div>
-                <div class="flex flex-col gap-2 truncate">
-                  <div class="truncate text-3xl-medium text-ink-gray-9">
-                    <span>{{ organization.doc.name }}</span>
-                  </div>
-                  <div
-                    v-if="organization.doc.website"
-                    class="flex items-center gap-1.5 text-base text-ink-gray-8"
-                  >
-                    <WebsiteIcon class="size-4" />
-                    <span>{{ website(organization.doc.website) }}</span>
-                  </div>
-                  <ErrorMessage :message="__(error)" />
-                </div>
-              </div>
-              <div class="flex gap-1.5">
-                <Button
-                  v-if="canDelete"
-                  :label="__('Delete')"
-                  theme="red"
-                  size="sm"
-                  iconLeft="lucide-trash-2"
-                  @click="deleteOrganization()"
-                />
-                <Button
-                  :tooltip="__('Open Website')"
-                  icon="lucide-link"
-                  @click="openWebsite"
-                />
-              </div>
-            </div>
-          </template>
-        </FileUploader>
+      </Tabs>
       </div>
-      <div
-        v-if="sections.data"
-        class="flex flex-1 flex-col justify-between overflow-hidden"
-      >
+      <AstraSidePanel stacked>
         <SidePanelLayout
+          v-if="sections.data"
           :sections="sections.data"
           doctype="CRM Organization"
           :docname="organization.doc.name"
           @reload="sections.reload"
           @beforeFieldChange="beforeFieldChange"
         />
-      </div>
-    </Resizer>
-    <Tabs
-      v-model="activeTab"
-      as="div"
-      :tabs="tabs"
-      class="flex flex-1 overflow-hidden flex-col [&_[role='tablist']]:gap-7.5 [&_[role='tablist']]:px-5 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-[45px] [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
-    >
-      <template #tab-label="{ tab }">{{ __(tab.label) }}</template>
-      <template #tab-suffix="{ tab, active }">
-        <Badge
-          :class="[active ? 'bg-surface-gray-10' : 'bg-gray-600']"
-          variant="solid"
-          theme="gray"
-          size="sm"
-        >
-          {{ tab.count }}
-        </Badge>
-      </template>
-      <template #tab-panel="{ tab }">
-        <DealsListView
-          v-if="tab.label === 'Deals' && rows.length"
-          class="mt-4"
-          :rows="rows"
-          :columns="columns"
-          :options="{ selectable: false, showTooltip: false }"
-        />
-        <ContactsListView
-          v-if="tab.label === 'Contacts' && rows.length"
-          class="mt-4"
-          :rows="rows"
-          :columns="columns"
-          :options="{ selectable: false, showTooltip: false }"
-        />
-        <EmptyState
-          v-if="!rows.length"
-          :icon="tab.iconLeft"
-          :name="__(tab.label)"
-          :description="
-            tab.value === 'deals'
-              ? __('Use New Deal to create a deal for this organization.')
-              : ''
-          "
-        />
-      </template>
-    </Tabs>
+      </AstraSidePanel>
+    </div>
   </div>
   <ErrorPage
     v-else-if="errorTitle"
@@ -225,14 +168,11 @@
 
 <script setup>
 import ErrorPage from '@/components/ErrorPage.vue'
-import Resizer from '@/components/Resizer.vue'
+import AstraSidePanel from '@/components/astra/AstraSidePanel.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
-import Icon from '@/components/Icon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
 import ContactsListView from '@/components/ListViews/ContactsListView.vue'
-import WebsiteIcon from '@/components/Icons/WebsiteIcon.vue'
-import CameraIcon from '@/components/Icons/CameraIcon.vue'
+import EmptyState from '@/components/ListViews/EmptyState.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
@@ -241,24 +181,22 @@ import DealModal from '@/components/Modals/DealModal.vue'
 import Link from '@/components/Controls/Link.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
+import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
+import RecordAvatar from '@/components/Pipeline/RecordAvatar.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
+import AstraButton from '@/components/astra/AstraButton.vue'
 import { useDocument } from '@/data/document'
 import { getSettings } from '@/stores/settings'
 import { globalStore } from '@/stores/global'
 import { getMeta } from '@/stores/meta'
 import { usersStore } from '@/stores/users'
 import { statusesStore } from '@/stores/statuses'
-import { getView } from '@/utils/view'
 import {
-  validateIsImageFile,
   setupCustomizations,
   openWebsite as openExternalWebsite,
 } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
 import {
-  Breadcrumbs,
-  Avatar,
-  FileUploader,
-  Dropdown,
   Tabs,
   createListResource,
   usePageMeta,
@@ -269,7 +207,7 @@ import {
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { useTelemetry } from '@framework/ui/telemetry'
 import { computed, ref, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
   organizationId: { type: String, required: true },
@@ -282,7 +220,6 @@ const { getDealStatus } = statusesStore()
 const { doctypeMeta } = getMeta('CRM Organization')
 const { capture } = useTelemetry()
 
-const route = useRoute()
 const router = useRouter()
 
 const errorTitle = ref('')
@@ -311,42 +248,19 @@ onMounted(async () => {
   if (organization.doc) await triggerOnRender()
 })
 
-const breadcrumbs = computed(() => {
-  let items = [{ label: __('Organizations'), route: { name: 'Organizations' } }]
-
-  if (route.query.view || route.query.viewType) {
-    let view = getView(
-      route.query.view,
-      route.query.viewType,
-      'CRM Organization',
-    )
-    if (view) {
-      items.push({
-        label: __(view.label),
-        icon: view.icon,
-        route: {
-          name: 'Organizations',
-          params: { viewType: route.query.viewType },
-          query: { view: route.query.view },
-        },
-      })
-    }
-  }
-
-  items.push({
-    label: title.value,
-    route: {
-      name: 'Organization',
-      params: { organizationId: props.organizationId },
-      query: route.query,
-    },
-  })
-  return items
-})
-
 const title = computed(() => {
   let t = doctypeMeta.value?.title_field || 'name'
   return organization.doc?.[t] || props.organizationId
+})
+
+const organizationMeta = computed(() => {
+  const parts = []
+  const doc = organization.doc || {}
+  if (doc.industry) parts.push(doc.industry)
+  if (doc.no_of_employees) parts.push(__('{0} employees', [doc.no_of_employees]))
+  if (doc.website) parts.push(website(doc.website))
+  if (doc.territory) parts.push(doc.territory)
+  return parts
 })
 
 usePageMeta(() => {

@@ -1,108 +1,83 @@
 <template>
-  <LayoutHeader v-if="contact.doc">
-    <header
-      class="relative flex h-10.5 items-center justify-between gap-2 py-2.5 pl-2"
+  <div
+    v-if="contact.doc"
+    class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg"
+  >
+    <nav
+      class="flex items-center gap-1.5 px-3 pt-2.5 text-crm-meta text-crm-muted-fg"
+      aria-label="Breadcrumb"
     >
-      <Breadcrumbs :items="breadcrumbs">
-        <template #prefix="{ item }">
-          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
-        </template>
-      </Breadcrumbs>
-    </header>
-  </LayoutHeader>
-  <div v-if="contact.doc" class="flex flex-col h-full overflow-hidden">
+      <router-link :to="{ name: 'Contacts' }" class="hover:text-crm-fg">
+        {{ __('Contacts') }}
+      </router-link>
+      <span aria-hidden="true">›</span>
+      <span class="truncate text-crm-fg">{{ title }}</span>
+    </nav>
+
+    <AstraRecordHeader
+      :title="title"
+      :avatar-src="contact.doc.image || ''"
+      :meta="contactMeta"
+    >
+      <template #actions>
+        <ConnectActions
+          v-if="contact.doc.name"
+          record-type="Contact"
+          :record-id="contact.doc.name"
+          :phone="contact.doc.mobile_no || ''"
+          show-labels
+        />
+        <AstraButton
+          v-if="callEnabled && contact.doc.mobile_no"
+          variant="secondary"
+          size="sm"
+          :label="__('Call')"
+          @click="makeCall(contact.doc.mobile_no)"
+        />
+        <AstraButton
+          v-if="canDelete"
+          variant="negative"
+          size="sm"
+          :label="__('Delete')"
+          @click="deleteContact"
+        />
+      </template>
+    </AstraRecordHeader>
+
     <FileUploader
       :validateFile="validateIsImageFile"
       @success="changeContactImage"
     >
       <template #default="{ openFileSelector, error }">
-        <div class="flex flex-col items-start justify-start gap-4 p-4">
-          <div class="flex gap-4 items-center">
-            <div class="group relative h-14.5 w-14.5">
-              <Avatar
-                size="3xl"
-                class="h-14.5 w-14.5"
-                :label="contact.doc.full_name"
-                :image="contact.doc.image"
-              />
-              <component
-                :is="contact.doc.image ? Dropdown : 'div'"
-                v-bind="
-                  contact.doc.image
-                    ? {
-                        options: [
-                          {
-                            icon: 'lucide-upload',
-                            label: contact.doc.image
-                              ? __('Change Image')
-                              : __('Upload Image'),
-                            onClick: openFileSelector,
-                          },
-                          {
-                            icon: 'lucide-trash-2',
-                            label: __('Remove Image'),
-                            onClick: () => changeContactImage(''),
-                          },
-                        ],
-                      }
-                    : { onClick: openFileSelector }
-                "
-                class="!absolute bottom-0 left-0 right-0"
-              >
-                <div
-                  class="z-1 absolute bottom-0 left-0 right-0 flex h-14 cursor-pointer items-center justify-center rounded-b-full bg-black bg-opacity-40 pt-5 duration-300 ease-in-out [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
-                  style="
-                    -webkit-clip-path: inset(22px 0 0 0);
-                    clip-path: inset(22px 0 0 0);
-                  "
-                >
-                  <CameraIcon class="h-6 w-6 cursor-pointer text-white" />
-                </div>
-              </component>
-            </div>
-            <div class="flex flex-col gap-2 truncate">
-              <div class="truncate text-lg-medium text-ink-gray-9">
-                <span v-if="contact.doc.salutation">
-                  {{ contact.doc.salutation + '. ' }}
-                </span>
-                <span>{{ contact.doc.full_name }}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <Button
-                  v-if="callEnabled && contact.doc.mobile_no"
-                  :label="__('Make a Call')"
-                  size="sm"
-                  :iconLeft="PhoneIcon"
-                  @click="callEnabled && makeCall(contact.doc.mobile_no)"
-                />
-                <Button
-                  v-if="canDelete"
-                  :label="__('Delete')"
-                  theme="red"
-                  size="sm"
-                  icon-left="lucide-trash-2"
-                  @click="deleteContact"
-                />
-                <Avatar
-                  v-if="contact.doc.company_name"
-                  size="md"
-                  :label="contact.doc.company_name"
-                  :image="
-                    getOrganization(contact.doc.company_name)?.organization_logo
-                  "
-                />
-              </div>
-              <ErrorMessage :message="__(error)" />
-            </div>
-          </div>
+        <div
+          class="flex items-center gap-2 border-b border-crm-border px-3 py-2"
+        >
+          <Button
+            size="sm"
+            :label="
+              contact.doc.image ? __('Change Image') : __('Upload Image')
+            "
+            iconLeft="lucide-upload"
+            @click="openFileSelector"
+          />
+          <Button
+            v-if="contact.doc.image"
+            size="sm"
+            theme="red"
+            :label="__('Remove Image')"
+            iconLeft="lucide-trash-2"
+            @click="changeContactImage('')"
+          />
+          <ErrorMessage :message="__(error)" />
         </div>
       </template>
     </FileUploader>
+
     <Tabs
       v-model="activeTab"
       as="div"
       :tabs="tabs"
-      class="flex flex-1 overflow-auto flex-col [&_[role='tablist']]:gap-3 [&_[role='tablist']]:px-4 [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+      :class="recordTabsClass({ scroll: true })"
     >
       <template #tab-suffix="{ tab, active }">
         <Badge
@@ -151,18 +126,17 @@
 </template>
 
 <script setup>
-import Icon from '@/components/Icon.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
 import DetailsIcon from '@/components/Icons/DetailsIcon.vue'
-import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
-import CameraIcon from '@/components/Icons/CameraIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
+import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
 import { validateIsImageFile } from '@/utils'
 import { useContactFields } from '@/composables/useContactFields'
 import { timestampCell } from '@/composables/useTimelinePreferences'
-import { getView } from '@/utils/view'
 import { useDocument } from '@/data/document'
 import { getSettings } from '@/stores/settings'
 import { getMeta } from '@/stores/meta'
@@ -172,20 +146,17 @@ import { organizationsStore } from '@/stores/organizations.js'
 import { statusesStore } from '@/stores/statuses'
 import { callEnabled } from '@/composables/telephony'
 import {
-  Breadcrumbs,
-  Avatar,
   FileUploader,
   Tabs,
   call,
   createResource,
   usePageMeta,
-  Dropdown,
   toast,
 } from 'frappe-ui'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { useTelemetry } from '@framework/ui/telemetry'
 import { ref, computed, h, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 const { brand } = getSettings()
 const { $dialog, makeCall } = globalStore()
@@ -200,7 +171,6 @@ const props = defineProps({
   contactId: { type: String, required: true },
 })
 
-const route = useRoute()
 const router = useRouter()
 
 const {
@@ -217,38 +187,19 @@ onMounted(async () => {
   if (contact.doc) await triggerOnRender()
 })
 
-const breadcrumbs = computed(() => {
-  let items = [{ label: __('Contacts'), route: { name: 'Contacts' } }]
-
-  if (route.query.view || route.query.viewType) {
-    let view = getView(route.query.view, route.query.viewType, 'Contact')
-    if (view) {
-      items.push({
-        label: __(view.label),
-        icon: view.icon,
-        route: {
-          name: 'Contacts',
-          params: { viewType: route.query.viewType },
-          query: { view: route.query.view },
-        },
-      })
-    }
-  }
-
-  items.push({
-    label: title.value,
-    route: {
-      name: 'Contact',
-      params: { contactId: props.contactId },
-      query: route.query,
-    },
-  })
-  return items
-})
-
 const title = computed(() => {
   let t = doctypeMeta.value?.title_field || 'name'
   return contact.doc?.[t] || props.contactId
+})
+
+const contactMeta = computed(() => {
+  const parts = []
+  const doc = contact.doc || {}
+  if (doc.designation) parts.push(doc.designation)
+  else if (doc.job_title) parts.push(doc.job_title)
+  if (doc.company_name) parts.push(doc.company_name)
+  if (doc.city) parts.push(doc.city)
+  return parts
 })
 
 usePageMeta(() => {

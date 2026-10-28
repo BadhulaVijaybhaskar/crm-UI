@@ -1,14 +1,46 @@
 <template>
-  <LayoutHeader>
-    <header
-      class="relative flex h-10.5 items-center justify-between gap-2 py-2.5 pl-2"
+  <div
+    v-if="doc.name"
+    class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg"
+  >
+    <nav
+      class="flex items-center gap-1.5 px-3 pt-2.5 text-crm-meta text-crm-muted-fg"
+      aria-label="Breadcrumb"
     >
-      <Breadcrumbs :items="breadcrumbs">
-        <template #prefix="{ item }">
-          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
-        </template>
-      </Breadcrumbs>
-      <div class="shrink-0">
+      <router-link :to="{ name: 'Leads' }" class="hover:text-crm-fg">
+        {{ __('Leads') }}
+      </router-link>
+      <span aria-hidden="true">›</span>
+      <span class="truncate text-crm-fg">{{ title }}</span>
+    </nav>
+
+    <AstraRecordHeader
+      :title="title"
+      :avatar-src="doc.image || doc.organization_logo || ''"
+      :status="doc.status || ''"
+      :status-tone="leadStatusTone"
+      :meta="leadMeta"
+    >
+      <template #actions>
+        <ConnectActions
+          record-type="CRM Lead"
+          :record-id="leadId"
+          :phone="doc.mobile_no || doc.phone || ''"
+          show-labels
+        />
+        <AssignTo
+          v-model="assignees.data"
+          doctype="CRM Lead"
+          :docname="leadId"
+        />
+        <CustomActions
+          v-if="document._actions?.length"
+          :actions="document._actions"
+        />
+        <CustomActions
+          v-if="document.actions?.length"
+          :actions="document.actions"
+        />
         <Dropdown
           v-if="doc"
           :options="
@@ -33,44 +65,37 @@
             </Button>
           </template>
         </Dropdown>
-      </div>
-    </header>
-  </LayoutHeader>
-  <div
-    v-if="doc.name"
-    class="flex h-12 items-center justify-between gap-2 border-b px-3 py-2.5"
-  >
-    <AssignTo v-model="assignees.data" doctype="CRM Lead" :docname="leadId" />
-    <div class="flex items-center gap-2">
-      <CustomActions
-        v-if="document._actions?.length"
-        :actions="document._actions"
-      />
-      <CustomActions
-        v-if="document.actions?.length"
-        :actions="document.actions"
-      />
-      <Tooltip
-        :disabled="!isLeadConversionDisabled"
-        :text="__('Cannot convert a lost lead to deal')"
-      >
-        <div class="inline-flex">
-          <Button
-            :label="__('Convert')"
-            variant="solid"
-            :disabled="isLeadConversionDisabled"
-            @click="showConvertToDealModal = true"
-          />
-        </div>
-      </Tooltip>
-    </div>
-  </div>
-  <div v-if="doc.name" class="flex h-full overflow-hidden">
+        <Tooltip
+          :disabled="!isLeadConversionDisabled"
+          :text="__('Cannot convert a lost lead to deal')"
+        >
+          <div class="inline-flex">
+            <AstraButton
+              variant="primary"
+              size="sm"
+              :label="__('Convert')"
+              :disabled="isLeadConversionDisabled"
+              @click="showConvertToDealModal = true"
+            />
+          </div>
+        </Tooltip>
+      </template>
+      <template #stage>
+        <StagePath
+          :stages="leadStages"
+          :current="doc.status"
+          :dates="stageDates"
+          @select="triggerStatusChange"
+        />
+      </template>
+    </AstraRecordHeader>
+
+    <div class="flex min-h-0 flex-1 overflow-hidden">
     <Tabs
       v-model="activeTab"
       as="div"
       :tabs="tabs"
-      class="flex flex-1 overflow-auto flex-col [&_[role='tab']]:px-1 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-3 [&_[role='tablist']]:min-h-[45px] [&_[role='tablist']]:gap-[22px] [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+      :class="recordTabsClass({ scroll: true })"
     >
       <template #tab-panel="{ tab }">
         <div v-if="tab.name == 'Details' && !tab.component">
@@ -105,6 +130,7 @@
         />
       </template>
     </Tabs>
+    </div>
   </div>
   <ErrorPage
     v-else-if="errorTitle"
@@ -134,7 +160,6 @@
 <script setup>
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
-import Icon from '@/components/Icon.vue'
 import DetailsIcon from '@/components/Icons/DetailsIcon.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
 import EmailIcon from '@/components/Icons/EmailIcon.vue'
@@ -146,14 +171,19 @@ import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
 import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
+import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import { STATUS_TONES } from '@/components/astra/format'
+import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
+import StagePath from '@/components/Pipeline/StagePath.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
+import { pipelineStages, stageEnteredOn } from '@/components/Pipeline/stageRail'
 import Activities from '@/components/Activities/Activities.vue'
 import AssignTo from '@/components/AssignTo.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import { setupCustomizations, isTranslatable } from '@/utils'
-import { getView } from '@/utils/view'
 import { getSettings } from '@/stores/settings'
 import { globalStore } from '@/stores/global'
 import { statusesStore } from '@/stores/statuses'
@@ -169,20 +199,18 @@ import {
   Dropdown,
   Tooltip,
   Tabs,
-  Breadcrumbs,
   call,
   usePageMeta,
 } from 'frappe-ui'
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
 
 const { brand } = getSettings()
 const { $dialog, $socket } = globalStore()
-const { statusOptions, getLeadStatus } = statusesStore()
+const { statusOptions, getLeadStatus, leadStatuses } = statusesStore()
 const { doctypeMeta } = getMeta('CRM Lead')
 
-const route = useRoute()
 const router = useRouter()
 
 const props = defineProps({
@@ -250,39 +278,29 @@ watch(
 
 const reload = ref(false)
 
-const breadcrumbs = computed(() => {
-  let items = [{ label: __('Leads'), route: { name: 'Leads' } }]
-
-  if (route.query.view || route.query.viewType) {
-    let view = getView(route.query.view, route.query.viewType, 'CRM Lead')
-    if (view) {
-      items.push({
-        label: __(view.label),
-        icon: view.icon,
-        route: {
-          name: 'Leads',
-          params: { viewType: route.query.viewType },
-          query: { view: route.query.view },
-        },
-      })
-    }
-  }
-
-  items.push({
-    label: title.value,
-    route: {
-      name: 'Lead',
-      params: { leadId: props.leadId },
-      query: route.query,
-    },
-  })
-  return items
-})
-
 const title = computed(() => {
   let t = doctypeMeta.value?.title_field || 'name'
   return doc.value?.[t] || props.leadId
 })
+
+const leadMeta = computed(() => {
+  const parts = []
+  if (doc.value?.job_title) parts.push(doc.value.job_title)
+  if (doc.value?.organization) parts.push(doc.value.organization)
+  return parts
+})
+
+const leadStatusTone = computed(() => STATUS_TONES[doc.value?.status] || 'mute')
+
+const leadStages = computed(() => {
+  const allowed = document.statuses?.length ? document.statuses : document._statuses
+  return pipelineStages(leadStatuses.data, allowed).map((stage) => ({
+    ...stage,
+    label: statusLabel(stage.name),
+  }))
+})
+
+const stageDates = computed(() => stageEnteredOn(doc.value?.status_change_log))
 
 usePageMeta(() => {
   return {

@@ -1,33 +1,27 @@
 <template>
-  <div class="border-t px-4 py-3">
-    <div class="mb-2 text-sm font-medium text-ink-gray-9">
+  <div class="max-h-36 overflow-y-auto">
+    <div class="mb-2 text-crm-label font-semibold text-crm-fg">
       {{ __('Stage history') }}
     </div>
-    <p v-if="!entries.length" class="text-p-sm text-ink-gray-5">
+    <p v-if="!entries.length" class="text-crm-label text-crm-muted-fg">
       {{ __('No stage changes yet.') }}
     </p>
     <ul v-else class="flex flex-col gap-2">
       <li
         v-for="(entry, index) in entries"
         :key="`${entry.at}-${index}`"
-        class="rounded-md border border-outline-gray-2 px-3 py-2 text-p-sm text-ink-gray-8"
+        class="rounded-crm-card border border-crm-border px-3 py-2 text-crm-label text-crm-fg"
       >
         <div class="flex flex-wrap items-baseline gap-1">
-          <span v-if="entry.open" class="font-medium">{{ entry.from }}</span>
+          <span v-if="entry.open" class="font-semibold">{{ entry.from }}</span>
           <template v-else>
-            <span class="font-medium">{{ entry.from || __('(start)') }}</span>
-            <span class="text-ink-gray-5">→</span>
-            <span class="font-medium">{{ entry.to }}</span>
+            <span class="font-semibold">{{ entry.from || __('(start)') }}</span>
+            <span class="text-crm-muted-fg">→</span>
+            <span class="font-semibold">{{ entry.to }}</span>
           </template>
-          <Badge
-            v-if="entry.open"
-            class="ml-1"
-            :label="__('Current')"
-            theme="blue"
-            variant="subtle"
-          />
+          <AstraBadge v-if="entry.open" class="ml-1" :label="__('Current')" tone="info" />
         </div>
-        <div class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-ink-gray-5">
+        <div class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-crm-muted-fg">
           <span v-if="entry.by">{{ __('By {0}', [entry.by]) }}</span>
           <span v-if="entry.at">{{ formatDate(entry.at) }}</span>
           <span v-if="entry.duration">
@@ -41,7 +35,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Badge } from 'frappe-ui'
+import AstraBadge from '@/components/astra/AstraBadge.vue'
 import { formatDate } from '@/utils'
 import { normalizeStageHistory } from '@/utils/stageHistory'
 

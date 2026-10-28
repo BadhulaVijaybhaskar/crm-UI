@@ -1,38 +1,77 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <ViewBreadcrumbs v-model="viewControls" routeName="Leads" />
-    </template>
-    <template #right-header>
+  <RecordsListChrome
+    :title="__('Leads')"
+    :description="__('Your open leads and pipeline.')"
+    :create-label="__('+ New lead')"
+    :view-tabs="viewTabs"
+    :active-view="activeView"
+    :show-save-view="true"
+    :show-view-switch="true"
+    :view-type="viewType === 'kanban' ? 'kanban' : 'list'"
+    :filter-chips="filterChips"
+    :show-filter-bar="filterChips.length > 0"
+    @create="showLeadModal = true"
+    @select-view="selectView"
+    @save-view="saveView"
+    @set-view-type="setViewType"
+    @remove-filter="removeFilterChip"
+  >
+    <template #actions>
       <CustomActions
         v-if="leadsListView?.customListActions"
         :actions="leadsListView.customListActions"
       />
-      <Button
-        variant="solid"
-        :label="__('Create')"
-        iconLeft="lucide-plus"
+      <AstraButton
+        variant="primary"
+        :label="__('+ New lead')"
         @click="showLeadModal = true"
       />
     </template>
-  </LayoutHeader>
-  <ViewControls
-    ref="viewControls"
-    v-model="leads"
-    v-model:loadMore="loadMore"
-    v-model:resizeColumn="triggerResize"
-    v-model:updatedPageCount="updatedPageCount"
-    doctype="CRM Lead"
-    :filters="{ converted: 0 }"
-    :options="{
-      allowedViews: ['list', 'group_by', 'kanban'],
-      groupSummary: true,
-      groupByExclude: ['naming_series', 'docstatus'],
-    }"
-  />
+    <div
+      class="astra-records-vc flex flex-wrap items-center justify-between gap-2 border-b border-crm-border bg-crm-card px-crm-page-x py-2.5"
+    >
+      <ViewControls
+        ref="viewControls"
+        v-model="leads"
+        v-model:loadMore="loadMore"
+        v-model:resizeColumn="triggerResize"
+        v-model:updatedPageCount="updatedPageCount"
+        doctype="CRM Lead"
+        :filters="{ converted: 0 }"
+        :options="{
+          allowedViews: ['list', 'group_by', 'kanban'],
+          groupSummary: true,
+          groupByExclude: ['naming_series', 'docstatus'],
+        }"
+      />
+      <div
+        v-if="viewType !== 'kanban'"
+        class="flex shrink-0 items-center gap-2"
+      >
+        <AstraButton
+          variant="secondary"
+          size="sm"
+          :label="__('Import')"
+          @click="showCrmCsvImport = true"
+        />
+        <AstraButton
+          v-if="canExportLeads"
+          variant="secondary"
+          size="sm"
+          :label="__('Export')"
+          @click="exportLeadsCsv"
+        />
+      </div>
+    </div>
+    <CrmCsvImportModal
+      v-if="showCrmCsvImport"
+      v-model="showCrmCsvImport"
+      doctype="CRM Lead"
+    />
   <KanbanView
     v-if="route.params.viewType == 'kanban'"
     v-model="leads"
+    class="min-h-0 flex-1"
     :options="{
       getRoute: (row) => getRoute(row.name),
       onNewClick: (column) => onNewClick(column),
@@ -265,11 +304,11 @@
     v-model="showLeadModal"
     :defaults="defaults"
   />
+  </RecordsListChrome>
 </template>
 
 <script setup>
 import UserAvatar from '@/components/UserAvatar.vue'
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import GroupSummaryTable from '@/components/GroupSummaryTable.vue'
 import MultipleAvatar from '@/components/MultipleAvatar.vue'
 import CustomActions from '@/components/CustomActions.vue'
@@ -278,14 +317,18 @@ import NoteIcon from '@/components/Icons/NoteIcon.vue'
 import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
 import LeadsListView from '@/components/ListViews/LeadsListView.vue'
+import RecordsListChrome from '@/components/ListViews/RecordsListChrome.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
 import KanbanView from '@/components/Kanban/KanbanView.vue'
 import KanbanActivityCounts from '@/components/Kanban/KanbanActivityCounts.vue'
 import LeadModal from '@/components/Modals/LeadModal.vue'
 import ViewControls from '@/components/ViewControls.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import CrmCsvImportModal from '@/components/Modals/CrmCsvImportModal.vue'
 import { useDoctypeModal } from '@/composables/doctypeModal'
+import { useRecordsViews } from '@/composables/useRecordsViews'
+import { canUseCrmCsvExport, crmCsvExportUrl } from '@/utils/csvExport'
 import { getMeta } from '@/stores/meta'
 import { globalStore } from '@/stores/global'
 import { usersStore } from '@/stores/users'
@@ -335,6 +378,39 @@ const loadMore = ref(1)
 const triggerResize = ref(1)
 const updatedPageCount = ref(20)
 const viewControls = ref(null)
+
+const {
+  viewType,
+  activeView,
+  viewTabs,
+  selectView,
+  setViewType,
+  saveView,
+  filterChipsFromList,
+  removeFilterChip,
+} = useRecordsViews({
+  doctype: 'CRM Lead',
+  list: leads,
+  viewControls,
+  defaultFilters: () => ({ converted: 0 }),
+  allLabel: __('All leads'),
+})
+
+const filterChips = computed(() => filterChipsFromList())
+const showCrmCsvImport = ref(false)
+const canExportLeads = computed(() => canUseCrmCsvExport('CRM Lead'))
+
+function exportLeadsCsv() {
+  const fields = (leads.value?.data?.columns || []).map((c) => c.key)
+  window.location.href = crmCsvExportUrl({
+    doctype: 'CRM Lead',
+    fields,
+    filters: leads.value?.params?.filters || { converted: 0 },
+    orderBy: leads.value?.params?.order_by,
+    limit: leads.value?.data?.total_count || 100,
+    title: 'CRM Lead',
+  })
+}
 
 function getRow(name, field) {
   function getValue(value) {

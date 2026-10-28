@@ -1,292 +1,184 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <ViewBreadcrumbs v-model="viewControls" routeName="Deals" />
-    </template>
-    <template #right-header>
+  <RecordsListChrome
+    :title="__('Deals')"
+    :description="__('Your deals · drag a card to change its stage.')"
+    :create-label="__('+ New deal')"
+    :view-tabs="viewTabs"
+    :active-view="activeView"
+    :show-save-view="true"
+    :show-view-switch="true"
+    :view-type="viewType === 'kanban' ? 'kanban' : 'list'"
+    :filter-chips="filterChips"
+    :show-filter-bar="filterChips.length > 0"
+    @create="showDealModal = true"
+    @select-view="selectView"
+    @save-view="saveView"
+    @set-view-type="setViewType"
+    @remove-filter="removeFilterChip"
+  >
+    <template #actions>
       <CustomActions
         v-if="dealsListView?.customListActions"
         :actions="dealsListView.customListActions"
       />
-      <Button
-        variant="solid"
-        :label="__('Create')"
-        iconLeft="lucide-plus"
+      <AstraButton
+        variant="primary"
+        :label="__('+ New deal')"
         @click="showDealModal = true"
       />
     </template>
-  </LayoutHeader>
-  <ViewControls
-    ref="viewControls"
-    v-model="deals"
-    v-model:loadMore="loadMore"
-    v-model:resizeColumn="triggerResize"
-    v-model:updatedPageCount="updatedPageCount"
-    doctype="CRM Deal"
-    :options="{
-      allowedViews: ['list', 'group_by', 'kanban'],
-      groupSummary: true,
-      groupByExclude: ['naming_series', 'docstatus'],
-    }"
-  />
-  <KanbanView
-    v-if="route.params.viewType == 'kanban'"
-    v-model="deals"
-    :options="{
-      getRoute: (row) => getRoute(row.name),
-      onNewClick: (column) => onNewClick(column),
-    }"
-    @update="(data) => viewControls.updateKanbanSettings(data)"
-    @loadMore="(columnName) => viewControls.loadMoreKanban(columnName)"
-  >
-    <template #title="{ titleField, itemName }">
-      <div class="flex gap-2 items-center">
-        <div v-if="titleField === 'status'">
-          <IndicatorIcon :class="getRow(itemName, titleField).color" />
-        </div>
-        <div
-          v-else-if="
-            titleField === 'organization' && getRow(itemName, titleField).label
-          "
-        >
-          <Avatar
-            class="flex items-center"
-            :image="getRow(itemName, titleField).logo"
-            :label="getRow(itemName, titleField).label"
-            size="sm"
-          />
-        </div>
-        <div
-          v-else-if="
-            titleField === 'deal_owner' &&
-            getRow(itemName, titleField).full_name
-          "
-        >
-          <UserAvatar
-            class="flex items-center"
-            :user="getRow(itemName, titleField).name"
-            size="sm"
-          />
-        </div>
-        <div
-          v-if="
-            [
-              'modified',
-              'creation',
-              'first_response_time',
-              'first_responded_on',
-              'response_by',
-            ].includes(titleField)
-          "
-          class="truncate text-base"
-        >
-          <Tooltip :text="getRow(itemName, titleField).label">
-            <div>{{ getRow(itemName, titleField).timeAgo }}</div>
-          </Tooltip>
-        </div>
-        <div v-else-if="titleField === 'sla_status'" class="truncate text-base">
-          <Badge
-            v-if="getRow(itemName, titleField).value"
-            :variant="'subtle'"
-            :theme="getRow(itemName, titleField).color"
-            size="md"
-            :label="getRow(itemName, titleField).value"
-          />
-        </div>
-        <div
-          v-else-if="getRow(itemName, titleField).label"
-          class="truncate text-base"
-        >
-          {{ getRow(itemName, titleField).label }}
-        </div>
-        <div v-else class="text-ink-gray-4">{{ __('No Title') }}</div>
-      </div>
-    </template>
-
-    <template #fields="{ fieldName, itemName }">
+    <div
+      class="astra-records-vc flex flex-wrap items-center justify-between gap-2 border-b border-crm-border bg-crm-card px-crm-page-x py-2.5"
+    >
+      <ViewControls
+        ref="viewControls"
+        v-model="deals"
+        v-model:loadMore="loadMore"
+        v-model:resizeColumn="triggerResize"
+        v-model:updatedPageCount="updatedPageCount"
+        doctype="CRM Deal"
+        :options="{
+          allowedViews: ['list', 'group_by', 'kanban'],
+          groupSummary: true,
+          groupByExclude: ['naming_series', 'docstatus'],
+        }"
+      />
       <div
-        v-if="getRow(itemName, fieldName).label"
-        class="truncate flex items-center gap-2"
+        v-if="viewType !== 'kanban'"
+        class="flex shrink-0 items-center gap-2"
       >
-        <div v-if="fieldName === 'status'">
-          <IndicatorIcon :class="getRow(itemName, fieldName).color" />
-        </div>
-        <div v-else-if="fieldName === 'organization'">
-          <Avatar
-            v-if="getRow(itemName, fieldName).label"
-            class="flex items-center"
-            :image="getRow(itemName, fieldName).logo"
-            :label="getRow(itemName, fieldName).label"
-            size="xs"
-          />
-        </div>
-        <div v-else-if="fieldName === 'deal_owner'">
-          <UserAvatar
-            v-if="getRow(itemName, fieldName).full_name"
-            class="flex items-center"
-            :user="getRow(itemName, fieldName).name"
-            size="xs"
-          />
-        </div>
-        <div
-          v-if="
-            [
-              'modified',
-              'creation',
-              'first_response_time',
-              'first_responded_on',
-              'response_by',
-            ].includes(fieldName)
+        <AstraButton
+          variant="secondary"
+          size="sm"
+          :label="__('Import')"
+          @click="
+            router.push({
+              name: 'NewDataImport',
+              params: { doctype: 'CRM Deal' },
+            })
           "
-          class="truncate text-base"
-        >
-          <Tooltip :text="getRow(itemName, fieldName).label">
-            <div>{{ getRow(itemName, fieldName).timeAgo }}</div>
-          </Tooltip>
-        </div>
-        <div v-else-if="fieldName === 'sla_status'" class="truncate text-base">
-          <Badge
-            v-if="getRow(itemName, fieldName).value"
-            :variant="'subtle'"
-            :theme="getRow(itemName, fieldName).color"
-            size="md"
-            :label="getRow(itemName, fieldName).value"
-          />
-        </div>
-        <div
-          v-else-if="fieldName === '_assign'"
-          class="flex items-center truncate"
-        >
-          <MultipleAvatar
-            :avatars="getRow(itemName, fieldName).label"
-            size="xs"
-          />
-        </div>
-        <div v-else class="truncate text-base">
-          {{ getRow(itemName, fieldName).label }}
-        </div>
-      </div>
-    </template>
-
-    <template #actions="{ itemName }">
-      <div class="flex gap-2 items-center justify-between">
-        <KanbanActivityCounts
-          :route="getRoute(itemName)"
-          :counts="{
-            emails: getRow(itemName, '_email_count').label,
-            notes: getRow(itemName, '_note_count').label,
-            tasks: getRow(itemName, '_task_count').label,
-            comments: getRow(itemName, '_comment_count').label,
-          }"
         />
-        <Dropdown
-          class="flex items-center gap-2"
-          :options="actions(itemName)"
-          variant="ghost"
-          @click.stop.prevent
-        >
-          <Button icon="lucide-plus" variant="ghost" />
-        </Dropdown>
+        <AstraButton
+          v-if="canExportDeals"
+          variant="secondary"
+          size="sm"
+          :label="__('Export')"
+          @click="exportDealsCsv"
+        />
       </div>
-    </template>
-  </KanbanView>
-  <GroupSummaryTable
-    v-else-if="viewControls?.groupSummary"
-    doctype="CRM Deal"
-    :settings="viewControls.groupSummary"
-    :filters="viewControls.currentFilters"
-    @update:settings="(s) => viewControls.updateGroupSummary(s)"
-  />
-  <DealsListView
-    v-else-if="deals.data && rows.length"
-    ref="dealsListView"
-    v-model="deals.data.page_length_count"
-    v-model:list="deals"
-    :rows="rows"
-    :columns="columns"
-    :options="{
-      showTooltip: false,
-      resizeColumn: true,
-      rowCount: deals.data.row_count,
-      totalCount: deals.data.total_count,
-    }"
-    @loadMore="() => loadMore++"
-    @columnWidthUpdated="() => triggerResize++"
-    @updatePageCount="(count) => (updatedPageCount = count)"
-    @applyFilter="(data) => viewControls.applyFilter(data)"
-    @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
-    @likeDoc="(data) => viewControls.likeDoc(data)"
-    @selectionsChanged="
-      (selections) => viewControls.updateSelections(selections)
-    "
-  />
-  <EmptyState
-    v-else-if="deals.data && !rows.length"
-    name="Deals"
-    :icon="DealsIcon"
-    :title="__('No deals yet')"
-    :description="
-      __(
-        'A deal is a sale you are working on. Create one, or convert a lead into a deal once it looks promising.',
-      )
-    "
-    :filtered="!!Object.keys(deals.params?.filters || {}).length"
-    importDoctype="CRM Deal"
-    @create="showDealModal = true"
-  />
-  <DealModal
-    v-if="showDealModal"
-    v-model="showDealModal"
-    :defaults="defaults"
-  />
+    </div>
+    <AstraDealsBoard
+      v-if="route.params.viewType == 'kanban'"
+      v-model="deals"
+      class="min-h-0 flex-1"
+      :rows-by-name="rowsByName"
+      :show-stages-link="showStagesLink"
+      :options="{
+        getRoute: (row) => getRoute(row.name),
+        onNewClick: (column) => onNewClick(column),
+      }"
+      @update="(data) => viewControls.updateKanbanSettings(data)"
+      @loadMore="(columnName) => viewControls.loadMoreKanban(columnName)"
+    />
+    <GroupSummaryTable
+      v-else-if="viewControls?.groupSummary"
+      doctype="CRM Deal"
+      :settings="viewControls.groupSummary"
+      :filters="viewControls.currentFilters"
+      @update:settings="(s) => viewControls.updateGroupSummary(s)"
+    />
+    <DealsListView
+      v-else-if="deals.data && rows.length"
+      ref="dealsListView"
+      v-model="deals.data.page_length_count"
+      v-model:list="deals"
+      :rows="rows"
+      :columns="columns"
+      :options="{
+        showTooltip: false,
+        resizeColumn: true,
+        rowCount: deals.data.row_count,
+        totalCount: deals.data.total_count,
+      }"
+      @loadMore="() => loadMore++"
+      @columnWidthUpdated="() => triggerResize++"
+      @updatePageCount="(count) => (updatedPageCount = count)"
+      @applyFilter="(data) => viewControls.applyFilter(data)"
+      @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
+      @likeDoc="(data) => viewControls.likeDoc(data)"
+      @selectionsChanged="
+        (selections) => viewControls.updateSelections(selections)
+      "
+    />
+    <EmptyState
+      v-else-if="deals.data && !rows.length"
+      name="Deals"
+      :icon="DealsIcon"
+      :title="__('No deals yet')"
+      :description="
+        __(
+          'A deal is a sale you are working on. Create one, or convert a lead into a deal once it looks promising.',
+        )
+      "
+      :filtered="!!Object.keys(deals.params?.filters || {}).length"
+      importDoctype="CRM Deal"
+      @create="showDealModal = true"
+    />
+    <DealModal
+      v-if="showDealModal"
+      v-model="showDealModal"
+      :defaults="defaults"
+    />
+  </RecordsListChrome>
 </template>
 
 <script setup>
-import UserAvatar from '@/components/UserAvatar.vue'
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import GroupSummaryTable from '@/components/GroupSummaryTable.vue'
-import MultipleAvatar from '@/components/MultipleAvatar.vue'
 import CustomActions from '@/components/CustomActions.vue'
-import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
-import NoteIcon from '@/components/Icons/NoteIcon.vue'
-import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
+import RecordsListChrome from '@/components/ListViews/RecordsListChrome.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
-import KanbanView from '@/components/Kanban/KanbanView.vue'
-import KanbanActivityCounts from '@/components/Kanban/KanbanActivityCounts.vue'
+import AstraDealsBoard from '@/components/Kanban/AstraDealsBoard.vue'
 import DealModal from '@/components/Modals/DealModal.vue'
 import ViewControls from '@/components/ViewControls.vue'
-import { useDoctypeModal } from '@/composables/doctypeModal'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import { useRecordsViews } from '@/composables/useRecordsViews'
+import { canUseCrmCsvExport, crmCsvExportUrl } from '@/utils/csvExport'
 import { getMeta } from '@/stores/meta'
-import { globalStore } from '@/stores/global'
 import { usersStore } from '@/stores/users'
 import { organizationsStore } from '@/stores/organizations'
 import { statusesStore } from '@/stores/statuses'
-import { callEnabled } from '@/composables/telephony'
 import { formatDate, timeAgo, website, formatTime } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
-import { useTelemetry } from '@framework/ui/telemetry'
 import { useBroadcast } from '@/composables/useBroadcast'
-import { useCrmOnboarding } from '@/composables/onboarding'
-import { Tooltip, Avatar, Dropdown } from 'frappe-ui'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ref, reactive, computed, h } from 'vue'
 
 const { getFormattedPercent, getFormattedFloat, getFormattedCurrency } =
   getMeta('CRM Deal')
-const { makeCall } = globalStore()
-const { getUser } = usersStore()
+const { getUser, isManager, isAdmin } = usersStore()
 const { getOrganization } = organizationsStore()
 const { getDealStatus } = statusesStore()
-const { completeStep } = useCrmOnboarding()
-const { capture } = useTelemetry()
-const { showModal } = useDoctypeModal()
 const { on } = useBroadcast()
 
 const route = useRoute()
+const router = useRouter()
+
+/** Stages settings lives on another branch; hide the gear until registered. */
+const showStagesLink = computed(() => {
+  if (!(isManager() || isAdmin())) return false
+  return Boolean(
+    router.hasRoute?.('Stages') ||
+      router.getRoutes?.().some(
+        (r) =>
+          r.name === 'Stages' ||
+          r.path?.includes?.('/settings/stages') ||
+          r.meta?.settingsPage === 'Stages',
+      ),
+  )
+})
 
 function getRoute(name) {
   return {
@@ -312,14 +204,36 @@ const triggerResize = ref(1)
 const updatedPageCount = ref(20)
 const viewControls = ref(null)
 
-function getRow(name, field) {
-  function getValue(value) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value
-    }
-    return { label: value }
-  }
-  return getValue(rows.value?.find((row) => row.name == name)[field])
+const {
+  viewType,
+  activeView,
+  viewTabs,
+  selectView,
+  setViewType,
+  saveView,
+  filterChipsFromList,
+  removeFilterChip,
+} = useRecordsViews({
+  doctype: 'CRM Deal',
+  list: deals,
+  viewControls,
+  defaultFilters: () => ({}),
+  allLabel: __('All open deals'),
+})
+
+const filterChips = computed(() => filterChipsFromList())
+const canExportDeals = computed(() => canUseCrmCsvExport('CRM Deal'))
+
+function exportDealsCsv() {
+  const fields = (deals.value?.data?.columns || []).map((c) => c.key)
+  window.location.href = crmCsvExportUrl({
+    doctype: 'CRM Deal',
+    fields,
+    filters: deals.value?.params?.filters || {},
+    orderBy: deals.value?.params?.order_by,
+    limit: deals.value?.data?.total_count || 100,
+    title: 'CRM Deal',
+  })
 }
 
 // Rows
@@ -337,6 +251,14 @@ const rows = computed(() => {
   } else {
     return parseRows(deals.value?.data.data, deals.value.data.columns)
   }
+})
+
+const rowsByName = computed(() => {
+  const map = {}
+  for (const row of rows.value || []) {
+    if (row?.name) map[row.name] = row
+  }
+  return map
 })
 
 const columns = computed(() => {
@@ -402,7 +324,7 @@ function parseRows(rows, columns = []) {
   let type = view_type === 'kanban' ? 'fieldtype' : 'type'
 
   return rows.map((deal) => {
-    let _rows = {}
+    let _rows = { name: deal.name }
     deals.value.data.rows.forEach((row) => {
       _rows[row] = deal[row]
 
@@ -509,70 +431,5 @@ function onNewClick(column) {
   }
 
   showDealModal.value = true
-}
-
-function actions(itemName) {
-  let mobile_no = getRow(itemName, 'mobile_no')?.label || ''
-  let actions = [
-    {
-      icon: h(PhoneIcon, { class: 'h-4 w-4' }),
-      label: __('Make a Call'),
-      onClick: () => makeCall(mobile_no),
-      condition: () => mobile_no && callEnabled.value,
-    },
-    {
-      icon: h(NoteIcon, { class: 'h-4 w-4' }),
-      label: __('New Note'),
-      onClick: () => showNote(itemName),
-    },
-    {
-      icon: h(TaskIcon, { class: 'h-4 w-4' }),
-      label: __('New Task'),
-      onClick: () => showTask(itemName),
-    },
-  ]
-  return actions.filter((action) =>
-    action.condition ? action.condition() : true,
-  )
-}
-
-function showNote(name) {
-  showModal({
-    doctype: 'FCRM Note',
-    title: 'Note',
-    defaults: {
-      reference_doctype: 'CRM Deal',
-      reference_docname: name,
-    },
-    callbacks: {
-      afterInsert: (d) => after(d, true),
-      afterUpdate: after,
-    },
-  })
-}
-
-function showTask(name) {
-  showModal({
-    doctype: 'CRM Task',
-    title: 'Task',
-    defaults: {
-      reference_doctype: 'CRM Deal',
-      reference_docname: name,
-    },
-    callbacks: {
-      afterInsert: (d) => after(d, true),
-      afterUpdate: after,
-    },
-  })
-}
-
-function after(d, isNew = false) {
-  let a = d.doctype == 'CRM Task' ? 'task' : 'note'
-  if (isNew) {
-    completeStep('create_first_' + a)
-    capture(a + '_created')
-  } else {
-    capture(a + '_updated')
-  }
 }
 </script>

@@ -55,3 +55,9 @@ export function avatarTone(seed = '') {
 export function stageToken(stage) {
   return STAGE_COLOURS[stage] || 'c6'
 }
+
+export function statusToneFor(status, type = '') {
+  if (type === 'Won') return 'success'
+  if (type === 'Lost') return 'danger'
+  return STATUS_TONES[status] || 'mute'
+}

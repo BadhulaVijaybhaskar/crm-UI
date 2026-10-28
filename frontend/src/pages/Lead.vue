@@ -1,222 +1,187 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <Breadcrumbs :items="breadcrumbs">
-        <template #prefix="{ item }">
-          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
-        </template>
-      </Breadcrumbs>
-    </template>
-    <template v-if="!errorTitle" #right-header>
-      <CustomActions
-        v-if="document._actions?.length"
-        :actions="document._actions"
-      />
-      <CustomActions
-        v-if="document.actions?.length"
-        :actions="document.actions"
-      />
-      <EnrichFromWebsite
-        doctype="CRM Lead"
-        :docname="leadId"
-        :website="doc.website"
-        @done="onEnriched"
-      />
-      <AssignTo v-model="assignees.data" doctype="CRM Lead" :docname="leadId" />
-      <Dropdown v-if="doc && document.statuses" :options="statuses" align="end">
-        <template #default="{ open }">
-          <Button
-            v-if="doc.status"
-            :label="statusLabel(doc.status)"
-            :iconRight="open ? 'lucide-chevron-up' : 'lucide-chevron-down'"
-          >
-            <template #prefix>
-              <IndicatorIcon :class="getLeadStatus(doc.status).color" />
-            </template>
-          </Button>
-        </template>
-      </Dropdown>
-      <Tooltip
-        :disabled="!isLeadConversionDisabled"
-        :text="__('Cannot convert a lost lead to deal')"
-      >
-        <div class="inline-flex">
-          <Button
-            :label="__('Convert to Deal')"
-            variant="solid"
-            :disabled="isLeadConversionDisabled"
-            @click="showConvertToDealModal = true"
-          />
-        </div>
-      </Tooltip>
-    </template>
-  </LayoutHeader>
-  <div v-if="doc.name" class="border-b px-5 py-2">
-    <ConnectCallSummary doctype="CRM Lead" :name="leadId" />
-  </div>
-  <div v-if="doc.name" class="flex h-full overflow-hidden">
-    <Tabs
-      v-model="activeTab"
-      :tabs="tabs"
-      class="flex flex-1 overflow-hidden flex-col [&_[role='tab']]:px-1 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-5 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-[45px] [&_[role='tablist']]:gap-[22px] [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+  <div v-if="doc.name" class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
+    <div class="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto xl:grid-cols-crm-record xl:overflow-hidden">
+    <div class="flex min-h-0 min-w-0 flex-col overflow-hidden max-xl:min-h-[24rem]">
+    <nav
+      class="flex min-w-0 items-center gap-1.5 px-crm-page-x pt-3 text-crm-meta text-crm-muted-fg"
+      aria-label="Breadcrumb"
     >
-      <template #tab-panel>
-        <Activities
-          ref="activities"
-          v-model:reload="reload"
-          v-model:activeTab="activeTab"
-          doctype="CRM Lead"
-          :docname="leadId"
-          :tabs="tabs"
-          @beforeSave="beforeStatusChange"
-          @afterSave="reloadResources"
+      <template v-for="(item, index) in breadcrumbs" :key="item.label + index">
+        <span v-if="index" aria-hidden="true">›</span>
+        <router-link
+          v-if="item.route && index < breadcrumbs.length - 1"
+          :to="item.route"
+          class="truncate hover:text-crm-fg"
+        >
+          {{ item.label }}
+        </router-link>
+        <span
+          v-else
+          class="truncate"
+          :class="index === breadcrumbs.length - 1 ? 'text-crm-fg' : ''"
+        >
+          {{ item.label }}
+        </span>
+      </template>
+    </nav>
+
+    <AstraRecordHeader :title="title" :meta="leadMeta" squared-avatar>
+      <template #avatar>
+        <RecordAvatar
+          :name="title"
+          :src="doc.image || doc.organization_logo || ''"
+          :removable="!!doc.image"
+          @upload="(file) => updateField('image', file?.file_url || '')"
+          @remove="updateField('image', '')"
         />
       </template>
-    </Tabs>
-    <Resizer class="flex flex-col justify-between border-l" side="right">
-      <div
-        class="flex h-[45px] cursor-copy items-center border-b px-5 py-2.5 text-lg-medium text-ink-gray-9"
+      <template #status>
+        <Dropdown
+          v-if="doc.status && document.statuses"
+          :options="statuses"
+          align="end"
+        >
+          <template #default="{ open }">
+            <button type="button" class="inline-flex items-center gap-0.5">
+              <AstraBadge
+                :label="statusLabel(doc.status)"
+                :tone="leadStatusTone"
+                dot
+              />
+              <span
+                class="size-3 text-crm-muted-fg"
+                :class="open ? 'lucide-chevron-up' : 'lucide-chevron-down'"
+                aria-hidden="true"
+              />
+            </button>
+          </template>
+        </Dropdown>
+        <AstraBadge
+          v-else-if="doc.status"
+          :label="statusLabel(doc.status)"
+          :tone="leadStatusTone"
+          dot
+        />
+      </template>
+      <template #actions>
+        <CustomActions
+          v-if="document._actions?.length"
+          :actions="document._actions"
+        />
+        <CustomActions
+          v-if="document.actions?.length"
+          :actions="document.actions"
+        />
+        <ConnectActions
+          record-type="CRM Lead"
+          :record-id="leadId"
+          :phone="doc.mobile_no || doc.phone || ''"
+          show-labels
+        />
+        <AstraButton
+          v-if="emailTab"
+          variant="secondary"
+          size="sm"
+          :label="__('Email')"
+          @click="
+            doc.email
+              ? openEmailBox()
+              : toast.error(__('Please set an email address to send emails'))
+          "
+        />
+        <EnrichFromWebsite
+          doctype="CRM Lead"
+          :docname="leadId"
+          :website="doc.website"
+          @done="onEnriched"
+        />
+        <AssignTo
+          v-model="assignees.data"
+          doctype="CRM Lead"
+          :docname="leadId"
+        />
+        <Tooltip
+          :disabled="!isLeadConversionDisabled"
+          :text="__('Cannot convert a lost lead to deal')"
+        >
+          <div class="inline-flex">
+            <AstraButton
+              variant="primary"
+              size="sm"
+              :label="__('Convert to deal')"
+              :disabled="isLeadConversionDisabled"
+              @click="showConvertToDealModal = true"
+            />
+          </div>
+        </Tooltip>
+        <Dropdown :options="moreOptions" align="end">
+          <AstraButton variant="secondary" size="sm" icon-only :label="__('More')">
+            <template #prefix>
+              <span class="lucide-ellipsis size-4" aria-hidden="true" />
+            </template>
+          </AstraButton>
+        </Dropdown>
+      </template>
+      <template #stage>
+        <StagePath
+          :stages="leadStages"
+          :current="doc.status"
+          :dates="stageDates"
+          :summary="stageSummary"
+          @select="triggerStatusChange"
+        />
+        <StageHistory
+          v-if="doc.status_change_log?.length"
+          :rows="doc.status_change_log"
+        />
+      </template>
+    </AstraRecordHeader>
+
+    <ConnectCallSummary doctype="CRM Lead" :name="leadId" />
+
+      <Tabs
+        v-model="activeTab"
+        :tabs="tabs"
+        :class="recordTabsClass()"
+      >
+        <template #tab-panel>
+          <Activities
+            ref="activities"
+            v-model:reload="reload"
+            v-model:activeTab="activeTab"
+            doctype="CRM Lead"
+            :docname="leadId"
+            :tabs="tabs"
+            @beforeSave="beforeStatusChange"
+            @afterSave="reloadResources"
+          />
+        </template>
+      </Tabs>
+    </div>
+    <AstraSidePanel stacked>
+      <button
+        type="button"
+        class="w-full border-b border-crm-border px-4 py-2.5 text-left text-crm-label text-crm-muted-fg hover:text-crm-fg"
         @click="copyToClipboard(leadId)"
       >
-        {{ __(leadId) }}
-      </div>
-      <FileUploader
-        :validateFile="validateIsImageFile"
-        @success="(file) => updateField('image', file.file_url)"
-      >
-        <template #default="{ openFileSelector }">
-          <div class="flex items-center justify-start gap-5 border-b p-5">
-            <div class="group relative size-12">
-              <Avatar
-                size="3xl"
-                class="size-12"
-                :label="title"
-                :image="doc.image || doc.organization_logo"
-              />
-              <component
-                :is="doc.image ? Dropdown : 'div'"
-                v-bind="
-                  doc.image
-                    ? {
-                        options: [
-                          {
-                            icon: 'lucide-upload',
-                            label: doc.image
-                              ? __('Change Image')
-                              : __('Upload Image'),
-                            onClick: openFileSelector,
-                          },
-                          {
-                            icon: 'lucide-trash-2',
-                            label: __('Remove Image'),
-                            onClick: () => updateField('image', ''),
-                          },
-                        ],
-                      }
-                    : { onClick: openFileSelector }
-                "
-                class="!absolute bottom-0 left-0 right-0"
-              >
-                <div
-                  class="z-1 absolute bottom-0.5 left-0 right-0.5 flex h-9 cursor-pointer items-center justify-center rounded-b-full bg-black bg-opacity-40 pt-3 opacity-0 duration-300 ease-in-out group-hover:opacity-100"
-                  style="
-                    -webkit-clip-path: inset(12px 0 0 0);
-                    clip-path: inset(12px 0 0 0);
-                  "
-                >
-                  <CameraIcon class="size-4 cursor-pointer text-white" />
-                </div>
-              </component>
-            </div>
-            <div class="flex flex-col gap-2.5 truncate">
-              <Tooltip :text="doc.lead_name || __('Set First Name')">
-                <div class="truncate text-3xl-medium text-ink-gray-9">
-                  {{ title }}
-                </div>
-              </Tooltip>
-              <div class="flex gap-1.5">
-                <Button
-                  v-if="callEnabled"
-                  :tooltip="__('Make a Call')"
-                  :icon="PhoneIcon"
-                  @click="
-                    () =>
-                      doc.mobile_no
-                        ? makeCall(doc.mobile_no)
-                        : toast.error(
-                            __('Please set a mobile number to make calls'),
-                          )
-                  "
-                />
-
-                <ConnectActions
-                  record-type="CRM Lead"
-                  :record-id="leadId"
-                  :phone="doc.mobile_no || doc.phone || ''"
-                />
-
-                <Button
-                  :tooltip="__('Send an Email')"
-                  :disabled="!emailTab"
-                  :icon="Email2Icon"
-                  @click="
-                    doc.email
-                      ? openEmailBox()
-                      : toast.error(
-                          __('Please set an email address to send emails'),
-                        )
-                  "
-                />
-                <Button
-                  :tooltip="__('Go to Website')"
-                  :icon="LinkIcon"
-                  @click="
-                    doc.website
-                      ? openWebsite(doc.website)
-                      : toast.error(__('Please set a website to visit'))
-                  "
-                />
-
-                <Button
-                  :tooltip="__('Attach a File')"
-                  :icon="AttachmentIcon"
-                  @click="showFilesUploader = true"
-                />
-
-                <Button
-                  v-if="canDelete"
-                  :tooltip="__('Delete')"
-                  variant="subtle"
-                  theme="red"
-                  icon="lucide-trash-2"
-                  @click="deleteLead"
-                />
-              </div>
-              <ErrorMessage :message="__(error)" />
-            </div>
-          </div>
-        </template>
-      </FileUploader>
+        {{ leadId }}
+      </button>
       <SLASection
         v-if="doc.sla_status"
         v-model="doc"
         @updateField="updateField"
       />
-      <StageHistory :rows="doc.status_change_log || []" />
-      <div
+      <SidePanelLayout
         v-if="sections.data"
-        class="flex flex-1 flex-col justify-between overflow-hidden"
-      >
-        <SidePanelLayout
-          :sections="sections.data"
-          doctype="CRM Lead"
-          :docname="leadId"
-          @reload="sections.reload"
-          @beforeFieldChange="beforeStatusChange"
-          @afterFieldChange="reloadResources"
-        />
-      </div>
-    </Resizer>
+        :sections="sections.data"
+        doctype="CRM Lead"
+        :docname="leadId"
+        @reload="sections.reload"
+        @beforeFieldChange="beforeStatusChange"
+        @afterFieldChange="reloadResources"
+      />
+    </AstraSidePanel>
+    </div>
   </div>
   <ErrorPage
     v-else-if="errorTitle"
@@ -257,23 +222,31 @@
 <script setup>
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
-import Icon from '@/components/Icon.vue'
-import Resizer from '@/components/Resizer.vue'
+import AstraSidePanel from '@/components/astra/AstraSidePanel.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
 import EmailIcon from '@/components/Icons/EmailIcon.vue'
-import Email2Icon from '@/components/Icons/Email2Icon.vue'
 import CommentIcon from '@/components/Icons/CommentIcon.vue'
 import DetailsIcon from '@/components/Icons/DetailsIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import NoteIcon from '@/components/Icons/NoteIcon.vue'
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
-import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
-import CameraIcon from '@/components/Icons/CameraIcon.vue'
-import LinkIcon from '@/components/Icons/LinkIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
+import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
+import AstraBadge from '@/components/astra/AstraBadge.vue'
+import { STATUS_TONES } from '@/components/astra/format'
+import RecordAvatar from '@/components/Pipeline/RecordAvatar.vue'
+import StagePath from '@/components/Pipeline/StagePath.vue'
+import StageHistory from '@/components/Pipeline/StageHistory.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
+import {
+  daysSince,
+  openStageStart,
+  pipelineStages,
+  stageEnteredOn,
+} from '@/components/Pipeline/stageRail'
 import ConnectCallSummary from '@/components/ConnectCallSummary.vue'
 import Activities from '@/components/Activities/Activities.vue'
 import AssignTo from '@/components/AssignTo.vue'
@@ -284,15 +257,15 @@ import CustomActions from '@/components/CustomActions.vue'
 import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
 import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
 import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
-import StageHistory from '@/components/Pipeline/StageHistory.vue'
 import {
   openWebsite,
   setupCustomizations,
   copyToClipboard,
-  validateIsImageFile,
+  formatDate,
   isTranslatable,
 } from '@/utils'
 import { getView } from '@/utils/view'
+import { usersStore } from '@/stores/users'
 import { getSettings } from '@/stores/settings'
 import { globalStore } from '@/stores/global'
 import { statusesStore } from '@/stores/statuses'
@@ -306,25 +279,23 @@ import { flattenCommandActions } from '@/utils/commandPalette'
 import { recordCommands } from '@/components/CommandPalette/recordCommands'
 import {
   createResource,
-  FileUploader,
   Dropdown,
   Tooltip,
-  Avatar,
   Tabs,
-  Breadcrumbs,
   call,
   usePageMeta,
   toast,
 } from 'frappe-ui'
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useActiveTabManager } from '@/composables/useActiveTabManager'
 import { useUnsavedChangesWarning } from '@/composables/useUnsavedChangesWarning'
 import { useVisitedRecords } from '@/composables/useVisitedRecords'
 
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
-const { statusOptions, getLeadStatus } = statusesStore()
+const { statusOptions, getLeadStatus, leadStatuses } = statusesStore()
+const { getUser } = usersStore()
 const { doctypeMeta } = getMeta('CRM Lead')
 
 const route = useRoute()
@@ -402,9 +373,17 @@ watch(
   { once: true },
 )
 
+const title = computed(() => {
+  let t = doctypeMeta.value?.title_field || 'name'
+  return doc.value?.[t] || props.leadId
+})
+
+const leadStatusTone = computed(
+  () => STATUS_TONES[doc.value?.status] || 'mute',
+)
+
 const breadcrumbs = computed(() => {
   let items = [{ label: __('Leads'), route: { name: 'Leads' } }]
-
   if (route.query.view || route.query.viewType) {
     let view = getView(route.query.view, route.query.viewType, 'CRM Lead')
     if (view) {
@@ -419,21 +398,88 @@ const breadcrumbs = computed(() => {
       })
     }
   }
-
   items.push({
     label: title.value,
-    route: {
-      name: 'Lead',
-      params: { leadId: props.leadId },
-      query: route.query,
-    },
+    route: { name: 'Lead', params: { leadId: props.leadId }, query: route.query },
   })
   return items
 })
 
-const title = computed(() => {
-  let t = doctypeMeta.value?.title_field || 'name'
-  return doc.value?.[t] || props.leadId
+const leadMeta = computed(() => {
+  const parts = []
+  if (doc.value?.job_title) parts.push(doc.value.job_title)
+  if (doc.value?.organization) parts.push(doc.value.organization)
+  if (doc.value?.lead_owner) {
+    parts.push(__('Owner {0}', [getUser(doc.value.lead_owner).full_name]))
+  }
+  if (doc.value?.creation) {
+    parts.push(__('Created {0}', [formatDate(doc.value.creation, '', true)]))
+  }
+  return parts
+})
+
+const allowedLeadStatuses = computed(() =>
+  document.statuses?.length ? document.statuses : document._statuses,
+)
+
+const leadStages = computed(() =>
+  pipelineStages(leadStatuses.data, allowedLeadStatuses.value).map((stage) => ({
+    ...stage,
+    label: statusLabel(stage.name),
+  })),
+)
+
+const stageDates = computed(() => stageEnteredOn(doc.value?.status_change_log))
+
+const stageSummary = computed(() => {
+  const start = openStageStart(doc.value?.status_change_log, doc.value?.status)
+  const days = daysSince(start)
+  if (days == null || !doc.value?.status) return ''
+  return __('Day {0} in {1}', [days, statusLabel(doc.value.status)])
+})
+
+const moreOptions = computed(() => {
+  const options = []
+  if (callEnabled.value) {
+    options.push({
+      label: __('Make a Call'),
+      icon: 'lucide-phone',
+      onClick: () => {
+        if (doc.value.mobile_no) makeCall(doc.value.mobile_no)
+        else toast.error(__('Please set a mobile number to make calls'))
+      },
+    })
+  }
+  options.push(
+    {
+      label: __('Go to Website'),
+      icon: 'lucide-link',
+      onClick: () => {
+        if (doc.value.website) openWebsite(doc.value.website)
+        else toast.error(__('Please set a website to visit'))
+      },
+    },
+    {
+      label: __('Attach a File'),
+      icon: 'lucide-paperclip',
+      onClick: () => {
+        showFilesUploader.value = true
+      },
+    },
+    {
+      label: __('Copy ID'),
+      icon: 'lucide-copy',
+      onClick: () => copyToClipboard(props.leadId),
+    },
+  )
+  if (canDelete.value) {
+    options.push({
+      label: __('Delete'),
+      icon: 'lucide-trash-2',
+      onClick: deleteLead,
+    })
+  }
+  return options
 })
 
 const statuses = computed(() => {

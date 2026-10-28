@@ -5,7 +5,12 @@
   >
     <span
       v-if="dot"
-      class="size-1.5 shrink-0 rounded-full bg-current"
+      class="size-1.5 shrink-0"
+      :class="[
+        square ? 'rounded-[2px]' : 'rounded-full',
+        markerColor ? '' : 'bg-current',
+      ]"
+      :style="markerColor ? { backgroundColor: markerColor } : undefined"
       aria-hidden="true"
     />
     <slot>{{ label }}</slot>
@@ -19,6 +24,8 @@ const props = defineProps({
   label: { type: String, default: '' },
   tone: { type: String, default: 'mute' },
   dot: { type: Boolean, default: false },
+  square: { type: Boolean, default: false },
+  markerColor: { type: String, default: '' },
 })
 
 const toneClass = computed(() => {
