@@ -18,10 +18,16 @@
       :title="title"
       :avatar-src="doc.image || doc.organization_logo || ''"
       :status="doc.status || ''"
-      status-tone="mute"
+      :status-tone="leadStatusTone"
       :meta="leadMeta"
     >
       <template #actions>
+        <ConnectActions
+          record-type="CRM Lead"
+          :record-id="leadId"
+          :phone="doc.mobile_no || doc.phone || ''"
+          show-labels
+        />
         <AssignTo
           v-model="assignees.data"
           doctype="CRM Lead"
@@ -74,6 +80,14 @@
           </div>
         </Tooltip>
       </template>
+      <template #stage>
+        <StagePath
+          :stages="leadStages"
+          :current="doc.status"
+          :dates="stageDates"
+          @select="triggerStatusChange"
+        />
+      </template>
     </AstraRecordHeader>
 
     <div class="flex min-h-0 flex-1 overflow-hidden">
@@ -81,7 +95,7 @@
       v-model="activeTab"
       as="div"
       :tabs="tabs"
-      class="flex flex-1 flex-col overflow-auto [&_[role='tab']]:px-2.5 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:bg-crm-card [&_[role='tablist']]:border-b [&_[role='tablist']]:border-crm-border [&_[role='tablist']]:px-3 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-10 [&_[role='tablist']]:gap-0.5 [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+      :class="recordTabsClass({ scroll: true })"
     >
       <template #tab-panel="{ tab }">
         <div v-if="tab.name == 'Details' && !tab.component">
@@ -159,6 +173,11 @@ import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
 import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
+import { STATUS_TONES } from '@/components/astra/format'
+import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
+import StagePath from '@/components/Pipeline/StagePath.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
+import { pipelineStages, stageEnteredOn } from '@/components/Pipeline/stageRail'
 import Activities from '@/components/Activities/Activities.vue'
 import AssignTo from '@/components/AssignTo.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
@@ -189,7 +208,7 @@ import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
 
 const { brand } = getSettings()
 const { $dialog, $socket } = globalStore()
-const { statusOptions, getLeadStatus } = statusesStore()
+const { statusOptions, getLeadStatus, leadStatuses } = statusesStore()
 const { doctypeMeta } = getMeta('CRM Lead')
 
 const router = useRouter()
@@ -270,6 +289,18 @@ const leadMeta = computed(() => {
   if (doc.value?.organization) parts.push(doc.value.organization)
   return parts
 })
+
+const leadStatusTone = computed(() => STATUS_TONES[doc.value?.status] || 'mute')
+
+const leadStages = computed(() => {
+  const allowed = document.statuses?.length ? document.statuses : document._statuses
+  return pipelineStages(leadStatuses.data, allowed).map((stage) => ({
+    ...stage,
+    label: statusLabel(stage.name),
+  }))
+})
+
+const stageDates = computed(() => stageEnteredOn(doc.value?.status_change_log))
 
 usePageMeta(() => {
   return {

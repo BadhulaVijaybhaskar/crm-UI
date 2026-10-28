@@ -20,6 +20,13 @@
       :meta="contactMeta"
     >
       <template #actions>
+        <ConnectActions
+          v-if="contact.doc.name"
+          record-type="Contact"
+          :record-id="contact.doc.name"
+          :phone="contact.doc.mobile_no || ''"
+          show-labels
+        />
         <AstraButton
           v-if="callEnabled && contact.doc.mobile_no"
           variant="secondary"
@@ -70,7 +77,7 @@
       v-model="activeTab"
       as="div"
       :tabs="tabs"
-      class="flex flex-1 flex-col overflow-auto [&_[role='tab']]:px-2.5 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:bg-crm-card [&_[role='tablist']]:border-b [&_[role='tablist']]:border-crm-border [&_[role='tablist']]:px-3 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-10 [&_[role='tablist']]:gap-0.5 [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+      :class="recordTabsClass({ scroll: true })"
     >
       <template #tab-suffix="{ tab, active }">
         <Badge
@@ -125,6 +132,8 @@ import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import DealsListView from '@/components/ListViews/DealsListView.vue'
 import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
+import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
 import { validateIsImageFile } from '@/utils'
 import { useContactFields } from '@/composables/useContactFields'
 import { timestampCell } from '@/composables/useTimelinePreferences'

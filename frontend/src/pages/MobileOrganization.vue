@@ -98,7 +98,7 @@
       v-model="activeTab"
       as="div"
       :tabs="tabs"
-      class="flex flex-1 flex-col overflow-auto [&_[role='tab']]:px-2.5 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:bg-crm-card [&_[role='tablist']]:border-b [&_[role='tablist']]:border-crm-border [&_[role='tablist']]:px-3 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-10 [&_[role='tablist']]:gap-0.5 [&>[role='tabpanel']:not([hidden])]:flex [&>[role='tabpanel']:not([hidden])]:grow [&>[data-slot=tab-list]]:overflow-x-auto [&_[data-slot=tab-indicator]]:translate-y-0 [&>[data-slot=tab-panel]]:min-h-0 [&>[data-slot=tab-panel]]:flex-col [&>[data-slot=tab-panel]]:overflow-auto"
+      :class="recordTabsClass({ scroll: true })"
     >
       <template #tab-suffix="{ tab, active }">
         <Badge
@@ -169,6 +169,7 @@ import DetailsIcon from '@/components/Icons/DetailsIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
+import { recordTabsClass } from '@/components/Pipeline/recordChrome'
 import AstraButton from '@/components/astra/AstraButton.vue'
 import { useDocument } from '@/data/document'
 import { getSettings } from '@/stores/settings'

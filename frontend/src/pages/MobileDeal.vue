@@ -4,7 +4,7 @@
     class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg"
   >
     <header
-      class="flex h-11 items-center gap-1 border-b border-crm-border bg-crm-card px-1"
+      class="relative flex h-12 shrink-0 items-center border-b border-crm-border bg-crm-card px-1"
     >
       <button
         type="button"
@@ -14,18 +14,31 @@
       >
         <span class="lucide-chevron-left size-5" aria-hidden="true" />
       </button>
-      <div class="min-w-0 flex-1 truncate text-crm-body font-semibold text-crm-fg">
+      <h1
+        class="pointer-events-none absolute inset-x-16 truncate text-center text-crm-body font-semibold text-crm-fg"
+      >
         {{ title }}
+      </h1>
+      <div class="ml-auto flex items-center gap-1">
+        <AssignTo v-model="assignees.data" doctype="CRM Deal" :docname="dealId" />
+        <CustomActions
+          v-if="document._actions?.length"
+          :actions="document._actions"
+        />
+        <CustomActions
+          v-if="document.actions?.length"
+          :actions="document.actions"
+        />
+        <Dropdown v-if="statuses.length" :options="statuses" align="end">
+          <button
+            type="button"
+            class="inline-flex size-9 items-center justify-center text-crm-fg"
+            :aria-label="__('Menu')"
+          >
+            <span class="lucide-ellipsis size-5" aria-hidden="true" />
+          </button>
+        </Dropdown>
       </div>
-      <AssignTo v-model="assignees.data" doctype="CRM Deal" :docname="dealId" />
-      <CustomActions
-        v-if="document._actions?.length"
-        :actions="document._actions"
-      />
-      <CustomActions
-        v-if="document.actions?.length"
-        :actions="document.actions"
-      />
     </header>
 
     <div class="border-b border-crm-border bg-crm-card px-4 pb-3">
@@ -37,24 +50,14 @@
         <span v-if="dealValue" class="text-crm-kpi font-semibold tracking-crm-num text-crm-fg">
           {{ dealValue }}
         </span>
-        <Dropdown v-if="doc.status" :options="statuses" align="end">
-          <template #default="{ open }">
-            <button type="button" class="inline-flex items-center gap-0.5">
-              <AstraBadge
-                :label="statusLabel(doc.status)"
-                tone="mute"
-                dot
-                square
-                :marker-color="stageMarkerColor(doc.status)"
-              />
-              <span
-                class="size-3 text-crm-muted-fg"
-                :class="open ? 'lucide-chevron-up' : 'lucide-chevron-down'"
-                aria-hidden="true"
-              />
-            </button>
-          </template>
-        </Dropdown>
+        <AstraBadge
+          v-if="doc.status"
+          :label="statusLabel(doc.status)"
+          :tone="mobileStatusTone"
+          dot
+          square
+          :marker-color="stageMarkerColor(doc.status)"
+        />
       </div>
       <p
         v-if="dealMeta.length"
@@ -62,13 +65,27 @@
       >
         {{ dealMeta.join(' · ') }}
       </p>
-      <StagePath
-        class="mt-3"
-        :stages="dealStages"
-        :current="doc.status"
-        :dates="stageDates"
-        @select="triggerStatusChange"
-      />
+      <div v-if="dealStages.length" class="mt-3 flex gap-1">
+        <button
+          v-for="(stage, index) in dealStages"
+          :key="stage.name"
+          type="button"
+          class="min-w-0 flex-1"
+          @click="triggerStatusChange(stage.name)"
+        >
+          <span class="block h-1.5 rounded-[3px]" :class="segmentBar(stage, index)" />
+          <span
+            class="mt-1 block truncate text-center text-crm-micro"
+            :class="
+              segmentCurrent(stage, index)
+                ? 'font-semibold text-crm-fg'
+                : 'text-crm-muted-fg'
+            "
+          >
+            {{ stage.label }}
+          </span>
+        </button>
+      </div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <ConnectActions
           record-type="CRM Deal"
@@ -80,7 +97,7 @@
           variant="secondary"
           size="sm"
           :label="__('Note')"
-          @click="changeTabTo('notes')"
+          @click="openNote"
         />
       </div>
       <div
@@ -333,14 +350,10 @@ import FileTextIcon from '@/components/Icons/FileTextIcon.vue'
 import SuccessIcon from '@/components/Icons/SuccessIcon.vue'
 import AstraBadge from '@/components/astra/AstraBadge.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
+import { statusToneFor } from '@/components/astra/format'
 import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
-import StagePath from '@/components/Pipeline/StagePath.vue'
 import { recordTabsClass } from '@/components/Pipeline/recordChrome'
-import {
-  pipelineStages,
-  stageEnteredOn,
-  stageMarkerColor,
-} from '@/components/Pipeline/stageRail'
+import { pipelineStages, stageMarkerColor, stageState } from '@/components/Pipeline/stageRail'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
@@ -354,6 +367,7 @@ import CustomActions from '@/components/CustomActions.vue'
 import { setupCustomizations, formatDate, isTranslatable } from '@/utils'
 import { withRecipientConfirmation } from '@/utils/whatsappRecipient'
 import { getSettings } from '@/stores/settings'
+import { usersStore } from '@/stores/users'
 import { globalStore } from '@/stores/global'
 import { statusesStore } from '@/stores/statuses'
 import { getMeta } from '@/stores/meta'
@@ -365,6 +379,7 @@ import { callEnabled } from '@/composables/telephony'
 import { canViewQuotations } from '@/composables/erpnext'
 import { useActiveTabManager } from '@/composables/useActiveTabManager'
 import { useVisitedRecords } from '@/composables/useVisitedRecords'
+import { useDoctypeModal } from '@/composables/doctypeModal'
 import {
   createResource,
   Dropdown,
@@ -380,6 +395,8 @@ import { useRouter } from 'vue-router'
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
 const { statusOptions, getDealStatus, dealStatuses } = statusesStore()
+const { getUser } = usersStore()
+const { showModal } = useDoctypeModal()
 const { doctypeMeta, getFormattedCurrency } = getMeta('CRM Deal')
 
 const router = useRouter()
@@ -468,9 +485,58 @@ const dealMeta = computed(() => {
   if (doc.value?.probability != null && doc.value.probability !== '') {
     parts.push(`${Number(doc.value.probability)}%`)
   }
-  if (doc.value?.deal_owner) parts.push(doc.value.deal_owner)
+  if (doc.value?.deal_owner) {
+    parts.push(getUser(doc.value.deal_owner).full_name)
+  }
   return parts
 })
+
+const mobileStatusTone = computed(() => {
+  const status = doc.value?.status
+  if (!status) return 'mute'
+  return statusToneFor(status, getDealStatus(status)?.type)
+})
+
+const segmentBars = {
+  done: 'bg-crm-primary',
+  current: 'bg-crm-primary shadow-[0_0_0_2px_var(--crm-primary-soft)]',
+  won: 'bg-crm-success',
+  lost: 'bg-crm-danger',
+  todo: 'bg-crm-neutral-soft',
+}
+
+function segmentState(stage, index) {
+  const currentIndex = dealStages.value.findIndex(
+    (row) => row.name === doc.value?.status,
+  )
+  return stageState(stage, index, currentIndex)
+}
+
+function segmentBar(stage, index) {
+  return segmentBars[segmentState(stage, index)]
+}
+
+function segmentCurrent(stage, index) {
+  const state = segmentState(stage, index)
+  return state === 'current' || state === 'won' || state === 'lost'
+}
+
+function openNote() {
+  showModal({
+    doctype: 'FCRM Note',
+    title: 'Note',
+    defaults: {
+      reference_doctype: 'CRM Deal',
+      reference_docname: props.dealId,
+    },
+    callbacks: {
+      afterInsert: () => {
+        reload.value = true
+        changeTabTo('notes')
+      },
+    },
+  })
+}
 
 const statuses = computed(() =>
   statusOptions(
@@ -487,8 +553,6 @@ const dealStages = computed(() => {
     label: statusLabel(stage.name),
   }))
 })
-
-const stageDates = computed(() => stageEnteredOn(doc.value?.status_change_log))
 
 function goBack() {
   router.push({ name: 'Deals' })

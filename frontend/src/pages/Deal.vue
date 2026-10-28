@@ -1,14 +1,28 @@
 <template>
   <div v-if="doc.name" class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
+    <div class="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto xl:grid-cols-crm-record xl:overflow-hidden">
+    <div class="flex min-h-0 min-w-0 flex-col overflow-hidden max-xl:min-h-[24rem]">
     <nav
-      class="flex items-center px-crm-page-x py-2 text-crm-label text-crm-muted-fg"
+      class="flex min-w-0 items-center gap-1.5 px-crm-page-x pt-3 text-crm-meta text-crm-muted-fg"
       aria-label="Breadcrumb"
     >
-      <Breadcrumbs :items="breadcrumbs">
-        <template #prefix="{ item }">
-          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
-        </template>
-      </Breadcrumbs>
+      <template v-for="(item, index) in breadcrumbs" :key="item.label + index">
+        <span v-if="index" aria-hidden="true">›</span>
+        <router-link
+          v-if="item.route && index < breadcrumbs.length - 1"
+          :to="item.route"
+          class="truncate hover:text-crm-fg"
+        >
+          {{ item.label }}
+        </router-link>
+        <span
+          v-else
+          class="truncate"
+          :class="index === breadcrumbs.length - 1 ? 'text-crm-fg' : ''"
+        >
+          {{ item.label }}
+        </span>
+      </template>
     </nav>
 
     <AstraRecordHeader :title="title" :meta="dealMeta" squared-avatar>
@@ -69,7 +83,6 @@
           variant="secondary"
           size="sm"
           :label="__('Email')"
-          :disabled="!doc.email"
           @click="
             doc.email
               ? openEmailBox()
@@ -113,11 +126,8 @@
       </template>
     </AstraRecordHeader>
 
-    <div class="border-b border-crm-border px-crm-page-x py-2">
-      <ConnectCallSummary doctype="CRM Deal" :name="dealId" />
-    </div>
+    <ConnectCallSummary doctype="CRM Deal" :name="dealId" />
 
-    <div class="flex min-h-0 flex-1 overflow-hidden">
     <Tabs
       ref="dealTabsRef"
       v-model="activeTab"
@@ -138,10 +148,11 @@
         />
       </template>
     </Tabs>
-    <Resizer side="right" class="flex w-crm-side flex-col justify-between border-l border-crm-border bg-crm-card">
+    </div>
+    <AstraSidePanel stacked>
       <button
         type="button"
-        class="w-full border-b border-crm-border px-4 py-2 text-left text-crm-meta text-crm-muted-fg"
+        class="w-full border-b border-crm-border px-4 py-2.5 text-left text-crm-label text-crm-muted-fg hover:text-crm-fg"
         @click="copyToClipboard(dealId)"
       >
         {{ dealId }}
@@ -312,8 +323,8 @@
           </template>
         </SidePanelLayout>
       </div>
-    </Resizer>
-  </div>
+    </AstraSidePanel>
+    </div>
   </div>
   <ErrorPage
     v-else-if="errorTitle"
@@ -367,8 +378,7 @@
 <script setup>
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
-import Icon from '@/components/Icon.vue'
-import Resizer from '@/components/Resizer.vue'
+import AstraSidePanel from '@/components/astra/AstraSidePanel.vue'
 import LoadingIndicator from '@/components/Icons/LoadingIndicator.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
 import EmailIcon from '@/components/Icons/EmailIcon.vue'
@@ -386,7 +396,7 @@ import FileTextIcon from '@/components/Icons/FileTextIcon.vue'
 import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
 import AstraBadge from '@/components/astra/AstraBadge.vue'
-import { STATUS_TONES } from '@/components/astra/format'
+import { statusToneFor } from '@/components/astra/format'
 import RecordAvatar from '@/components/Pipeline/RecordAvatar.vue'
 import StagePath from '@/components/Pipeline/StagePath.vue'
 import StageHistory from '@/components/Pipeline/StageHistory.vue'
@@ -440,7 +450,6 @@ import {
   Dropdown,
   Avatar,
   Tabs,
-  Breadcrumbs,
   call,
   usePageMeta,
   toast,
@@ -584,6 +593,8 @@ const breadcrumbs = computed(() => {
         },
       })
     }
+  } else if (doc.value?.status) {
+    items.push({ label: statusLabel(doc.value.status) })
   }
   items.push({
     label: title.value,
@@ -616,14 +627,17 @@ const dealMeta = computed(() => {
   if (doc.value?.deal_owner) {
     parts.push(__('Owner {0}', [getUser(doc.value.deal_owner).full_name]))
   }
+  if (doc.value?.source) parts.push(doc.value.source)
   const fromLead = doc.value?.lead_name || doc.value?.lead
-  if (fromLead) parts.push(__('From {0}', [fromLead]))
+  if (fromLead) parts.push(__('From lead {0}', [fromLead]))
   return parts
 })
 
-const dealStatusTone = computed(
-  () => STATUS_TONES[doc.value?.status] || 'mute',
-)
+const dealStatusTone = computed(() => {
+  const status = doc.value?.status
+  if (!status) return 'mute'
+  return statusToneFor(status, getDealStatus(status)?.type)
+})
 
 const allowedDealStatuses = computed(() =>
   document.statuses?.length ? document.statuses : document._statuses,
