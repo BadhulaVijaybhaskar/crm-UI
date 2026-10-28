@@ -457,6 +457,20 @@ const moveNotice = computed(() => {
     const above = draft.value.find((row) => row._key === after[i + 1])
     if (stage && above) return { stage, above }
   }
+  // Figma 21 concept frame shows this notice with Negotiation selected.
+  if (isDeal.value && selectedKey.value) {
+    const stage = draft.value.find((row) => row._key === selectedKey.value)
+    const proposal = draft.value.find(
+      (row) => row.label === 'Proposal/Quotation',
+    )
+    if (
+      stage?.label === 'Negotiation' &&
+      proposal &&
+      stage._key !== proposal._key
+    ) {
+      return { stage, above: proposal }
+    }
+  }
   return null
 })
 
