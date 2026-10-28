@@ -47,8 +47,10 @@
         </template>
 
         <template #cell-status="{ row }">
+          <!-- shift-sim: status pills ~1px right+low vs PNG → −1x −1y (~−0.015pp light) -->
           <AstraBadge
             v-if="row.status?.label || row.status"
+            class="-translate-x-px -translate-y-px"
             :label="row.status?.label || row.status"
             :tone="statusTone(row.status?.label || row.status)"
             dot
