@@ -47,9 +47,10 @@
       </AstraButton>
     </template>
     <template #toolbar>
+      <!-- app.css .btn/.btn.sm: gap 7px, font-weight 600 — match PNG ghost tools -->
       <button
         type="button"
-        class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg"
+        class="inline-flex h-crm-control-sm items-center gap-[7px] rounded-crm-control-sm px-2.5 text-crm-label font-semibold text-crm-muted-fg"
       >
         <svg
           class="size-3.5"
@@ -67,7 +68,7 @@
       <button
         v-if="viewType !== 'kanban'"
         type="button"
-        class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg"
+        class="inline-flex h-crm-control-sm items-center gap-[7px] rounded-crm-control-sm px-2.5 text-crm-label font-semibold text-crm-muted-fg"
         @click="showCrmCsvImport = true"
       >
         <svg
@@ -87,7 +88,7 @@
       <button
         v-if="viewType !== 'kanban' && canExportLeads"
         type="button"
-        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg"
+        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-semibold text-crm-muted-fg"
         @click="exportLeadsCsv"
       >
         {{ __('Export') }}

@@ -54,11 +54,16 @@
         </button>
       </slot>
     </div>
-    <div v-if="$slots.actions || sortLabel" class="flex flex-nowrap items-center gap-2">
+    <!-- app.css .btn gap:7px; .btn font-weight:600 (ghost keeps muted-fg).
+         Shift-sim vs PNG: actions sit ~8–12px too far right → nudge left. -->
+    <div
+      v-if="$slots.actions || sortLabel"
+      class="-translate-x-2 flex flex-nowrap items-center gap-[7px]"
+    >
       <button
         v-if="sortLabel"
         type="button"
-        class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg"
+        class="inline-flex h-crm-control-sm items-center gap-[7px] rounded-crm-control-sm px-2.5 text-crm-label font-semibold text-crm-muted-fg"
         @click="$emit('sort')"
       >
         <svg
