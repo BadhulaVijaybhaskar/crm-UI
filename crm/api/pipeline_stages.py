@@ -235,7 +235,13 @@ def _move_renamed_columns(by_name: dict[str, dict], renames: dict[str, str]) -> 
 				continue
 			column = by_name.pop(old)
 			column["name"] = new
-			by_name[new] = column
+			if new in by_name:
+				kept = by_name[new]
+				for key, value in column.items():
+					if key != "name":
+						kept.setdefault(key, value)
+			else:
+				by_name[new] = column
 			pending.pop(old)
 			moved = True
 		if not moved:
