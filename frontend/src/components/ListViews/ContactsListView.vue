@@ -1,5 +1,6 @@
 <template>
   <ListView
+    ref="listViewRef"
     class="astra-list-view"
     :class="$attrs.class"
     :columns="columns"
@@ -258,6 +259,7 @@ watch(pageLengthCount, (val, old_value) => {
 })
 
 const listBulkActionsRef = ref(null)
+const listViewRef = ref(null)
 const selectedKeys = ref([])
 
 function onSelectionsChanged(selections) {
@@ -268,6 +270,7 @@ function onSelectionsChanged(selections) {
 }
 
 function clearSelections() {
+  listViewRef.value?.toggleAllRows?.(false)
   selectedKeys.value = []
   emit('selectionsChanged', new Set())
 }
