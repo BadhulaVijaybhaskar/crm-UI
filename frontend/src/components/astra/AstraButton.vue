@@ -44,12 +44,15 @@ const sizeClass = computed(() => {
 
 const variantClass = computed(() => {
   const map = {
-    primary: 'bg-crm-primary text-crm-primary-fg hover:bg-crm-primary-hover',
+    // app.css .btn.pri — border matches fill so outer size matches capture HTML
+    primary:
+      'border border-crm-primary bg-crm-primary text-crm-primary-fg hover:border-crm-primary-hover hover:bg-crm-primary-hover',
     secondary:
-      'bg-crm-card text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)] hover:bg-crm-muted',
-    ghost: 'bg-transparent text-crm-muted-fg hover:bg-crm-muted hover:text-crm-fg',
-    positive: 'bg-crm-success text-white hover:brightness-105',
-    negative: 'bg-crm-danger text-white hover:brightness-105',
+      'border border-crm-border-strong bg-crm-card text-crm-fg hover:bg-crm-muted',
+    ghost:
+      'border border-transparent bg-transparent text-crm-muted-fg hover:bg-crm-muted hover:text-crm-fg',
+    positive: 'border border-crm-success bg-crm-success text-white hover:brightness-105',
+    negative: 'border border-crm-danger bg-crm-danger text-white hover:brightness-105',
   }
   return map[props.variant] || map.secondary
 })
