@@ -428,18 +428,20 @@ defineExpose({
 .astra-leads-table :deep(th:nth-child(8)),
 .astra-leads-table :deep(td:nth-child(8)) {
   width: 73px;
-  padding-left: 8px;
+  /* Owner avatar was −2px vs PNG after the −2 pad; restore default */
+  padding-left: 10px;
 }
 .astra-leads-table :deep(th:nth-child(9)),
 .astra-leads-table :deep(td:nth-child(9)) {
   width: 158px;
-  padding-left: 8px;
+  /* Activity ink sat ~10px left of PNG; +8px pad is shift-sim optimum */
+  padding-left: 16px;
 }
 .astra-leads-table :deep(th:nth-child(10)),
 .astra-leads-table :deep(td:nth-child(10)) {
   width: 91px;
-  /* Shift-sim: Created ink −2px vs PNG (~1332) */
-  padding-left: 8px;
+  /* Created −3px vs default 10px padding */
+  padding-left: 7px;
 }
 .astra-leads-table :deep(td.bg-crm-row-selected) {
   background: var(--crm-row-selected);

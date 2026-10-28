@@ -1,5 +1,5 @@
 <template>
-  <div class="astra-shell__topbar">
+  <div class="astra-shell__topbar -translate-x-px">
     <button
       type="button"
       class="flex h-[34px] w-crm-search items-center gap-2 rounded-crm-control bg-crm-muted px-2.5 text-left text-crm-label text-crm-faint shadow-[inset_0_0_0_1px_var(--crm-border)] hover:text-crm-muted-fg"
