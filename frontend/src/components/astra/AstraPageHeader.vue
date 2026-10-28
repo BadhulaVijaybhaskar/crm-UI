@@ -14,7 +14,7 @@
       </h1>
       <p
         v-if="description"
-        class="m-0 text-[13px] leading-[18.85px] text-crm-muted-fg"
+        class="m-0 -translate-y-px text-[13px] leading-[18.85px] text-crm-muted-fg"
       >
         {{ description }}
       </p>
