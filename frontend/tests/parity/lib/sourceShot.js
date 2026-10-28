@@ -60,6 +60,7 @@ export async function screenshotSourceHtml({
 @font-face{font-family:Inter;font-weight:400;src:url(data:font/woff2;base64,${inter(400)}) format('woff2')}
 @font-face{font-family:Inter;font-weight:500;src:url(data:font/woff2;base64,${inter(500)}) format('woff2')}
 @font-face{font-family:Inter;font-weight:600;src:url(data:font/woff2;base64,${inter(600)}) format('woff2')}
+@font-face{font-family:Inter;font-weight:700;src:url(data:font/woff2;base64,${inter(700)}) format('woff2')}
 `,
   })
   await page.goto(`http://127.0.0.1:${port}/${htmlFile}`, {

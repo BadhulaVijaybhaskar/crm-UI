@@ -2,13 +2,13 @@
   <div
     class="flex items-center justify-between gap-2 px-crm-page-x py-[10px]"
   >
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-nowrap items-center gap-2">
       <slot name="filters">
         <button
           v-for="filter in filters"
           :key="filter.id || filter.label"
           type="button"
-          class="inline-flex h-crm-control-sm items-center gap-1 rounded-crm-control-sm bg-crm-card pl-2.5 pr-2 text-crm-label shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+          class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm bg-crm-card pl-2.5 pr-2 text-crm-label shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
           :class="{
             'bg-crm-primary-soft shadow-[inset_0_0_0_1px_var(--crm-primary)]':
               filter.active,
@@ -16,22 +16,44 @@
           @click="$emit('remove-filter', filter)"
         >
           <span class="text-crm-muted-fg">{{ filter.key || filter.label }}</span>
-          <span v-if="filter.value" class="font-semibold text-crm-fg">
+          <span v-if="filter.value" class="font-semibold text-crm-primary">
             {{ filter.value }}
           </span>
-          <span class="text-crm-faint" aria-hidden="true">×</span>
+          <svg
+            class="size-3.5"
+            :class="filter.active ? 'text-crm-primary' : 'text-crm-faint'"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
         </button>
         <button
           v-if="showAdd"
           type="button"
-          class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+          class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm bg-crm-card px-2.5 text-crm-label font-medium text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
           @click="$emit('add-filter')"
         >
-          + {{ addLabel }}
+          <svg
+            class="size-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          {{ addLabel }}
         </button>
       </slot>
     </div>
-    <div v-if="$slots.actions || sortLabel" class="flex flex-wrap items-center gap-2">
+    <div v-if="$slots.actions || sortLabel" class="flex flex-nowrap items-center gap-2">
       <button
         v-if="sortLabel"
         type="button"

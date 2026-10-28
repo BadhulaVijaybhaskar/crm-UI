@@ -2,7 +2,7 @@
    Colour tokens live in astra-crm-tokens.css (--crm-*). Do not enable the
    optional frappe-ui remapping block there; shell chrome uses --crm-* directly.
 
-   Font: self-hosted Inter (OFL) 400/500/600 — matches app.css / Figma captures.
+   Font: self-hosted Inter (OFL) 400/500/600/700 — matches app.css / Figma captures.
    Licence: src/assets/fonts/Inter-OFL.txt (not shown in UI). */
 
 @font-face {
@@ -25,6 +25,13 @@
   font-weight: 600;
   font-display: swap;
   src: url('./assets/fonts/Inter-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/Inter-700.woff2') format('woff2');
 }
 
 :root {

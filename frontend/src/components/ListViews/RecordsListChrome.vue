@@ -28,18 +28,19 @@
             :key="tab.value"
             type="button"
             role="tab"
-            class="inline-flex h-[38px] items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-2.5 text-crm-body font-medium text-crm-muted-fg"
-            :class="{
-              'border-crm-primary font-semibold text-crm-fg':
-                tab.value === activeView,
-            }"
+            class="-mb-px inline-flex h-[38px] items-center gap-1.5 whitespace-nowrap border-b-2 px-2.5 text-crm-body font-medium"
+            :class="
+              tab.value === activeView
+                ? 'border-crm-primary font-semibold text-crm-fg'
+                : 'border-transparent text-crm-muted-fg'
+            "
             :aria-selected="tab.value === activeView"
             @click="$emit('select-view', tab)"
           >
             <span>{{ tab.label }}</span>
             <span
               v-if="tab.count != null"
-              class="text-crm-micro font-semibold text-crm-faint"
+              class="text-[11px] font-semibold text-crm-faint"
             >
               {{ tab.count }}
             </span>
@@ -47,10 +48,20 @@
           <button
             v-if="showSaveView"
             type="button"
-            class="inline-flex h-[38px] items-center gap-1 px-2.5 text-crm-body font-semibold text-crm-primary"
+            class="-mb-px inline-flex h-[38px] items-center gap-1.5 px-2.5 text-crm-body font-semibold text-crm-primary"
             @click="$emit('save-view')"
           >
-            <span class="lucide-plus size-3.5" aria-hidden="true" />
+            <svg
+              class="size-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
             {{ __('Save view') }}
           </button>
         </div>
@@ -61,9 +72,14 @@
         role="group"
         :aria-label="__('View type')"
       >
+        <!--
+          crm.css .views span { height:38px } cascades onto .seg spans in the
+          HTML capture, so List/Board render at 38px and the tabs row is 46px.
+          Match that signed-off height (app.css .seg span 26px is overridden).
+        -->
         <button
           type="button"
-          class="inline-flex h-[26px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
+          class="inline-flex h-[38px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             viewType === 'list'
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
@@ -85,7 +101,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex h-[26px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
+          class="inline-flex h-[38px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             viewType === 'kanban'
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
@@ -101,8 +117,8 @@
             stroke-width="1.75"
             aria-hidden="true"
           >
-            <rect x="3" y="3" width="7" height="18" rx="1" />
-            <rect x="14" y="3" width="7" height="12" rx="1" />
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M8 7v7M12 7v4M16 7v9" />
           </svg>
           {{ __('Board') }}
         </button>

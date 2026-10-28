@@ -27,11 +27,22 @@
       />
       <AstraButton
         variant="primary"
+        size="sm"
         :label="__('New lead')"
         @click="showLeadModal = true"
       >
         <template #prefix>
-          <span class="lucide-plus size-3.5" aria-hidden="true" />
+          <svg
+            class="size-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
         </template>
       </AstraButton>
     </template>
@@ -516,10 +527,13 @@ const columns = computed(() => {
 
   if (_columns.length) {
     _columns = _columns.map((col) => {
-      if (col.key === 'score' || col.key === 'creation') {
-        return { ...col, align: 'right' }
+      // Drop fixture rem widths — list CSS matches signed-off HTML auto-layout.
+      const next = { ...col, width: undefined }
+      // crm.css .tbl th.r / td.r — Score only (Created stays left).
+      if (col.key === 'score') {
+        next.align = 'right'
       }
-      return col
+      return next
     })
   }
 

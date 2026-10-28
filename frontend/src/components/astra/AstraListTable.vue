@@ -1,5 +1,8 @@
 <template>
-  <div class="w-full overflow-auto bg-crm-card" :class="{ 'min-h-64': !rows.length }">
+  <div
+    class="w-full overflow-x-hidden overflow-y-visible bg-crm-card"
+    :class="{ 'min-h-64': !rows.length }"
+  >
     <div v-if="!rows.length">
       <slot name="empty">
         <AstraEmptyState :title="emptyTitle" :body="emptyBody" />
@@ -10,11 +13,11 @@
         <tr>
           <th
             v-if="selectable"
-            class="h-crm-th w-10 border-b border-crm-border bg-crm-muted px-2.5 text-center"
+            class="h-crm-th w-[34px] border-b border-crm-border bg-crm-muted px-2.5 text-center"
           >
             <AstraCheckbox
               :checked="allSelected"
-              :indeterminate="someSelected && !allSelected"
+              :indeterminate="false"
               :aria-label="__('Select all')"
               @change="(checked) => $emit('toggle-all', checked)"
             />
@@ -43,7 +46,8 @@
         >
           <td
             v-if="selectable"
-            class="h-crm-td w-10 px-2.5 text-center"
+            class="h-crm-td w-[34px] px-2.5 text-center"
+            :class="{ 'bg-crm-row-selected': isSelected(row) }"
             @click.stop
           >
             <AstraCheckbox
@@ -56,7 +60,10 @@
             v-for="col in columns"
             :key="col.key"
             class="h-crm-td whitespace-nowrap px-2.5 text-crm-label text-crm-fg"
-            :class="{ 'text-right': col.align === 'right' }"
+            :class="{
+              'text-right': col.align === 'right',
+              'bg-crm-row-selected': isSelected(row),
+            }"
           >
             <slot :name="`cell-${col.key}`" :row="row" :column="col">
               {{ row[col.key] }}
@@ -102,9 +109,5 @@ const allSelected = computed(
   () =>
     props.rows.length > 0 &&
     props.rows.every((row) => props.selectedKeys.includes(rowKey(row))),
-)
-
-const someSelected = computed(() =>
-  props.rows.some((row) => props.selectedKeys.includes(rowKey(row))),
 )
 </script>

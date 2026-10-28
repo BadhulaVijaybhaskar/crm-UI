@@ -1,6 +1,6 @@
 <template>
   <span
-    class="inline-flex h-crm-chip items-center gap-1.5 whitespace-nowrap rounded-crm-chip px-2 text-crm-meta font-semibold"
+    class="inline-flex h-crm-chip items-center gap-[5px] whitespace-nowrap rounded-crm-chip px-2 text-crm-meta font-semibold"
     :class="toneClass"
   >
     <span

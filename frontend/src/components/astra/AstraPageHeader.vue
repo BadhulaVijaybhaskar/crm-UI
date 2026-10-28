@@ -1,5 +1,5 @@
 <template>
-  <header class="flex items-start justify-between gap-3 px-crm-page-x pb-3.5 pt-[18px]">
+  <header class="flex items-center justify-between gap-3 px-crm-page-x pb-3.5 pt-[18px]">
     <div class="min-w-0">
       <p
         v-if="eyebrow"
@@ -7,10 +7,15 @@
       >
         {{ eyebrow }}
       </p>
-      <h1 class="m-0 text-crm-page font-semibold tracking-crm-tight text-crm-fg">
+      <h1
+        class="m-0 text-[20px] font-semibold leading-[29px] tracking-crm-tight text-crm-fg"
+      >
         {{ title }}
       </h1>
-      <p v-if="description" class="mt-1 text-crm-body text-crm-muted-fg">
+      <p
+        v-if="description"
+        class="m-0 text-[13px] leading-[18.85px] text-crm-muted-fg"
+      >
         {{ description }}
       </p>
     </div>

@@ -1,9 +1,9 @@
 <template>
-  <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-crm-bg px-crm-page-x pb-6 pt-2.5">
+  <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-crm-bg px-crm-page-x pb-6">
     <div
       class="min-h-0 flex-1 overflow-hidden rounded-[10px] border border-crm-border bg-crm-card"
     >
-      <div class="h-full overflow-auto">
+      <div class="h-full overflow-y-auto overflow-x-hidden">
       <AstraListTable
         class="astra-leads-table"
         row-key-field="name"
@@ -29,12 +29,14 @@
               size="md"
             />
             <div class="flex min-w-0 flex-col leading-[1.3]">
-              <span class="truncate text-crm-label font-semibold text-crm-fg">
+              <span
+                class="truncate text-[12.5px] font-semibold leading-[1.3] text-crm-fg"
+              >
                 {{ row.lead_name?.label || row.lead_name }}
               </span>
               <span
                 v-if="row.lead_name?.organization || row.organization"
-                class="truncate text-crm-meta text-crm-muted-fg"
+                class="truncate text-[11.5px] leading-[1.3] text-crm-muted-fg"
               >
                 {{ row.lead_name?.organization || row.organization }}
               </span>
@@ -283,10 +285,21 @@ const bulkBarActions = computed(() => {
   )
   const edit = all.find((a) => a.label === __('Edit') || a.label === 'Edit')
   const allowed = []
-  if (assign) allowed.push({ label: __('Assign'), onClick: assign.onClick })
-  if (edit) allowed.push({ label: __('Set status'), onClick: edit.onClick })
+  if (assign)
+    allowed.push({
+      label: __('Assign'),
+      icon: 'assign',
+      onClick: assign.onClick,
+    })
+  if (edit)
+    allowed.push({
+      label: __('Set status'),
+      icon: 'status',
+      onClick: edit.onClick,
+    })
   allowed.push({
     label: __('Set temperature'),
+    icon: 'temperature',
     onClick: () => edit?.onClick?.(),
   })
   if (canUseCrmCsvExport('CRM Lead') && selectedKeys.value.length) {
@@ -346,13 +359,17 @@ defineExpose({
 
 <style scoped>
 .astra-leads-table :deep(table) {
+  /* Fixed layout; leftover width goes to Created (no width on last col). */
+  table-layout: fixed;
+  width: 100%;
   border-collapse: collapse;
 }
 .astra-leads-table :deep(th) {
   height: 34px;
   padding: 0 10px;
   letter-spacing: 0.06em;
-  font-size: 11px;
+  font-size: 11.5px;
+  font-weight: 600;
 }
 .astra-leads-table :deep(td) {
   height: 44px;
@@ -362,8 +379,55 @@ defineExpose({
   overflow: hidden;
   vertical-align: middle;
 }
-.astra-leads-table :deep(tr.bg-crm-row-selected),
-.astra-leads-table :deep(tr[class*='bg-crm-row-selected']) {
+/*
+ * Column widths tuned to Figma PNG landmarks (HTML auto-layout sits ~7–14px
+ * right of PNG from Status onward). Name −7 / Status −7 / Activity +7.
+ */
+.astra-leads-table :deep(th:nth-child(1)),
+.astra-leads-table :deep(td:nth-child(1)) {
+  width: 35px;
+  min-width: 35px;
+  max-width: 35px;
+}
+.astra-leads-table :deep(th:nth-child(2)),
+.astra-leads-table :deep(td:nth-child(2)) {
+  width: 199px;
+  min-width: 199px;
+  max-width: 199px;
+}
+.astra-leads-table :deep(th:nth-child(3)),
+.astra-leads-table :deep(td:nth-child(3)) {
+  width: 135px;
+}
+.astra-leads-table :deep(th:nth-child(4)),
+.astra-leads-table :deep(td:nth-child(4)) {
+  width: 79px;
+}
+.astra-leads-table :deep(th:nth-child(5)),
+.astra-leads-table :deep(td:nth-child(5)) {
+  width: 197px;
+}
+.astra-leads-table :deep(th:nth-child(6)),
+.astra-leads-table :deep(td:nth-child(6)) {
+  width: 67px;
+}
+.astra-leads-table :deep(th:nth-child(7)),
+.astra-leads-table :deep(td:nth-child(7)) {
+  width: 108px;
+}
+.astra-leads-table :deep(th:nth-child(8)),
+.astra-leads-table :deep(td:nth-child(8)) {
+  width: 73px;
+}
+.astra-leads-table :deep(th:nth-child(9)),
+.astra-leads-table :deep(td:nth-child(9)) {
+  width: 160px;
+}
+.astra-leads-table :deep(th:nth-child(10)),
+.astra-leads-table :deep(td:nth-child(10)) {
+  width: 91px;
+}
+.astra-leads-table :deep(td.bg-crm-row-selected) {
   background: var(--crm-row-selected);
 }
 </style>
