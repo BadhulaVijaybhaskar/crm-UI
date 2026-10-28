@@ -68,7 +68,7 @@
       </div>
       <div
         v-if="showViewSwitch"
-        class="flex shrink-0 items-center gap-0.5 rounded-crm-control bg-crm-muted p-[3px] shadow-[inset_0_0_0_1px_var(--crm-border)]"
+        class="-translate-x-px flex shrink-0 items-center gap-0.5 rounded-crm-control bg-crm-muted p-[3px] shadow-[inset_0_0_0_1px_var(--crm-border)]"
         role="group"
         :aria-label="__('View type')"
       >
