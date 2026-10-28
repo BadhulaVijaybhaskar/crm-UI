@@ -18,8 +18,17 @@ export const sessionStore = defineStore('crm-session', () => {
 
   const login = createResource({
     url: 'login',
-    onError() {
-      throw new Error(__('Invalid Email or Password'))
+    onError(error) {
+      const status = error?.httpStatus || error?.status || error?.response?.status
+      const err = new Error(
+        status === 429 || error?.exc_type === 'SecurityException'
+          ? __('Too many failed attempts. Please try again after some time.')
+          : __('Invalid Email or Password'),
+      )
+      err.status = status
+      err.httpStatus = status
+      err.exc_type = error?.exc_type
+      throw err
     },
     onSuccess() {
       user.value = sessionUser()
