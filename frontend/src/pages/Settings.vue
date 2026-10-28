@@ -64,7 +64,7 @@ const router = useRouter()
 const navEl = ref(null)
 const { getUser, users } = usersStore()
 const user = computed(() => getUser() || {})
-const ready = computed(() => Boolean(users.fetched || users.data))
+const ready = computed(() => Boolean(users.fetched))
 const groups = computed(() => visibleSettingsGroups())
 const active = computed(() => {
   const items = groups.value.flatMap((group) => group.items)
