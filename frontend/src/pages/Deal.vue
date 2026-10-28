@@ -1,16 +1,14 @@
 <template>
   <div v-if="doc.name" class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
     <nav
-      class="flex items-center gap-1.5 px-crm-page-x pt-3 text-crm-meta text-crm-muted-fg"
+      class="flex items-center px-crm-page-x py-2 text-crm-label text-crm-muted-fg"
       aria-label="Breadcrumb"
     >
-      <router-link :to="{ name: 'Deals' }" class="hover:text-crm-fg">
-        {{ __('Deals') }}
-      </router-link>
-      <span aria-hidden="true">›</span>
-      <span v-if="doc.status" class="truncate">{{ doc.status }}</span>
-      <span v-if="doc.status" aria-hidden="true">›</span>
-      <span class="truncate text-crm-fg">{{ title }}</span>
+      <Breadcrumbs :items="breadcrumbs">
+        <template #prefix="{ item }">
+          <Icon v-if="item.icon" :icon="item.icon" class="mr-2 h-4" />
+        </template>
+      </Breadcrumbs>
     </nav>
 
     <AstraRecordHeader :title="title" :meta="dealMeta" squared-avatar>
@@ -369,6 +367,7 @@
 <script setup>
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
+import Icon from '@/components/Icon.vue'
 import Resizer from '@/components/Resizer.vue'
 import LoadingIndicator from '@/components/Icons/LoadingIndicator.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
@@ -392,7 +391,6 @@ import RecordAvatar from '@/components/Pipeline/RecordAvatar.vue'
 import StagePath from '@/components/Pipeline/StagePath.vue'
 import StageHistory from '@/components/Pipeline/StageHistory.vue'
 import { recordTabsClass } from '@/components/Pipeline/recordChrome'
-import { recordTabsClass } from '@/components/Pipeline/recordChrome'
 import {
   daysSince,
   openStageStart,
@@ -415,10 +413,14 @@ import CustomActions from '@/components/CustomActions.vue'
 import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
 import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
 import {
+  openWebsite,
   setupCustomizations,
   copyToClipboard,
+  formatDate,
   isTranslatable,
 } from '@/utils'
+import { getView } from '@/utils/view'
+import { usersStore } from '@/stores/users'
 import { withRecipientConfirmation } from '@/utils/whatsappRecipient'
 import { getSettings } from '@/stores/settings'
 import { globalStore } from '@/stores/global'
@@ -438,6 +440,7 @@ import {
   Dropdown,
   Avatar,
   Tabs,
+  Breadcrumbs,
   call,
   usePageMeta,
   toast,
@@ -451,7 +454,7 @@ import {
   nextTick,
   watch,
 } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useActiveTabManager } from '@/composables/useActiveTabManager'
 import { useUnsavedChangesWarning } from '@/composables/useUnsavedChangesWarning'
 import { useVisitedRecords } from '@/composables/useVisitedRecords'
@@ -460,8 +463,10 @@ const { on } = useBroadcast()
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
 const { statusOptions, getDealStatus, dealStatuses } = statusesStore()
-const { doctypeMeta } = getMeta('CRM Deal')
+const { getUser } = usersStore()
+const { doctypeMeta, getFormattedCurrency } = getMeta('CRM Deal')
 
+const route = useRoute()
 const router = useRouter()
 
 const props = defineProps({
@@ -564,20 +569,55 @@ const title = computed(() => {
   return doc.value?.[t] || props.dealId
 })
 
+const breadcrumbs = computed(() => {
+  let items = [{ label: __('Deals'), route: { name: 'Deals' } }]
+  if (route.query.view || route.query.viewType) {
+    let view = getView(route.query.view, route.query.viewType, 'CRM Deal')
+    if (view) {
+      items.push({
+        label: __(view.label),
+        icon: view.icon,
+        route: {
+          name: 'Deals',
+          params: { viewType: route.query.viewType },
+          query: { view: route.query.view },
+        },
+      })
+    }
+  }
+  items.push({
+    label: title.value,
+    route: {
+      name: 'Deal',
+      params: { dealId: props.dealId },
+      query: route.query,
+    },
+  })
+  return items
+})
+
 const dealMeta = computed(() => {
   const parts = []
-  if (doc.value?.expected_deal_value != null && doc.value?.expected_deal_value !== '') {
-    parts.push(String(doc.value.expected_deal_value))
-  }
+  const amount =
+    doc.value?.deal_value != null && doc.value.deal_value !== ''
+      ? getFormattedCurrency('deal_value', doc.value)
+      : doc.value?.expected_deal_value != null &&
+          doc.value.expected_deal_value !== ''
+        ? getFormattedCurrency('expected_deal_value', doc.value)
+        : ''
+  if (amount) parts.push(amount)
   if (doc.value?.expected_closure_date) {
-    parts.push(__('Expected close {0}', [doc.value.expected_closure_date]))
+    parts.push(
+      __('Expected close {0}', [
+        formatDate(doc.value.expected_closure_date, '', true),
+      ]),
+    )
   }
   if (doc.value?.deal_owner) {
-    parts.push(doc.value.deal_owner)
+    parts.push(__('Owner {0}', [getUser(doc.value.deal_owner).full_name]))
   }
-  if (doc.value?.lead) {
-    parts.push(__('From lead {0}', [doc.value.lead]))
-  }
+  const fromLead = doc.value?.lead_name || doc.value?.lead
+  if (fromLead) parts.push(__('From {0}', [fromLead]))
   return parts
 })
 
@@ -599,18 +639,57 @@ const dealStages = computed(() =>
 const stageDates = computed(() => stageEnteredOn(doc.value?.status_change_log))
 
 const stageSummary = computed(() => {
-  const start = openStageStart(doc.value?.status_change_log, doc.value?.status)
-  const days = daysSince(start)
-  const probability = getDealStatus(doc.value?.status)?.probability
-  if (days == null || !doc.value?.status) return ''
-  if (probability != null && probability !== '') {
-    return __('{0}% · Day {1} in {2}', [
-      probability,
-      days,
-      statusLabel(doc.value.status),
-    ])
+  const parts = []
+  const probability = doc.value?.probability
+  if (probability != null && probability !== '') parts.push(`${Number(probability)}%`)
+  const days = daysSince(
+    openStageStart(doc.value?.status_change_log, doc.value?.status),
+  )
+  if (days != null && doc.value?.status) {
+    parts.push(__('Day {0} in {1}', [days, statusLabel(doc.value.status)]))
   }
-  return __('Day {0} in {1}', [days, statusLabel(doc.value.status)])
+  return parts.join(' · ')
+})
+
+const moreOptions = computed(() => {
+  const options = []
+  if (callEnabled.value) {
+    options.push({
+      label: __('Make a Call'),
+      icon: 'lucide-phone',
+      onClick: triggerCall,
+    })
+  }
+  options.push(
+    {
+      label: __('Go to Website'),
+      icon: 'lucide-link',
+      onClick: () => {
+        if (doc.value.website) openWebsite(doc.value.website)
+        else toast.error(__('Please set a website to visit'))
+      },
+    },
+    {
+      label: __('Attach a File'),
+      icon: 'lucide-paperclip',
+      onClick: () => {
+        showFilesUploader.value = true
+      },
+    },
+    {
+      label: __('Copy ID'),
+      icon: 'lucide-copy',
+      onClick: () => copyToClipboard(props.dealId),
+    },
+  )
+  if (canDelete.value) {
+    options.push({
+      label: __('Delete'),
+      icon: 'lucide-trash-2',
+      onClick: deleteDeal,
+    })
+  }
+  return options
 })
 
 const statuses = computed(() => {
