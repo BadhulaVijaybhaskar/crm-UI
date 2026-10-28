@@ -288,10 +288,18 @@ class TestOrgHierarchy(IntegrationTestCase):
 	def test_api_admin_lists_all_leads(self):
 		a = make_lead("rep1@hier.test")
 		b = make_lead("outsider@hier.test")
-		# Administrator session (default) — no filter
-		names = {d.name for d in frappe.client.get_list("CRM Lead", fields=["name"], limit_page_length=50)}
-		self.assertIn(a.name, names)
-		self.assertIn(b.name, names)
+		# Scope to this test's leads — default page length truncates once leftovers
+		# from prior suite runs accumulate on a fresh site run twice.
+		names = {
+			d.name
+			for d in frappe.client.get_list(
+				"CRM Lead",
+				fields=["name"],
+				filters={"name": ["in", [a.name, b.name]]},
+				limit_page_length=20,
+			)
+		}
+		self.assertEqual(names, {a.name, b.name})
 
 	# ------------------------------------------------------------------
 	# Deal activities
