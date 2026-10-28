@@ -38,22 +38,45 @@
     <template #toolbar>
       <button
         type="button"
-        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+        class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg"
       >
+        <svg
+          class="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          aria-hidden="true"
+        >
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M9 4v16M15 4v16" />
+        </svg>
         {{ __('Columns') }}
       </button>
       <button
         v-if="viewType !== 'kanban'"
         type="button"
-        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+        class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg"
         @click="showCrmCsvImport = true"
       >
+        <svg
+          class="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          aria-hidden="true"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="m17 8-5-5-5 5" />
+          <path d="M12 3v12" />
+        </svg>
         {{ __('Import') }}
       </button>
       <button
         v-if="viewType !== 'kanban' && canExportLeads"
         type="button"
-        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg"
         @click="exportLeadsCsv"
       >
         {{ __('Export') }}

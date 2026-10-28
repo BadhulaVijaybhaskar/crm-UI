@@ -35,9 +35,19 @@
       <button
         v-if="sortLabel"
         type="button"
-        class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+        class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg"
         @click="$emit('sort')"
       >
+        <svg
+          class="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          aria-hidden="true"
+        >
+          <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+        </svg>
         {{ sortLabel }}
       </button>
       <slot name="actions" />
