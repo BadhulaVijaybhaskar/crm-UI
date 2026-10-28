@@ -84,6 +84,8 @@ class CRMLead(Document):
 		from crm.api.form import enrich_form_submission
 
 		enrich_form_submission(self)
+		# Do NOT default lead_owner here — Assignment Rule / availability must
+		# run first. apply_default_owner() fills in only when still empty.
 
 	def before_validate(self):
 		self.set_sla()
@@ -104,6 +106,10 @@ class CRMLead(Document):
 			add_status_change_log(self)
 
 	def after_insert(self):
+		# Only assign when an owner was explicitly set. Leaving lead_owner empty
+		# lets Assignment Rule / availability pick an agent (doc method runs
+		# before those hooks). Hierarchy still sees the record via document
+		# owner and ToDo assignment.
 		if self.lead_owner:
 			if self.lead_owner != frappe.session.user:
 				self.share_with_agent(self.lead_owner)

@@ -2,6 +2,8 @@ import json
 
 import frappe
 from frappe import _
+from frappe.utils.password import get_decrypted_password
+from twilio.request_validator import RequestValidator
 from twilio.twiml.voice_response import VoiceResponse
 from werkzeug.wrappers import Response
 
@@ -23,6 +25,26 @@ def validate_twilio_request(args, require_application_sid: bool = False):
 		application_sid = frappe.utils.cstr(args.get("ApplicationSid"))
 		if not application_sid or application_sid != frappe.utils.cstr(twilio.application_sid):
 			frappe.throw(_("Invalid Twilio application"), frappe.PermissionError)
+
+	# Reject forged webhooks: AccountSid alone is not enough.
+	signature = None
+	if frappe.request:
+		signature = frappe.request.headers.get("X-Twilio-Signature")
+	if not signature:
+		frappe.throw(_("Missing Twilio signature"), frappe.PermissionError)
+
+	auth_token = get_decrypted_password("CRM Twilio Settings", "CRM Twilio Settings", "auth_token")
+	if not auth_token:
+		frappe.throw(_("Twilio auth token is missing"), frappe.PermissionError)
+
+	params = dict(args or {})
+	params.pop("cmd", None)
+	from crm.integrations.twilio.utils import get_twilio_webhook_url
+
+	url = get_twilio_webhook_url()
+	validator = RequestValidator(auth_token)
+	if not validator.validate(url, params, signature):
+		frappe.throw(_("Invalid Twilio signature"), frappe.PermissionError)
 
 	return twilio
 

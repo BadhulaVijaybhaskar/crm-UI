@@ -131,29 +131,29 @@ class TestCRMDeal(IntegrationTestCase):
 
 	def test_update_deal_owner(self):
 		"""Test updating deal owner assigns and shares with new owner"""
-		# Create deal without owner
+		# Create deal without an explicit owner — falls back to the creator
 		deal = create_test_deal(organization="Update Owner Org")
-		self.assertFalse(deal.deal_owner)
+		self.assertEqual(deal.deal_owner, frappe.session.user)
 
-		# Update deal owner
-		deal.deal_owner = "Administrator"
+		# Update to a different owner (creator is usually Administrator in tests)
+		deal.deal_owner = "crm.user1@example.com"
 		deal.save()
 
 		# Verify assignment and share
 		deal.reload()
-		self.assertEqual(deal.deal_owner, "Administrator")
+		self.assertEqual(deal.deal_owner, "crm.user1@example.com")
 		assignees = deal.get_assigned_users()
-		self.assertIn("Administrator", assignees)
+		self.assertIn("crm.user1@example.com", assignees)
 
 		docshare = frappe.db.exists(
 			"DocShare",
-			{"user": "Administrator", "share_name": deal.name, "share_doctype": "CRM Deal"},
+			{"user": "crm.user1@example.com", "share_name": deal.name, "share_doctype": "CRM Deal"},
 		)
 		self.assertTrue(docshare)
 
 		# Try to assign same agent again - should not duplicate
 		initial_count = len(assignees)
-		deal.assign_agent("Administrator")
+		deal.assign_agent("crm.user1@example.com")
 		assignees_after = deal.get_assigned_users()
 		self.assertEqual(len(assignees_after), initial_count)
 
@@ -533,6 +533,42 @@ class TestGetDealContacts(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		self.assertFalse(frappe.db.exists("Contact Email", {"email_id": "noperm-deal@example.com"}))
 		self.assertFalse(frappe.db.exists("CRM Organization", {"organization_name": "No Perm Org"}))
+
+	def test_create_deal_api_inserts_without_ignore_permissions(self):
+		"""create_deal must insert under the caller's permissions (no ignore_permissions)."""
+		email = "deal-inserter@example.com"
+		for doctype in ("CRM Deal", "Contact", "CRM Organization"):
+			role = f"Test {doctype} Access"
+			if not frappe.db.exists("Role", role):
+				frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(
+					ignore_permissions=True
+				)
+			add_permission(doctype, role, 0)
+			update_permission_property(doctype, role, 0, "create", 1)
+			update_permission_property(doctype, role, 0, "write", 1)
+			update_permission_property(doctype, role, 0, "read", 1)
+
+		if not frappe.db.exists("User", email):
+			user = frappe.get_doc(
+				{"doctype": "User", "email": email, "first_name": "Inserter", "send_welcome_email": 0}
+			).insert(ignore_permissions=True)
+		else:
+			user = frappe.get_doc("User", email)
+		user.add_roles("Test CRM Deal Access", "Test Contact Access", "Test CRM Organization Access")
+
+		frappe.set_user(email)
+		try:
+			deal_name = create_deal(
+				{
+					"organization_name": "Permitted Insert Org",
+					"first_name": "Permitted",
+					"email": "permitted-insert@example.com",
+				}
+			)
+			deal = frappe.get_doc("CRM Deal", deal_name)
+			self.assertEqual(deal.owner, email)
+		finally:
+			frappe.set_user("Administrator")
 
 	def test_get_assigned_users_requires_read_permission(self):
 		deal = create_test_deal(organization="Assignees Read Org")
