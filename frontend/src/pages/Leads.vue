@@ -1,37 +1,51 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <ViewBreadcrumbs v-model="viewControls" routeName="Leads" />
-    </template>
-    <template #right-header>
+  <RecordsListChrome
+    :title="__('Leads')"
+    :description="__('Your open leads and pipeline.')"
+    :create-label="__('+ New lead')"
+    :view-tabs="viewTabs"
+    :active-view="activeView"
+    :show-save-view="true"
+    :show-view-switch="true"
+    :view-type="viewType === 'kanban' ? 'kanban' : 'list'"
+    :filter-chips="filterChips"
+    :show-filter-bar="filterChips.length > 0"
+    @create="showLeadModal = true"
+    @select-view="selectView"
+    @save-view="saveView"
+    @set-view-type="setViewType"
+    @remove-filter="removeFilterChip"
+  >
+    <template #actions>
       <CustomActions
         v-if="leadsListView?.customListActions"
         :actions="leadsListView.customListActions"
       />
-      <Button
-        variant="solid"
-        :label="__('Create')"
-        iconLeft="lucide-plus"
+      <AstraButton
+        variant="primary"
+        :label="__('+ New lead')"
         @click="showLeadModal = true"
       />
     </template>
-  </LayoutHeader>
-  <ViewControls
-    ref="viewControls"
-    v-model="leads"
-    v-model:loadMore="loadMore"
-    v-model:resizeColumn="triggerResize"
-    v-model:updatedPageCount="updatedPageCount"
-    doctype="CRM Lead"
-    :filters="{ converted: 0 }"
-    :options="{
-      allowedViews: ['list', 'group_by', 'kanban'],
-      groupSummary: true,
-      groupByExclude: ['naming_series', 'docstatus'],
-    }"
-  />
+    <div class="astra-records-vc border-b border-crm-border bg-crm-card">
+      <ViewControls
+        ref="viewControls"
+        v-model="leads"
+        v-model:loadMore="loadMore"
+        v-model:resizeColumn="triggerResize"
+        v-model:updatedPageCount="updatedPageCount"
+        doctype="CRM Lead"
+        :filters="{ converted: 0 }"
+        :options="{
+          allowedViews: ['list', 'group_by', 'kanban'],
+          groupSummary: true,
+          groupByExclude: ['naming_series', 'docstatus'],
+        }"
+      />
+    </div>
   <KanbanView
     v-if="route.params.viewType == 'kanban'"
+    class="min-h-0 flex-1"
     v-model="leads"
     :options="{
       getRoute: (row) => getRoute(row.name),
@@ -265,11 +279,11 @@
     v-model="showLeadModal"
     :defaults="defaults"
   />
+  </RecordsListChrome>
 </template>
 
 <script setup>
 import UserAvatar from '@/components/UserAvatar.vue'
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import GroupSummaryTable from '@/components/GroupSummaryTable.vue'
 import MultipleAvatar from '@/components/MultipleAvatar.vue'
 import CustomActions from '@/components/CustomActions.vue'
@@ -278,14 +292,16 @@ import NoteIcon from '@/components/Icons/NoteIcon.vue'
 import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
 import LeadsListView from '@/components/ListViews/LeadsListView.vue'
+import RecordsListChrome from '@/components/ListViews/RecordsListChrome.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
 import KanbanView from '@/components/Kanban/KanbanView.vue'
 import KanbanActivityCounts from '@/components/Kanban/KanbanActivityCounts.vue'
 import LeadModal from '@/components/Modals/LeadModal.vue'
 import ViewControls from '@/components/ViewControls.vue'
+import AstraButton from '@/components/astra/AstraButton.vue'
 import { useDoctypeModal } from '@/composables/doctypeModal'
+import { useRecordsViews } from '@/composables/useRecordsViews'
 import { getMeta } from '@/stores/meta'
 import { globalStore } from '@/stores/global'
 import { usersStore } from '@/stores/users'
@@ -335,6 +351,25 @@ const loadMore = ref(1)
 const triggerResize = ref(1)
 const updatedPageCount = ref(20)
 const viewControls = ref(null)
+
+const {
+  viewType,
+  activeView,
+  viewTabs,
+  selectView,
+  setViewType,
+  saveView,
+  filterChipsFromList,
+  removeFilterChip,
+} = useRecordsViews({
+  doctype: 'CRM Lead',
+  list: leads,
+  viewControls,
+  defaultFilters: () => ({ converted: 0 }),
+  allLabel: __('All leads'),
+})
+
+const filterChips = computed(() => filterChipsFromList())
 
 function getRow(name, field) {
   function getValue(value) {

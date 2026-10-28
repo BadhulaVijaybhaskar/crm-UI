@@ -12,19 +12,21 @@
             v-if="selectable"
             class="h-crm-th w-10 border-b border-crm-border bg-crm-muted px-2.5 text-center"
           >
-            <input
-              type="checkbox"
-              class="size-[15px] rounded-crm-mini accent-crm-primary"
+            <AstraCheckbox
               :checked="allSelected"
-              :indeterminate.prop="someSelected && !allSelected"
-              @change="$emit('toggle-all', $event.target.checked)"
+              :indeterminate="someSelected && !allSelected"
+              :aria-label="__('Select all')"
+              @change="(checked) => $emit('toggle-all', checked)"
             />
           </th>
           <th
             v-for="col in columns"
             :key="col.key"
-            class="h-crm-th border-b border-crm-border bg-crm-muted px-2.5 text-left text-crm-meta font-semibold text-crm-muted-fg"
-            :class="{ 'text-right': col.align === 'right' }"
+            class="h-crm-th border-b border-crm-border bg-crm-muted px-2.5 text-left text-crm-micro font-semibold text-crm-muted-fg"
+            :class="[
+              uppercaseHeaders ? 'uppercase tracking-crm-caps' : 'normal-case',
+              { 'text-right': col.align === 'right' },
+            ]"
             :style="col.width ? { width: col.width } : undefined"
           >
             {{ col.label }}
@@ -44,11 +46,10 @@
             class="h-crm-td w-10 px-2.5 text-center"
             @click.stop
           >
-            <input
-              type="checkbox"
-              class="size-[15px] rounded-crm-mini accent-crm-primary"
+            <AstraCheckbox
               :checked="isSelected(row)"
-              @change="$emit('toggle-row', row, $event.target.checked)"
+              :aria-label="__('Select row')"
+              @change="(checked) => $emit('toggle-row', row, checked)"
             />
           </td>
           <td
@@ -69,6 +70,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import AstraCheckbox from '@/components/astra/AstraCheckbox.vue'
 import AstraEmptyState from '@/components/astra/AstraEmptyState.vue'
 
 const props = defineProps({
@@ -82,6 +84,8 @@ const props = defineProps({
     type: String,
     default: 'Try adjusting filters or create a new record.',
   },
+  /** Spec table headers are sentence case; set true for uppercase 11px caps. */
+  uppercaseHeaders: { type: Boolean, default: true },
 })
 
 defineEmits(['row-click', 'toggle-row', 'toggle-all'])
