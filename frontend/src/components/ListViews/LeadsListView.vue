@@ -1,6 +1,9 @@
 <template>
-  <div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-crm-card">
-    <div class="min-h-0 flex-1 overflow-auto px-crm-page-x">
+  <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-crm-bg px-crm-page-x pb-6 pt-2.5">
+    <div
+      class="min-h-0 flex-1 overflow-hidden rounded-[10px] border border-crm-border bg-crm-card"
+    >
+      <div class="h-full overflow-auto">
       <AstraListTable
         class="astra-leads-table"
         row-key-field="name"
@@ -102,10 +105,11 @@
           }}</span>
         </template>
       </AstraListTable>
+      </div>
     </div>
 
     <div
-      class="flex items-center border-t border-crm-border bg-crm-card px-crm-page-x py-2.5 text-[12px] text-crm-muted-fg"
+      class="mt-2.5 flex items-center text-[12px] text-crm-muted-fg"
     >
       <span>
         {{

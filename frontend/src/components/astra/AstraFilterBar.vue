@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center justify-between gap-2 border-b border-crm-border bg-crm-card px-crm-page-x py-[10px]"
+    class="flex items-center justify-between gap-2 px-crm-page-x py-[10px]"
   >
     <div class="flex flex-wrap items-center gap-2">
       <slot name="filters">

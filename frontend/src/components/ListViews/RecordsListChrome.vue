@@ -19,7 +19,7 @@
 
     <div
       v-if="viewTabs.length || showViewSwitch"
-      class="flex items-center gap-2 border-b border-crm-border bg-crm-card px-crm-page-x"
+      class="flex items-center gap-2 border-b border-crm-border px-crm-page-x"
     >
       <div class="min-w-0 flex-1 overflow-x-auto">
         <div class="flex items-center gap-0.5" role="tablist">
@@ -63,7 +63,7 @@
       >
         <button
           type="button"
-          class="inline-flex h-[26px] items-center rounded-crm-chip px-2.5 text-crm-label font-medium"
+          class="inline-flex h-[26px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             viewType === 'list'
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
@@ -71,11 +71,21 @@
           "
           @click="$emit('set-view-type', 'list')"
         >
+          <svg
+            class="size-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            aria-hidden="true"
+          >
+            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
           {{ __('List') }}
         </button>
         <button
           type="button"
-          class="inline-flex h-[26px] items-center rounded-crm-chip px-2.5 text-crm-label font-medium"
+          class="inline-flex h-[26px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             viewType === 'kanban'
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
@@ -83,6 +93,17 @@
           "
           @click="$emit('set-view-type', 'kanban')"
         >
+          <svg
+            class="size-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            aria-hidden="true"
+          >
+            <rect x="3" y="3" width="7" height="18" rx="1" />
+            <rect x="14" y="3" width="7" height="12" rx="1" />
+          </svg>
           {{ __('Board') }}
         </button>
       </div>
