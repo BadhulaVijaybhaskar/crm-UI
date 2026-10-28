@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:title",
+ "creation": "2026-10-27 18:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "enabled",
+  "endpoint_url",
+  "secret",
+  "events",
+  "timeout_seconds"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "endpoint_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Endpoint URL",
+   "options": "URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "secret",
+   "fieldtype": "Password",
+   "label": "Signing secret"
+  },
+  {
+   "description": "Comma-separated: lead.created, lead.updated, deal.created, deal.updated, deal.stage_changed, contact.created, contact.updated",
+   "fieldname": "events",
+   "fieldtype": "Small Text",
+   "label": "Events",
+   "reqd": 1
+  },
+  {
+   "default": "15",
+   "fieldname": "timeout_seconds",
+   "fieldtype": "Int",
+   "label": "Timeout (seconds)",
+   "non_negative": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-27 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "CRM Outbound Webhook",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -86,6 +86,8 @@ import WorkflowAutomationPage from '@/components/Settings/WorkflowAutomations/Wo
 import EmailTemplatePage from '@/components/Settings/EmailTemplate/EmailTemplatePage.vue'
 import TelephonyPage from '@/components/Settings/Telephony/TelephonyPage.vue'
 import AstraConnectSettings from '@/components/Settings/AstraConnectSettings.vue'
+import DeveloperAccess from '@/components/Settings/DeveloperAccess.vue'
+import LucideKeyRound from '~icons/lucide/key-round'
 import EmailConfig from '@/components/Settings/EmailConfig.vue'
 import Icon from '@/components/Icon.vue'
 import { usersStore } from '@/stores/users'
@@ -108,7 +110,7 @@ function isErpIntegrationAvailable() {
   )
 }
 
-const { isManager, getUser } = usersStore()
+const { isManager, isAdmin, getUser } = usersStore()
 
 const user = computed(() => getUser() || {})
 
@@ -250,6 +252,12 @@ const tabs = computed(() => {
           icon: PhoneIcon,
           component: markRaw(AstraConnectSettings),
           condition: () => isManager(),
+        },
+        {
+          label: __('API & webhooks'),
+          icon: markRaw(LucideKeyRound),
+          component: markRaw(DeveloperAccess),
+          condition: () => isAdmin(),
         },
         {
           label: __('Telephony'),

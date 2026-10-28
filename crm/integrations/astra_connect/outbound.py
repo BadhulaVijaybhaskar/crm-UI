@@ -90,6 +90,8 @@ def enqueue_event(event_type: str, payload: dict[str, Any]):
 		event_name=event.name,
 		now=bool(getattr(frappe.flags, "in_test", False)),
 	)
+	# Custom CRM Outbound Webhook rows are fired by independent doc_events
+	# (crm_outbound_webhook), not gated on Connect.
 
 
 def deliver_event(event_name: str, max_attempts: int = 3):
@@ -137,6 +139,9 @@ def deliver_event(event_name: str, max_attempts: int = 3):
 	doc.error = last_error
 	doc.save(ignore_permissions=True)
 	frappe.db.commit()
+
+
+# deliver_custom_webhooks lives on CRM Outbound Webhook (Connect-independent).
 
 
 @frappe.whitelist()

@@ -23,7 +23,62 @@ class CRMSearch(SQLiteSearch):
 		"metadata_fields": ["parent", "author"],
 	}
 
+	# Record doctypes need an explicit content mapping — SQLiteSearch requires
+	# the column, and Lead/Deal/Contact/Org have no HTML content field.
 	INDEXABLE_DOCTYPES: ClassVar = {
+		"CRM Lead": {
+			"fields": [
+				"name",
+				{"title": "lead_name"},
+				{"content": "lead_name"},
+				"first_name",
+				"last_name",
+				"email",
+				"mobile_no",
+				"organization",
+				"status",
+				"modified",
+				{"author": "lead_owner"},
+			],
+		},
+		"CRM Deal": {
+			"fields": [
+				"name",
+				{"title": "organization"},
+				{"content": "organization"},
+				"email",
+				"mobile_no",
+				"status",
+				"modified",
+				{"author": "deal_owner"},
+			],
+		},
+		"Contact": {
+			"fields": [
+				"name",
+				{"title": "full_name"},
+				{"content": "full_name"},
+				"first_name",
+				"last_name",
+				"email_id",
+				"mobile_no",
+				"company_name",
+				"modified",
+				{"author": "owner"},
+			],
+		},
+		"CRM Organization": {
+			"fields": [
+				"name",
+				{"title": "organization_name"},
+				{"content": "organization_name"},
+				"website",
+				"industry",
+				"territory",
+				"modified",
+				{"author": "owner"},
+			],
+		},
 		"Comment": {
 			"fields": [
 				"name",
@@ -83,31 +138,76 @@ class CRMSearch(SQLiteSearch):
 		"""Return `parent` keys the user can read, or None when there are too many to pre-filter."""
 		leads = frappe.get_list("CRM Lead", pluck="name", limit=PREFILTER_LIMIT + 1)
 		deals = frappe.get_list("CRM Deal", pluck="name", limit=PREFILTER_LIMIT + 1)
-		if len(leads) > PREFILTER_LIMIT or len(deals) > PREFILTER_LIMIT:
+		contacts = frappe.get_list("Contact", pluck="name", limit=PREFILTER_LIMIT + 1)
+		orgs = frappe.get_list("CRM Organization", pluck="name", limit=PREFILTER_LIMIT + 1)
+		if any(
+			len(rows) > PREFILTER_LIMIT for rows in (leads, deals, contacts, orgs)
+		):
 			return None
 
-		return [parent_key("CRM Lead", name) for name in leads] + [
-			parent_key("CRM Deal", name) for name in deals
-		]
+		return (
+			[parent_key("CRM Lead", name) for name in leads]
+			+ [parent_key("CRM Deal", name) for name in deals]
+			+ [parent_key("Contact", name) for name in contacts]
+			+ [parent_key("CRM Organization", name) for name in orgs]
+		)
 
 	def prepare_document(self, doc):
 		# The index queue loads documents by name, so the configured filters are not applied there.
 		config = self.doc_configs.get(doc.doctype)
-		if not config or not matches_filters(doc, config["filters"]):
+		if not config:
+			return None
+		filters = config.get("filters") or {}
+		if filters and not matches_filters(doc, filters):
 			return None
 
 		document = super().prepare_document(doc)
 		if not document:
 			return None
 
-		reference_name = doc.reference_docname if doc.doctype == "FCRM Note" else doc.reference_name
-		document["parent"] = parent_key(doc.reference_doctype, reference_name)
+		if doc.doctype in ("CRM Lead", "CRM Deal", "Contact", "CRM Organization"):
+			document["parent"] = parent_key(doc.doctype, doc.name)
+			# Always populate content — empty title fields still indexed by name/email/phone.
+			document["content"] = self._record_content(doc) or document.get("content") or doc.name
+			if not document.get("title"):
+				document["title"] = document["content"].split()[0] if document["content"] else doc.name
+		else:
+			reference_name = doc.reference_docname if doc.doctype == "FCRM Note" else doc.reference_name
+			document["parent"] = parent_key(doc.reference_doctype, reference_name)
 
 		# Index only the new text of an email, so a phrase matches the email that said it
 		# and not every later reply that quotes it.
 		if doc.doctype == "Communication":
 			document["content"] = self._process_content(strip_quoted_reply(doc.content))
+		# Schema requires content — never leave it None (migrate / lead insert crash).
+		if not document.get("content"):
+			document["content"] = document.get("title") or doc.name or ""
 		return document
+
+	def _record_content(self, doc) -> str:
+		fields = {
+			"CRM Lead": ("lead_name", "first_name", "last_name", "email", "mobile_no", "organization", "status"),
+			"CRM Deal": ("organization", "email", "mobile_no", "status"),
+			"Contact": ("full_name", "first_name", "last_name", "email_id", "mobile_no", "company_name"),
+			"CRM Organization": ("organization_name", "website", "industry", "territory"),
+		}.get(doc.doctype, ())
+		parts = []
+		for field in fields:
+			value = doc.get(field)
+			if value not in (None, ""):
+				parts.append(str(value))
+		return " ".join(parts).strip()
+
+	def add_to_queue(self, *args, **kwargs):
+		"""Compatibility shim — older frappe SQLiteSearch used this name; tests patch it."""
+		parent = getattr(SQLiteSearch, "add_to_queue", None)
+		if callable(parent):
+			return parent(self, *args, **kwargs)
+		# Fall through to direct index when the parent API is absent.
+		doctype = kwargs.get("doctype") or (args[0] if args else None)
+		docname = kwargs.get("docname") or (args[1] if len(args) > 1 else None)
+		if doctype and docname:
+			return self.index_doc(doctype, docname)
 
 	def index_doc(self, doctype, docname):
 		try:

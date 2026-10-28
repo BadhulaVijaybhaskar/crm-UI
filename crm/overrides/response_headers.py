@@ -53,9 +53,13 @@ _CSP_BASE = (
 
 
 def _socketio_connect_sources() -> list[str]:
-	"""Extra connect-src origins when socketio_port is explicitly configured."""
+	"""Extra connect-src origins when direct socketio dialling is opted in."""
 	extras: list[str] = []
 	try:
+		from frappe.utils import cint
+
+		if not cint(frappe.conf.get("astra_socketio_direct")):
+			return extras
 		port = frappe.conf.get("socketio_port")
 		if port in (None, "", 0, "0"):
 			return extras

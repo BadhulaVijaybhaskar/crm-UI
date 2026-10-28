@@ -5,20 +5,31 @@ import { getCachedListResource, getCachedResource } from 'frappe-ui'
  * Socket.IO URL for realtime.
  *
  * Default: same-origin (`/socket.io` via the site nginx/proxy) so CSP
- * `connect-src 'self'` allows the connection on every /crm page.
+ * `connect-src 'self'` works on every /crm page (including behind :443).
  *
- * Only when `window.socketio_port` is explicitly set (site/boot config) do we
- * dial a cross-port absolute URL — the app CSP then adds that origin.
+ * Direct host:port dialling is opt-in only — site config
+ * `astra_socketio_direct=1` plus a bootstrapped `socketio_port`.
+ * Never treat a bare common_site_config socketio_port as a signal to
+ * bypass the proxy (that port is not exposed in production).
  */
 export function getSocketioUrl() {
   const siteName = window.site_name || ''
+  const direct =
+    window.astra_socketio_direct === 1 ||
+    window.astra_socketio_direct === true ||
+    window.astra_socketio_direct === '1'
   const configured = window.socketio_port
-  if (configured !== undefined && configured !== null && configured !== '') {
+  if (
+    direct &&
+    configured !== undefined &&
+    configured !== null &&
+    configured !== ''
+  ) {
     const host = window.location.hostname
     const protocol = window.location.protocol === 'https:' ? 'https' : 'http'
     return `${protocol}://${host}:${configured}/${siteName}`
   }
-  // Same-origin — proxy terminates /socket.io (and /{site}) on this host.
+  // Same-origin — proxy terminates /socket.io on this host.
   return `${window.location.origin}/${siteName}`
 }
 

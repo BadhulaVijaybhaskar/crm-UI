@@ -7,7 +7,9 @@ Design (inbox + worker):
   worker     — claim via conditional UPDATE, upsert call log / note under unique
                indexes, commit data, then conditional status UPDATE. No GET_LOCK,
                no savepoints, never rewrite another request's inbox row.
-  sweeper    — resets stale Processing rows and re-enqueues them.
+  sweeper    — DB row is source of truth: reclaim stale Processing and orphaned
+               Received rows; always re-enqueue with a fresh job_id (RQ job
+               records must not block recovery).
 """
 
 from __future__ import annotations
@@ -38,8 +40,23 @@ from crm.utils.sanitize import sanitize_text
 
 MAX_WORKER_ATTEMPTS = 8
 CONNECT_QUEUE = "astra_connect"
+FALLBACK_QUEUE = "default"
 WORKER_PATH = "crm.integrations.astra_connect.api.process_inbox_event"
 DEFAULT_STALE_MINUTES = 5
+# Reject oversized bodies before HMAC work (DoS / CPU on signature verify).
+MAX_WEBHOOK_BODY_BYTES = 256 * 1024
+
+
+def _webhook_body_too_large() -> bool:
+	"""True when Content-Length exceeds the webhook body cap (before reading body)."""
+	try:
+		request = frappe.request
+		cl = request.headers.get("Content-Length") if request is not None else None
+		if cl is None or cl == "":
+			return False
+		return int(cl) > MAX_WEBHOOK_BODY_BYTES
+	except (TypeError, ValueError, AttributeError):
+		return False
 
 
 def _json_response(payload: dict[str, Any], status_code: int = 200):
@@ -144,21 +161,77 @@ def _extract_source_timestamp(payload: dict, signed_ts) -> Any:
 		return None
 
 
-def _enqueue_processing(event_name: str, event_id: str) -> None:
-	"""Enqueue on the dedicated Connect queue (or run sync in tests)."""
-	job_id = f"astra-connect-{event_id}"
+def _configured_queue_names() -> set[str]:
+	"""Queue names known to this site (workers.* / get_queues_timeout)."""
+	names: set[str] = {"default", "short", "long"}
+	workers = frappe.conf.get("workers")
+	if isinstance(workers, dict):
+		names.update(str(k) for k in workers.keys())
+	try:
+		from frappe.utils.background_jobs import get_queues_timeout
+
+		names.update(str(k) for k in (get_queues_timeout() or {}).keys())
+	except Exception:
+		pass
+	return names
+
+
+def _resolve_connect_queue() -> str:
+	"""Prefer ``astra_connect`` when configured; otherwise fall back to default."""
+	if CONNECT_QUEUE in _configured_queue_names():
+		return CONNECT_QUEUE
+	return FALLBACK_QUEUE
+
+
+def _fresh_job_id(event_id: str, attempts: int | None = None) -> str:
+	"""Unique RQ job id per enqueue attempt — never blocked by a stuck 'started' record."""
+	attempt = int(attempts or 0)
+	nonce = frappe.generate_hash(length=10)
+	return f"astra-connect-{event_id}:{attempt}:{nonce}"
+
+
+def _enqueue_processing(event_name: str, event_id: str, *, attempts: int | None = None) -> str | None:
+	"""Enqueue (or run sync in tests). Always uses a fresh job_id; never deduplicate.
+
+	The DB inbox row + conditional claim UPDATE are the source of truth. A stale RQ
+	job left in ``started`` after SIGKILL must not prevent recovery.
+	"""
+	if attempts is None:
+		try:
+			attempts = int(
+				frappe.db.get_value("Astra Connect Event", event_name, "attempts") or 0
+			)
+		except Exception:
+			attempts = 0
+
 	if getattr(frappe.flags, "in_test", False) or frappe.conf.get("astra_connect_sync_processing"):
 		process_inbox_event(event_name)
-		return
-	frappe.enqueue(
-		WORKER_PATH,
+		return None
+
+	job_id = _fresh_job_id(event_id, attempts)
+	queue = _resolve_connect_queue()
+	kwargs = dict(
 		event_name=event_name,
-		queue=CONNECT_QUEUE,
+		queue=queue,
 		timeout=300,
 		job_id=job_id,
-		deduplicate=True,
+		deduplicate=False,
 		enqueue_after_commit=True,
 	)
+	try:
+		frappe.enqueue(WORKER_PATH, **kwargs)
+		return job_id
+	except Exception as exc:
+		# Undeclared custom queue (or transient RQ error) — fall back to default.
+		if queue != FALLBACK_QUEUE:
+			_logger().warning(
+				f"Astra Connect enqueue on '{queue}' failed ({exc}); falling back to '{FALLBACK_QUEUE}'"
+			)
+			kwargs["queue"] = FALLBACK_QUEUE
+			kwargs["job_id"] = _fresh_job_id(event_id, attempts)
+			frappe.enqueue(WORKER_PATH, **kwargs)
+			return kwargs["job_id"]
+		raise
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
@@ -175,6 +248,7 @@ def receive() -> dict[str, Any]:
 	  200 duplicate (unique delivery already stored — including Failed redelivery)
 	  400 malformed payload (final)
 	  401 bad signature or stale timestamp (final)
+	  413 body too large (final; checked before HMAC)
 	  503 webhook disabled
 	"""
 	try:
@@ -182,7 +256,20 @@ def receive() -> dict[str, Any]:
 	except WebhookDisabledError as exc:
 		return _json_response({"status": "disabled", "error": str(exc)}, status_code=503)
 
+	# Cap body size before reading / HMAC — Content-Length when present, else len(body).
+	if _webhook_body_too_large():
+		return _json_response(
+			{"status": "rejected", "error": _("Payload too large")},
+			status_code=413,
+		)
+
 	raw_body = frappe.request.get_data() or b""
+	if len(raw_body) > MAX_WEBHOOK_BODY_BYTES:
+		return _json_response(
+			{"status": "rejected", "error": _("Payload too large")},
+			status_code=413,
+		)
+
 	headers = read_request_headers()
 
 	try:
@@ -203,7 +290,6 @@ def receive() -> dict[str, Any]:
 		return _json_response({"status": "rejected", "error": _("Invalid JSON body")}, status_code=400)
 
 	# Signature already bound this body to the per-site secret (frappe.conf).
-	# Sanitise string fields so notes/summaries cannot carry script markup.
 	payload = _sanitize_payload(payload)
 
 	event_id = (headers.get("event_id") or "").strip()
@@ -264,7 +350,7 @@ def receive() -> dict[str, Any]:
 				status_code=200,
 			)
 
-		_enqueue_processing(event.name, event_id)
+		_enqueue_processing(event.name, event_id, attempts=0)
 		return _json_response(
 			{
 				"status": "accepted",
@@ -283,7 +369,7 @@ def retry_event(event_id: str) -> dict[str, Any]:
 	if "System Manager" not in frappe.get_roles():
 		frappe.throw(_("Only System Managers can retry Connect events"), frappe.PermissionError)
 
-	fields = ["name", "status"]
+	fields = ["name", "status", "attempts"]
 	if frappe.db.has_column("Astra Connect Event", "claimed_at"):
 		fields.append("claimed_at")
 	row = frappe.db.get_value(
@@ -296,16 +382,29 @@ def retry_event(event_id: str) -> dict[str, Any]:
 	if row.status not in ("Failed", "Received") and not stale:
 		frappe.throw(_("Only failed, received, or stale processing events can be retried"))
 
+	minutes = _stale_processing_minutes()
+	cutoff = add_to_date(now_datetime(), minutes=-minutes)
+	now = now_datetime()
+	user = frappe.session.user
 	has_claimed = frappe.db.has_column("Astra Connect Event", "claimed_at")
+
+	# Conditional UPDATE — do not clobber a fresh in-flight Processing claim.
 	if has_claimed:
 		frappe.db.sql(
 			"""
 			UPDATE `tabAstra Connect Event`
 			SET status = 'Received', error = '', claimed_at = NULL,
 				modified = %s, modified_by = %s
-			WHERE name = %s AND status IN ('Failed', 'Received', 'Processing')
+			WHERE name = %s
+			  AND (
+				status IN ('Failed', 'Received')
+				OR (
+					status = 'Processing'
+					AND (claimed_at IS NULL OR claimed_at <= %s)
+				)
+			  )
 			""",
-			(now_datetime(), frappe.session.user, row.name),
+			(now, user, row.name, cutoff),
 		)
 	else:
 		frappe.db.sql(
@@ -313,12 +412,34 @@ def retry_event(event_id: str) -> dict[str, Any]:
 			UPDATE `tabAstra Connect Event`
 			SET status = 'Received', error = '',
 				modified = %s, modified_by = %s
-			WHERE name = %s AND status IN ('Failed', 'Received', 'Processing')
+			WHERE name = %s
+			  AND (
+				status IN ('Failed', 'Received')
+				OR (status = 'Processing' AND modified <= %s)
+			  )
 			""",
-			(now_datetime(), frappe.session.user, row.name),
+			(now, user, row.name, cutoff),
 		)
+
+	changed = int(frappe.db.sql("SELECT ROW_COUNT()")[0][0] or 0)
 	frappe.db.commit()
-	_enqueue_processing(row.name, event_id)
+	if changed == 0:
+		# Raced a live worker — do not enqueue a duplicate claim.
+		fresh = frappe.db.get_value(
+			"Astra Connect Event", row.name, ["status", "attempts"], as_dict=True
+		)
+		return _json_response(
+			{
+				"status": "skipped",
+				"event_id": event_id,
+				"name": row.name,
+				"event_status": fresh.status if fresh else None,
+			},
+			status_code=200,
+		)
+
+	attempts = int((row.attempts or 0))
+	_enqueue_processing(row.name, event_id, attempts=attempts)
 	return _json_response(
 		{"status": "accepted", "event_id": event_id, "name": row.name},
 		status_code=202,
@@ -335,38 +456,36 @@ def _is_stale_processing(row) -> bool:
 
 
 def sweep_stale_processing() -> dict[str, Any]:
-	"""Reset Processing rows older than N minutes to Received and re-enqueue.
+	"""Recover orphaned inbox rows: stale Processing + aged Received without a live job.
 
-	Scheduled every 2 minutes. Configurable via Astra Connect Settings
-	``stale_processing_minutes`` or site_config ``astra_connect_stale_processing_minutes``
-	(default 5).
+	DB rows are the source of truth. Always re-enqueues with a fresh job_id so a
+	stuck RQ ``started`` record cannot block recovery. Scheduled every 2 minutes.
 	"""
 	if not frappe.db.exists("DocType", "Astra Connect Event"):
-		return {"reset": 0}
+		return {"reset": 0, "reenqueued": 0}
 
 	minutes = _stale_processing_minutes()
 	cutoff = add_to_date(now_datetime(), minutes=-minutes)
 	has_claimed = frappe.db.has_column("Astra Connect Event", "claimed_at")
+	user = get_connect_integration_user()
+	now = now_datetime()
 
+	# 1) Stale Processing → Received (conditional), then enqueue.
 	if has_claimed:
-		rows = frappe.db.sql(
+		processing_rows = frappe.db.sql(
 			"""
-			SELECT name, event_id, claimed_at, modified
+			SELECT name, event_id, attempts, claimed_at, modified
 			FROM `tabAstra Connect Event`
 			WHERE status = 'Processing'
-			  AND (
-				claimed_at IS NULL
-				OR claimed_at <= %s
-				OR (claimed_at IS NULL AND modified <= %s)
-			  )
+			  AND (claimed_at IS NULL OR claimed_at <= %s)
 			""",
-			(cutoff, cutoff),
+			(cutoff,),
 			as_dict=True,
 		)
 	else:
-		rows = frappe.db.sql(
+		processing_rows = frappe.db.sql(
 			"""
-			SELECT name, event_id, modified
+			SELECT name, event_id, attempts, modified
 			FROM `tabAstra Connect Event`
 			WHERE status = 'Processing' AND modified <= %s
 			""",
@@ -375,7 +494,8 @@ def sweep_stale_processing() -> dict[str, Any]:
 		)
 
 	reset = 0
-	for row in rows:
+	reenqueued = 0
+	for row in processing_rows:
 		if has_claimed:
 			frappe.db.sql(
 				"""
@@ -386,12 +506,14 @@ def sweep_stale_processing() -> dict[str, Any]:
 					modified = %s,
 					modified_by = %s
 				WHERE name = %s AND status = 'Processing'
+				  AND (claimed_at IS NULL OR claimed_at <= %s)
 				""",
 				(
 					_("Reset by Connect sweeper after stale Processing"),
-					now_datetime(),
-					get_connect_integration_user(),
+					now,
+					user,
 					row.name,
+					cutoff,
 				),
 			)
 		else:
@@ -402,22 +524,56 @@ def sweep_stale_processing() -> dict[str, Any]:
 					error = %s,
 					modified = %s,
 					modified_by = %s
-				WHERE name = %s AND status = 'Processing'
+				WHERE name = %s AND status = 'Processing' AND modified <= %s
 				""",
 				(
 					_("Reset by Connect sweeper after stale Processing"),
-					now_datetime(),
-					get_connect_integration_user(),
+					now,
+					user,
 					row.name,
+					cutoff,
 				),
 			)
 		if int(frappe.db.sql("SELECT ROW_COUNT()")[0][0] or 0) != 1:
 			continue
 		frappe.db.commit()
-		_enqueue_processing(row.name, row.event_id)
+		_enqueue_processing(row.name, row.event_id, attempts=int(row.attempts or 0))
 		reset += 1
+		reenqueued += 1
 
-	return {"reset": reset, "stale_minutes": minutes}
+	# 2) Orphaned Received (enqueue never ran / undeclared queue / skipped RQ job).
+	received_rows = frappe.db.sql(
+		"""
+		SELECT name, event_id, attempts, modified
+		FROM `tabAstra Connect Event`
+		WHERE status = 'Received' AND modified <= %s
+		""",
+		(cutoff,),
+		as_dict=True,
+	)
+	for row in received_rows:
+		# Touch modified so we do not tight-loop the same row every sweep if enqueue
+		# keeps failing hard; still uses a fresh job_id each time.
+		frappe.db.sql(
+			"""
+			UPDATE `tabAstra Connect Event`
+			SET error = %s, modified = %s, modified_by = %s
+			WHERE name = %s AND status = 'Received'
+			""",
+			(
+				_("Re-enqueued by Connect sweeper (orphaned Received)"),
+				now_datetime(),
+				user,
+				row.name,
+			),
+		)
+		if int(frappe.db.sql("SELECT ROW_COUNT()")[0][0] or 0) != 1:
+			continue
+		frappe.db.commit()
+		_enqueue_processing(row.name, row.event_id, attempts=int(row.attempts or 0))
+		reenqueued += 1
+
+	return {"reset": reset, "reenqueued": reenqueued, "stale_minutes": minutes}
 
 
 def process_inbox_event(event_name: str) -> dict[str, Any] | None:
