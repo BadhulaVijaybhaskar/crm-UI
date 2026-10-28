@@ -41,7 +41,7 @@
         <button
           v-if="showAdd"
           type="button"
-          class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm bg-crm-card pl-2.5 pr-2 text-crm-label text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
+          class="ml-1 inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm bg-crm-card pl-2.5 pr-2 text-crm-label text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]"
           @click="$emit('add-filter')"
         >
           <svg
