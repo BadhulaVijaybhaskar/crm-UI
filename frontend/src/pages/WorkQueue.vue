@@ -162,7 +162,7 @@
                 {{ initialsFrom(personName(item)) }}
               </span>
               <div class="flex min-w-0 flex-col pt-0.5 leading-[1.3]">
-                <b class="truncate text-[13px] font-semibold text-crm-fg">
+                <b class="truncate text-[12.5px] font-semibold text-crm-fg">
                   {{ personName(item) }}
                 </b>
                 <span class="mt-0.5 truncate text-[11.5px] text-crm-muted-fg">
@@ -326,7 +326,7 @@
                 {{ lastCallOutcome }}
               </div>
             </div>
-            <div class="mt-[13px] flex gap-2">
+            <div class="mt-[11px] flex gap-2">
               <AstraButton
                 v-if="connectReady"
                 size="sm"
@@ -353,7 +353,7 @@
             </div>
             <p
               v-if="detail.data.shortcuts"
-              class="m-0 mt-3 text-[11.5px] text-crm-faint"
+              class="m-0 mt-[13px] text-[11.5px] text-crm-faint"
             >
               {{ __('Shortcuts: {0}', [detail.data.shortcuts]) }}
             </p>
