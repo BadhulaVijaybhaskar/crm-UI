@@ -48,7 +48,7 @@
           <button
             v-if="showSaveView"
             type="button"
-            class="-mb-px inline-flex h-[38px] items-center gap-1.5 px-2.5 text-crm-body font-semibold text-crm-primary"
+            class="-mb-px ml-[7px] inline-flex h-[38px] -translate-y-px items-center gap-1.5 px-2.5 text-crm-body font-semibold text-crm-primary"
             @click="$emit('save-view')"
           >
             <svg
