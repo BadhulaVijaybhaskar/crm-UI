@@ -1,6 +1,7 @@
 <template>
   <header class="flex items-center justify-between gap-3 px-crm-page-x pb-3.5 pt-[18px]">
-    <div class="min-w-0">
+    <!-- PNG title block sits ~1px left of default packing -->
+    <div class="min-w-0 -translate-x-px">
       <p
         v-if="eyebrow"
         class="mb-1 text-crm-caps font-bold uppercase tracking-crm-caps text-crm-faint"

@@ -2,7 +2,8 @@
   <div
     class="flex items-center justify-between gap-2 px-crm-page-x py-[10px]"
   >
-    <div class="flex translate-x-[2px] translate-y-px flex-nowrap items-center gap-2">
+    <!-- shift-sim: chips ~1px right of PNG at +2px → back to +1px -->
+    <div class="flex translate-x-px translate-y-px flex-nowrap items-center gap-2">
       <slot name="filters">
         <button
           v-for="filter in filters"
