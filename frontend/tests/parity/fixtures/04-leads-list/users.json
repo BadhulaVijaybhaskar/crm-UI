@@ -12,9 +12,9 @@
       "is_manager": true
     },
     {
-      "name": "rahul.mehta@example.com",
-      "email": "rahul.mehta@example.com",
-      "full_name": "Rahul Mehta",
+      "name": "rohan.mehta@example.com",
+      "email": "rohan.mehta@example.com",
+      "full_name": "Rohan Mehta",
       "user_image": "",
       "enabled": 1,
       "roles": ["Sales User"],
