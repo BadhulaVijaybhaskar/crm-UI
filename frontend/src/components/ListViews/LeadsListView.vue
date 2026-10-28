@@ -28,7 +28,7 @@
               :src="row.lead_name?.image"
               size="md"
             />
-            <div class="flex min-w-0 translate-y-px flex-col leading-[1.3]">
+            <div class="flex min-w-0 flex-col leading-[1.3]">
               <span
                 class="truncate text-[12.5px] font-semibold leading-[1.3] text-crm-fg"
               >
@@ -423,7 +423,8 @@ defineExpose({
 }
 .astra-leads-table :deep(th:nth-child(9)),
 .astra-leads-table :deep(td:nth-child(9)) {
-  width: 160px;
+  /* −2px pulls Created onto PNG ink (~1332) */
+  width: 158px;
 }
 .astra-leads-table :deep(th:nth-child(10)),
 .astra-leads-table :deep(td:nth-child(10)) {

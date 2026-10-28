@@ -189,12 +189,12 @@
               size="foot"
               nav-foot
             />
-            <div v-if="!isCollapsed" class="min-w-0 flex-1">
-              <div class="truncate text-[12.5px] font-semibold leading-tight text-[#E8EDF5]">
+            <div v-if="!isCollapsed" class="min-w-0 flex-1 leading-[1.45]">
+              <div class="truncate text-[12.5px] font-semibold text-[#E8EDF5]">
                 {{ currentUser.full_name || currentUser.email }}
               </div>
               <div
-                class="whitespace-nowrap text-[11.5px] leading-tight text-[color:var(--crm-nav-faint)]"
+                class="whitespace-nowrap text-[11.5px] text-[color:var(--crm-nav-faint)]"
                 :title="userRole"
               >
                 {{ userRole }}

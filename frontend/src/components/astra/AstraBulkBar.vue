@@ -6,7 +6,7 @@
     :aria-label="__('Bulk actions')"
   >
     <div
-      class="pointer-events-auto inline-flex h-[42px] items-center gap-2 rounded-crm-rail bg-crm-bulk-bg px-3 text-crm-label text-crm-bulk-fg shadow-crm-bulk"
+      class="pointer-events-auto inline-flex h-[42px] translate-x-px items-center gap-2 rounded-crm-rail bg-crm-bulk-bg px-3 text-crm-label text-crm-bulk-fg shadow-crm-bulk"
     >
       <!-- crm.css .bulk .bb is font-weight 600; PNG tints count with primary -->
       <span
