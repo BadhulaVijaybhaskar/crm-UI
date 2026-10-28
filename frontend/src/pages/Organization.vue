@@ -262,8 +262,10 @@ const title = computed(() => {
 const organizationMeta = computed(() => {
   const parts = []
   const doc = organization.doc || {}
-  if (doc.website) parts.push(website(doc.website))
   if (doc.industry) parts.push(doc.industry)
+  if (doc.no_of_employees) parts.push(__('{0} employees', [doc.no_of_employees]))
+  if (doc.website) parts.push(website(doc.website))
+  if (doc.territory) parts.push(doc.territory)
   return parts
 })
 
