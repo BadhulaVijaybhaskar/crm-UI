@@ -1,10 +1,11 @@
 import { useOnboarding } from '@framework/ui/components/Onboarding'
 import { useTelemetry } from '@framework/ui/telemetry'
+import { ONBOARDING_APP_NAME } from '@/components/astra/myday/myDayHelpers'
 
 const pendingSteps = new Set()
 
 export function useCrmOnboarding() {
-  const onboarding = useOnboarding('frappecrm')
+  const onboarding = useOnboarding(ONBOARDING_APP_NAME)
   const { capture } = useTelemetry()
 
   function completeStep(step, callback = null) {

@@ -8,10 +8,50 @@ import LucidePhone from '~icons/lucide/phone'
 import LucideMessagesSquare from '~icons/lucide/messages-square'
 import LucideBot from '~icons/lucide/bot'
 import LucideActivity from '~icons/lucide/activity'
+import LucideListTodo from '~icons/lucide/list-todo'
+import LucideInbox from '~icons/lucide/inbox'
 import LucideChartColumn from '~icons/lucide/chart-column'
 import LucideSettings from '~icons/lucide/settings'
 import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
+
+/**
+ * Sidebar item key (mirrors AppSidebar navLinkFromItem).
+ * One selectable item → one key; Astra routes never share a key.
+ */
+export function navItemKey(item) {
+  if (!item) return null
+  if (item.connect) return `connect:${item.connect}`
+  if (item.action) return String(item.action)
+  if (item.route) return item.route
+  return null
+}
+
+/**
+ * Active sidebar key for a vue-router location — same rules as AppSidebar.
+ * Saved views use the view id; plain pages use the route name.
+ * Unmapped routes clear the highlight.
+ *
+ * @param {{ name?: string, query?: { view?: string } }} route
+ * @param {Array<{ route?: string }>} items  nav items with a route
+ * @param {string[]} [viewKeys]  saved/public/pinned view keys
+ */
+export function resolveActiveNavKey(route, items = [], viewKeys = []) {
+  if (!route?.name) return null
+  const key = route.query?.view || route.name
+  const known = items.some(
+    (link) => link.route === key || link.route === route.name,
+  )
+  const knownView = viewKeys.includes(key)
+  if (!known && !knownView && key !== 'Notifications') return null
+  return key
+}
+
+/** True when exactly one of `keys` equals `active`. */
+export function isExclusiveActive(active, keys) {
+  if (active == null) return false
+  return keys.filter((k) => k === active).length === 1
+}
 
 /**
  * Flip these when the real page ships (CRM-08 Activities, CRM-09 Reports).
@@ -19,6 +59,8 @@ import { isAstraConnectConfigured } from '@/utils/astraConnect'
  */
 export const NAV_FEATURE_READY = Object.freeze({
   Activities: true,
+  WorkQueue: true,
+  Conversations: true,
   Reports: false,
 })
 
@@ -69,6 +111,18 @@ export const navigationItems = [
     icon: LucideActivity,
     route: 'Activities',
     ready: NAV_FEATURE_READY.Activities,
+  },
+  {
+    label: 'Work queue',
+    icon: LucideListTodo,
+    route: 'Work Queue',
+    ready: NAV_FEATURE_READY.WorkQueue,
+  },
+  {
+    label: 'Conversations',
+    icon: LucideInbox,
+    route: 'Conversations',
+    ready: NAV_FEATURE_READY.Conversations,
   },
   {
     label: 'Reports',

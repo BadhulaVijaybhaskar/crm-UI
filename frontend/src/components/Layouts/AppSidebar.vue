@@ -115,8 +115,9 @@
               :afterUpgrade="() => capture('upgrade_plan_from_trial_banner')"
             />
             <GettingStartedBanner
-              v-if="!isOnboardingStepsCompleted"
+              v-if="showGettingStarted && onboardingProgressLabel"
               :isSidebarCollapsed="isCollapsed"
+              :progress-label="onboardingProgressLabel"
             />
           </div>
           <SidebarItem
@@ -159,12 +160,11 @@
        drawer does not unmount the modal. -->
   <template v-if="!mobile">
     <Settings />
-    <HelpModal
+    <OnboardingHelpModal
       v-if="showHelpModal"
       v-model="showHelpModal"
       v-model:articles="articles"
       title="Astra CRM"
-      appName="crm"
       docsLink=""
       :logo="CRMLogo"
       :afterSkip="(step) => capture('onboarding_step_skipped_' + step)"
@@ -189,8 +189,17 @@ import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import Icon from '@/components/Icon.vue'
 import PinIcon from '@/components/Icons/PinIcon.vue'
 import UserDropdown from '@/components/UserDropdown.vue'
-import { getNavigationItems } from '@/utils/navigation'
+import {
+  getNavigationItems,
+  resolveActiveNavKey,
+} from '@/utils/navigation'
 import { openAstraConnect } from '@/utils/astraConnect'
+import {
+  ONBOARDING_APP_NAME,
+  formatOnboardingProgressLabel,
+  shouldShowGettingStartedBanner,
+} from '@/components/astra/myday/myDayHelpers'
+import OnboardingHelpModal from '@/components/Layouts/OnboardingHelpModal.vue'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
@@ -220,7 +229,6 @@ import { call, Sidebar, SidebarItem, SidebarLabel, Tooltip } from 'frappe-ui'
 import { SignupBanner } from '@framework/ui/components/SignupBanner'
 import { TrialBanner } from '@framework/ui/components/TrialBanner'
 import {
-  HelpModal,
   GettingStartedBanner,
   useOnboarding,
   showHelpModal,
@@ -232,7 +240,7 @@ import router from '@/router'
 import { useStorage } from '@vueuse/core'
 import { useDemoData } from '@/composables/demoData'
 import { useCrmOnboarding } from '@/composables/onboarding'
-import { ref, reactive, computed, markRaw, onMounted, watch } from 'vue'
+import { ref, reactive, computed, markRaw, onMounted, unref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const props = defineProps({
@@ -362,18 +370,11 @@ function getIcon(routeName, icon) {
   }
 }
 
-// A saved view's key is its name; a plain nav item's key is its route name.
-// Unmapped routes (Legal notices, etc.) clear the highlight.
+// Shared with navigation.js — tests cover this exact active-key logic.
 function currentRouteKey() {
-  const key = route.query.view || route.name
-  const known = links.some(
-    (link) => link.route === key || link.route === route.name,
-  )
-  const knownView = allViews.value
-    ?.flatMap((s) => s.views || [])
-    .some((v) => v.key === key)
-  if (!known && !knownView && key !== 'Notifications') return null
-  return key
+  const viewKeys =
+    allViews.value?.flatMap((s) => (s.views || []).map((v) => v.key)) || []
+  return resolveActiveNavKey(route, links, viewKeys)
 }
 
 // Set the highlight on click rather than waiting for the route, since route
@@ -421,8 +422,33 @@ function toggleHelpModal() {
 // onboarding
 const { user } = sessionStore()
 const { users, isManager } = usersStore()
-const { isOnboardingStepsCompleted, setUp } = useOnboarding('frappecrm')
+const onboarding = useOnboarding(ONBOARDING_APP_NAME)
+const { isOnboardingStepsCompleted, setUp } = onboarding
 const { flushPendingSteps } = useCrmOnboarding()
+
+// Only show after setUp; never render when totalSteps is 0 (avoids "0/0 · NaN%").
+const onboardingReady = ref(false)
+const onboardingTotalSteps = computed(() =>
+  Number(unref(onboarding.totalSteps) || 0),
+)
+const onboardingStepsCompleted = computed(() =>
+  Number(unref(onboarding.stepsCompleted) || 0),
+)
+const onboardingProgressLabel = computed(() =>
+  formatOnboardingProgressLabel(
+    onboardingStepsCompleted.value,
+    onboardingTotalSteps.value,
+  ),
+)
+const showGettingStarted = computed(
+  () =>
+    onboardingReady.value &&
+    onboardingProgressLabel.value != null &&
+    shouldShowGettingStartedBanner({
+      completed: Boolean(unref(isOnboardingStepsCompleted)),
+      totalSteps: onboardingTotalSteps.value,
+    }),
+)
 
 // The onboarding composable persists the checklist as a positional
 // [{name, completed}] list, seeds it from the current steps ONLY when empty,
@@ -441,7 +467,7 @@ const { flushPendingSteps } = useCrmOnboarding()
 //   - skip entirely once onboarding is finished, so a completed checklist is
 //     never rewritten or reopened.
 // It is idempotent: an already-reconciled list produces no change.
-const ONBOARDING_KEY = 'frappecrm_onboarding_status'
+const ONBOARDING_KEY = `${ONBOARDING_APP_NAME}_onboarding_status`
 
 async function reconcileOnboarding(currentSteps) {
   // `user` is the unwrapped session user id string (Pinia unwraps the ref on
@@ -485,7 +511,7 @@ async function reconcileOnboarding(currentSteps) {
     localStorage.setItem('onboardingStatus', JSON.stringify(store))
     await call('frappe.onboarding.update_user_onboarding_status', {
       steps: JSON.stringify(merged),
-      appName: 'frappecrm',
+      appName: ONBOARDING_APP_NAME,
     })
   } catch {
     return
@@ -628,6 +654,7 @@ onMounted(async () => {
   await reconcileOnboarding(filteredSteps)
   setUp(filteredSteps)
   flushPendingSteps()
+  onboardingReady.value = true
 })
 
 // help center
