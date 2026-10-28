@@ -40,13 +40,13 @@
 
 :root {
   --ac: #0a7393;
-  --acm: #0d8aad;
-  --ac2: #14b8a6;
-  --astra-grad: linear-gradient(135deg, #0a7393 0%, #0d8aad 55%, #14b8a6 100%);
+  --acm: #08627e;
+  --ac2: #0e8f83;
+  --astra-grad: linear-gradient(135deg, #0a7393 0%, #08627e 55%, #0e8f83 100%);
   --astra-bg: #f3f6f8;
   --astra-surface: #ffffff;
   --astra-text: #0b1324;
-  --astra-muted: #64748b;
+  --astra-muted: #5b6478;
   --astra-border: #e1e7ec;
 }
 
@@ -54,13 +54,13 @@ html.dark,
 [data-theme="dark"],
 body.dark {
   --ac: #3fbad9;
-  --acm: #2aa8c9;
-  --ac2: #14b8a6;
-  --astra-grad: linear-gradient(135deg, #3fbad9 0%, #2aa8c9 55%, #14b8a6 100%);
+  --acm: #62c8e2;
+  --ac2: #2dd4bf;
+  --astra-grad: linear-gradient(135deg, #3fbad9 0%, #62c8e2 55%, #2dd4bf 100%);
   --astra-bg: #081218;
   --astra-surface: #0d1a22;
   --astra-text: #e6eef2;
-  --astra-muted: #98a3b8;
+  --astra-muted: #97a9b4;
   --astra-border: #1a2c37;
 }
 
@@ -68,13 +68,13 @@ body.dark {
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
     --ac: #3fbad9;
-    --acm: #2aa8c9;
-    --ac2: #14b8a6;
-    --astra-grad: linear-gradient(135deg, #3fbad9 0%, #2aa8c9 55%, #14b8a6 100%);
+    --acm: #62c8e2;
+    --ac2: #2dd4bf;
+    --astra-grad: linear-gradient(135deg, #3fbad9 0%, #62c8e2 55%, #2dd4bf 100%);
     --astra-bg: #081218;
     --astra-surface: #0d1a22;
     --astra-text: #e6eef2;
-    --astra-muted: #98a3b8;
+    --astra-muted: #97a9b4;
     --astra-border: #1a2c37;
   }
 }

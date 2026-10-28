@@ -1,17 +1,17 @@
 /* Astra CRM login / website chrome. Loaded via hooks.web_include_css.
-   Login card follows the active color scheme (dark card in dark mode). */
+   Colours match frontend/src/astra-crm-tokens.css (official Figma v1). */
 
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
   --ac: #0a7393;
-  --acm: #0d8aad;
-  --ac2: #14b8a6;
-  --astra-grad: linear-gradient(135deg, #0a7393 0%, #0d8aad 55%, #14b8a6 100%);
+  --acm: #08627e;
+  --ac2: #0e8f83;
+  --astra-grad: linear-gradient(135deg, #0a7393 0%, #08627e 55%, #0e8f83 100%);
   --astra-bg: #f3f6f8;
   --astra-surface: #ffffff;
   --astra-text: #0b1324;
-  --astra-muted: #64748b;
+  --astra-muted: #5b6478;
   --astra-border: #e1e7ec;
 }
 
@@ -19,13 +19,13 @@ html.dark,
 [data-theme="dark"],
 body.dark {
   --ac: #3fbad9;
-  --acm: #2aa8c9;
-  --ac2: #14b8a6;
-  --astra-grad: linear-gradient(135deg, #3fbad9 0%, #2aa8c9 55%, #14b8a6 100%);
+  --acm: #62c8e2;
+  --ac2: #2dd4bf;
+  --astra-grad: linear-gradient(135deg, #3fbad9 0%, #62c8e2 55%, #2dd4bf 100%);
   --astra-bg: #081218;
   --astra-surface: #0d1a22;
   --astra-text: #e6eef2;
-  --astra-muted: #98a3b8;
+  --astra-muted: #97a9b4;
   --astra-border: #1a2c37;
 }
 
@@ -33,7 +33,6 @@ body {
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Frappe /login page */
 .for-login,
 .page-card,
 .login-content,
@@ -45,16 +44,8 @@ body {
   background: var(--astra-surface) !important;
   color: var(--astra-text) !important;
   border: 1px solid color-mix(in srgb, var(--astra-border) 70%, transparent) !important;
-  border-radius: 22px !important;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 1px 2px rgba(11, 19, 36, 0.04), 0 8px 24px -12px rgba(11, 19, 36, 0.1) !important;
-}
-
-html.dark .page-card,
-[data-theme="dark"] .page-card,
-body.dark .page-card {
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 10px 30px -12px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 24px 60px rgba(4, 20, 27, 0.3) !important;
 }
 
 .page-card .page-card-head img,
@@ -68,16 +59,31 @@ body.dark .page-card {
 
 .btn-login,
 .btn-primary.btn-login,
-.page-card .btn-primary {
+.page-card .btn-primary,
+form.form-login button[type="submit"],
+.for-login button[type="submit"],
+.login-content button[type="submit"],
+.page-card button[type="submit"] {
   border: 0 !important;
   border-radius: 999px !important;
-  background-image: linear-gradient(115deg, #0e63e0, #1677ff 55%, #3b8eff) !important;
-  box-shadow: 0 8px 24px -8px color-mix(in srgb, #145cf6 70%, transparent);
+  color: #fff !important;
+  min-height: 44px !important;
+  background-image: none !important;
+  background-color: var(--ac) !important;
+  box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--ac) 55%, transparent);
+}
+
+.for-login label,
+.page-card label,
+.login-content label,
+form.form-login label {
+  color: var(--astra-text) !important;
 }
 
 .for-login .form-control,
-.page-card .form-control {
-  border-radius: 12px !important;
+.page-card .form-control,
+.login-content .form-control,
+form.form-login .form-control {
   background: var(--astra-surface) !important;
   color: var(--astra-text) !important;
   border-color: var(--astra-border) !important;

@@ -1,0 +1,126 @@
+/*
+ * Astra CRM — design tokens from the signed-off CRM v1 designs (Figma 8X2GyihAcjsYvwHJNDA6mw, page "CRM screens v1").
+ * Target: Vue 3 + UI kit + Tailwind 3. Dark mode = [data-theme="dark"], html.dark kept as an alias.
+ *
+ * All variables are namespaced --crm-* so they never collide with the UI kit's own --surface-*, --ink-*, --outline-*.
+ * Import once, after astra-theme.css, e.g. in src/index.css:   @import './astra-crm-tokens.css';
+ * Use through the Tailwind extension in tailwind.astra.js (bg-crm-card, text-crm-muted-fg, …) or plain var().
+ * An optional block at the bottom maps the UI kit's own variables onto these values so stock UI-kit
+ * components (Button, Dialog, Dropdown, ListView) match the new look. Review before enabling it — it is app-wide.
+ */
+
+:root {
+  /* surfaces */
+  --crm-bg: #f3f6f8;
+  --crm-card: #ffffff;
+  --crm-muted: #f6f8fa;
+  --crm-border: #e1e7ec;
+  --crm-border-strong: #d0d9e0;
+  --crm-neutral-soft: #eef1f6;
+  --crm-row-hover: #f7f9fc;
+  --crm-row-selected: #e4f2f6;           /* = primary-soft */
+  /* text */
+  --crm-fg: #0b1324;
+  --crm-muted-fg: #5b6478;
+  --crm-faint: #8a94a6;
+  /* brand */
+  --crm-primary: #0a7393;
+  --crm-primary-hover: #08627e;
+  --crm-primary-soft: #e4f2f6;
+  --crm-primary-fg: #ffffff;
+  --crm-ring: #0a7393;
+  --crm-blue: #1677ff;
+  --crm-blue-soft: #eaf2ff;
+  --crm-teal: #0e8f83;
+  --crm-teal-soft: #e2f5f2;
+  /* status */
+  --crm-success: #0f8a5f;
+  --crm-success-soft: #e5f5ee;
+  --crm-warning: #a86a0b;
+  --crm-warning-soft: #fff3dc;
+  --crm-danger: #c93b3b;
+  --crm-danger-soft: #fdecec;
+  /* nav (ink-teal in both modes) */
+  --crm-nav: #07161f;
+  --crm-nav-fg: #c4d2da;
+  --crm-nav-faint: #748a97;
+  --crm-nav-active: #0f2a36;
+  --crm-nav-border: #122631;
+  --crm-nav-indicator: #2dd4bf;           /* 3px inset bar + icon colour on the one active item */
+  /* charts / stage colours */
+  --crm-c1: #0a7393;
+  --crm-c2: #1677ff;
+  --crm-c3: #14b8a6;
+  --crm-c4: #7db7e8;
+  --crm-c5: #d99a1e;
+  --crm-c6: #94a3b8;
+  /* overlays & shadows */
+  --crm-overlay: rgba(4, 16, 22, 0.45);
+  --crm-shadow-modal: 0 24px 60px rgba(4, 20, 27, 0.3);
+  --crm-shadow-drag: 0 10px 26px rgba(4, 20, 27, 0.18), 0 0 0 1.5px var(--crm-primary);
+  --crm-shadow-tile-drag: 0 14px 30px rgba(4, 20, 27, 0.2), 0 0 0 2px var(--crm-primary);
+  --crm-shadow-bulk: 0 8px 24px rgba(4, 20, 27, 0.25);
+  --crm-focus: 0 0 0 2px var(--crm-card), 0 0 0 4px var(--crm-ring);
+  --crm-input-focus: 0 0 0 3px var(--crm-primary-soft);
+  /* bulk bar is inverted */
+  --crm-bulk-bg: #0b1324;
+  --crm-bulk-fg: #ffffff;
+}
+
+[data-theme='dark'],
+html.dark {
+  --crm-bg: #081218;
+  --crm-card: #0d1a22;
+  --crm-muted: #11212b;
+  --crm-border: #1a2c37;
+  --crm-border-strong: #26404d;
+  --crm-neutral-soft: #152733;
+  --crm-row-hover: #11212b;
+  --crm-row-selected: #0c2530;
+  --crm-fg: #e6eef2;
+  --crm-muted-fg: #97a9b4;
+  --crm-faint: #6b808c;
+  --crm-primary: #3fbad9;
+  --crm-primary-hover: #62c8e2;
+  --crm-primary-soft: #0e2f3b;
+  --crm-primary-fg: #04141b;
+  --crm-ring: #6ccde6;
+  --crm-blue: #5b9dff;
+  --crm-blue-soft: #12284a;
+  --crm-teal: #2dd4bf;
+  --crm-teal-soft: #0b2e2d;
+  --crm-success: #4ade9e;
+  --crm-success-soft: #0e2a22;
+  --crm-warning: #fbbf4a;
+  --crm-warning-soft: #2c2210;
+  --crm-danger: #f87171;
+  --crm-danger-soft: #321a1e;
+  --crm-nav: #050f15;
+  --crm-nav-fg: #c4d2da;
+  --crm-nav-faint: #66808d;
+  --crm-nav-active: #0f2733;
+  --crm-nav-border: #10212b;
+  --crm-c1: #3fbad9;
+  --crm-c2: #5b9dff;
+  --crm-c3: #2dd4bf;
+  --crm-c4: #8ec5f0;
+  --crm-c5: #f0b44a;
+  --crm-c6: #7d8f9c;
+  --crm-overlay: rgba(0, 0, 0, 0.6);
+  --crm-bulk-bg: #e6eef2;
+  --crm-bulk-fg: #04141b;
+}
+
+/* ---- OPTIONAL: align stock UI-kit components with the design. App-wide; enable deliberately. ----
+:root {
+  --surface-base: var(--crm-bg);
+  --surface-gray-1: var(--crm-card);  --surface-elevation-1: var(--crm-card);
+  --surface-gray-2: var(--crm-muted); --surface-elevation-2: var(--crm-muted);
+  --surface-gray-3: var(--crm-neutral-soft);
+  --surface-sidebar: var(--crm-nav);
+  --ink-gray-9: var(--crm-fg); --ink-gray-6: var(--crm-muted-fg); --ink-gray-5: var(--crm-muted-fg); --ink-gray-4: var(--crm-faint);
+  --outline-gray-1: var(--crm-border); --outline-gray-2: var(--crm-border); --outline-gray-3: var(--crm-border-strong);
+  --ink-blue-2: var(--crm-primary); --surface-blue-1: var(--crm-primary-soft);
+}
+(the same block works under [data-theme='dark'] because the --crm-* values swap there)
+---- */

@@ -1,5 +1,6 @@
-/* Astra CRM design tokens — Figma v1 (teal primary, light + dark).
-   Maps onto frappe-ui CSS variables so existing pages pick up the look. */
+/* Astra CRM theme shell — fonts + layout.
+   Colour tokens live in astra-crm-tokens.css (--crm-*). Do not enable the
+   optional frappe-ui remapping block there; shell chrome uses --crm-* directly. */
 
 @font-face {
   font-family: 'Plus Jakarta Sans';
@@ -38,215 +39,11 @@
 }
 
 :root {
-  /* Brand */
-  --ac: #0a7393;
-  --acm: #0d8aad;
-  --ac2: #14b8a6;
-  --ac-l: #3fbad9;
-  --ac-soft: #e4f2f6;
-  --night: #07161f;
-  --astra-grad: linear-gradient(135deg, var(--ac) 0%, var(--acm) 55%, var(--ac2) 100%);
-  --astra-shadow-primary: 0 8px 24px -8px color-mix(in srgb, var(--ac) 55%, transparent);
-  --astra-nav-w: 240px;
-  --astra-nav-w-collapsed: 64px;
-  --astra-topbar-h: 56px;
-
-  /* Type */
   --font-sans: 'Plus Jakarta Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari',
     ui-sans-serif, system-ui, sans-serif;
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.875rem;
-  --text-md: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --leading-tight: 1.25;
-  --leading-snug: 1.375;
-  --leading-normal: 1.5;
-  --font-medium: 500;
-  --font-semibold: 600;
-  --font-bold: 700;
-
-  /* Spacing (4px grid) */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-
-  /* Surfaces — light */
-  --surface-base: #f3f6f8;
-  --surface-gray-1: #ffffff;
-  --surface-gray-2: #f6f8fa;
-  --surface-gray-3: #eef1f6;
-  --surface-gray-4: #e1e7ec;
-  --surface-gray-5: #c4d2da;
-  --surface-gray-6: #94a3b8;
-  --surface-gray-7: #64748b;
-  --surface-gray-8: #475569;
-  --surface-gray-9: #1e293b;
-  --surface-gray-10: #0f172a;
-  --surface-sidebar: #07161f;
-  --surface-elevation-1: #ffffff;
-  --surface-elevation-2: #f6f8fa;
-  --surface-elevation-3: #eef1f6;
-  --surface-menus: #ffffff;
-  --surface-white: #ffffff;
-  --surface-cards: #ffffff;
-  --surface-alpha-gray-1: rgba(7, 22, 31, 0.03);
-  --surface-alpha-gray-2: rgba(7, 22, 31, 0.05);
-  --surface-alpha-gray-3: rgba(7, 22, 31, 0.08);
-  --surface-alpha-gray-4: rgba(7, 22, 31, 0.11);
-  --surface-alpha-gray-5: rgba(7, 22, 31, 0.14);
-  --surface-alpha-elevation-1: rgba(255, 255, 255, 0.92);
-  --surface-alpha-elevation-2: rgba(255, 255, 255, 0.96);
-  --surface-alpha-elevation-3: rgba(255, 255, 255, 1);
-
-  --nav-active-bg: color-mix(in srgb, #0a7393 32%, #07161f);
-  --nav-active-border: #0a7393;
-  --nav-active-shadow: inset 3px 0 0 var(--nav-active-border);
-
-  /* Ink */
-  --ink-gray-1: #e1e7ec;
-  --ink-gray-2: #c4d2da;
-  --ink-gray-3: #94a3b8;
-  --ink-gray-4: #94a3b8;
-  --ink-gray-5: #64748b;
-  --ink-gray-6: #64748b;
-  --ink-gray-7: #475569;
-  --ink-gray-8: #1e293b;
-  --ink-gray-9: #0b1324;
-  --ink-white: #ffffff;
-
-  /* Outlines */
-  --outline-gray-1: #e1e7ec;
-  --outline-gray-2: #e1e7ec;
-  --outline-gray-3: #c4d2da;
-  --outline-gray-4: #94a3b8;
-  --outline-gray-5: #64748b;
-
-  /* Primary / accent mapped to frappe blue slots */
-  --ink-blue-2: #0a7393;
-  --ink-blue-3: #0d8aad;
-  --surface-blue-1: #e4f2f6;
-  --surface-blue-2: color-mix(in srgb, #0a7393 14%, #fff);
-
-  /* Semantic */
-  --astra-success: #059669;
-  --astra-success-soft: #d1fae5;
-  --astra-warning: #d97706;
-  --astra-warning-soft: #fff3dc;
-  --astra-danger: #dc2626;
-  --astra-danger-soft: #fee2e2;
-  --astra-info: #2563eb;
-  --astra-info-soft: #dbeafe;
-
-  /* Radius */
-  --radius-1: 4px;
-  --radius-2: 6px;
-  --radius-3: 8px;
-  --radius-4: 10px;
-  --radius-5: 12px;
-  --radius-6: 14px;
-  --radius-7: 16px;
-  --radius-8: 20px;
-  --radius-full: 999px;
-
-  /* Shadows */
-  --elevation-xs: 0 1px 2px rgba(7, 22, 31, 0.04);
-  --elevation-sm: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 1px 2px rgba(7, 22, 31, 0.04), 0 8px 24px -12px rgba(7, 22, 31, 0.1);
-  --elevation-md: 0 1px 2px rgba(7, 22, 31, 0.05),
-    0 18px 40px -16px rgba(7, 22, 31, 0.22);
-  --elevation-lg: 0 24px 48px -20px rgba(7, 22, 31, 0.28);
-  --shadow-row-hover: inset 0 0 0 999px var(--ac-soft);
-}
-
-[data-theme='dark'],
-html.dark {
-  --ac: #3fbad9;
-  --acm: #2aa8c9;
-  --ac2: #14b8a6;
-  --ac-l: #7dd3e8;
-  --ac-soft: #0e2f3b;
-  --night: #050f15;
-
-  --surface-base: #081218;
-  --surface-gray-1: #0d1a22;
-  --surface-gray-2: #11212b;
-  --surface-gray-3: #1a2c37;
-  --surface-gray-4: #243844;
-  --surface-gray-5: #3a5160;
-  --surface-gray-6: #7c89a3;
-  --surface-gray-7: #98a3b8;
-  --surface-gray-8: #b3bdcc;
-  --surface-gray-9: #e1e6ee;
-  --surface-gray-10: #f1f4f8;
-  --surface-sidebar: #050f15;
-  --surface-elevation-1: #0d1a22;
-  --surface-elevation-2: #11212b;
-  --surface-elevation-3: #1a2c37;
-  --surface-menus: #0d1a22;
-  --surface-white: #0d1a22;
-  --surface-cards: #0d1a22;
-  --surface-alpha-gray-1: rgba(230, 238, 242, 0.04);
-  --surface-alpha-gray-2: rgba(230, 238, 242, 0.06);
-  --surface-alpha-gray-3: rgba(230, 238, 242, 0.08);
-  --surface-alpha-gray-4: rgba(230, 238, 242, 0.11);
-  --surface-alpha-gray-5: rgba(230, 238, 242, 0.14);
-  --surface-alpha-elevation-1: rgba(13, 26, 34, 0.92);
-  --surface-alpha-elevation-2: rgba(17, 33, 43, 0.96);
-  --surface-alpha-elevation-3: rgba(26, 44, 55, 1);
-
-  --nav-active-bg: color-mix(in srgb, #3fbad9 22%, #050f15);
-  --nav-active-border: #3fbad9;
-  --nav-active-shadow: inset 3px 0 0 var(--nav-active-border);
-
-  --ink-gray-1: #243844;
-  --ink-gray-2: #3a5160;
-  --ink-gray-3: #7c89a3;
-  --ink-gray-4: #7c89a3;
-  --ink-gray-5: #98a3b8;
-  --ink-gray-6: #98a3b8;
-  --ink-gray-7: #b3bdcc;
-  --ink-gray-8: #e1e6ee;
-  --ink-gray-9: #e6eef2;
-
-  --outline-gray-1: #1a2c37;
-  --outline-gray-2: #1a2c37;
-  --outline-gray-3: #243844;
-  --outline-gray-4: #7c89a3;
-  --outline-gray-5: #98a3b8;
-
-  --ink-blue-2: #3fbad9;
-  --ink-blue-3: #7dd3e8;
-  --surface-blue-1: #0e2f3b;
-  --surface-blue-2: color-mix(in srgb, #3fbad9 22%, #0d1a22);
-
-  --astra-success: #34d399;
-  --astra-success-soft: color-mix(in srgb, #34d399 18%, #0d1a22);
-  --astra-warning: #fbbf24;
-  --astra-warning-soft: color-mix(in srgb, #fbbf24 16%, #0d1a22);
-  --astra-danger: #f87171;
-  --astra-danger-soft: color-mix(in srgb, #f87171 16%, #0d1a22);
-  --astra-info: #60a5fa;
-  --astra-info-soft: color-mix(in srgb, #60a5fa 16%, #0d1a22);
-
-  --elevation-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --elevation-sm: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 10px 30px -12px rgba(0, 0, 0, 0.6);
-  --elevation-md: 0 18px 44px -14px rgba(0, 0, 0, 0.75);
-  --elevation-lg: 0 28px 56px -18px rgba(0, 0, 0, 0.85);
-  --shadow-row-hover: inset 0 0 0 999px var(--ac-soft);
-  --astra-shadow-primary: 0 8px 24px -8px color-mix(in srgb, var(--ac) 45%, transparent);
-
-  color-scheme: dark;
+  --astra-nav-w: 240px;
+  --astra-nav-w-collapsed: 64px;
+  --astra-topbar-h: 52px;
 }
 
 html,
@@ -259,10 +56,10 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  background-color: var(--surface-base);
-  color: var(--ink-gray-9);
+  font-size: 13px;
+  line-height: 1.45;
+  background-color: var(--crm-bg, #f3f6f8);
+  color: var(--crm-fg, #0b1324);
 }
 
 /* Shell: fixed full-height left nav; only the content column scrolls */
@@ -271,6 +68,7 @@ body {
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
+  background: var(--crm-bg);
 }
 
 .astra-shell__sidebar {
@@ -280,22 +78,9 @@ body {
   position: sticky;
   top: 0;
   overflow: hidden;
-  background: var(--surface-sidebar);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  --surface-elevation-1: color-mix(in srgb, var(--ac) 14%, var(--night));
-  --surface-elevation-2: var(--surface-elevation-1);
-  --surface-elevation-3: color-mix(in srgb, var(--ac) 20%, var(--night));
-  --surface-alpha-gray-2: rgba(255, 255, 255, 0.05);
-  --surface-alpha-gray-3: rgba(255, 255, 255, 0.08);
-  --surface-gray-1: color-mix(in srgb, var(--ac) 14%, var(--night));
-  --surface-gray-2: rgba(255, 255, 255, 0.06);
-  --ink-gray-9: #ffffff;
-  --ink-gray-8: #ffffff;
-  --ink-gray-7: rgba(255, 255, 255, 0.72);
-  --ink-gray-5: rgba(255, 255, 255, 0.55);
-  --ink-gray-4: rgba(255, 255, 255, 0.35);
-  --outline-gray-1: rgba(255, 255, 255, 0.06);
-  --outline-gray-2: rgba(255, 255, 255, 0.08);
+  background: var(--crm-nav);
+  border-right: 1px solid var(--crm-nav-border);
+  color: var(--crm-nav-fg);
 }
 
 .astra-shell__sidebar[data-collapsed='true'] {
@@ -305,7 +90,9 @@ body {
 
 .astra-shell__sidebar [data-slot='sidebar'] {
   width: 100% !important;
+  height: 100%;
   background: transparent;
+  border: 0;
 }
 
 .astra-shell__main {
@@ -316,7 +103,7 @@ body {
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-  background: var(--surface-base);
+  background: var(--crm-bg);
 }
 
 .astra-shell__topbar {
@@ -324,17 +111,17 @@ body {
   height: var(--astra-topbar-h);
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: 0 var(--space-5);
-  background: var(--surface-gray-1);
-  border-bottom: 1px solid var(--outline-gray-1);
+  gap: 10px;
+  padding: 0 24px;
+  background: var(--crm-card);
+  border-bottom: 1px solid var(--crm-border);
   z-index: 20;
 }
 
 .astra-shell__page-header {
   flex: 0 0 auto;
-  background: var(--surface-gray-1);
-  border-bottom: 1px solid var(--outline-gray-1);
+  background: var(--crm-card);
+  border-bottom: 1px solid var(--crm-border);
 }
 
 .astra-shell__content {
@@ -344,6 +131,7 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   max-width: 100%;
+  background: var(--crm-bg);
 }
 
 .astra-shell__content .list-view,
@@ -352,46 +140,51 @@ body {
   max-width: 100%;
 }
 
-/* Primary solid actions */
-button.bg-surface-gray-10,
-button[class*='bg-surface-gray-10'],
-.bg-surface-gray-10.text-ink-white {
-  background-image: none;
-  background-color: var(--ac);
-  color: var(--ink-white, #fff);
-  box-shadow: var(--astra-shadow-primary);
-  border: 0;
+/* Active nav — exactly one item, inset teal indicator */
+.astra-shell__sidebar [aria-current='page'],
+.astra-shell__sidebar [data-active='true'] {
+  background: var(--crm-nav-active);
+  box-shadow: inset 3px 0 0 var(--crm-nav-indicator);
+  color: #ffffff;
+  border-radius: 6px;
 }
 
-button.bg-surface-gray-10:hover,
-button[class*='bg-surface-gray-10']:hover {
-  filter: brightness(1.06);
+.astra-shell__sidebar [aria-current='page'] *,
+.astra-shell__sidebar [data-active='true'] * {
+  color: inherit;
 }
 
-.astra-card,
-.rounded-lg.border.bg-surface-white,
-.rounded-lg.border.bg-surface-menus,
-.rounded-6.border {
-  border-radius: var(--radius-5);
+.astra-shell__sidebar [aria-current='page'] .astra-nav-icon,
+.astra-shell__sidebar [data-active='true'] .astra-nav-icon {
+  color: var(--crm-nav-indicator);
 }
 
-/* Login — do not restyle Login.vue structure; keep token-driven chrome */
+.astra-shell__sidebar[data-collapsed='true'] img[alt],
+.astra-shell__sidebar .astra-brand-mark {
+  background: transparent !important;
+  box-shadow: none !important;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* Login chrome (structure owned elsewhere; colours follow tokens) */
 .astra-login-page {
   min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
-  background: var(--surface-base);
+  background: var(--crm-bg);
 }
 
 .astra-login-card {
   width: min(100%, 400px);
   padding: 40px;
-  border-radius: var(--radius-7);
-  background: var(--surface-gray-1);
-  color: var(--ink-gray-9);
-  border: 1px solid color-mix(in srgb, var(--outline-gray-2) 70%, transparent);
-  box-shadow: var(--elevation-sm);
+  border-radius: 12px;
+  background: var(--crm-card);
+  color: var(--crm-fg);
+  border: 1px solid var(--crm-border);
+  box-shadow: var(--crm-shadow-modal);
 }
 
 .astra-login-card .astra-login-logo {
@@ -408,63 +201,32 @@ button[class*='bg-surface-gray-10']:hover {
   width: 100%;
   min-height: 40px;
   border: 0;
-  border-radius: var(--radius-full);
-  color: #fff;
+  border-radius: 999px;
+  color: var(--crm-primary-fg);
   font: 600 0.875rem var(--font-sans);
-  background: var(--ac);
-  box-shadow: var(--astra-shadow-primary);
+  background: var(--crm-primary);
   cursor: pointer;
 }
 
 .astra-login-card input {
   width: 100%;
   padding: 0.62rem 0.875rem;
-  border-radius: var(--radius-4);
-  border: 1px solid var(--outline-gray-2);
-  background: var(--surface-gray-1);
-  color: var(--ink-gray-9);
-  font: 400 0.875rem var(--font-sans);
+  border-radius: 7px;
+  border: 1px solid var(--crm-border-strong);
+  background: var(--crm-card);
+  color: var(--crm-fg);
+  font: 400 12.5px var(--font-sans);
 }
 
 .astra-login-card input:focus {
   outline: none;
-  border-color: var(--ac);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 12%, transparent);
-}
-
-/* Active nav */
-.astra-shell__sidebar [aria-current='page'],
-.astra-shell__sidebar [data-active='true'] {
-  background: var(--nav-active-bg);
-  box-shadow: var(--nav-active-shadow);
-  color: #fff;
-  border-radius: var(--radius-2);
-}
-
-.astra-shell__sidebar [aria-current='page'] *,
-.astra-shell__sidebar [data-active='true'] * {
-  color: #fff;
-}
-
-.astra-shell__sidebar[data-collapsed='true'] img[alt],
-.astra-shell__sidebar .astra-brand-mark {
-  background: transparent !important;
-  box-shadow: none !important;
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-.avatar,
-[class*='Avatar'] {
-  --avatar-bg: var(--surface-gray-3);
-  background-color: var(--surface-gray-3);
-  box-shadow: inset 0 0 0 1px var(--outline-gray-2);
+  border-color: var(--crm-primary);
+  box-shadow: var(--crm-input-focus);
 }
 
 :focus-visible {
-  outline: 2px solid var(--ac);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--crm-focus);
   border-radius: inherit;
 }
 
@@ -482,6 +244,6 @@ button[class*='bg-surface-gray-10']:hover {
     position: sticky;
     left: 0;
     z-index: 1;
-    background: var(--surface-base);
+    background: var(--crm-bg);
   }
 }
