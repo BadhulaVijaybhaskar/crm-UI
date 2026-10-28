@@ -457,6 +457,7 @@ export function sessionInitScript(email) {
   const encoded = encodeURIComponent(fullName)
   return `
 (() => {
+  window.__PARITY__ = { enabled: true, user: '${email}' };
   document.cookie = 'user_id=${email}; path=/';
   document.cookie = 'system_user=yes; path=/';
   document.cookie = 'full_name=${encoded}; path=/';
