@@ -3,8 +3,8 @@
     v-if="contact.doc"
     class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg"
   >
-    <div class="grid min-h-0 flex-1 grid-cols-1 overflow-hidden xl:grid-cols-crm-record">
-    <div class="flex min-h-0 min-w-0 flex-col overflow-hidden">
+    <div class="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto xl:grid-cols-crm-record xl:overflow-hidden">
+    <div class="flex min-h-0 min-w-0 flex-col overflow-hidden max-xl:min-h-[24rem]">
     <nav
       class="flex items-center gap-1.5 px-crm-page-x pt-3 text-crm-meta text-crm-muted-fg"
       aria-label="Breadcrumb"
