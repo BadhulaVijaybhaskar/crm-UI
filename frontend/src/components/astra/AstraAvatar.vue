@@ -61,7 +61,7 @@ const sizeClass = computed(() => {
   if (props.size === 'foot') return `${radius} size-[30px] text-[11px] font-semibold`
   if (props.size === 'lg') return `${radius} size-[42px] text-[15px]`
   if (props.size === 'xl') return `${radius} size-14 text-base`
-  // crm.css .av2 — 26×26, 10.5px; 600 matches available Inter cut / Figma AA better than 700
-  return `${radius} size-[26px] text-[10.5px] font-semibold`
+  // crm.css .av2 — 26×26, 10.5px / 700
+  return `${radius} size-[26px] text-[10.5px] font-bold`
 })
 </script>
