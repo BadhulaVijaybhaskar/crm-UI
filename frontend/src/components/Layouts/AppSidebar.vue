@@ -58,9 +58,14 @@
           </SidebarItem>
 
           <section v-for="section in navSections" :key="section.id">
+            <!--
+              crm.css .sect is pt-12px; PNG Connect block sits ~3px lower than a
+              uniform 12px stack — add 3px before Connect only (PNG approved).
+            -->
             <div
               v-if="!section.hideLabel && !isCollapsed"
-              class="px-5 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[color:var(--crm-nav-faint)]"
+              class="px-5 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[color:var(--crm-nav-faint)]"
+              :class="section.id === 'connect' ? 'pt-[15px]' : 'pt-3'"
             >
               {{ __(section.label) }}
             </div>
