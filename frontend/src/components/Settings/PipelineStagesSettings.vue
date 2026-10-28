@@ -1,22 +1,5 @@
 <template>
   <div class="flex h-full min-h-0 flex-col bg-crm-bg text-crm-fg">
-    <div
-      class="mx-crm-page-x mt-0 flex h-[30px] items-center gap-2 border-b border-dashed border-crm-border-strong bg-crm-muted px-0 text-crm-label text-crm-muted-fg"
-      style="
-        margin-left: var(--crm-page-x, 24px);
-        margin-right: var(--crm-page-x, 24px);
-      "
-    >
-      <Icon icon="triangle-alert" class="size-3.5 shrink-0 text-crm-warning" />
-      <span>
-        <span class="font-semibold text-crm-fg">{{ __('Concept') }}</span>
-        {{
-          __(
-            ': In-app stage editor. Stages are real, configurable records today; this editor screen is new and needs backend work.',
-          )
-        }}
-      </span>
-    </div>
     <AstraPageHeader
       :title="__('Pipeline stages')"
       :description="
