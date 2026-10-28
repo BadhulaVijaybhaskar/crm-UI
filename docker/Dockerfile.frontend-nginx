@@ -1,0 +1,20 @@
+# Frontend nginx image: ship Astra security header + sourcemap block snippets,
+# strip any baked *.map under the html/assets trees, and override the base
+# security_headers.conf that otherwise duplicates XFO / sends HSTS on HTTP.
+ARG BASE_IMAGE=nginx:1.27-alpine
+FROM ${BASE_IMAGE}
+
+COPY docker/nginx/security_headers.conf /etc/nginx/snippets/security_headers.conf
+COPY docker/nginx/security_headers_http.map /etc/nginx/conf.d/00-astra-hsts-map.conf
+COPY docker/nginx/block-sourcemaps.conf /etc/nginx/snippets/block-sourcemaps.conf
+COPY docker/nginx/crm.conf /etc/nginx/snippets/crm.conf
+COPY scripts/strip-sourcemaps.sh /usr/local/bin/strip-sourcemaps.sh
+
+# conf.d/*.conf is included from http{} in stock nginx — the map file is valid there.
+# Prefer X-Forwarded-Proto; if empty, $astra_hsts_value stays blank (no HSTS on HTTP).
+
+RUN chmod +x /usr/local/bin/strip-sourcemaps.sh \
+ && FRONTEND_ASSETS_PATH=/usr/share/nginx/html \
+    NGINX_ASSETS_PATH=/assets \
+    /usr/local/bin/strip-sourcemaps.sh \
+ && find -L /usr/share/nginx/html /assets /var/www/html -type f -name '*.map' -delete 2>/dev/null || true

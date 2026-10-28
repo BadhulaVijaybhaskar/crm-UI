@@ -31,7 +31,12 @@ def make_user(email, roles=None):
 
 class TestPasswordSetup(IntegrationTestCase):
 	def setUp(self):
+		# Stale module/role cache can omit FCRM and make get_context() 403
+		# (check_app_permission) before the password redirect runs.
+		frappe.clear_cache()
+		frappe.local.system_settings = None
 		self.user = make_user("no-password@example.com", roles=["System Manager"])
+		frappe.clear_cache(user=self.user.name)
 		frappe.set_user(self.user.name)
 
 	def tearDown(self):

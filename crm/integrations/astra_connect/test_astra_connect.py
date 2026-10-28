@@ -50,6 +50,10 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		frappe.set_user("Administrator")
 		# @rate_limit(ip_based=True) requires a request IP; tests have no WSGI environ.
 		frappe.local.request_ip = "127.0.0.1"
+		# Prefer synchronous inbox processing so teardown does not race RQ workers
+		# (MariaDB 1020 "record has changed since last read" on CRM Lead).
+		frappe.flags.in_test = True
+		frappe.conf.astra_connect_sync_processing = 1
 		settings = frappe.get_single("Astra Connect Settings")
 		settings.enabled = 1
 		settings.connect_base_url = "https://connect.example.test"
@@ -61,8 +65,53 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
-		self._cleanup_committed_rows()
+		# Restore sync flags so any in-flight enqueue from a patched test finishes
+		# inline before we delete committed rows.
+		frappe.flags.in_test = True
+		frappe.conf.astra_connect_sync_processing = 1
+		self._drain_connect_queue()
+		self._cleanup_committed_rows_retry()
 		frappe.db.rollback()
+
+	def _drain_connect_queue(self):
+		"""Best-effort: wait briefly for RQ jobs that tests forced async."""
+		try:
+			from frappe.utils.background_jobs import get_queue, get_redis_conn
+
+			conn = get_redis_conn()
+			for qname in ("astra_connect", "default", "short"):
+				try:
+					q = get_queue(qname, connection=conn)
+				except Exception:
+					continue
+				# Empty the queue — tests must not leave workers mutating CRM Lead.
+				try:
+					q.empty()
+				except Exception:
+					pass
+			# Give a sticky started worker a beat to finish if already claimed.
+			time.sleep(0.05)
+		except Exception:
+			pass
+
+	def _cleanup_committed_rows_retry(self, attempts: int = 6):
+		"""Retry cleanup on MariaDB 1020 (concurrent worker update during DELETE)."""
+		last_exc = None
+		for i in range(attempts):
+			try:
+				self._cleanup_committed_rows()
+				return
+			except Exception as exc:
+				last_exc = exc
+				msg = str(exc)
+				if "1020" not in msg and "changed since last read" not in msg.lower():
+					raise
+				frappe.db.rollback()
+				time.sleep(0.05 * (i + 1))
+				frappe.flags.in_test = True
+				frappe.conf.astra_connect_sync_processing = 1
+		if last_exc:
+			raise last_exc
 
 	def _track_lead(self, lead_id: str):
 		self._created_lead_ext_ids.append(lead_id)
