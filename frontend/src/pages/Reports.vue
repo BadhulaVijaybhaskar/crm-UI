@@ -29,7 +29,7 @@
     </AstraPageHeader>
 
     <div
-      class="flex h-11 shrink-0 items-center gap-0.5 border-b border-[color:var(--crm-border,#e1e7ec)] px-crm-page-x"
+      class="flex h-10 shrink-0 items-center gap-0.5 px-crm-page-x"
     >
       <Dropdown
         :options="dashboardMenuOptions"
@@ -42,7 +42,7 @@
       />
       <button
         type="button"
-        class="inline-flex h-[34px] items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium"
+        class="inline-flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium"
         :class="
           tab === 'personal'
             ? 'border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] font-semibold text-[color:var(--crm-fg,#0b1324)]'
@@ -63,7 +63,7 @@
       </button>
       <button
         type="button"
-        class="inline-flex h-[34px] items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium"
+        class="inline-flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium"
         :class="
           tab === 'team'
             ? 'bg-[color:var(--crm-muted,#f6f8fa)] font-semibold text-[color:var(--crm-fg,#0b1324)]'
@@ -78,7 +78,7 @@
       </button>
       <button
         type="button"
-        class="inline-flex h-[34px] items-center gap-1 px-2 text-[12.5px] font-semibold text-[color:var(--crm-muted-fg,#5b6478)] hover:text-[color:var(--crm-primary,#0a7393)]"
+        class="inline-flex h-7 items-center gap-1 px-2 text-[12.5px] font-semibold text-[color:var(--crm-muted-fg,#5b6478)] hover:text-[color:var(--crm-primary,#0a7393)]"
         @click="createDashboard"
       >
         <LucidePlus class="size-3.5" aria-hidden="true" />
@@ -96,7 +96,7 @@
         </span>
         <button
           type="button"
-          class="inline-flex h-[34px] items-center gap-1.5 rounded-lg border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px]"
+          class="inline-flex h-7 items-center gap-1.5 rounded-lg border border-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px]"
           @click="cyclePeriod"
         >
           <span class="text-[color:var(--crm-muted-fg,#5b6478)]">{{
@@ -113,7 +113,7 @@
         <button
           v-if="editing || isAdmin() || isManager()"
           type="button"
-          class="inline-flex h-[34px] items-center gap-1.5 rounded-lg border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px]"
+          class="inline-flex h-7 items-center gap-1.5 rounded-lg border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px]"
         >
           <span class="text-[color:var(--crm-muted-fg,#5b6478)]">{{
             __('Sales user')

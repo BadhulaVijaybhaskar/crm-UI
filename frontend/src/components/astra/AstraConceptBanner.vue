@@ -4,11 +4,13 @@
     role="note"
   >
     <LucideTriangleAlert
-      class="size-3.5 shrink-0 text-[color:var(--crm-fg,#0b1324)]"
+      class="size-3.5 shrink-0 text-[color:var(--crm-warning,#a86a0b)]"
       aria-hidden="true"
     />
-    <span class="font-bold text-[color:var(--crm-fg,#0b1324)]">{{ label }}</span>
-    <span class="min-w-0 flex-1 truncate">
+    <span class="shrink-0 font-bold text-[color:var(--crm-fg,#0b1324)]">{{
+      label
+    }}</span>
+    <span class="min-w-0 flex-1 whitespace-nowrap text-[color:var(--crm-muted-fg,#5b6478)]">
       <slot>{{ text }}</slot>
     </span>
   </div>

@@ -1,11 +1,11 @@
 <template>
   <div
-    class="report-grid min-h-0 flex-1 overflow-y-auto pb-6 pt-4"
+    class="report-grid min-h-0 flex-1 overflow-y-auto pb-6 pt-1"
     :class="editing ? 'report-grid--editing mx-crm-page-x' : 'px-crm-page-x'"
   >
     <GridLayout
       v-if="items.length > 0"
-      class="h-fit w-full"
+      class="report-grid-layout h-fit w-full"
       :class="editing ? 'mb-40 !select-none' : ''"
       :col-num="12"
       :cols="{ lg: 12, md: 12, sm: 12, xs: 1, xxs: 1 }"
@@ -32,6 +32,11 @@
           'vgl-item--parity-dragging': draggingId && draggingId === tile.id,
         }"
       >
+        <div
+          v-if="draggingId && draggingId === tile.id"
+          class="report-tile-drop-slot"
+          aria-hidden="true"
+        />
         <div
           v-if="layoutReady"
           class="h-full w-full"
@@ -130,6 +135,17 @@ function onLayout(newLayout) {
   --vgl-resizer-size: 12px;
 }
 
+/*
+ * grid-layout-plus insets the first/last track by margin[0]/margin[1].
+ * CSS-grid refs use gap only (no outer inset). Pull the layout out by
+ * one margin so tile left edges match the Figma PNG / HTML dgrid.
+ */
+.report-grid-layout {
+  margin-left: -12px;
+  margin-right: -12px;
+  width: calc(100% + 24px);
+}
+
 .report-grid--editing :deep(.vgl-item) {
   overflow: visible;
 }
@@ -159,9 +175,25 @@ function onLayout(newLayout) {
   z-index: 3;
 }
 
+.report-tile-drop-slot {
+  /* Figma 17: soft dashed home-slot behind the tipped mid-drag card */
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 2px dashed var(--crm-primary, #0a7393);
+  border-radius: 10px;
+  background: var(--crm-primary-soft, #e4f2f6);
+  pointer-events: none;
+}
+
 :deep(.vgl-item--dragging) .report-tile-drag-ghost,
 .report-tile-drag-ghost {
-  /* Figma 17: line tile mid-drag — slight tip + primary ring/shadow */
+  /* Card sits inset in the soft slot with a slight tip + primary ring */
+  position: absolute;
+  inset: 8px;
+  z-index: 2;
+  width: auto;
+  height: auto;
   transform: rotate(-0.6deg);
   box-shadow: var(
     --crm-shadow-tile-drag,
@@ -169,11 +201,7 @@ function onLayout(newLayout) {
     0 0 0 2px var(--crm-primary, #0a7393)
   );
   border-radius: 10px;
-  position: relative;
-  z-index: 2;
   background: var(--crm-card, #fff);
-  outline: 2px dashed var(--crm-primary, #0a7393);
-  outline-offset: 6px;
 }
 
 :deep(.vgl-item__resizer) {
