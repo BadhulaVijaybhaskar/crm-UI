@@ -12,12 +12,10 @@
 
 <script setup>
 import { Checkbox, ErrorMessage, call } from 'frappe-ui'
-import { telemetryPlugin, useTelemetry } from '@framework/ui/telemetry'
-import { getCurrentInstance, ref } from 'vue'
+import { ref } from 'vue'
 
-const telemetry = useTelemetry()
-const app = getCurrentInstance().appContext.app
-const enabled = ref(true)
+// Telemetry is disabled product-wide (no pulse.m.frappe.cloud).
+const enabled = ref(false)
 const saving = ref(false)
 const error = ref('')
 
@@ -26,10 +24,9 @@ async function persistPreference(share) {
     doctype: 'System Settings',
     name: 'System Settings',
     fieldname: 'enable_telemetry',
-    value: share ? 1 : 0,
+    value: 0,
   })
-  if (share) await telemetryPlugin.install(app, { app_name: 'crm' })
-  else telemetry.disable()
+  enabled.value = false
 }
 
 async function savePreference(share) {
@@ -38,7 +35,7 @@ async function savePreference(share) {
   error.value = ''
   try {
     await persistPreference(share)
-    enabled.value = share
+    enabled.value = false
     return true
   } catch (err) {
     error.value = __('Could not save your preference. Please try again.')

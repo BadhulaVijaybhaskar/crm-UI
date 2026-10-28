@@ -8,11 +8,12 @@
        column falls through to the white page canvas. The token cannot be
        overridden on the Sidebar element itself — `bg-surface-sidebar` is emitted
        after `bg-surface-gray-1` in the utilities layer and would win. -->
-  <div class="relative flex h-full bg-surface-gray-1">
+  <div class="relative flex h-full bg-surface-sidebar text-ink-gray-9">
     <Sidebar
       v-model:collapsed="isSidebarCollapsed"
       :collapsible="!mobile"
-      :width="mobile ? '260px' : undefined"
+      :width="mobile ? '260px' : '240px'"
+      collapsed-width="64px"
       class="border-r border-outline-gray-1"
     >
       <div class="flex h-full flex-col p-2">
@@ -82,8 +83,8 @@
                 :key="link.key"
                 :route="link.to"
                 :label="__(link.label)"
-                :active="activeItem === link.key"
-                @click="selectItem($event, link.key)"
+                :active="!link.external && activeItem === link.key"
+                @click="onNavClick($event, link)"
               >
                 <template #prefix>
                   <Icon :icon="link.icon" class="size-4 text-ink-gray-7" />
@@ -104,7 +105,7 @@
         <div v-if="!mobile" class="mt-auto flex flex-col gap-1 pt-2">
           <div class="mb-1 flex flex-col gap-2">
             <SignupBanner
-              v-if="isDemoSite"
+              v-if="isDemoSite && isFCSite"
               :isSidebarCollapsed="isCollapsed"
               :afterSignup="() => capture('signup_from_demo_site')"
             />
@@ -154,18 +155,22 @@
     <Notifications v-if="!mobile" />
   </div>
 
+  <!-- Desktop only: on mobile, Settings lives in MobileLayout so closing the
+       drawer does not unmount the modal. -->
   <template v-if="!mobile">
     <Settings />
     <HelpModal
       v-if="showHelpModal"
       v-model="showHelpModal"
       v-model:articles="articles"
+      title="Astra CRM"
+      appName="crm"
+      docsLink=""
       :logo="CRMLogo"
       :afterSkip="(step) => capture('onboarding_step_skipped_' + step)"
       :afterSkipAll="() => capture('onboarding_steps_skipped')"
       :afterReset="(step) => capture('onboarding_step_reset_' + step)"
       :afterResetAll="() => capture('onboarding_steps_reset')"
-      docsLink="https://docs.frappe.io/crm"
     />
     <IntermediateStepModal
       v-model="showIntermediateModal"
@@ -185,6 +190,7 @@ import Icon from '@/components/Icon.vue'
 import PinIcon from '@/components/Icons/PinIcon.vue'
 import UserDropdown from '@/components/UserDropdown.vue'
 import { getNavigationItems } from '@/utils/navigation'
+import { openAstraConnect } from '@/utils/astraConnect'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
@@ -258,12 +264,7 @@ const allViews = computed(() => {
       name: 'All Views',
       hideLabel: true,
       opened: true,
-      views: links.map((link) => ({
-        label: link.label,
-        icon: link.icon,
-        key: link.route,
-        to: { name: link.route },
-      })),
+      views: links.map((link) => navLinkFromItem(link)),
     },
   ]
   if (getPublicViews().length) {
@@ -284,6 +285,32 @@ const allViews = computed(() => {
   return _views
 })
 
+function navLinkFromItem(link) {
+  if (link.connect) {
+    return {
+      label: link.label,
+      icon: link.icon,
+      key: `connect:${link.connect}`,
+      external: true,
+      connect: link.connect,
+    }
+  }
+  if (link.action === 'settings') {
+    return {
+      label: link.label,
+      icon: link.icon,
+      key: 'settings',
+      action: 'settings',
+    }
+  }
+  return {
+    label: link.label,
+    icon: link.icon,
+    key: link.route,
+    to: { name: link.route },
+  }
+}
+
 function parseView(views) {
   return views.map((view) => {
     return {
@@ -297,6 +324,21 @@ function parseView(views) {
       },
     }
   })
+}
+
+function onNavClick(event, link) {
+  if (link.connect) {
+    // External Connect destinations must not steal the active nav highlight.
+    openAstraConnect(link.connect)
+    if (props.mobile) mobileSidebarOpened.value = false
+    return
+  }
+  if (link.action === 'settings') {
+    showSettings.value = true
+    if (props.mobile) mobileSidebarOpened.value = false
+    return
+  }
+  selectItem(event, link.key)
 }
 
 function getIcon(routeName, icon) {
@@ -321,8 +363,17 @@ function getIcon(routeName, icon) {
 }
 
 // A saved view's key is its name; a plain nav item's key is its route name.
+// Unmapped routes (Legal notices, etc.) clear the highlight.
 function currentRouteKey() {
-  return route.query.view || route.name
+  const key = route.query.view || route.name
+  const known = links.some(
+    (link) => link.route === key || link.route === route.name,
+  )
+  const knownView = allViews.value
+    ?.flatMap((s) => s.views || [])
+    .some((v) => v.key === key)
+  if (!known && !knownView && key !== 'Notifications') return null
+  return key
 }
 
 // Set the highlight on click rather than waiting for the route, since route
@@ -657,11 +708,11 @@ const articles = ref([
       { name: 'twilio', title: __('Twilio') },
       { name: 'exotel', title: __('Exotel') },
       { name: 'whatsapp', title: __('WhatsApp') },
-      { name: 'erpnext', title: __('ERPNext') },
+      { name: 'erpnext', title: __('ERP') },
     ],
   },
   {
-    title: __('Frappe CRM mobile'),
+    title: __('Astra CRM mobile'),
     opened: false,
     subArticles: [
       { name: 'mobile-app-installation', title: __('Mobile App Installation') },

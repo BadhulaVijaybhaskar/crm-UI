@@ -6,7 +6,7 @@ import LogoSendgrid from '@/images/sendgrid.png'
 import LogoSparkpost from '@/images/sparkpost.webp'
 import LogoYahoo from '@/images/yahoo.png'
 import LogoYandex from '@/images/yandex.png'
-import LogoFrappeMail from '@/images/frappe-mail.svg'
+import LogoMail from '@/images/mail.svg'
 
 const fixedFields = [
   {
@@ -78,10 +78,10 @@ export const popularProviderFields = [
 export const customProviderFields = [
   ...fixedFields,
   {
-    label: __('Frappe Mail Site'),
+    label: __('Mail site'),
     name: 'frappe_mail_site',
     type: 'text',
-    placeholder: 'https://frappemail.com',
+    placeholder: 'https://mail.example.com',
   },
   {
     label: __('API Key'),
@@ -100,11 +100,12 @@ export const customProviderFields = [
 export const services = [
   {
     name: 'Frappe Mail',
-    icon: LogoFrappeMail,
+    label: __('Mail'),
+    icon: LogoMail,
     info: __(
-      'Setting up Frappe Mail requires you to have an API key and API secret for your email account. Read more',
+      'Setting up Mail requires an API key and API secret for your email account.',
     ),
-    link: 'https://github.com/frappe/mail',
+    link: '',
     custom: true,
   },
   {
@@ -171,7 +172,14 @@ export const emailIcon = {
   SparkPost: LogoSparkpost,
   Yahoo: LogoYahoo,
   Yandex: LogoYandex,
-  'Frappe Mail': LogoFrappeMail,
+  'Frappe Mail': LogoMail,
+}
+
+/** User-visible label for an Email Account.service value (API keys stay unchanged). */
+export function serviceDisplayName(service) {
+  if (service === 'Frappe Mail') return __('Mail')
+  const match = services.find((s) => s.name === service)
+  return match?.label || service
 }
 
 export function validateInputs(state, isCustom) {

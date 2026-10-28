@@ -15,6 +15,7 @@ import {
   setCommandPaletteProvider,
 } from '@/composables/useCommandPalette'
 import { getNavigationItems } from '@/utils/navigation'
+import { openAstraConnect } from '@/utils/astraConnect'
 import { activityHashFor } from '@/utils/activityHash'
 import { activityCommand } from './activityCommands'
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
@@ -84,7 +85,7 @@ const SETTINGS_SECTIONS = [
     pages: [
       ['SLA Policies', 'timer'],
       ['Accounts', 'at-sign'],
-      ['ERPNext', 'blocks'],
+      ['ERP', 'blocks'],
       ['Lead Syncing', 'refresh-cw'],
     ],
   },
@@ -280,20 +281,53 @@ function contextualCommands(tracked) {
 }
 
 function navigationCommands(tracked) {
-  return getNavigationItems().map((item) =>
-    tracked(
-      {
-        id: `navigate-${item.route}`,
-        title: item.label,
-        group: 'Navigate',
-        icon: item.icon,
-        weight: 0.7,
-        keywords: `go open ${item.label}`,
-        perform: () => router.push({ name: item.route }),
-      },
-      'navigation',
-    ),
-  )
+  return getNavigationItems()
+    .map((item) => {
+      if (item.connect) {
+        return tracked(
+          {
+            id: `navigate-connect-${item.connect}`,
+            title: item.label,
+            group: 'Navigate',
+            icon: item.icon,
+            weight: 0.7,
+            keywords: `go open ${item.label} astra connect`,
+            perform: () => openAstraConnect(item.connect),
+          },
+          'navigation',
+        )
+      }
+      if (item.action === 'settings') {
+        return tracked(
+          {
+            id: 'navigate-settings',
+            title: item.label,
+            group: 'Navigate',
+            icon: item.icon,
+            weight: 0.7,
+            keywords: `go open ${item.label}`,
+            perform: () => {
+              showSettings.value = true
+            },
+          },
+          'navigation',
+        )
+      }
+      if (!item.route) return null
+      return tracked(
+        {
+          id: `navigate-${item.route}`,
+          title: item.label,
+          group: 'Navigate',
+          icon: item.icon,
+          weight: 0.7,
+          keywords: `go open ${item.label}`,
+          perform: () => router.push({ name: item.route }),
+        },
+        'navigation',
+      )
+    })
+    .filter(Boolean)
 }
 
 function createCommands(tracked, emit, showModal) {

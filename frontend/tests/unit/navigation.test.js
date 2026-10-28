@@ -1,17 +1,98 @@
-import { getNavigationItems, navigationItems } from '@/utils/navigation'
+import { afterEach, describe, expect, it } from 'vitest'
+import {
+  getNavigationItems,
+  isNavItemAvailable,
+  NAV_FEATURE_READY,
+  navigationItems,
+} from '@/utils/navigation'
 
 describe('navigationItems', () => {
-  it('uses unique route names', () => {
-    const routes = navigationItems.map((item) => item.route)
-    expect(new Set(routes).size).toBe(routes.length)
+  afterEach(() => {
+    delete window.astra_connect_enabled
+    delete window.astra_connect_url
+    delete window.boot
   })
 
-  it('omits desktop-only destinations on mobile', () => {
-    const mobileRoutes = getNavigationItems({ mobile: true }).map(
-      (item) => item.route,
+  it('keeps the Astra CRM sidebar registry order', () => {
+    const labels = navigationItems.map((item) => item.label)
+    expect(labels).toEqual([
+      'Dashboard',
+      'Leads',
+      'Contacts',
+      'Companies',
+      'Deals',
+      'Tasks',
+      'AI Calling',
+      'Messages',
+      'AI Employees',
+      'Activities',
+      'Reports',
+      'Settings',
+    ])
+  })
+
+  it('does not surface WhatsApp inbox in the sidebar registry', () => {
+    const labels = navigationItems.map((item) => item.label.toLowerCase())
+    expect(labels.some((l) => l.includes('whatsapp'))).toBe(false)
+    expect(labels.some((l) => l === 'inbox')).toBe(false)
+  })
+
+  it('fails if any nav item is a placeholder / Soon stub', () => {
+    for (const item of navigationItems) {
+      expect(item.placeholder, `${item.label} must not be a placeholder`).toBeFalsy()
+      expect(String(item.label)).not.toMatch(/soon|placeholder/i)
+    }
+    for (const item of getNavigationItems()) {
+      expect(item.placeholder, `${item.label} surfaced as placeholder`).toBeFalsy()
+    }
+  })
+
+  it('hides Activities and Reports until their feature flags flip', () => {
+    expect(NAV_FEATURE_READY.Activities).toBe(false)
+    expect(NAV_FEATURE_READY.Reports).toBe(false)
+    const labels = getNavigationItems().map((item) => item.label)
+    expect(labels).not.toContain('Activities')
+    expect(labels).not.toContain('Reports')
+  })
+
+  it('hides Connect destinations until Settings is enabled with a base URL', () => {
+    expect(
+      getNavigationItems()
+        .filter((item) => item.connect)
+        .map((item) => item.connect),
+    ).toEqual([])
+
+    window.astra_connect_enabled = true
+    window.astra_connect_url = 'https://connect.example.test'
+    expect(
+      getNavigationItems()
+        .filter((item) => item.connect)
+        .map((item) => item.connect),
+    ).toEqual(['calls', 'messages', 'employees'])
+  })
+
+  it('uses unique keys for in-app routes and connect links', () => {
+    const keys = navigationItems.map(
+      (item) => item.route || item.connect || item.action,
     )
-    expect(mobileRoutes).not.toContain('Dashboard')
-    expect(mobileRoutes).not.toContain('Calendar')
-    expect(mobileRoutes).toContain('Leads')
+    expect(new Set(keys).size).toBe(keys.length)
+  })
+
+  it('includes Dashboard on mobile (settings drawer + mobile menu)', () => {
+    const mobileLabels = getNavigationItems({ mobile: true }).map(
+      (item) => item.label,
+    )
+    expect(mobileLabels).toContain('Dashboard')
+    expect(mobileLabels).toContain('Leads')
+    expect(mobileLabels).toContain('Companies')
+    expect(mobileLabels).toContain('Settings')
+  })
+
+  it('rejects placeholder and not-ready items via isNavItemAvailable', () => {
+    expect(isNavItemAvailable({ label: 'X', placeholder: true })).toBe(false)
+    expect(isNavItemAvailable({ label: 'X', ready: false, route: 'Leads' })).toBe(
+      false,
+    )
+    expect(isNavItemAvailable({ label: 'Leads', route: 'Leads' })).toBe(true)
   })
 })

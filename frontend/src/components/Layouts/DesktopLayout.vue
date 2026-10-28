@@ -1,9 +1,19 @@
 <template>
-  <div class="flex h-screen w-screen">
-    <AppSidebar />
-    <div class="flex-1 flex flex-col h-full overflow-auto bg-surface-base">
+  <div
+    class="astra-shell"
+    :data-sidebar-collapsed="isSidebarCollapsed ? 'true' : 'false'"
+  >
+    <div
+      class="astra-shell__sidebar"
+      :data-collapsed="isSidebarCollapsed ? 'true' : 'false'"
+    >
+      <AppSidebar />
+    </div>
+    <div class="astra-shell__main">
       <AppHeader />
-      <slot />
+      <div class="astra-shell__content">
+        <slot />
+      </div>
     </div>
     <GlobalModals />
   </div>
@@ -13,7 +23,10 @@ import AppSidebar from '@/components/Layouts/AppSidebar.vue'
 import AppHeader from '@/components/Layouts/AppHeader.vue'
 import GlobalModals from '@/components/Modals/GlobalModals.vue'
 import { availabilityStore } from '@/stores/availability'
+import { useStorage } from '@vueuse/core'
 
 // listen for status changes from the start, not only once a picker opens
 availabilityStore()
+
+const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
 </script>

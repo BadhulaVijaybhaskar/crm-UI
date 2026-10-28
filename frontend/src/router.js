@@ -134,10 +134,27 @@ const routes = [
     name: 'Welcome',
     component: () => import('@/pages/Welcome.vue'),
   },
+  // Activities + Reports routes land with CRM-08 / CRM-09 (no placeholder pages).
+  // Dev-only mock login — production auth goes through /login (website).
+  ...(import.meta.env.DEV
+    ? [
+        {
+          path: '/login',
+          name: 'Login',
+          component: () => import('@/pages/Login.vue'),
+          meta: { public: true },
+        },
+      ]
+    : []),
   {
     path: '/setup',
     name: 'Setup',
     component: () => import('@/pages/Setup.vue'),
+  },
+  {
+    path: '/legal-notices',
+    name: 'Legal Notices',
+    component: () => import('@/pages/LegalNotices.vue'),
   },
   {
     path: '/:invalidpath',
@@ -209,8 +226,15 @@ router.beforeEach(async (to, from, next) => {
     } else {
       next({ name: route_name, params: { viewType: type } })
     }
+  } else if (!isLoggedIn && to.name === 'Login') {
+    next()
   } else if (!isLoggedIn) {
-    window.location.href = '/login?redirect-to=/crm'
+    // Prefer the in-app Astra login mock under Vite; fall back to Frappe /login.
+    if (import.meta.env.DEV) {
+      next({ name: 'Login', query: { redirect: to.fullPath } })
+    } else {
+      window.location.href = '/login?redirect-to=/crm'
+    }
   } else if (to.matched.length === 0) {
     next({ name: 'Invalid Page' })
   } else if (['Deal', 'Lead'].includes(to.name) && !to.hash) {

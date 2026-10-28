@@ -1,4 +1,5 @@
 @import 'frappe-ui/style.css';
+@import './astra-theme.css';
 
 @layer components {
   .prose-f {

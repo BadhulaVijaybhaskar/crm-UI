@@ -424,10 +424,11 @@ if (doctype) {
   ;({ getFormattedPercent, getFormattedFloat, getFormattedCurrency } =
     getMeta(doctype))
 } else {
-  getFormattedPercent = (fn, doc) => formatNumber(doc[fn], '', null) + '%'
+  getFormattedPercent = (fn, doc) =>
+    `${Math.round(Number(doc[fn]) || 0)}%`
   getFormattedFloat = (fn, doc) => formatNumber(doc[fn], '', null)
   getFormattedCurrency = (fn, doc) =>
-    formatCurrency(doc[fn], '', window.sysdefaults?.currency || 'USD', null)
+    formatCurrency(doc[fn], '', window.sysdefaults?.currency || 'INR', null)
 }
 
 const { users, getUser } = usersStore()

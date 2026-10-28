@@ -1,0 +1,27 @@
+{% extends "frappe/www/login.html" %}
+
+{# Astra CRM owns this override so the website footer (and any powered-by
+   markup) is not part of the served login HTML. Vendor chrome is also
+   stripped via CRM footer templates + Website Settings on migrate. #}
+
+{% block head %}
+{{ super() }}
+<script>
+  // Apply theme before first paint so dark login CSS matches user preference.
+  (function () {
+    try {
+      var t = localStorage.getItem('theme') || localStorage.getItem('frappeTheme');
+      if (!t || t === 'system' || t === 'auto') {
+        t =
+          window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+      document.documentElement.classList.toggle('dark', t === 'dark');
+    } catch (e) {}
+  })();
+</script>
+{% endblock %}
+
+{% block footer %}{% endblock %}

@@ -21,7 +21,7 @@ import {
   frappeRequest,
 } from 'frappe-ui'
 
-import { telemetryPlugin } from '@framework/ui/telemetry'
+// Telemetry disabled — do not load pulse.m.frappe.cloud (or any vendor endpoint).
 // injects the lucide SVG sprite into the DOM so the IconPicker and lucide Icons
 // (used for view icons) can render from it
 import { spritePlugin } from 'frappe-ui/experimental'
@@ -50,8 +50,6 @@ app.use(translationPlugin)
 for (let key in globalComponents) {
   app.component(key, globalComponents[key])
 }
-app.use(telemetryPlugin, { app_name: 'crm' })
-
 app.config.globalProperties.$dialog = createDialog
 
 let socket

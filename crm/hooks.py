@@ -1,14 +1,15 @@
 import frappe
 
 app_name = "crm"
-app_title = "Frappe CRM"
+app_title = "Astra CRM"
 app_publisher = "Frappe Technologies Pvt. Ltd."
-app_description = "Kick-ass Open Source CRM"
+app_description = "Astra CRM — sales workspace for Astra Connect teams"
 app_email = "shariq@frappe.io"
 app_license = "AGPLv3"
-app_icon_url = "/assets/crm/images/logo.svg"
-app_icon_title = "CRM"
+app_icon_url = "/assets/crm/images/astra-crm-logo.png"
+app_icon_title = "Astra CRM"
 app_icon_route = "/crm"
+app_logo_url = "/assets/crm/images/astra-crm-logo.png"
 
 # Apps
 # ------------------
@@ -17,12 +18,28 @@ required_apps = ["whatsapp"]
 add_to_apps_screen = [
 	{
 		"name": "crm",
-		"logo": "/assets/crm/images/logo.svg",
-		"title": "CRM",
+		"logo": "/assets/crm/images/astra-crm-logo.png",
+		"title": "Astra CRM",
 		"route": "/crm",
 		"has_permission": "crm.api.check_app_permission",
 	}
 ]
+
+# Login / website chrome for Astra branding (card follows light/dark theme)
+web_include_css = ["/assets/crm/css/astra-login.css"]
+website_context = {
+	"splash_image": "/assets/crm/images/astra-crm-logo.png",
+	"brand_html": "Astra CRM",
+	"app_name": "Astra CRM",
+	"footer_address": "",
+	"copyright": "",
+	# Space (truthy) skips the framework footer_powered.html include; CRM also
+	# ships empty/override footer templates so no vendor text is in the HTML.
+	"footer_powered": " ",
+	"show_footer_on_login": 0,
+}
+
+update_website_context = ["crm.overrides.branding.update_website_context"]
 
 get_site_info = "crm.activation.get_site_info"
 
@@ -68,15 +85,29 @@ doctype_js = {
 # application home page (will override Website Settings)
 # home_page = "login"
 
-# website user home page (by Role)
-# role_home_page = {
-# "Role": "home_page"
-# }
+# Sales roles land in Astra CRM, not the Desk /app workspace.
+role_home_page = {
+	"Sales User": "crm",
+	"Sales Manager": "crm",
+}
 
 website_route_rules = [
 	{"from_route": "/crm/<path:app_path>", "to_route": "crm"},
 	{"from_route": "/crm-form/<route>", "to_route": "crm_form"},
 ]
+
+# Root favicon / PWA manifest — avoid 404 on bare /favicon.ico and /manifest.json
+website_redirects = [
+	{"source": "/favicon.ico", "target": "/assets/crm/images/favicon-32.png", "redirect_http_status": 301},
+	{
+		"source": "/manifest.json",
+		"target": "/assets/crm/manifest/manifest.webmanifest",
+		"redirect_http_status": 301,
+	},
+]
+
+# before_request redirect for sales users hitting /app (Desk)
+before_request = ["crm.overrides.desk.redirect_sales_users_from_desk"]
 
 # Generators
 # ----------
@@ -397,7 +428,7 @@ ignore_links_on_delete = ["Failed Lead Sync Log"]
 # Request Events
 # ----------------
 # before_request = ["crm.utils.before_request"]
-# after_request = ["crm.utils.after_request"]
+after_request = ["crm.overrides.response_headers.after_request"]
 
 # Job Events
 # ----------
@@ -460,13 +491,6 @@ standard_dropdown_items = [
 		"label": "Settings",
 		"type": "Route",
 		"icon": "settings",
-		"route": "#",
-		"is_standard": 1,
-	},
-	{
-		"name1": "login_to_fc",
-		"label": "Login to Frappe Cloud",
-		"type": "Route",
 		"route": "#",
 		"is_standard": 1,
 	},

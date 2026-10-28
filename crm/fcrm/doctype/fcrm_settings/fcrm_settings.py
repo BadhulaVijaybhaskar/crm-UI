@@ -191,6 +191,15 @@ def get_standard_dropdown_items():
 
 def after_migrate():
 	sync_table("dropdown_items", "standard_dropdown_items")
+	from crm.overrides.branding import (
+		apply_doctype_label_overrides,
+		relabel_crm_workspace,
+		scrub_site_branding,
+	)
+
+	scrub_site_branding()
+	relabel_crm_workspace()
+	apply_doctype_label_overrides()
 
 
 def sync_table(key, hook):
@@ -198,17 +207,28 @@ def sync_table(key, hook):
 	existing_items = {d.name1: d for d in crm_settings.get(key)}
 	new_standard_items = {}
 
-	# add new items
+	# add new items / refresh labels for standard rows
 	count = 0  # maintain count because list may come from separate apps
 	for item in frappe.get_hooks(hook):
-		if item.get("name1") not in existing_items:
+		name1 = item.get("name1")
+		if name1 not in existing_items:
 			crm_settings.append(key, item, count)
-		new_standard_items[item.get("name1")] = True
+		else:
+			row = existing_items[name1]
+			for field in ("label", "icon", "route", "type"):
+				if field in item and row.get(field) != item.get(field):
+					row.set(field, item.get(field))
+		new_standard_items[name1] = True
 		count += 1
 
 	# remove unused items
 	items = crm_settings.get(key)
 	items = [item for item in items if not (item.is_standard and (item.name1 not in new_standard_items))]
+	crm_settings.set(key, items)
+
+	# Drop retired standard rows (Legal notices lives under About; no Cloud login).
+	retired = {"legal_notices", "login_to_fc"}
+	items = [item for item in (crm_settings.get(key) or []) if item.name1 not in retired]
 	crm_settings.set(key, items)
 
 	crm_settings.save()

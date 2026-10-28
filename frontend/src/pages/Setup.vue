@@ -43,8 +43,8 @@
       </main>
       <SetupTelemetryConsent class="mb-3" />
       <footer class="flex items-center gap-2 text-sm text-ink-gray-5">
-        <CRMLogo class="size-4" />
-        Frappe CRM
+        <img :src="ASTRA_MARK" alt="" class="size-4 object-contain" />
+        Astra CRM
       </footer>
     </section>
     <SetupPreview
@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import CRMLogo from '@/components/Icons/CRMLogo.vue'
+import { ASTRA_MARK } from '@/assets/brand'
 import SetupPreview from '@/components/Setup/SetupPreview.vue'
 import SetupEmail from '@/components/Setup/SetupEmail.vue'
 import SetupLeads from '@/components/Setup/SetupLeads.vue'
@@ -203,7 +203,7 @@ async function markSetupDone() {
   }
 }
 
-usePageMeta(() => ({ title: __('Set up Frappe CRM') }))
+usePageMeta(() => ({ title: __('Set up Astra CRM') }))
 </script>
 
 <style scoped>

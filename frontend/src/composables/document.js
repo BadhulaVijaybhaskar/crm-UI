@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { call, toast } from 'frappe-ui'
+import { ERP_CRM_SETTINGS_DOCTYPE } from '@/utils/erpSettingsDoctype'
 
 export const showCreateDocumentModal = ref(false)
 export const createDocumentDoctype = ref('')
@@ -20,7 +21,7 @@ async function shouldCreateProductInERPNext() {
 
 function getERPNextSetting(field) {
   return call('frappe.client.get_single_value', {
-    doctype: 'ERPNext CRM Settings',
+    doctype: ERP_CRM_SETTINGS_DOCTYPE,
     field,
   })
 }
@@ -29,7 +30,7 @@ export async function createDocument(doctype, obj, close, callback) {
   if (!doctype) return
   if (doctype === 'CRM Product' && (await shouldCreateProductInERPNext())) {
     close?.()
-    toast.info(__('Create products as Items in ERPNext'))
+    toast.info(__('Create products as Items in ERP'))
     window.open('/app/item/new', '_blank')
     return
   }

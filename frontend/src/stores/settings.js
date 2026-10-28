@@ -1,5 +1,6 @@
 import { createDocumentResource } from 'frappe-ui'
 import { reactive, ref } from 'vue'
+import { ASTRA_FAVICON, ASTRA_LOGO } from '@/assets/brand'
 
 const settings = ref({})
 const brand = reactive({})
@@ -16,9 +17,9 @@ const _settings = createDocumentResource({
 
 export function getSettings() {
   function setupBrand() {
-    brand.name = settings.value?.brand_name
-    brand.logo = settings.value?.brand_logo
-    brand.favicon = settings.value?.favicon
+    brand.name = settings.value?.brand_name || 'Astra CRM'
+    brand.logo = settings.value?.brand_logo || ASTRA_LOGO
+    brand.favicon = settings.value?.favicon || ASTRA_FAVICON
   }
 
   return {

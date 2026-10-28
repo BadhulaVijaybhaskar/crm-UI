@@ -5,13 +5,22 @@
         class="flex h-12 items-center rounded-5 py-2 duration-300 ease-in-out"
         :class="
           isCollapsed
-            ? 'w-auto px-0'
+            ? 'w-auto bg-transparent px-0'
             : open
               ? 'w-full px-2 bg-surface-elevation-3 shadow-sm'
               : 'w-full px-2 hover:bg-surface-gray-2'
         "
       >
-        <BrandLogo v-model="brand" class="h-8 max-w-16 flex-shrink-0" />
+        <img
+          :src="sidebarLogo"
+          :alt="brand.name || 'Astra CRM'"
+          class="flex-shrink-0 object-contain"
+          :class="
+            isCollapsed
+              ? 'astra-brand-mark size-7 bg-transparent'
+              : 'h-9 max-w-[168px]'
+          "
+        />
         <div
           class="flex flex-1 flex-col text-left duration-300 ease-in-out truncate"
           :class="
@@ -20,10 +29,16 @@
               : 'ml-2 w-auto opacity-100'
           "
         >
-          <div class="text-base-medium leading-none text-ink-gray-9 truncate">
-            {{ __(brand.name || 'CRM') }}
+          <div
+            v-if="customBrandLogo"
+            class="text-base-medium leading-none text-ink-gray-9 truncate"
+          >
+            {{ __(brand.name || 'Astra CRM') }}
           </div>
-          <div class="mt-1 text-sm leading-none text-ink-gray-7 truncate">
+          <div
+            class="text-sm leading-none text-ink-gray-7 truncate"
+            :class="customBrandLogo ? 'mt-1' : ''"
+          >
             {{ user.full_name }}
           </div>
         </div>
@@ -46,34 +61,39 @@
 </template>
 
 <script setup>
-import BrandLogo from '@/components/BrandLogo.vue'
-import FrappeCloudIcon from '@/components/Icons/FrappeCloudIcon.vue'
 import AppsIcon from '@/components/Icons/AppsIcon.vue'
 import { sessionStore } from '@/stores/session'
 import { usersStore } from '@/stores/users'
 import { getSettings } from '@/stores/settings'
 import { showSettings, isMobileView } from '@/composables/settings'
 import { showAboutModal } from '@/composables/modals'
-import { confirmLoginToFrappeCloud } from '@/composables/frappecloud'
 import { spriteIcon } from '@/utils/spriteIcon'
 import { createResource, Dropdown } from 'frappe-ui'
 import { computed, h, markRaw } from 'vue'
+import { ASTRA_LOGO_ON_DARK, ASTRA_MARK } from '@/assets/brand'
 
-defineProps({
+const props = defineProps({
   isCollapsed: { type: Boolean, default: false },
 })
 
 const { settings, brand } = getSettings()
 const { logout } = sessionStore()
-const { getUser } = usersStore()
+const { getUser, isAdmin } = usersStore()
 
 const user = computed(() => getUser() || {})
+const userIsAdmin = computed(() => isAdmin())
+
+// Brand Settings upload wins; otherwise the Astra lockup tuned for the dark rail.
+const customBrandLogo = computed(() => settings.value?.brand_logo || '')
+const sidebarLogo = computed(() => {
+  if (customBrandLogo.value) return customBrandLogo.value
+  return props.isCollapsed ? ASTRA_MARK : ASTRA_LOGO_ON_DARK
+})
 
 const apps = createResource({
   url: 'frappe.apps.get_apps',
   cache: 'apps',
   auto: true,
-  transform: (data) => [deskApp(), ...crmSiblingApps(data)],
 })
 
 const dropdownItems = computed(() => {
@@ -134,6 +154,8 @@ function getStandardItem(item) {
         icon: markRaw(AppsIcon),
         label: __(item.label),
         submenu: appMenuItems(),
+        // Non-admins get an empty switcher; hide the entry entirely.
+        condition: () => userIsAdmin.value && appMenuItems().length > 0,
       }
     case 'settings':
       return {
@@ -142,15 +164,9 @@ function getStandardItem(item) {
         onClick: () => (showSettings.value = true),
         condition: () => !isMobileView.value,
       }
-    case 'login_to_fc':
-      return {
-        icon: h(FrappeCloudIcon),
-        label: __(item.label),
-        onClick: () => confirmLoginToFrappeCloud(),
-        condition: () => !isMobileView.value && window.is_fc_site,
-      }
     case 'about':
       return {
+        _name1: 'about',
         icon: item.icon,
         label: __(item.label),
         onClick: () => (showAboutModal.value = true),
@@ -165,7 +181,7 @@ function getStandardItem(item) {
 }
 
 function appMenuItems() {
-  return (apps.data || []).map((app) => ({
+  return visibleApps(apps.data).map((app) => ({
     label: app.title,
     onClick: () => (window.location.href = app.route),
     slots: {
@@ -174,23 +190,40 @@ function appMenuItems() {
   }))
 }
 
-function deskApp() {
-  return {
-    name: 'frappe',
-    logo: '/assets/frappe/images/framework.png',
-    title: __('Desk'),
-    route: '/desk',
-  }
-}
+const VENDOR_APP_NAMES = new Set([
+  'frappe',
+  'erpnext',
+  'insights',
+  'hrms',
+  'lms',
+  'wiki',
+  'builder',
+  'helpdesk',
+  'telephony',
+])
 
-function crmSiblingApps(data) {
-  return data
-    .filter((app) => app.name !== 'crm')
-    .map((app) => ({
-      name: app.name,
-      logo: app.logo,
-      title: __(app.title),
-      route: app.route,
-    }))
+/** Non-admins: no Desk / other apps. Admins: Desk → Admin with Astra mark. */
+function visibleApps(data) {
+  if (!userIsAdmin.value) return []
+  return [
+    {
+      name: 'admin',
+      logo: ASTRA_MARK,
+      title: __('Admin'),
+      route: '/desk',
+    },
+    ...(data || [])
+      .filter((app) => app.name !== 'crm' && !VENDOR_APP_NAMES.has(app.name))
+      .filter((app) => {
+        const blob = `${app.name || ''} ${app.title || ''} ${app.logo || ''}`
+        return !/frappe|erpnext|framework\.png/i.test(blob)
+      })
+      .map((app) => ({
+        name: app.name,
+        logo: ASTRA_MARK,
+        title: __(app.title),
+        route: app.route,
+      })),
+  ]
 }
 </script>

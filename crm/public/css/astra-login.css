@@ -1,0 +1,157 @@
+/* Astra CRM login / website chrome. Loaded via hooks.web_include_css.
+   Login card follows the active color scheme (dark card in dark mode).
+   Fonts are self-hosted under /assets/crm/fonts/ (no Google Fonts). */
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/assets/crm/fonts/PlusJakartaSans-800.woff2") format("woff2");
+}
+
+:root {
+  --ac: #145cf6;
+  --acm: #0e8bd6;
+  --ac2: #09b5a4;
+  --astra-grad: linear-gradient(135deg, #145cf6 0%, #0e8bd6 55%, #09b5a4 100%);
+  --astra-bg: #f3f6fa;
+  --astra-surface: #ffffff;
+  --astra-text: #0b1324;
+  --astra-muted: #64748b;
+  --astra-border: #e3e9f1;
+}
+
+html.dark,
+[data-theme="dark"],
+body.dark {
+  --astra-bg: #070b14;
+  --astra-surface: #0f1626;
+  --astra-text: #e8edf5;
+  --astra-muted: #98a3b8;
+  --astra-border: #232f47;
+}
+
+/* Fallback when data-theme was not set yet (no localStorage / first visit) */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --astra-bg: #070b14;
+    --astra-surface: #0f1626;
+    --astra-text: #e8edf5;
+    --astra-muted: #98a3b8;
+    --astra-border: #232f47;
+  }
+}
+
+body {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.for-login,
+.page-card,
+.login-content,
+.form-signin {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.page-card {
+  background: var(--astra-surface) !important;
+  color: var(--astra-text) !important;
+  border: 1px solid color-mix(in srgb, var(--astra-border) 70%, transparent) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 1px 2px rgba(11, 19, 36, 0.04), 0 8px 24px -12px rgba(11, 19, 36, 0.1) !important;
+}
+
+html.dark .page-card,
+[data-theme="dark"] .page-card,
+body.dark .page-card {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 10px 30px -12px rgba(0, 0, 0, 0.6) !important;
+}
+
+.page-card .page-card-head img,
+.for-login .app-logo,
+.login-content .app-logo {
+  max-height: 50px;
+  max-width: 275px;
+  width: auto;
+  object-fit: contain;
+}
+
+.btn-login,
+.btn-primary.btn-login,
+.page-card .btn-primary,
+form.form-login button[type="submit"],
+.for-login button[type="submit"],
+.login-content button[type="submit"],
+.page-card button[type="submit"] {
+  border: 0 !important;
+  border-radius: 999px !important;
+  color: #fff !important;
+  min-height: 44px !important;
+  background-image: var(--astra-grad) !important;
+  background-color: transparent !important;
+  box-shadow: 0 8px 24px -8px color-mix(in srgb, #145cf6 70%, transparent);
+}
+
+.for-login label,
+.page-card label,
+.login-content label,
+form.form-login label {
+  color: var(--astra-text) !important;
+}
+
+.for-login .form-control,
+.page-card .form-control,
+form.form-login input,
+.login-content input[type="email"],
+.login-content input[type="password"],
+.login-content input[type="text"] {
+  min-height: 44px !important;
+  border-radius: 12px !important;
+  background: var(--astra-surface) !important;
+  color: var(--astra-text) !important;
+  border-color: var(--astra-border) !important;
+}
+
+@media (max-width: 390px) {
+  .page-card {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    min-height: 100dvh;
+    display: flex;
+    align-content: center;
+    flex-wrap: wrap;
+  }
+}

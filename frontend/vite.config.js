@@ -4,6 +4,7 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 import frappeui from 'frappe-ui/vite'
+import { astraProductionScrub } from './vite.astraScrub.js'
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -11,21 +12,21 @@ export default defineConfig(() => {
     plugins: [
       vue(),
       vueJsx(),
+      astraProductionScrub(),
       VitePWA({
         registerType: 'autoUpdate',
         workbox: {
           maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
-        },
-        devOptions: {
-          enabled: true,
+          sourcemap: false,
+          cleanupOutdatedCaches: true,
         },
         manifest: {
+          id: '/crm',
           display: 'standalone',
-          name: 'Frappe CRM',
-          short_name: 'Frappe CRM',
+          name: 'Astra CRM',
+          short_name: 'Astra CRM',
           start_url: '/crm',
-          description:
-            'Modern & 100% Open-source CRM tool to supercharge your sales operations',
+          description: 'Astra CRM — sales workspace for Astra Connect teams',
           icons: [
             {
               src: '/assets/crm/manifest/manifest-icon-192.maskable.png',
@@ -53,8 +54,16 @@ export default defineConfig(() => {
             },
           ],
         },
+        // Keep SW registration filenames generic (no vendor tokens).
+        filename: 'sw.js',
+        devOptions: {
+          enabled: true,
+        },
       }),
     ],
+    esbuild: {
+      legalComments: 'none',
+    },
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, 'src'),
@@ -145,7 +154,7 @@ export default defineConfig(() => {
       buildConfig: {
         indexHtmlPath: '../crm/www/crm.html',
         emptyOutDir: true,
-        sourcemap: true,
+        sourcemap: false,
       },
     }),
   )
