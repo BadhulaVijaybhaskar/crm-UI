@@ -54,6 +54,11 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		# (MariaDB 1020 "record has changed since last read" on CRM Lead).
 		frappe.flags.in_test = True
 		frappe.conf.astra_connect_sync_processing = 1
+		# Belt-and-suspenders: any frappe.enqueue call runs the worker inline so
+		# no RQ worker can touch CRM Lead while tearDown deletes test rows.
+		# Individual tests may temporarily replace this with their own patch.
+		self._enqueue_patcher = patch.object(frappe, "enqueue", side_effect=self._inline_enqueue)
+		self._enqueue_patcher.start()
 		settings = frappe.get_single("Astra Connect Settings")
 		settings.enabled = 1
 		settings.connect_base_url = "https://connect.example.test"
@@ -65,34 +70,47 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
-		# Restore sync flags so any in-flight enqueue from a patched test finishes
-		# inline before we delete committed rows.
+		# Stop the suite-level enqueue patch first, then restore sync flags and
+		# clean committed rows — no background worker should still be running.
+		if getattr(self, "_enqueue_patcher", None):
+			try:
+				self._enqueue_patcher.stop()
+			except RuntimeError:
+				pass
+			self._enqueue_patcher = None
 		frappe.flags.in_test = True
 		frappe.conf.astra_connect_sync_processing = 1
-		self._drain_connect_queue()
 		self._cleanup_committed_rows_retry()
 		frappe.db.rollback()
 
-	def _drain_connect_queue(self):
-		"""Best-effort: wait briefly for RQ jobs that tests forced async."""
-		try:
-			from frappe.utils.background_jobs import get_queue, get_redis_conn
+	def _inline_enqueue(self, method, **kwargs):
+		"""Run Connect worker (or other enqueued callables) synchronously in tests."""
+		from crm.integrations.astra_connect import api as connect_api
 
-			conn = get_redis_conn()
-			for qname in ("astra_connect", "default", "short"):
-				try:
-					q = get_queue(qname, connection=conn)
-				except Exception:
-					continue
-				# Empty the queue — tests must not leave workers mutating CRM Lead.
-				try:
-					q.empty()
-				except Exception:
-					pass
-			# Give a sticky started worker a beat to finish if already claimed.
-			time.sleep(0.05)
-		except Exception:
-			pass
+		event_name = kwargs.get("event_name")
+		job_id = kwargs.get("job_id") or "inline"
+		if method == connect_api.WORKER_PATH or method == connect_api.process_inbox_event:
+			if event_name:
+				connect_api.process_inbox_event(event_name)
+			return job_id
+		if isinstance(method, str) and method.endswith("process_inbox_event"):
+			if event_name:
+				connect_api.process_inbox_event(event_name)
+			return job_id
+		if callable(method):
+			# Best-effort: call with event_name when present.
+			try:
+				if event_name is not None:
+					method(event_name)
+				else:
+					method(**{k: v for k, v in kwargs.items() if k not in {
+						"queue", "timeout", "job_id", "deduplicate", "enqueue_after_commit",
+						"event_name",
+					}})
+			except TypeError:
+				method()
+			return job_id
+		return job_id
 
 	def _cleanup_committed_rows_retry(self, attempts: int = 6):
 		"""Retry cleanup on MariaDB 1020 (concurrent worker update during DELETE)."""
@@ -112,7 +130,6 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 				frappe.conf.astra_connect_sync_processing = 1
 		if last_exc:
 			raise last_exc
-
 	def _track_lead(self, lead_id: str):
 		self._created_lead_ext_ids.append(lead_id)
 

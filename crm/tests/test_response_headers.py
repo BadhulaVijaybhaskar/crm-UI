@@ -85,11 +85,24 @@ class TestResponseHeaders(UnitTestCase):
 			"Host": "crm.example:8831",
 		}
 		with patch.object(frappe.local, "request", request, create=True):
-			with patch.dict(frappe.conf, {"socketio_port": 9000}, clear=False):
+			with patch.dict(
+				frappe.conf, {"socketio_port": 9000, "astra_socketio_direct": 1}, clear=False
+			):
 				rh.after_request(resp)
 		csp = resp.headers["Content-Security-Policy"]
 		self.assertIn("http://crm.example:9000", csp)
 		self.assertIn("ws://crm.example:9000", csp)
+
+	def test_csp_omits_socketio_port_without_direct_opt_in(self):
+		resp, request = self._response(https=False)
+		request.headers = {"X-Forwarded-Proto": "http", "Host": "crm.example:8831"}
+		with patch.object(frappe.local, "request", request, create=True):
+			with patch.dict(
+				frappe.conf, {"socketio_port": 9000, "astra_socketio_direct": 0}, clear=False
+			):
+				rh.after_request(resp)
+		csp = resp.headers["Content-Security-Policy"]
+		self.assertNotIn(":9000", csp)
 
 
 class TestLoginLockoutStatus(UnitTestCase):

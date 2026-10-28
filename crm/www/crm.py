@@ -31,10 +31,13 @@ def get_context():
 		frappe.local.flags.redirect_location = "/login"
 		raise frappe.Redirect
 
+	# Password setup before module permission — a user without their own
+	# password must reach /update-password even if the FCRM module cache is
+	# briefly stale (otherwise check_app_permission raises first).
+	redirect_to_set_password()
+
 	if not check_app_permission():
 		frappe.throw(_("You do not have permission to access Astra CRM"), frappe.PermissionError)
-
-	redirect_to_set_password()
 
 	frappe.db.commit()
 	context = frappe._dict()
@@ -89,11 +92,10 @@ def get_boot():
 	sysdefaults["app_name"] = ASTRA_APP_NAME
 	sysdefaults["otp_issuer_name"] = ASTRA_APP_NAME
 
-	return frappe._dict(
+	boot = frappe._dict(
 		{
 			"default_route": get_default_route(),
 			"site_name": frappe.local.site,
-			"socketio_port": frappe.conf.socketio_port,
 			"read_only_mode": frappe.flags.read_only,
 			"csrf_token": frappe.sessions.get_csrf_token(),
 			"setup_complete": cint(frappe.get_system_settings("setup_complete")),
@@ -114,6 +116,13 @@ def get_boot():
 			**_astra_connect_boot(),
 		}
 	)
+	# Only expose socketio_port when opting into direct (non-proxied) dialling.
+	# common_site_config always has socketio_port=9000; booting it makes the SPA
+	# hit host:9000 and fail behind nginx/:443. Same-origin /socket.io is default.
+	if cint(frappe.conf.get("astra_socketio_direct")):
+		boot["astra_socketio_direct"] = 1
+		boot["socketio_port"] = frappe.conf.socketio_port
+	return boot
 
 
 def _astra_connect_boot() -> dict:
