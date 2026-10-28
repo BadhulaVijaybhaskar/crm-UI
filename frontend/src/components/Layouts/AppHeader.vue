@@ -20,7 +20,11 @@
 
     <div class="flex items-center gap-2">
       <Dropdown :options="newOptions">
-        <AstraButton variant="primary" size="sm" :label="__('+ New')" />
+        <AstraButton variant="primary" size="sm" :label="__('New')">
+          <template #prefix>
+            <span class="lucide-plus size-3.5" aria-hidden="true" />
+          </template>
+        </AstraButton>
       </Dropdown>
 
       <button

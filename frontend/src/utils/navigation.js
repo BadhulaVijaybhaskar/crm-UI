@@ -3,42 +3,69 @@ import DealsIcon from '@/components/Icons/DealsIcon.vue'
 import LeadsIcon from '@/components/Icons/LeadsIcon.vue'
 import OrganizationsIcon from '@/components/Icons/OrganizationsIcon.vue'
 import TaskIcon from '@/components/Icons/TaskIcon.vue'
-import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
+import NoteIcon from '@/components/Icons/NoteIcon.vue'
+import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
+import LucideHouse from '~icons/lucide/house'
+import LucideListChecks from '~icons/lucide/list-checks'
+import LucideInbox from '~icons/lucide/inbox'
 import LucidePhone from '~icons/lucide/phone'
 import LucideMessagesSquare from '~icons/lucide/messages-square'
 import LucideBot from '~icons/lucide/bot'
-import LucideActivity from '~icons/lucide/activity'
 import LucideChartColumn from '~icons/lucide/chart-column'
 import LucideSettings from '~icons/lucide/settings'
 import router from '@/router'
 import { isAstraConnectConfigured } from '@/utils/astraConnect'
 
 /**
- * Flip these when the real page ships (CRM-08 Activities, CRM-09 Reports).
+ * Flip these when the real page ships.
  * Items with ready:false are omitted from the sidebar and command palette.
  */
 export const NAV_FEATURE_READY = Object.freeze({
-  Activities: true,
-  Reports: true,
+  Conversations: true,
 })
 
 /**
- * Sidebar registry. Each item is one of:
- * - { route } — in-app vue-router name (must exist and be ready)
- * - { connect, requiresConnect: true } — Astra Connect path (only when configured)
+ * Sidebar registry — labels/order match Figma CRM v1 (p-*.html / crm.css).
+ * - { route } — in-app vue-router name
+ * - { connect, requiresConnect: true } — Astra Connect path
  * - { action: 'settings' } — opens the settings modal
- *
- * `section` groups the rail to match Figma v1. Settings stays in the footer.
- * Rules: every selectable item must work. No placeholder/Soon entries.
+ * Optional `count` is a static design default; live counts can override later.
  */
 export const navigationItems = [
   {
-    label: 'Dashboard',
-    icon: LucideLayoutDashboard,
+    label: 'Home',
+    icon: LucideHouse,
     route: 'Dashboard',
     section: 'main',
   },
-  { label: 'Leads', icon: LeadsIcon, route: 'Leads', section: 'records' },
+  {
+    label: 'Work queue',
+    icon: LucideListChecks,
+    route: 'Activities',
+    section: 'main',
+    count: 12,
+  },
+  {
+    label: 'Conversations',
+    icon: LucideInbox,
+    route: 'Conversations',
+    ready: NAV_FEATURE_READY.Conversations,
+    section: 'main',
+  },
+  {
+    label: 'Leads',
+    icon: LeadsIcon,
+    route: 'Leads',
+    section: 'records',
+    count: 42,
+  },
+  {
+    label: 'Deals',
+    icon: DealsIcon,
+    route: 'Deals',
+    section: 'records',
+    count: 14,
+  },
   {
     label: 'Contacts',
     icon: ContactsIcon,
@@ -51,14 +78,38 @@ export const navigationItems = [
     route: 'Organizations',
     section: 'records',
   },
-  { label: 'Deals', icon: DealsIcon, route: 'Deals', section: 'records' },
-  { label: 'Tasks', icon: TaskIcon, route: 'Tasks', section: 'activity' },
+  {
+    label: 'Tasks',
+    icon: TaskIcon,
+    route: 'Tasks',
+    section: 'activity',
+    count: 7,
+  },
+  {
+    label: 'Notes',
+    icon: NoteIcon,
+    route: 'Notes',
+    section: 'activity',
+  },
+  {
+    label: 'Call logs',
+    icon: PhoneIcon,
+    route: 'Call Logs',
+    section: 'activity',
+  },
+  {
+    label: 'Reports',
+    icon: LucideChartColumn,
+    route: 'Reports',
+    section: 'insights',
+  },
   {
     label: 'AI Calling',
     icon: LucidePhone,
     connect: 'calls',
     requiresConnect: true,
     section: 'connect',
+    external: true,
   },
   {
     label: 'Messages',
@@ -66,6 +117,7 @@ export const navigationItems = [
     connect: 'messages',
     requiresConnect: true,
     section: 'connect',
+    external: true,
   },
   {
     label: 'AI Employees',
@@ -73,20 +125,7 @@ export const navigationItems = [
     connect: 'employees',
     requiresConnect: true,
     section: 'connect',
-  },
-  {
-    label: 'Activities',
-    icon: LucideActivity,
-    route: 'Activities',
-    ready: NAV_FEATURE_READY.Activities,
-    section: 'activity',
-  },
-  {
-    label: 'Reports',
-    icon: LucideChartColumn,
-    route: 'Reports',
-    ready: NAV_FEATURE_READY.Reports,
-    section: 'insights',
+    external: true,
   },
   {
     label: 'Settings',

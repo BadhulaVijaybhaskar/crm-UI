@@ -33,6 +33,8 @@ const sizeClass = computed(() => {
   const radius = props.squared ? 'rounded-crm-panel' : 'rounded-full'
   if (props.size === 'xs') return `${radius} size-5 text-[9px]`
   if (props.size === 'sm') return `${radius} size-[20px] text-[9px]`
+  // crm.css .nav .foot .av — 30×30
+  if (props.size === 'foot') return `${radius} size-[30px] text-[11px]`
   if (props.size === 'lg') return `${radius} size-[42px] text-[15px]`
   if (props.size === 'xl') return `${radius} size-14 text-base`
   return `${radius} size-[26px] text-[10.5px]`
