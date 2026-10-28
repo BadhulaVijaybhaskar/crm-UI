@@ -174,7 +174,7 @@
     <div v-else-if="kind === 'bar'" class="mt-2 min-h-0 flex-1">
       <div
         v-if="bars.length"
-        class="hb flex h-full min-h-0 items-end gap-2 pb-[18px] pt-2"
+        class="hb flex h-full min-h-0 items-end gap-2.5 pb-2.5 pt-1"
       >
         <div
           v-for="(bar, i) in bars"
