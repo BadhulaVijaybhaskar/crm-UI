@@ -1,156 +1,247 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <ViewBreadcrumbs v-model="viewControls" routeName="Notes" />
-    </template>
-    <template #right-header>
-      <Button
-        variant="solid"
-        :label="__('Create')"
-        iconLeft="lucide-plus"
-        @click="createNote"
-      />
-    </template>
-  </LayoutHeader>
-  <ViewControls
-    ref="viewControls"
-    v-model="notes"
-    v-model:loadMore="loadMore"
-    v-model:updatedPageCount="updatedPageCount"
-    doctype="FCRM Note"
-    :options="{
-      hideColumnsButton: true,
-      defaultViewName: __('Notes View'),
-    }"
-  />
-  <div class="flex-1 overflow-y-auto">
-    <div
-      v-if="notes.data?.data?.length"
-      class="grid grid-cols-1 gap-2 px-3 pb-2 sm:grid-cols-4 sm:gap-4 sm:px-5 sm:pb-3"
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
+    <AstraPageHeader
+      :title="__('Notes')"
+      :description="__('Notes on your leads and deals.')"
     >
-      <div
-        v-for="note in notes.data.data"
-        :key="note.name"
-        class="group flex h-56 cursor-pointer flex-col justify-between gap-2 rounded-6 border px-5 py-4 shadow-sm hover:bg-surface-sidebar"
-        @click="openNote(note, { edit: () => editNote(note.name) })"
-      >
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex min-w-0 flex-col gap-1">
-            <div class="truncate text-lg-medium text-ink-gray-9">
-              {{ note.title }}
+      <template #actions>
+        <AstraButton variant="primary" :label="__('New note')" @click="createNote">
+          <template #prefix>
+            <LucidePlus class="size-3.5" aria-hidden="true" />
+          </template>
+        </AstraButton>
+      </template>
+    </AstraPageHeader>
+
+    <ViewControls
+      ref="viewControls"
+      v-model="notes"
+      v-model:loadMore="loadMore"
+      v-model:updatedPageCount="updatedPageCount"
+      doctype="FCRM Note"
+      :options="{
+        hideColumnsButton: true,
+        defaultViewName: __('Notes View'),
+      }"
+    />
+
+    <div
+      v-if="noteRows.length"
+      class="grid min-h-0 flex-1 grid-cols-1 border-t border-crm-border lg:grid-cols-[minmax(280px,380px)_1fr]"
+    >
+      <aside class="flex min-h-0 flex-col overflow-y-auto border-r border-crm-border bg-crm-card">
+        <template v-if="pinnedNotes.length">
+          <p
+            class="px-4 pb-1 pt-3 text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-faint"
+          >
+            {{ __('Pinned') }}
+          </p>
+          <button
+            v-for="note in pinnedNotes"
+            :key="'p-' + note.name"
+            type="button"
+            class="w-full border-b border-crm-border px-4 py-3 text-left hover:bg-crm-row-hover"
+            :class="{ 'bg-crm-row-selected': selectedName === note.name }"
+            @click="selectNote(note)"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <p class="m-0 truncate text-crm-label font-semibold text-crm-fg">
+                {{ note.title }}
+              </p>
+              <div class="flex shrink-0 items-center gap-1.5">
+                <span class="text-crm-micro text-crm-faint">
+                  {{ __(timeAgo(note.modified)) }}
+                </span>
+                <span
+                  class="rounded bg-crm-warning-soft px-1.5 text-[10.5px] font-semibold text-crm-warning"
+                >
+                  {{ __('Pinned') }}
+                </span>
+              </div>
             </div>
-            <router-link
-              v-if="linkedRoute(note)"
-              :to="linkedRoute(note)"
-              class="truncate text-sm text-ink-gray-5 hover:text-ink-gray-8 hover:underline"
-              @click.stop
+            <p
+              v-if="noteSnippet(note)"
+              class="m-0 mt-1 line-clamp-2 text-crm-meta text-crm-muted-fg"
+            >
+              {{ noteSnippet(note) }}
+            </p>
+            <p
+              v-if="linkedLabel(note)"
+              class="m-0 mt-1.5 truncate text-crm-meta font-semibold text-crm-primary"
             >
               {{ linkedLabel(note) }}
-            </router-link>
+            </p>
+          </button>
+        </template>
+        <p
+          class="px-4 pb-1 pt-3 text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-faint"
+        >
+          {{ __('Recent') }}
+        </p>
+        <button
+          v-for="note in recentNotes"
+          :key="'r-' + note.name"
+          type="button"
+          class="w-full border-b border-crm-border px-4 py-3 text-left hover:bg-crm-row-hover"
+          :class="{ 'bg-crm-row-selected': selectedName === note.name }"
+          @click="selectNote(note)"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <p class="m-0 truncate text-crm-label font-semibold text-crm-fg">
+              {{ note.title }}
+            </p>
+            <span class="shrink-0 text-crm-micro text-crm-faint">
+              {{ __(timeAgo(note.modified)) }}
+            </span>
           </div>
-          <Dropdown
-            :options="[
-              {
-                label: __('Edit'),
-                icon: 'lucide-edit-2',
-                onClick: () => editNote(note.name),
-              },
-              {
-                label: __('Copy link'),
-                icon: 'lucide-link',
-                onClick: () => copyNoteLink(note.name),
-              },
-              {
-                label: __('Delete'),
-                icon: 'lucide-trash-2',
-                onClick: () => deleteNote(note.name),
-              },
-            ]"
+          <p
+            v-if="noteSnippet(note)"
+            class="m-0 mt-1 line-clamp-2 text-crm-meta text-crm-muted-fg"
           >
-            <Button
-              icon="lucide-more-horizontal"
-              variant="ghost"
-              class="hover:bg-surface-base"
-              @click.stop
+            {{ noteSnippet(note) }}
+          </p>
+          <p
+            v-if="linkedLabel(note)"
+            class="m-0 mt-1.5 truncate text-crm-meta font-semibold text-crm-primary"
+          >
+            {{ linkedLabel(note) }}
+          </p>
+        </button>
+        <ListFooter
+          v-if="notes.data?.data?.length"
+          v-model="notes.data.page_length_count"
+          class="border-t px-3 py-2"
+          :options="{
+            rowCount: notes.data.row_count,
+            totalCount: notes.data.total_count,
+          }"
+          @loadMore="() => loadMore++"
+        />
+      </aside>
+
+      <section
+        v-if="selectedNote"
+        class="flex min-h-0 flex-col overflow-y-auto bg-crm-card"
+      >
+        <header
+          class="flex flex-wrap items-start justify-between gap-3 border-b border-crm-border px-5 py-4"
+        >
+          <div class="min-w-0">
+            <h2 class="m-0 text-crm-dialog font-semibold text-crm-fg">
+              {{ selectedNote.title }}
+            </h2>
+            <AstraBadge
+              v-if="selectedNote.pinned"
+              class="mt-2"
+              :label="pinnedBadgeLabel"
+              tone="warn"
             />
-          </Dropdown>
-        </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <AstraButton
+              v-if="canPin"
+              size="sm"
+              :label="selectedNote.pinned ? __('Unpin') : __('Pin')"
+              @click="togglePin(selectedNote)"
+            />
+            <AstraButton
+              size="sm"
+              :label="__('Edit')"
+              @click="editNote(selectedNote.name)"
+            />
+          </div>
+        </header>
         <!-- content is passed through sanitizeHTML() (DOMPurify) before rendering, so v-html is safe here -->
         <!-- eslint-disable vue/no-v-html -->
         <div
-          v-if="note.content"
-          class="prose-f prose-sm text-p-sm max-w-none text-ink-gray-5 flex-1 overflow-hidden prose-headings:my-1 prose-headings:text-p-sm prose-headings:font-medium prose-headings:text-ink-gray-7 [&>*:first-child]:mt-0"
-          v-html="sanitizeHTML(note.content)"
+          class="prose-f prose-sm max-w-none flex-1 px-5 py-4 text-crm-label text-crm-fg"
+          v-html="sanitizeHTML(selectedNote.content || '')"
         />
         <!-- eslint-enable vue/no-v-html -->
-        <div class="mt-2 flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <UserAvatar :user="note.owner" size="xs" />
-            <div class="text-sm text-ink-gray-8">
-              {{ getUser(note.owner).full_name }}
-            </div>
-          </div>
-          <Tooltip :text="formatDate(note.modified)">
-            <div class="text-sm text-ink-gray-7">
-              {{ __(timeAgo(note.modified)) }}
-            </div>
-          </Tooltip>
-        </div>
-      </div>
+        <footer
+          class="flex flex-wrap items-center justify-between gap-2 border-t border-crm-border px-5 py-3 text-crm-meta text-crm-muted-fg"
+        >
+          <router-link
+            v-if="linkedRoute(selectedNote)"
+            :to="linkedRoute(selectedNote)"
+            class="font-semibold text-crm-primary hover:underline"
+          >
+            {{ __('Linked to') }} {{ linkedLabel(selectedNote) }}
+          </router-link>
+          <span v-else />
+          <span>
+            {{ __('By') }}
+            {{ getUser(selectedNote.owner).full_name }}
+            · {{ formatDate(selectedNote.modified) }}
+          </span>
+        </footer>
+      </section>
     </div>
+
+    <AstraEmptyState
+      v-else-if="notes.data"
+      :title="__('No notes yet')"
+      :body="
+        __(
+          'Notes keep what you learned on a call or in a meeting next to the lead or deal it belongs to.',
+        )
+      "
+    >
+      <AstraButton variant="primary" :label="__('New note')" @click="createNote" />
+    </AstraEmptyState>
   </div>
-  <ListFooter
-    v-if="notes.data?.data?.length"
-    v-model="notes.data.page_length_count"
-    class="border-t px-3 py-2 sm:px-5"
-    :options="{
-      rowCount: notes.data.row_count,
-      totalCount: notes.data.total_count,
-    }"
-    @loadMore="() => loadMore++"
-  />
-  <EmptyState
-    v-else
-    name="Notes"
-    :icon="NoteIcon"
-    :title="__('No notes yet')"
-    :description="
-      __(
-        'Notes keep what you learned on a call or in a meeting next to the lead or deal it belongs to.',
-      )
-    "
-    :filtered="!!Object.keys(notes.params?.filters || {}).length"
-    @create="createNote"
-  />
 </template>
 
 <script setup>
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
-import UserAvatar from '@/components/UserAvatar.vue'
-import NoteIcon from '@/components/Icons/NoteIcon.vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import { call, usePageMeta } from 'frappe-ui'
+import { ListFooter } from 'frappe-ui/experimental'
+import LucidePlus from '~icons/lucide/plus'
 import ViewControls from '@/components/ViewControls.vue'
+import {
+  AstraBadge,
+  AstraButton,
+  AstraEmptyState,
+  AstraPageHeader,
+} from '@/components/astra'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { useNoteView } from '@/composables/noteView'
-import EmptyState from '@/components/ListViews/EmptyState.vue'
 import { usersStore } from '@/stores/users'
-import { timeAgo, formatDate, sanitizeHTML, copyToClipboard } from '@/utils'
+import { timeAgo, formatDate, sanitizeHTML } from '@/utils'
 import { useTelemetry } from '@framework/ui/telemetry'
-import { call, Dropdown, Tooltip } from 'frappe-ui'
-import { ListFooter } from 'frappe-ui/experimental'
-import { ref, watch, onMounted } from 'vue'
+import { getSettings } from '@/stores/settings'
+import { ASTRA_FAVICON } from '@/assets/brand'
 
+const { brand } = getSettings()
 const { getUser } = usersStore()
 const { capture } = useTelemetry()
-
 const { showModal } = useDoctypeModal()
-const { openNote, noteLink, loadLinkedTitles, linkedRoute, linkedLabel } =
-  useNoteView()
+const { openNote, loadLinkedTitles, linkedRoute, linkedLabel } = useNoteView()
 
 const notes = ref({})
 const loadMore = ref(1)
 const updatedPageCount = ref(20)
 const viewControls = ref(null)
+const selectedName = ref(null)
+
+const noteRows = computed(() => notes.value?.data?.data || [])
+const pinnedNotes = computed(() => noteRows.value.filter((n) => n.pinned))
+const recentNotes = computed(() => noteRows.value.filter((n) => !n.pinned))
+const selectedNote = computed(
+  () => noteRows.value.find((n) => n.name === selectedName.value) || null,
+)
+const canPin = computed(() =>
+  noteRows.value.some((n) => Object.prototype.hasOwnProperty.call(n, 'pinned')),
+)
+
+const pinnedBadgeLabel = computed(() => {
+  const n = selectedNote.value
+  if (!n?.pinned) return __('Pinned')
+  if (n.pinned_by) {
+    return __('Pinned by {0}', [getUser(n.pinned_by).full_name])
+  }
+  return __('Pinned')
+})
 
 watch(
   () => notes.value?.data?.page_length_count,
@@ -162,11 +253,27 @@ watch(
 
 watch(
   () => notes.value?.data?.data,
-  (rows) => loadLinkedTitles(rows),
+  (rows) => {
+    loadLinkedTitles(rows)
+    if (!rows?.length) {
+      selectedName.value = null
+      return
+    }
+    if (!selectedName.value || !rows.find((n) => n.name === selectedName.value)) {
+      selectedName.value = rows[0].name
+    }
+  },
 )
 
-function copyNoteLink(name) {
-  copyToClipboard(noteLink(name))
+function selectNote(note) {
+  selectedName.value = note.name
+}
+
+function noteSnippet(note) {
+  if (!note?.content) return ''
+  const tmp = document.createElement('div')
+  tmp.innerHTML = sanitizeHTML(note.content)
+  return (tmp.textContent || '').trim().slice(0, 180)
 }
 
 const noteCallbacks = {
@@ -197,15 +304,14 @@ function editNote(noteName) {
   })
 }
 
-async function deleteNote(name) {
-  await call('frappe.client.delete', {
-    doctype: 'FCRM Note',
-    name,
+async function togglePin(note) {
+  await call('crm.fcrm.doctype.fcrm_note.fcrm_note.set_pinned', {
+    name: note.name,
+    pinned: !note.pinned,
   })
   notes.value.reload()
 }
 
-// open a shared note link, even when the note is not on the loaded page
 onMounted(() => {
   const searchParams = new URLSearchParams(window.location.search)
   const noteName = searchParams.get('open')
@@ -214,4 +320,9 @@ onMounted(() => {
   searchParams.delete('open')
   window.history.replaceState(null, '', window.location.pathname)
 })
+
+usePageMeta(() => ({
+  title: __('Notes'),
+  icon: brand?.favicon || ASTRA_FAVICON,
+}))
 </script>

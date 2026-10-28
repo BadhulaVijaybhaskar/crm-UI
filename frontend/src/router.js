@@ -44,6 +44,16 @@ const routes = [
     component: () => import('@/pages/Dashboard.vue'),
   },
   {
+    path: '/work-queue',
+    name: 'Work Queue',
+    component: () => import('@/pages/WorkQueue.vue'),
+  },
+  {
+    path: '/conversations',
+    name: 'Conversations',
+    component: () => import('@/pages/Conversations.vue'),
+  },
+  {
     alias: '/leads',
     path: '/leads/view/:viewType?',
     name: 'Leads',
