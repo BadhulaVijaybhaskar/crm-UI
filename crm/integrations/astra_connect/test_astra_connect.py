@@ -549,7 +549,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertEqual(self._event_status(eid1), "Processed")
 		lead = frappe.get_doc("CRM Lead", {"astra_external_id": self._uid("lead-up-1")})
 		self.assertEqual(lead.status, "Contacted")
-		self.assertEqual(lead.ai_employee_id, "emp-2")
+		self.assertEqual(lead.ai_employee_id, self._uid("emp-2"))
 
 		payload["email"] = "grace.updated@example.com"
 		payload["status"] = "qualified"
@@ -609,9 +609,9 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		self.assertEqual(call_log.outcome, "weird_custom_label_from_ops")
 		self.assertEqual(call_log.disposition, DEFAULT_DISPOSITION)
 		self.assertEqual(call_log.channel, "voice")
-		self.assertEqual(call_log.astra_contact_id, "ctc-55")
+		self.assertEqual(call_log.astra_contact_id, self._uid("ctc-55"))
 		self.assertEqual(call_log.qualified, 1)
-		self.assertEqual(call_log.ai_employee_id, "emp-9")
+		self.assertEqual(call_log.ai_employee_id, self._uid("emp-9"))
 		# Outbound: party on `to`; agent/DID leg stays empty when unset (never
 		# duplicate the customer onto both legs or invent astra-connect/unknown).
 		self.assertEqual(call_log.to, "+919876543210")
@@ -702,7 +702,7 @@ class TestAstraConnectWebhooks(FrappeTestCase):
 		# Inbound: party on `from`; empty agent leg when no Connect DID.
 		self.assertTrue(str(call_log.get("from") or "").endswith("9876543211"))
 		self.assertFalse(call_log.to)
-		self.assertEqual(call_log.ai_employee_id, "emp-3")
+		self.assertEqual(call_log.ai_employee_id, self._uid("emp-3"))
 
 	def test_call_unmatched_returns_accepted_event_failed(self):
 		payload = {
