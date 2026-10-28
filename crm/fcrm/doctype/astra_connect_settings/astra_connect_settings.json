@@ -7,7 +7,8 @@
   "enabled",
   "connect_base_url",
   "default_lead_owner",
-  "connect_agent_number"
+  "connect_agent_number",
+  "stale_processing_minutes"
  ],
  "fields": [
   {
@@ -36,12 +37,20 @@
    "fieldtype": "Data",
    "label": "Connect Agent Number",
    "options": "Phone"
+  },
+  {
+   "default": "5",
+   "description": "Processing rows older than this many minutes are reset by the Connect sweeper and re-enqueued. Overridable via site_config astra_connect_stale_processing_minutes.",
+   "fieldname": "stale_processing_minutes",
+   "fieldtype": "Int",
+   "label": "Stale Processing Minutes",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-28 12:00:00.000000",
+ "modified": "2026-10-28 01:30:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "Astra Connect Settings",
