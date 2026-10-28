@@ -144,6 +144,12 @@ const routes = [
     name: 'Reports',
     component: () => import('@/pages/Reports.vue'),
   },
+  {
+    path: '/settings/:section?',
+    name: 'Settings',
+    component: () => import('@/pages/Settings.vue'),
+    props: true,
+  },
   // Dev-only mock login — production auth goes through /login (website).
   ...(import.meta.env.DEV
     ? [

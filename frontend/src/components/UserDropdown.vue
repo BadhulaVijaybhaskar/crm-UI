@@ -65,7 +65,7 @@ import AppsIcon from '@/components/Icons/AppsIcon.vue'
 import { sessionStore } from '@/stores/session'
 import { usersStore } from '@/stores/users'
 import { getSettings } from '@/stores/settings'
-import { showSettings, isMobileView } from '@/composables/settings'
+import { isMobileView, openSettings } from '@/composables/settings'
 import { showAboutModal } from '@/composables/modals'
 import { spriteIcon } from '@/utils/spriteIcon'
 import { createResource, Dropdown } from 'frappe-ui'
@@ -161,7 +161,7 @@ function getStandardItem(item) {
       return {
         icon: item.icon,
         label: __(item.label),
-        onClick: () => (showSettings.value = true),
+        onClick: () => openSettings(),
         condition: () => !isMobileView.value,
       }
     case 'about':

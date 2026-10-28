@@ -26,7 +26,6 @@ export const NAV_FEATURE_READY = Object.freeze({
  * Sidebar registry. Each item is one of:
  * - { route } — in-app vue-router name (must exist and be ready)
  * - { connect, requiresConnect: true } — Astra Connect path (only when configured)
- * - { action: 'settings' } — opens the settings modal
  *
  * Rules: every selectable item must work. No placeholder/Soon entries.
  * WhatsApp inbox is intentionally omitted (app stays installed).
@@ -79,7 +78,7 @@ export const navigationItems = [
   {
     label: 'Settings',
     icon: LucideSettings,
-    action: 'settings',
+    route: 'Settings',
   },
 ]
 

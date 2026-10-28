@@ -104,7 +104,7 @@
 <script setup>
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
-import { showSettings, activeSettingsPage } from '@/composables/settings'
+import { openSettings } from '@/composables/settings'
 import { useBroadcast } from '@/composables/useBroadcast'
 import { usersStore } from '@/stores/users'
 import { TemplateContent, useTemplates } from '@whatsapp/ui'
@@ -188,8 +188,7 @@ async function send() {
 // Only managers see the WhatsApp settings page, which is why the button is gated.
 function newWhatsAppTemplate() {
   show.value = false
-  showSettings.value = true
-  activeSettingsPage.value = 'WhatsApp'
+  openSettings('WhatsApp')
   broadcast('whatsapp_template_page', {
     page: 'new-template',
     reference_doctype: props.doctype,

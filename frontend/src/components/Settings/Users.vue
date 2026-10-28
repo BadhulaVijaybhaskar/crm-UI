@@ -1,37 +1,26 @@
 <template>
   <div class="flex h-full flex-col gap-6 p-6 text-ink-gray-8">
     <!-- Header -->
-    <div class="flex justify-between px-2 pt-2">
-      <div class="flex flex-col gap-1 w-9/12">
+    <div class="flex items-start justify-between gap-3 px-2 pt-2">
+      <div class="flex min-w-0 flex-col gap-1">
         <h2 class="flex gap-2 text-2xl-semibold leading-none h-5">
           {{ __('Users') }}
         </h2>
         <p class="text-p-base text-ink-gray-6">
-          {{
-            __(
-              'Add or invite users and choose their role to control what they can see and do.',
-            )
-          }}
+          {{ __('Who can sign in and what they can see.') }}
         </p>
       </div>
-      <div class="flex item-center space-x-2 w-3/12 justify-end">
-        <Dropdown
-          :options="[
-            {
-              label: __('Add Existing User'),
-              onClick: () => (showAddExistingModal = true),
-            },
-            {
-              label: __('Invite New User'),
-              onClick: () => (activeSettingsPage = 'Invite User'),
-            },
-          ]"
-          :button="{
-            label: __('New'),
-            iconLeft: 'lucide-plus',
-            variant: 'solid',
-          }"
-          align="end"
+      <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <Button
+          :label="__('Add existing user')"
+          variant="outline"
+          @click="showAddExistingModal = true"
+        />
+        <Button
+          :label="__('Invite new user')"
+          variant="solid"
+          icon-left="lucide-plus"
+          @click="openSettings('invite-user')"
         />
       </div>
     </div>
@@ -59,11 +48,26 @@
       v-if="!users.loading && users.data?.crmUsers?.length > 1"
       class="flex flex-col overflow-hidden"
     >
-      <div
-        v-if="users.data?.crmUsers?.length > 10"
-        class="flex items-center gap-2 mb-4 px-2 pt-0.5"
-      >
+      <div class="mb-4 flex flex-col gap-3 px-2 pt-0.5">
+        <div class="flex flex-wrap gap-1.5" role="group" :aria-label="__('Role')">
+          <button
+            v-for="chip in roleFilters"
+            :key="chip.value"
+            type="button"
+            class="h-7 rounded-full px-3 text-sm"
+            :class="
+              currentRole === chip.value
+                ? 'bg-surface-gray-7 text-ink-white'
+                : 'bg-surface-gray-2 text-ink-gray-7'
+            "
+            :aria-pressed="currentRole === chip.value"
+            @click="currentRole = chip.value"
+          >
+            {{ chip.label }} {{ chip.count }}
+          </button>
+        </div>
         <TextInput
+          v-if="users.data?.crmUsers?.length > 10"
           ref="searchRef"
           v-model="search"
           :placeholder="__('Search User')"
@@ -77,18 +81,14 @@
             />
           </template>
         </TextInput>
-        <Select
-          v-model="currentRole"
-          class="shrink-0"
-          :options="[
-            { label: __('All'), value: 'All' },
-            { label: __('Admin'), value: 'System Manager' },
-            { label: __('Manager'), value: 'Sales Manager' },
-            { label: __('Sales User'), value: 'Sales User' },
-          ]"
-        />
       </div>
-      <ul class="divide-y divide-outline-elevation-2 overflow-y-auto px-2">
+      <p v-if="!usersList.length" class="px-2 py-6 text-p-sm text-ink-gray-5">
+        {{ __('No users match this filter.') }}
+      </p>
+      <ul
+        v-else
+        class="divide-y divide-outline-elevation-2 overflow-y-auto px-2"
+      >
         <template v-for="user in usersList" :key="user.name">
           <li class="flex items-center justify-between py-2">
             <div class="flex items-center">
@@ -149,20 +149,19 @@
             </div>
           </li>
         </template>
-        <!-- Load More Button -->
-        <div
-          v-if="!users.loading && users.hasNextPage"
-          class="flex justify-center"
-        >
-          <Button
-            class="mt-3.5 p-2"
-            :loading="users.loading"
-            :label="__('Load More')"
-            icon-left="lucide-refresh-cw"
-            @click="() => users.next()"
-          />
-        </div>
       </ul>
+      <div
+        v-if="!users.loading && users.hasNextPage"
+        class="flex justify-center"
+      >
+        <Button
+          class="mt-3.5 p-2"
+          :loading="users.loading"
+          :label="__('Load More')"
+          icon-left="lucide-refresh-cw"
+          @click="() => users.next()"
+        />
+      </div>
     </div>
   </div>
   <AddExistingUserModal
@@ -175,7 +174,7 @@
 import AddExistingUserModal from '@/components/Modals/AddExistingUserModal.vue'
 import AvailabilityDot from '@/components/AvailabilityDot.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
-import { activeSettingsPage } from '@/composables/settings'
+import { openSettings } from '@/composables/settings'
 import { usersStore } from '@/stores/users'
 import {
   Dropdown,
@@ -184,7 +183,7 @@ import {
   toast,
   call,
   Tooltip,
-  Select,
+  Button,
 } from 'frappe-ui'
 import { ref, computed, onMounted } from 'vue'
 import { ConfirmDelete } from '../../utils'
@@ -201,6 +200,42 @@ const roleMap = {
   'Sales Manager': __('Manager'),
   'Sales User': __('Sales User'),
 }
+
+const countableUsers = computed(
+  () =>
+    users.data?.crmUsers?.filter((user) => user.name !== 'Administrator') ||
+    [],
+)
+
+const roleFilters = computed(() => {
+  const counts = {
+    All: countableUsers.value.length,
+    'System Manager': 0,
+    'Sales Manager': 0,
+    'Sales User': 0,
+  }
+  for (const user of countableUsers.value) {
+    if (counts[user.role] != null) counts[user.role] += 1
+  }
+  return [
+    { label: __('All'), value: 'All', count: counts.All },
+    {
+      label: __('Admin'),
+      value: 'System Manager',
+      count: counts['System Manager'],
+    },
+    {
+      label: __('Manager'),
+      value: 'Sales Manager',
+      count: counts['Sales Manager'],
+    },
+    {
+      label: __('Sales User'),
+      value: 'Sales User',
+      count: counts['Sales User'],
+    },
+  ]
+})
 
 const usersList = computed(() => {
   let filteredUsers =

@@ -155,10 +155,7 @@
     <Notifications v-if="!mobile" />
   </div>
 
-  <!-- Desktop only: on mobile, Settings lives in MobileLayout so closing the
-       drawer does not unmount the modal. -->
   <template v-if="!mobile">
-    <Settings />
     <HelpModal
       v-if="showHelpModal"
       v-model="showHelpModal"
@@ -202,7 +199,6 @@ import CollapseSidebar from '@/components/Icons/CollapseSidebar.vue'
 import NotificationsIcon from '@/components/Icons/NotificationsIcon.vue'
 import HelpIcon from '@/components/Icons/HelpIcon.vue'
 import Notifications from '@/components/Notifications.vue'
-import Settings from '@/components/Settings/Settings.vue'
 import { viewsStore } from '@/stores/views'
 import {
   unreadNotificationsCount,
@@ -210,11 +206,7 @@ import {
 } from '@/stores/notifications'
 import { usersStore } from '@/stores/users'
 import { sessionStore } from '@/stores/session'
-import {
-  showSettings,
-  activeSettingsPage,
-  mobileSidebarOpened,
-} from '@/composables/settings'
+import { mobileSidebarOpened, openSettings } from '@/composables/settings'
 import { useBroadcast } from '@/composables/useBroadcast.js'
 import { call, Sidebar, SidebarItem, SidebarLabel, Tooltip } from 'frappe-ui'
 import { SignupBanner } from '@framework/ui/components/SignupBanner'
@@ -295,14 +287,6 @@ function navLinkFromItem(link) {
       connect: link.connect,
     }
   }
-  if (link.action === 'settings') {
-    return {
-      label: link.label,
-      icon: link.icon,
-      key: 'settings',
-      action: 'settings',
-    }
-  }
   return {
     label: link.label,
     icon: link.icon,
@@ -330,11 +314,6 @@ function onNavClick(event, link) {
   if (link.connect) {
     // External Connect destinations must not steal the active nav highlight.
     openAstraConnect(link.connect)
-    if (props.mobile) mobileSidebarOpened.value = false
-    return
-  }
-  if (link.action === 'settings') {
-    showSettings.value = true
     if (props.mobile) mobileSidebarOpened.value = false
     return
   }
@@ -541,8 +520,7 @@ const steps = reactive([
     completed: false,
     onClick: () => {
       minimize.value = true
-      showSettings.value = true
-      activeSettingsPage.value = __('Accounts')
+      openSettings(__('Accounts'))
       capture('onboarding_step_clicked_connect_your_email')
     },
     condition: () => isManager(),
@@ -554,8 +532,7 @@ const steps = reactive([
     completed: false,
     onClick: () => {
       minimize.value = true
-      showSettings.value = true
-      activeSettingsPage.value = 'Invite User'
+      openSettings('Invite User')
       capture('onboarding_step_clicked_invite_your_team')
     },
     condition: () => isManager(),

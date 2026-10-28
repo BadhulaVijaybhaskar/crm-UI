@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { showSettings, activeSettingsPage } from '@/composables/settings'
+import { openSettings } from '@/composables/settings'
 import { useBroadcast } from '@/composables/useBroadcast'
 import { createListResource } from 'frappe-ui'
 import { sanitizeHTML } from '@/utils'
@@ -105,8 +105,7 @@ const templates = createListResource({
 
 function create() {
   show.value = false
-  showSettings.value = true
-  activeSettingsPage.value = 'Templates'
+  openSettings('Templates')
   send('email_template_page', {
     page: 'new-template',
     reference_doctype: props.doctype,

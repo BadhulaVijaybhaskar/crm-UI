@@ -330,7 +330,6 @@ import AssignmentRulesSection from './AssignmentRulesSection.vue'
 import AssignmentSchedule from './AssignmentSchedule.vue'
 import AssigneeRules from './AssigneeRules.vue'
 import { globalStore } from '@/stores/global'
-import { disableSettingModalOutsideClick } from '@/composables/settings'
 import { useUnsavedChangesWarning } from '@/composables/useUnsavedChangesWarning'
 import { convertToConditions, validateConditions } from '@/utils'
 
@@ -753,11 +752,6 @@ watch(
   (newVal) => {
     if (!initialData.value) return
     isDirty.value = JSON.stringify(newVal) != initialData.value
-    if (isDirty.value) {
-      disableSettingModalOutsideClick.value = true
-    } else {
-      disableSettingModalOutsideClick.value = false
-    }
   },
   { deep: true },
 )
@@ -767,6 +761,5 @@ useUnsavedChangesWarning(() => isDirty.value)
 onUnmounted(() => {
   resetAssignmentRuleErrors()
   resetAssignmentRuleData()
-  disableSettingModalOutsideClick.value = false
 })
 </script>

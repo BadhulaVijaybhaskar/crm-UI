@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
+import router from '@/router'
 import {
   getNavigationItems,
   isNavItemAvailable,
@@ -76,6 +77,19 @@ describe('navigationItems', () => {
       (item) => item.route || item.connect || item.action,
     )
     expect(new Set(keys).size).toBe(keys.length)
+  })
+
+  it('routes Settings to the settings page', () => {
+    const item = navigationItems.find((entry) => entry.label === 'Settings')
+    expect(item.route).toBe('Settings')
+    expect(router.hasRoute('Settings')).toBe(true)
+    const match = router.resolve({
+      name: 'Settings',
+      params: { section: 'users' },
+    })
+    expect(match.name).toBe('Settings')
+    expect(match.params.section).toBe('users')
+    expect(match.path).toBe('/settings/users')
   })
 
   it('includes Dashboard on mobile (settings drawer + mobile menu)', () => {

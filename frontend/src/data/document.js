@@ -2,7 +2,7 @@ import { getScript } from '@/data/script'
 import { globalStore } from '@/stores/global'
 import { getMeta } from '@/stores/meta'
 import { useAttachments } from '@/composables/useAttachments'
-import { showSettings, activeSettingsPage } from '@/composables/settings'
+import { openSettings } from '@/composables/settings'
 import { runSequentially, parseAssignees, sanitizeText } from '@/utils'
 import { findMissingMandatory } from '@/utils/fieldTransforms'
 import {
@@ -259,10 +259,7 @@ export function useDocument(doctype, docname, resourceOverrides = {}) {
 
     helpers.crm = {
       makePhoneCall: makeCall,
-      openSettings: (page) => {
-        showSettings.value = true
-        activeSettingsPage.value = page
-      },
+      openSettings,
     }
 
     const controllersArray = await setupScript(
