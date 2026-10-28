@@ -19,6 +19,7 @@ from typing import Any
 
 import frappe
 from frappe import _
+from frappe.rate_limiter import rate_limit
 from frappe.utils import add_to_date, get_datetime, now_datetime
 
 from crm.integrations.astra_connect.auth import (
@@ -33,6 +34,7 @@ from crm.integrations.astra_connect.processing import (
 	get_connect_integration_user,
 	process_event,
 )
+from crm.utils.sanitize import sanitize_text
 
 MAX_WORKER_ATTEMPTS = 8
 CONNECT_QUEUE = "astra_connect"
@@ -45,6 +47,21 @@ def _json_response(payload: dict[str, Any], status_code: int = 200):
 	frappe.local.response["type"] = "json"
 	frappe.local.response["message"] = payload
 	return payload
+
+
+def _sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
+	"""Strip HTML/script from inbound webhook string fields before persistence."""
+
+	def walk(value):
+		if isinstance(value, str):
+			return sanitize_text(value, max_length=4000)
+		if isinstance(value, list):
+			return [walk(v) for v in value]
+		if isinstance(value, dict):
+			return {k: walk(v) for k, v in value.items()}
+		return value
+
+	return walk(payload)
 
 
 def _logger():
@@ -145,6 +162,7 @@ def _enqueue_processing(event_name: str, event_id: str) -> None:
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=120, seconds=60, ip_based=True)
 def receive() -> dict[str, Any]:
 	"""Inbound Astra Connect webhook — durable inbox insert only, then enqueue.
 
@@ -183,6 +201,10 @@ def receive() -> dict[str, Any]:
 			raise ValueError("payload must be a JSON object")
 	except Exception:
 		return _json_response({"status": "rejected", "error": _("Invalid JSON body")}, status_code=400)
+
+	# Signature already bound this body to the per-site secret (frappe.conf).
+	# Sanitise string fields so notes/summaries cannot carry script markup.
+	payload = _sanitize_payload(payload)
 
 	event_id = (headers.get("event_id") or "").strip()
 	event_type = (payload.get("type") or payload.get("event") or "").strip()

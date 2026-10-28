@@ -77,6 +77,10 @@ def add_comment(reference_doctype: str, reference_name: str, content: str, attac
 	:param attachments: List of File names or dicts with keys "fname" and "fcontent"
 	:return: Comment Document
 	"""
+	frappe.has_permission(reference_doctype, "write", reference_name, throw=True)
+	from crm.utils.sanitize import sanitize_html
+
+	content = sanitize_html(content)
 	comment = frappe_add_comment(
 		reference_doctype,
 		reference_name,
