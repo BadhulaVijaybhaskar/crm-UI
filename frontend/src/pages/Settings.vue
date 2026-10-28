@@ -53,7 +53,7 @@ import Icon from '@/components/Icon.vue'
 import { visibleSettingsGroups } from '@/components/Settings/settingsSections'
 import { usersStore } from '@/stores/users'
 import { Avatar } from 'frappe-ui'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -77,15 +77,17 @@ function open(slug) {
   router.push({ name: 'Settings', params: { section: slug } })
 }
 
-watch(
-  () => [props.section, ready.value, active.value?.slug],
-  () => {
-    if (!ready.value || !active.value) return
-    if ((props.section || '') === active.value.slug) return
-    router.replace({ name: 'Settings', params: { section: active.value.slug } })
-  },
-  { immediate: true },
-)
+function syncSection() {
+  if (!ready.value || !active.value) return
+  if ((props.section || '') === active.value.slug) return
+  router.replace({
+    name: 'Settings',
+    params: { section: active.value.slug },
+  })
+}
+
+watch(() => [props.section, ready.value, active.value?.slug], syncSection)
+onMounted(syncSection)
 
 watch(
   () => active.value?.slug,

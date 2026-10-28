@@ -105,7 +105,9 @@ class TestCRMFieldsLayout(IntegrationTestCase):
 		self.assertEqual(before, self._layout_value("Data Fields"))
 
 	def test_sales_manager_cannot_save_fields_layout(self):
-		email = self._user("layout-manager@hier.test", "Layout Manager", "Sales Manager")
+		email = self._user(
+			"layout-manager@hier.test", "Layout Manager", "Sales Manager"
+		)
 		before = self._layout_value("Data Fields")
 		frappe.set_user(email)
 		with self.assertRaises(frappe.PermissionError):
@@ -120,7 +122,9 @@ class TestCRMFieldsLayout(IntegrationTestCase):
 		saved = save_fields_layout("CRM Lead", "Grid Row", layout)
 		self.assertEqual(saved, layout)
 		self.assertEqual(
-			frappe.db.get_value("CRM Fields Layout", {"dt": "CRM Lead", "type": "Grid Row"}, "layout"),
+			frappe.db.get_value(
+				"CRM Fields Layout", {"dt": "CRM Lead", "type": "Grid Row"}, "layout"
+			),
 			layout,
 		)
 
