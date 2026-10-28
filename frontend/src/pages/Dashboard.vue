@@ -1,10 +1,12 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg">
+  <div
+    class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg [text-rendering:geometricPrecision]"
+  >
     <div class="min-h-0 flex-1 overflow-y-auto">
       <header class="flex items-center gap-3 px-crm-page-x pb-3.5 pt-[19px]">
         <div class="min-w-0">
           <h1
-            class="m-0 text-[20px] font-semibold leading-[1.45] tracking-crm-tight text-crm-fg"
+            class="m-0 text-[20px] font-semibold leading-[1.45] tracking-[-0.02em] text-crm-fg"
           >
             {{ summary.data?.greeting || __('Home') }}
           </h1>
@@ -52,7 +54,11 @@
             <div
               class="flex items-center gap-1.5 text-[12px] leading-[1.45] text-crm-muted-fg"
             >
-              <component :is="kpiIcon(kpi.id)" class="size-3.5" aria-hidden="true" />
+              <component
+                :is="kpiIcon(kpi.id)"
+                class="size-3.5"
+                aria-hidden="true"
+              />
               <span>{{ kpi.label }}</span>
             </div>
             <p
@@ -87,10 +93,14 @@
           <div
             class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
           >
-            <h2 class="m-0 text-crm-panel font-semibold leading-[21.5px] tracking-[-0.005em] text-crm-fg">
+            <h2
+              class="m-0 text-crm-panel font-semibold leading-[21.5px] tracking-[-0.005em] text-crm-fg"
+            >
               {{ __('Your pipeline') }}
             </h2>
-            <span class="relative top-px text-[12.5px] leading-[1.45] text-crm-muted-fg">
+            <span
+              class="relative top-px text-[12.5px] leading-[1.45] text-crm-muted-fg"
+            >
               {{ __('Grouped by milestone · stages from Settings') }}
             </span>
             <div class="flex-1" />
@@ -102,7 +112,9 @@
               <LucideChevronRight class="size-3.5" aria-hidden="true" />
             </router-link>
           </div>
-          <div class="flex items-stretch gap-1.5 overflow-x-auto px-4 pb-3.5 pt-3">
+          <div
+            class="flex items-stretch gap-1.5 overflow-x-auto px-4 pb-3.5 pt-3"
+          >
             <div
               v-for="group in pipelineGroups"
               :key="group.id"
@@ -114,7 +126,9 @@
             >
               <div
                 class="mb-1.5 flex items-center gap-1.5 whitespace-nowrap text-crm-caps font-bold uppercase leading-[1.45] tracking-crm-caps"
-                :class="group.current ? 'text-crm-primary' : 'text-crm-muted-fg'"
+                :class="
+                  group.current ? 'text-crm-primary' : 'text-crm-muted-fg'
+                "
               >
                 <span>{{ group.label }}</span>
                 <span class="ml-auto text-[12px] tracking-normal text-crm-fg">
@@ -127,7 +141,10 @@
                   :key="stage.name"
                   class="min-w-0 flex-1"
                 >
-                  <div class="h-1.5 rounded-[3px]" :class="stageBarClass(group, stage)" />
+                  <div
+                    class="h-1.5 rounded-[3px]"
+                    :class="stageBarClass(group, stage)"
+                  />
                   <div
                     class="mt-1.5 truncate text-[11.5px] font-semibold leading-[1.45] text-crm-fg"
                   >
@@ -144,8 +161,12 @@
           </div>
         </section>
 
-        <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.355fr_1fr]">
-          <section class="rounded-crm-panel border border-crm-border bg-crm-card">
+        <div
+          class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.355fr_1fr]"
+        >
+          <section
+            class="rounded-crm-panel border border-crm-border bg-crm-card"
+          >
             <div
               class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
             >
@@ -154,7 +175,9 @@
               >
                 {{ __('Today') }}
               </h2>
-              <span class="relative top-px truncate text-[12.5px] leading-[1.45] text-crm-muted-fg">
+              <span
+                class="relative top-px truncate text-[12.5px] leading-[1.45] text-crm-muted-fg"
+              >
                 {{ __('Tasks, calls and meetings on your records') }}
               </span>
               <div class="flex-1" />
@@ -207,7 +230,7 @@
                   </span>
                   <div class="min-w-0 flex-1">
                     <div
-                      class="truncate font-semibold"
+                      class="truncate font-semibold tracking-[-0.005em]"
                       :class="
                         isDone(row.item)
                           ? 'text-crm-muted-fg line-through'
@@ -251,7 +274,9 @@
                 >
                   {{ __('Response deadlines') }}
                 </h2>
-                <span class="relative top-px truncate text-[12.5px] leading-[1.45] text-crm-muted-fg">
+                <span
+                  class="relative top-px truncate text-[12.5px] leading-[1.45] text-crm-muted-fg"
+                >
                   {{ __('SLA on your leads') }}
                 </span>
                 <div class="flex-1" />
@@ -276,7 +301,9 @@
                     {{ initialsFrom(row.title) }}
                   </span>
                   <div class="min-w-0 flex-1">
-                    <div class="truncate font-semibold text-crm-fg">
+                    <div
+                      class="truncate font-semibold tracking-[-0.005em] text-crm-fg"
+                    >
                       {{ row.title }}
                     </div>
                     <div class="truncate text-[11.5px] text-crm-muted-fg">
@@ -286,7 +313,9 @@
                   <span
                     class="shrink-0 whitespace-nowrap text-[11.5px] font-semibold"
                     :class="
-                      row.state === 'overdue' ? 'text-crm-danger' : 'text-crm-warning'
+                      row.state === 'overdue'
+                        ? 'text-crm-danger'
+                        : 'text-crm-warning'
                     "
                   >
                     {{ deadlineLabel(row) }}
@@ -346,13 +375,17 @@
                     />
                   </span>
                   <div class="min-w-0 flex-1">
-                    <div class="truncate font-semibold text-crm-fg">
+                    <div
+                      class="truncate font-semibold tracking-[-0.005em] text-crm-fg"
+                    >
                       {{ recentTitle(item) }}
                     </div>
                     <div class="truncate text-[11.5px] text-crm-muted-fg">
                       <template v-if="recentOutcome(item)">
                         {{ __('Outcome:') }}
-                        <span class="font-semibold">{{ recentOutcome(item) }}</span>
+                        <span class="font-semibold">{{
+                          recentOutcome(item)
+                        }}</span>
                         <template v-if="recentDuration(item)">
                           · {{ recentDuration(item) }}
                         </template>
@@ -389,11 +422,7 @@ import LucideSquareKanban from '~icons/lucide/square-kanban'
 import LucideChevronRight from '~icons/lucide/chevron-right'
 import LucideCheck from '~icons/lucide/check'
 import LucideExternalLink from '~icons/lucide/external-link'
-import {
-  AstraBadge,
-  AstraButton,
-  AstraEmptyState,
-} from '@/components/astra'
+import { AstraBadge, AstraButton, AstraEmptyState } from '@/components/astra'
 import { initialsFrom } from '@/components/astra/format'
 import { formatCompactCurrency } from '@/utils/compactCurrency'
 import { formatDate } from '@/utils'
