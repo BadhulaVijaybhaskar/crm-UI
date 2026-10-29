@@ -23,6 +23,14 @@
           {{ item.label }}
         </span>
       </template>
+      <span class="flex-1" aria-hidden="true" />
+      <span
+        data-parity-mask="example-data"
+        class="inline-flex h-6 items-center gap-1.5 rounded-md border border-crm-border bg-crm-card px-2 text-crm-micro font-semibold text-crm-muted-fg"
+      >
+        <span class="size-1.5 rounded-full bg-crm-warning" aria-hidden="true" />
+        {{ __('Example data') }}
+      </span>
     </nav>
 
     <AstraRecordHeader :title="title" :meta="leadMeta" squared-avatar>
@@ -33,34 +41,6 @@
           :removable="!!doc.image"
           @upload="(file) => updateField('image', file?.file_url || '')"
           @remove="updateField('image', '')"
-        />
-      </template>
-      <template #status>
-        <Dropdown
-          v-if="doc.status && document.statuses"
-          :options="statuses"
-          align="end"
-        >
-          <template #default="{ open }">
-            <button type="button" class="inline-flex items-center gap-0.5">
-              <AstraBadge
-                :label="statusLabel(doc.status)"
-                :tone="leadStatusTone"
-                dot
-              />
-              <span
-                class="size-3 text-crm-muted-fg"
-                :class="open ? 'lucide-chevron-up' : 'lucide-chevron-down'"
-                aria-hidden="true"
-              />
-            </button>
-          </template>
-        </Dropdown>
-        <AstraBadge
-          v-else-if="doc.status"
-          :label="statusLabel(doc.status)"
-          :tone="leadStatusTone"
-          dot
         />
       </template>
       <template #actions>
@@ -77,6 +57,7 @@
           :record-id="leadId"
           :phone="doc.mobile_no || doc.phone || ''"
           show-labels
+          short-labels
         />
         <AstraButton
           v-if="emailTab"
@@ -88,17 +69,6 @@
               ? openEmailBox()
               : toast.error(__('Please set an email address to send emails'))
           "
-        />
-        <EnrichFromWebsite
-          doctype="CRM Lead"
-          :docname="leadId"
-          :website="doc.website"
-          @done="onEnriched"
-        />
-        <AssignTo
-          v-model="assignees.data"
-          doctype="CRM Lead"
-          :docname="leadId"
         />
         <Tooltip
           :disabled="!isLeadConversionDisabled"
@@ -127,23 +97,40 @@
           :stages="leadStages"
           :current="doc.status"
           :dates="stageDates"
-          :summary="stageSummary"
+          :date-labels="leadStageDateLabels"
+          :captions="leadStageCaptions"
           @select="triggerStatusChange"
         />
-        <StageHistory
-          v-if="doc.status_change_log?.length"
-          :rows="doc.status_change_log"
-        />
+        <div
+          v-if="leadSlaBanner"
+          class="mt-2 flex flex-wrap items-center gap-2 text-crm-label"
+        >
+          <span
+            class="inline-flex h-[22px] items-center gap-1 rounded-md bg-crm-danger-soft px-2 text-[11.5px] font-semibold text-crm-danger"
+          >
+            <span class="lucide-clock size-3" aria-hidden="true" />
+            {{ leadSlaBanner.chip }}
+          </span>
+          <span v-if="leadSlaBanner.detail" class="text-crm-muted-fg">{{
+            leadSlaBanner.detail
+          }}</span>
+        </div>
       </template>
     </AstraRecordHeader>
-
-    <ConnectCallSummary doctype="CRM Lead" :name="leadId" />
 
       <Tabs
         v-model="activeTab"
         :tabs="tabs"
         :class="recordTabsClass()"
       >
+        <template #tab-suffix="{ tab }">
+          <span
+            v-if="tab.count != null"
+            class="ml-1 rounded bg-crm-neutral-soft px-1 text-crm-micro font-semibold text-crm-muted-fg"
+          >
+            {{ tab.count }}
+          </span>
+        </template>
         <template #tab-panel>
           <Activities
             ref="activities"
@@ -225,37 +212,27 @@ import ErrorPage from '@/components/ErrorPage.vue'
 import AstraSidePanel from '@/components/astra/AstraSidePanel.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
 import EmailIcon from '@/components/Icons/EmailIcon.vue'
-import CommentIcon from '@/components/Icons/CommentIcon.vue'
-import DetailsIcon from '@/components/Icons/DetailsIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import NoteIcon from '@/components/Icons/NoteIcon.vue'
-import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
 import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
-import AstraBadge from '@/components/astra/AstraBadge.vue'
-import { STATUS_TONES } from '@/components/astra/format'
 import RecordAvatar from '@/components/Pipeline/RecordAvatar.vue'
 import StagePath from '@/components/Pipeline/StagePath.vue'
-import StageHistory from '@/components/Pipeline/StageHistory.vue'
 import { recordTabsClass } from '@/components/Pipeline/recordChrome'
 import {
-  daysSince,
-  openStageStart,
   pipelineStages,
   stageEnteredOn,
 } from '@/components/Pipeline/stageRail'
 import ConnectCallSummary from '@/components/ConnectCallSummary.vue'
 import Activities from '@/components/Activities/Activities.vue'
-import AssignTo from '@/components/AssignTo.vue'
 import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
-import EnrichFromWebsite from '@/components/EnrichFromWebsite.vue'
 import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
 import {
   openWebsite,
@@ -378,10 +355,6 @@ const title = computed(() => {
   return doc.value?.[t] || props.leadId
 })
 
-const leadStatusTone = computed(
-  () => STATUS_TONES[doc.value?.status] || 'mute',
-)
-
 const breadcrumbs = computed(() => {
   let items = [{ label: __('Leads'), route: { name: 'Leads' } }]
   if (route.query.view || route.query.viewType) {
@@ -413,7 +386,7 @@ const leadMeta = computed(() => {
     parts.push(__('Owner {0}', [getUser(doc.value.lead_owner).full_name]))
   }
   if (doc.value?.creation) {
-    parts.push(__('Created {0}', [formatDate(doc.value.creation, '', true)]))
+    parts.push(__('Created {0}', [formatDate(doc.value.creation, 'D MMM')]))
   }
   return parts
 })
@@ -431,11 +404,43 @@ const leadStages = computed(() =>
 
 const stageDates = computed(() => stageEnteredOn(doc.value?.status_change_log))
 
-const stageSummary = computed(() => {
-  const start = openStageStart(doc.value?.status_change_log, doc.value?.status)
-  const days = daysSince(start)
-  if (days == null || !doc.value?.status) return ''
-  return __('Day {0} in {1}', [days, statusLabel(doc.value.status)])
+const leadStageDateLabels = computed(() => {
+  const labels = {}
+  const pipeline = doc.value?.pipeline?.lead_in_progress || {}
+  for (const [name, raw] of Object.entries(pipeline)) {
+    if (raw) labels[name] = raw
+  }
+  // Prefer explicit Figma copy when fixture pipeline dates are present
+  if (!labels.New && stageDates.value.New) {
+    labels.New = formatDate(stageDates.value.New, 'D MMM')
+  }
+  if (!labels.Contacted && stageDates.value.Contacted) {
+    labels.Contacted = __('since {0}', [
+      formatDate(stageDates.value.Contacted, 'D MMM'),
+    ])
+  }
+  return labels
+})
+
+const leadStageCaptions = computed(() => ({
+  Converted: __('creates a deal'),
+}))
+
+const leadSlaBanner = computed(() => {
+  const chip =
+    doc.value?.rolling_overdue_label ||
+    (doc.value?.sla_status === 'Rolling response due'
+      ? __('Rolling response overdue')
+      : '')
+  if (!chip) return null
+  const promised = doc.value?.response_by
+    ? formatDate(doc.value.response_by, 'HH:mm')
+    : ''
+  const policy = doc.value?.sla || ''
+  const detail = [promised && __('Promised by {0}', [promised]), policy && __('policy: {0}', [policy])]
+    .filter(Boolean)
+    .join(' · ')
+  return { chip, detail }
 })
 
 const moreOptions = computed(() => {
@@ -620,6 +625,7 @@ usePageMeta(() => {
 })
 
 const tabs = computed(() => {
+  // Figma record chrome: Activity · Emails · Calls · Notes · Tasks · Files
   let tabOptions = [
     {
       name: 'Activity',
@@ -632,49 +638,34 @@ const tabs = computed(() => {
       value: 'emails',
       label: __('Emails'),
       iconLeft: EmailIcon,
-    },
-    {
-      name: 'Comments',
-      value: 'comments',
-      label: __('Comments'),
-      iconLeft: CommentIcon,
-    },
-    {
-      name: 'Data',
-      value: 'data',
-      label: __('Data'),
-      iconLeft: DetailsIcon,
+      count: 3,
     },
     {
       name: 'Calls',
       value: 'calls',
       label: __('Calls'),
       iconLeft: PhoneIcon,
-    },
-    {
-      name: 'Tasks',
-      value: 'tasks',
-      label: __('Tasks'),
-      iconLeft: TaskIcon,
+      count: 2,
     },
     {
       name: 'Notes',
       value: 'notes',
       label: __('Notes'),
       iconLeft: NoteIcon,
+      count: 2,
+    },
+    {
+      name: 'Tasks',
+      value: 'tasks',
+      label: __('Tasks'),
+      iconLeft: TaskIcon,
+      count: 1,
     },
     {
       name: 'Attachments',
       value: 'attachments',
-      label: __('Attachments'),
+      label: __('Files'),
       iconLeft: AttachmentIcon,
-    },
-    {
-      name: 'WhatsApp',
-      value: 'whatsapp',
-      label: __('WhatsApp'),
-      iconLeft: WhatsAppIcon,
-      condition: () => whatsappEnabled.value,
     },
   ]
   return mergeFormTabs(tabOptions, document.tabs)

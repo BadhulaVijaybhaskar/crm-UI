@@ -48,13 +48,18 @@ const chipStyle = computed(() => {
     return { backgroundColor: '#16264A', color: '#C9D3E6' }
   }
   if (props.squared) {
-    return { backgroundColor: soft.value, color: 'var(--crm-muted-fg)' }
+    // Figma .bigav — primary-soft chip + primary initials (not muted ink)
+    return {
+      backgroundColor: 'var(--crm-primary-soft)',
+      color: 'var(--crm-primary)',
+    }
   }
   return { backgroundColor: soft.value, color: tone.value }
 })
 
 const sizeClass = computed(() => {
-  const radius = props.squared ? 'rounded-crm-panel' : 'rounded-full'
+  // Figma .bigav uses 10px radius on record avatars
+  const radius = props.squared ? 'rounded-[10px]' : 'rounded-full'
   if (props.size === 'xs') return `${radius} size-5 text-[9px] font-semibold`
   // PNG av2 initials ink is lighter than Inter 700 in Chromium — match PNG
   // (approved) with 600; HTML .av2 {700} disagrees with the capture.

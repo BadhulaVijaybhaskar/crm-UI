@@ -1,63 +1,97 @@
 {
   "message": [
-    {
-      "name": "ACT-MI-1",
-      "type": "task",
-      "date_group": "TODAY",
-      "title": "Task overdue",
-      "subtitle": "Call back about pricing · High",
-      "due": "11:00",
-      "priority": "High",
-      "status": "Overdue",
-      "owner": "rohan.mehta@example.com",
-      "creation": "2026-10-28 09:00:00"
-    },
-    {
-      "name": "ACT-MI-2",
-      "type": "call",
-      "date_group": "26 OCT",
-      "title": "Outgoing call by Rohan · 4 m 38 s",
-      "chip": "Astra Connect",
-      "time": "16:20",
-      "duration": "4 m 38 s",
-      "outcome": "Callback requested",
-      "disposition": "Interested",
-      "summary": "Runs 6 schools, evaluating for next term. Wants per-school pricing and a reference customer before Thursday.",
-      "recording_note": "Recording & transcript in Astra Connect",
-      "owner": "rohan.mehta@example.com",
-      "creation": "2026-10-26 16:20:00"
-    },
-    {
-      "name": "ACT-MI-3",
-      "type": "email",
-      "date_group": "26 OCT",
-      "title": "Email sent",
-      "subtitle": "Brightpath — intro and brochure",
-      "time": "11:05",
-      "owner": "rohan.mehta@example.com",
-      "creation": "2026-10-26 11:05:00"
-    },
-    {
-      "name": "ACT-MI-4",
-      "type": "status",
-      "date_group": "24 OCT",
-      "title": "Status",
-      "from_status": "New",
-      "to_status": "Contacted",
-      "time": "15:40",
-      "owner": "rohan.mehta@example.com",
-      "creation": "2026-10-24 15:40:00"
-    },
-    {
-      "name": "ACT-MI-5",
-      "type": "note",
-      "date_group": "24 OCT",
-      "title": "Note by Priya Nair",
-      "pinned": true,
-      "time": "10:12",
-      "content": "Referred by Cedar Clinics. Decision maker; budget approved for Q1.",
-      "owner": "priya.nair@example.com",
-      "creation": "2026-10-24 10:12:00"
-    }
+    [
+      {
+        "name": "VER-MI-1",
+        "activity_type": "stage_change",
+        "creation": "2026-10-24 15:40:00",
+        "owner": "rohan.mehta@example.com",
+        "owner_name": "Rohan Mehta",
+        "data": {
+          "from_status": "New",
+          "to_status": "Contacted",
+          "field": "status"
+        },
+        "is_lead": true
+      },
+      {
+        "name": "VER-MI-2",
+        "activity_type": "communication",
+        "creation": "2026-10-26 11:05:00",
+        "owner": "rohan.mehta@example.com",
+        "owner_name": "Rohan Mehta",
+        "communication_type": "Email",
+        "communication_date": "2026-10-26 11:05:00",
+        "data": {
+          "subject": "Brightpath \u2014 intro and brochure",
+          "content": "<p>Intro and brochure</p>",
+          "sender_full_name": "Rohan Mehta",
+          "sender": "rohan.mehta@example.com",
+          "recipients": "meera.iyer@example.in",
+          "cc": "",
+          "bcc": "",
+          "attachments": [],
+          "read_by_recipient": 1,
+          "delivery_status": "Sent"
+        },
+        "is_lead": true
+      },
+      {
+        "name": "NOTEACT-MI-1",
+        "activity_type": "note",
+        "creation": "2026-10-24 10:12:00",
+        "owner": "priya.nair@example.com",
+        "owner_name": "Priya Nair",
+        "data": {
+          "action": "added",
+          "title": "Referral note",
+          "note": "NOTE-MI-1"
+        },
+        "is_lead": true
+      }
+    ],
+    [
+      {
+        "name": "CALL-MI-1",
+        "activity_type": "outgoing_call",
+        "type": "Outgoing",
+        "status": "Completed",
+        "duration": 278,
+        "creation": "2026-10-26 16:20:00",
+        "owner": "rohan.mehta@example.com",
+        "owner_name": "Rohan Mehta",
+        "receiver": "meera.iyer@example.in",
+        "caller": "rohan.mehta@example.com",
+        "summary": "Runs 6 schools, evaluating for next term. Wants per-school pricing and a reference customer before Thursday.",
+        "outcome": "Callback requested",
+        "disposition": "Interested"
+      }
+    ],
+    [
+      {
+        "name": "NOTE-MI-1",
+        "title": "Referral note",
+        "content": "Referred by Cedar Clinics. Decision maker; budget approved for Q1.",
+        "owner": "priya.nair@example.com",
+        "owner_name": "Priya Nair",
+        "creation": "2026-10-24 10:12:00",
+        "modified": "2026-10-24 10:12:00",
+        "pinned": 1
+      }
+    ],
+    [
+      {
+        "name": "TASK-MI-1",
+        "title": "Call back about pricing",
+        "status": "Overdue",
+        "priority": "High",
+        "due_date": "2026-10-28 11:00:00",
+        "assigned_to": "rohan.mehta@example.com",
+        "owner": "rohan.mehta@example.com",
+        "creation": "2026-10-28 09:00:00",
+        "modified": "2026-10-28 09:00:00"
+      }
+    ],
+    []
   ]
 }

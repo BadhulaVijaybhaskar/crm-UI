@@ -54,13 +54,251 @@ function emptyReportview() {
   return ok({ keys: [], values: [], user_info: {}, total_count: 0 })
 }
 
+/** Default CRM Lead Status rows (Figma 05 stage rail). */
+const DEFAULT_LEAD_STATUSES = [
+  { name: 'New', color: 'gray', position: 1, type: 'Open' },
+  { name: 'Contacted', color: 'orange', position: 2, type: 'Open' },
+  { name: 'Nurture', color: 'blue', position: 3, type: 'Open' },
+  { name: 'Qualified', color: 'green', position: 4, type: 'Open' },
+  // Keep Converted on the open path (Figma DEAL group); only Unqualified/Junk close out.
+  { name: 'Converted', color: 'green', position: 5, type: 'Open' },
+  { name: 'Unqualified', color: 'red', position: 6, type: 'Lost' },
+  { name: 'Junk', color: 'red', position: 7, type: 'Lost' },
+]
+
+/** Default CRM Deal Status rows when stages.json is absent. */
+const DEFAULT_DEAL_STATUSES = [
+  { name: 'Qualification', color: 'gray', position: 1, type: 'Open', probability: 10 },
+  { name: 'Demo/Making', color: 'orange', position: 2, type: 'Open', probability: 40 },
+  { name: 'Proposal/Quotation', color: 'blue', position: 3, type: 'Open', probability: 60 },
+  { name: 'Negotiation', color: 'purple', position: 4, type: 'Open', probability: 80 },
+  { name: 'Ready to Close', color: 'green', position: 5, type: 'Open', probability: 90 },
+  { name: 'Won', color: 'green', position: 6, type: 'Won', probability: 100 },
+  { name: 'Lost', color: 'red', position: 7, type: 'Lost', probability: 0 },
+]
+
+function defaultMeta(doctype) {
+  const d = (doctype || '').toLowerCase()
+  let title_field = 'name'
+  let fields = [{ fieldname: 'name', fieldtype: 'Data', label: 'Name' }]
+  if (d.includes('lead') && !d.includes('status')) {
+    title_field = 'lead_name'
+    fields = [
+      { fieldname: 'lead_name', fieldtype: 'Data', label: 'Lead Name' },
+      { fieldname: 'status', fieldtype: 'Link', label: 'Status', options: 'CRM Lead Status' },
+      { fieldname: 'organization', fieldtype: 'Data', label: 'Organization' },
+      { fieldname: 'job_title', fieldtype: 'Data', label: 'Job Title' },
+      { fieldname: 'email', fieldtype: 'Data', label: 'Email' },
+      { fieldname: 'mobile_no', fieldtype: 'Data', label: 'Mobile' },
+      { fieldname: 'website', fieldtype: 'Data', label: 'Website' },
+      { fieldname: 'lead_owner', fieldtype: 'Link', label: 'Owner', options: 'User' },
+      { fieldname: 'temperature', fieldtype: 'Select', label: 'Temperature' },
+      { fieldname: 'lead_score', fieldtype: 'Int', label: 'Lead score' },
+      { fieldname: 'source', fieldtype: 'Data', label: 'Source' },
+      { fieldname: 'industry', fieldtype: 'Data', label: 'Industry' },
+      { fieldname: 'no_of_employees', fieldtype: 'Data', label: 'Employees' },
+      { fieldname: 'annual_revenue', fieldtype: 'Currency', label: 'Annual revenue' },
+      { fieldname: 'territory', fieldtype: 'Data', label: 'Territory' },
+      { fieldname: 'linkedin', fieldtype: 'Data', label: 'LinkedIn' },
+      { fieldname: 'sla', fieldtype: 'Data', label: 'SLA' },
+      { fieldname: 'sla_status', fieldtype: 'Data', label: 'SLA Status' },
+    ]
+  } else if (d.includes('deal') && !d.includes('status')) {
+    title_field = 'organization'
+    fields = [
+      { fieldname: 'organization', fieldtype: 'Link', label: 'Organization', options: 'CRM Organization' },
+      { fieldname: 'status', fieldtype: 'Link', label: 'Status', options: 'CRM Deal Status' },
+      { fieldname: 'deal_owner', fieldtype: 'Link', label: 'Owner', options: 'User' },
+      { fieldname: 'annual_revenue', fieldtype: 'Currency', label: 'Amount' },
+    ]
+  } else if (d.includes('contact')) {
+    title_field = 'full_name'
+    fields = [
+      { fieldname: 'full_name', fieldtype: 'Data', label: 'Full Name' },
+      { fieldname: 'email_id', fieldtype: 'Data', label: 'Email' },
+      { fieldname: 'mobile_no', fieldtype: 'Data', label: 'Mobile' },
+    ]
+  } else if (d.includes('organization') || d.includes('compan')) {
+    title_field = 'organization_name'
+    fields = [
+      { fieldname: 'organization_name', fieldtype: 'Data', label: 'Organization Name' },
+      { fieldname: 'website', fieldtype: 'Data', label: 'Website' },
+      { fieldname: 'industry', fieldtype: 'Data', label: 'Industry' },
+    ]
+  } else if (d.includes('fcrm settings')) {
+    title_field = 'name'
+    fields = [
+      { fieldname: 'setup_completed', fieldtype: 'Check', label: 'Setup Completed' },
+      { fieldname: 'brand_name', fieldtype: 'Data', label: 'Brand Name' },
+    ]
+  }
+  return ok({
+    docs: [
+      {
+        name: doctype,
+        doctype: 'DocType',
+        title_field,
+        fields,
+        permissions: [
+          {
+            role: 'System Manager',
+            read: 1,
+            write: 1,
+            create: 1,
+            delete: 1,
+            submit: 0,
+            cancel: 0,
+            amend: 0,
+          },
+        ],
+      },
+    ],
+    user_settings: '{}',
+  })
+}
+
+function defaultSidepanel(doctype) {
+  const d = (doctype || '').toLowerCase()
+  if (d.includes('lead')) {
+    return ok([
+      {
+        name: 'details',
+        label: 'Details',
+        opened: true,
+        columns: [
+          {
+            name: 'col1',
+            fields: [
+              { fieldname: 'status', label: 'Status', fieldtype: 'Link' },
+              { fieldname: 'temperature', label: 'Temperature', fieldtype: 'Data' },
+              {
+                fieldname: 'lead_score',
+                label: 'Lead score',
+                fieldtype: 'Data',
+              },
+              { fieldname: 'source', label: 'Source', fieldtype: 'Data' },
+              { fieldname: 'industry', label: 'Industry', fieldtype: 'Data' },
+              { fieldname: 'no_of_employees', label: 'Employees', fieldtype: 'Data' },
+              { fieldname: 'annual_revenue', label: 'Annual revenue', fieldtype: 'Currency' },
+              { fieldname: 'territory', label: 'Territory', fieldtype: 'Data' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'contact',
+        label: 'Contact',
+        opened: true,
+        columns: [
+          {
+            name: 'col1',
+            fields: [
+              { fieldname: 'email', label: 'Email', fieldtype: 'Data' },
+              { fieldname: 'mobile_no', label: 'Mobile', fieldtype: 'Data' },
+              { fieldname: 'website', label: 'Website', fieldtype: 'Data' },
+              { fieldname: 'linkedin', label: 'LinkedIn', fieldtype: 'Data' },
+            ],
+          },
+        ],
+      },
+    ])
+  }
+  if (d.includes('deal')) {
+    return ok([
+      {
+        name: 'details',
+        label: 'Details',
+        opened: true,
+        columns: [
+          {
+            name: 'col1',
+            fields: [
+              { fieldname: 'status', label: 'Status', fieldtype: 'Link' },
+              { fieldname: 'organization', label: 'Organization', fieldtype: 'Link' },
+              { fieldname: 'annual_revenue', label: 'Amount', fieldtype: 'Currency' },
+            ],
+          },
+        ],
+      },
+    ])
+  }
+  if (d.includes('contact')) {
+    return ok([
+      {
+        name: 'details',
+        label: 'Details',
+        opened: true,
+        columns: [
+          {
+            name: 'col1',
+            fields: [
+              { fieldname: 'email_id', label: 'Email', fieldtype: 'Data' },
+              { fieldname: 'mobile_no', label: 'Mobile', fieldtype: 'Data' },
+            ],
+          },
+        ],
+      },
+    ])
+  }
+  if (d.includes('organization') || d.includes('compan')) {
+    return ok([
+      {
+        name: 'details',
+        label: 'Details',
+        opened: true,
+        columns: [
+          {
+            name: 'col1',
+            fields: [
+              { fieldname: 'website', label: 'Website', fieldtype: 'Data' },
+              { fieldname: 'industry', label: 'Industry', fieldtype: 'Data' },
+            ],
+          },
+        ],
+      },
+    ])
+  }
+  return ok([])
+}
+
 /**
  * Pick list payload for a doctype from fixture files.
  * Soft-defaults to empty reportview when the fixture file is absent.
+ * Status doctypes MUST be checked before lead/deal entity lists.
  */
 function listForDoctype(fixture, doctype) {
   const d = (doctype || '').toLowerCase()
-  if (d.includes('deal') || d === 'crm deal') {
+  if (d.includes('lead status') || d === 'crm lead status') {
+    const fromFile = readJson(fixture, 'lead-statuses.json', null)
+    if (fromFile) return unwrap(fromFile, ok(DEFAULT_LEAD_STATUSES))
+    return ok(DEFAULT_LEAD_STATUSES)
+  }
+  if (d.includes('deal status') || d === 'crm deal status') {
+    const fromFile =
+      readJson(fixture, 'stages.json', null) ||
+      readJson(fixture, 'deal-statuses.json', null)
+    if (fromFile) {
+      const msg = fromFile.message || fromFile
+      // stages.json may be kanban columns — normalize to status rows when needed
+      if (Array.isArray(msg) && msg.length && msg[0]?.name) {
+        return ok(
+          msg.map((row, i) => ({
+            name: row.name,
+            color: row.color || 'gray',
+            position: row.position ?? i + 1,
+            type: row.type || 'Open',
+            probability: row.probability,
+          })),
+        )
+      }
+      return unwrap(fromFile, ok(DEFAULT_DEAL_STATUSES))
+    }
+    return ok(DEFAULT_DEAL_STATUSES)
+  }
+  if (d.includes('communication status')) {
+    return ok([{ name: 'Open' }, { name: 'Replied' }, { name: 'Closed' }])
+  }
+  if (d === 'crm deal' || (d.includes('deal') && !d.includes('status'))) {
     return unwrap(readJson(fixture, 'deals.json', null), emptyReportview())
   }
   if (d.includes('contact') && !d.includes('crm contacts')) {
@@ -72,16 +310,31 @@ function listForDoctype(fixture, doctype) {
       emptyReportview(),
     )
   }
-  if (d.includes('lead')) {
+  if (d === 'crm lead' || (d.includes('lead') && !d.includes('status'))) {
     return unwrap(readJson(fixture, 'leads.json', null), emptyReportview())
   }
   if (d.includes('task')) {
     return unwrap(readJson(fixture, 'tasks.json', null), ok([]))
   }
-  if (d.includes('deal status') || d.includes('crm deal status')) {
-    return unwrap(readJson(fixture, 'stages.json', null), ok([]))
-  }
   return null
+}
+
+/** Resolve doctype/name from POST body or GET query — never the method path. */
+function resolveDocArgs(post, parsed, fallbackDoctype = '') {
+  const search = parsed.search
+  const name =
+    post.name ||
+    post.docname ||
+    (search && search.get('name')) ||
+    null
+  const dt =
+    post.doctype ||
+    post.doc?.doctype ||
+    (search && search.get('doctype')) ||
+    parsed.doctype ||
+    fallbackDoctype ||
+    ''
+  return { name, dt }
 }
 
 /**
@@ -291,44 +544,86 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       method.includes('getdoctype') ||
       url.includes('getdoctype')
     ) {
-      const dt = (post.doctype || doctype || '').toLowerCase()
-      if (dt.includes('deal') && metaDeal) body = metaDeal
+      const { dt: rawDt } = resolveDocArgs(post, parsed, doctype)
+      const dt = (rawDt || '').toLowerCase()
+      if (dt.includes('deal') && !dt.includes('status') && metaDeal) body = metaDeal
       else if (dt.includes('contact') && metaContact) body = metaContact
       else if (
         (dt.includes('organization') || dt.includes('compan')) &&
         metaOrg
       ) {
         body = metaOrg
-      } else body = meta || ok([[], []])
+      } else if (dt.includes('lead') && !dt.includes('status') && meta) {
+        body = meta
+      } else body = defaultMeta(rawDt || doctype || 'CRM Lead')
     } else if (
       method.includes('get_single_value') ||
       url.includes('get_single_value')
     ) {
       body = ok(1) // setup_completed
     } else if (
+      method.includes('get_doc_permissions') ||
+      url.includes('get_doc_permissions')
+    ) {
+      body = ok({
+        permissions: {
+          read: 1,
+          write: 1,
+          create: 1,
+          delete: 1,
+          submit: 0,
+          cancel: 0,
+          amend: 0,
+          print: 1,
+          email: 1,
+          share: 1,
+        },
+      })
+    } else if (
+      method.includes('get_sidepanel_sections') ||
+      url.includes('get_sidepanel_sections')
+    ) {
+      const { dt } = resolveDocArgs(post, parsed, doctype || post.doctype)
+      const fromFile = readJson(fixture, 'sidepanel.json', null)
+      body = fromFile ? unwrap(fromFile, defaultSidepanel(dt)) : defaultSidepanel(dt)
+    } else if (
       method.includes('frappe.client.get') &&
       !method.includes('get_list') &&
       !method.includes('get_count') &&
       !method.includes('get_value') &&
-      !method.includes('get_single')
+      !method.includes('get_single') &&
+      !method.includes('get_doc_permissions')
     ) {
-      // frappe.client.get / getdoc — single document
-      const name = post.name || parsed.name
-      const dt = post.doctype || doctype
-      body =
-        recordForDoctype(fixture, dt, name) ||
-        ok({ name, doctype: dt })
+      // frappe.client.get — GET query or POST body; never use method path as name
+      const { name, dt } = resolveDocArgs(post, parsed, doctype)
+      if ((dt || '').toLowerCase().includes('fcrm settings')) {
+        body = ok({
+          name: 'FCRM Settings',
+          doctype: 'FCRM Settings',
+          setup_completed: 1,
+          brand_name: 'Astra CRM',
+          brand_logo: '',
+          favicon: '',
+        })
+      } else {
+        body =
+          recordForDoctype(fixture, dt, name) ||
+          (name ? ok({ name, doctype: dt }) : ok(null))
+      }
     } else if (
       method.includes('crm.api.doc.get_data') ||
       url.includes('crm.api.doc.get_data')
     ) {
-      body = buildGetData(fixture, doctype || post.doctype || 'CRM Lead', views)
+      const { dt } = resolveDocArgs(post, parsed, doctype || post.doctype || 'CRM Lead')
+      body = buildGetData(fixture, dt || 'CRM Lead', views)
     } else if (
       method.includes('frappe.client.get_list') ||
       method.includes('frappe.client.get_count') ||
       method.includes('frappe.desk.reportview.get') ||
       method.includes('frappe.desk.reportview.get_count')
     ) {
+      const { dt: listDt } = resolveDocArgs(post, parsed, doctype)
+      const effectiveDt = listDt || doctype
       if (method.includes('get_count')) {
         // Prefer parity_count from matching view filters when present
         const viewList = views.message || views || []
@@ -369,7 +664,7 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
         if (parityHit != null) {
           body = ok(parityHit)
         } else {
-          const list = listForDoctype(fixture, doctype)
+          const list = listForDoctype(fixture, effectiveDt)
           const total =
             list?.message?.total_count ??
             (Array.isArray(list?.message) ? list.message.length : 0)
@@ -377,7 +672,7 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
         }
       } else {
         body =
-          listForDoctype(fixture, doctype) ||
+          listForDoctype(fixture, effectiveDt) ||
           (leads ? unwrap(leads, emptyReportview()) : emptyReportview())
       }
     } else if (
@@ -456,6 +751,13 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
 export function sessionInitScript(email) {
   const fullName = sessionFullName(email)
   const encoded = encodeURIComponent(fullName)
+  const onboardingSteps = [
+    'create_first_lead',
+    'connect_your_email',
+    'invite_your_team',
+    'convert_lead_to_deal',
+    'create_first_task',
+  ].map((name) => ({ name, completed: true }))
   return `
 (() => {
   window.__PARITY__ = { enabled: true, user: '${email}' };
@@ -467,7 +769,9 @@ export function sessionInitScript(email) {
     localStorage.setItem('isSidebarCollapsed', 'false');
     localStorage.setItem('crm_setup_completed', '1');
     localStorage.setItem('onboardingStatus', JSON.stringify({
-      '${email}': { frappecrm_onboarding_status: [{ name: 'done', completed: true }] }
+      '${email}': {
+        frappecrm_onboarding_status: ${JSON.stringify(onboardingSteps)}
+      }
     }));
   } catch (e) {}
 })();
