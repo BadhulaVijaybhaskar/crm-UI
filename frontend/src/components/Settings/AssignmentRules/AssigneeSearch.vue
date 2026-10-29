@@ -99,7 +99,7 @@ import { Popover } from 'frappe-ui'
 import { computed, inject, ref } from 'vue'
 import { usersStore } from '@/stores/users'
 import { globalStore } from '@/stores/global'
-import { activeSettingsPage } from '@/composables/settings'
+import { openSettings } from '@/composables/settings'
 
 const emit = defineEmits(['addAssignee'])
 const query = ref('')
@@ -153,7 +153,7 @@ const inviteAgent = () => {
         label: __('Go to Invite Page'),
         variant: 'solid',
         onClick: ({ close }) => {
-          activeSettingsPage.value = 'Invite User'
+          openSettings('Invite User')
           close()
         },
       },

@@ -28,6 +28,15 @@ class CRMLeadStatus(Document):
 			"teal",
 			"violet",
 			"purple",
+			"c1",
+			"c2",
+			"c3",
+			"c4",
+			"c5",
+			"c6",
+			"success",
+			"danger",
+			"warning",
 		]
 		lead_status: DF.Data
 		position: DF.Int

@@ -1,0 +1,143 @@
+[
+  {
+    "name": "tab_deal",
+    "label": "",
+    "sections": [
+      {
+        "name": "sec_deal",
+        "label": "Deal",
+        "opened": true,
+        "columns": [
+          {
+            "name": "col_deal_l",
+            "fields": [
+              {
+                "fieldname": "organization",
+                "label": "Company",
+                "fieldtype": "Link",
+                "reqd": 1
+              },
+              {
+                "fieldname": "expected_closure_date",
+                "label": "Expected close",
+                "fieldtype": "Date",
+                "reqd": 0
+              },
+              {
+                "fieldname": "next_step",
+                "label": "Next step",
+                "fieldtype": "Data",
+                "reqd": 0
+              }
+            ]
+          },
+          {
+            "name": "col_deal_r",
+            "fields": [
+              {
+                "fieldname": "annual_revenue",
+                "label": "Deal value",
+                "fieldtype": "Currency",
+                "reqd": 1
+              },
+              {
+                "fieldname": "probability",
+                "label": "Probability",
+                "fieldtype": "Percent",
+                "reqd": 0
+              },
+              {
+                "fieldname": "territory",
+                "label": "Territory",
+                "fieldtype": "Link",
+                "reqd": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "sec_contact",
+        "label": "Contact",
+        "opened": true,
+        "columns": [
+          {
+            "name": "col_contact_l",
+            "fields": [
+              {
+                "fieldname": "salutation",
+                "label": "Salutation",
+                "fieldtype": "Select",
+                "reqd": 0
+              },
+              {
+                "fieldname": "last_name",
+                "label": "Last name",
+                "fieldtype": "Data",
+                "reqd": 0
+              },
+              {
+                "fieldname": "mobile_no",
+                "label": "Mobile no",
+                "fieldtype": "Data",
+                "reqd": 0
+              }
+            ]
+          },
+          {
+            "name": "col_contact_r",
+            "fields": [
+              {
+                "fieldname": "first_name",
+                "label": "First name",
+                "fieldtype": "Data",
+                "reqd": 1
+              },
+              {
+                "fieldname": "email",
+                "label": "Email",
+                "fieldtype": "Data",
+                "reqd": 0
+              },
+              {
+                "fieldname": "gender",
+                "label": "Gender",
+                "fieldtype": "Link",
+                "reqd": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "sec_source",
+        "label": "Source",
+        "opened": true,
+        "columns": [
+          {
+            "name": "col_source_l",
+            "fields": [
+              {
+                "fieldname": "source",
+                "label": "Source",
+                "fieldtype": "Link",
+                "reqd": 0
+              }
+            ]
+          },
+          {
+            "name": "col_source_r",
+            "fields": [
+              {
+                "fieldname": "industry",
+                "label": "Industry",
+                "fieldtype": "Link",
+                "reqd": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -140,9 +140,20 @@ const routes = [
     component: () => import('@/pages/Activities.vue'),
   },
   {
+    path: '/conversations',
+    name: 'Conversations',
+    component: () => import('@/pages/Conversations.vue'),
+  },
+  {
     path: '/reports',
     name: 'Reports',
     component: () => import('@/pages/Reports.vue'),
+  },
+  {
+    path: '/settings/:section?',
+    name: 'Settings',
+    component: () => import('@/pages/Settings.vue'),
+    props: true,
   },
   // Dev-only mock login — production auth goes through /login (website).
   ...(import.meta.env.DEV

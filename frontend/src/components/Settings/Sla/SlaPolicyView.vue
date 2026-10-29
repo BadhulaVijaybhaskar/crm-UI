@@ -262,7 +262,6 @@ import {
   validateSlaData,
 } from './utils'
 import SlaAssignmentConditions from './SlaAssignmentConditions.vue'
-import { disableSettingModalOutsideClick } from '../../../composables/settings'
 import { useUnsavedChangesWarning } from '../../../composables/useUnsavedChangesWarning'
 import { convertToConditions } from '../../../utils'
 import SlaHolidays from './SlaHolidays.vue'
@@ -325,8 +324,6 @@ const getSlaResource = createResource({
 if (step.value.data && step.value.fetchData) {
   getSlaResource.submit()
 } else {
-  disableSettingModalOutsideClick.value = true
-
   // SlaPriorityList fills in the default priorities only after its own fetch
   // resolves, so snapshot the pristine form once they land instead of now
   watch(
@@ -498,11 +495,6 @@ watch(
   (newVal) => {
     if (!initialData.value) return
     isDirty.value = JSON.stringify(newVal) != initialData.value
-    if (isDirty.value) {
-      disableSettingModalOutsideClick.value = true
-    } else {
-      disableSettingModalOutsideClick.value = false
-    }
   },
   { deep: true },
 )
@@ -511,6 +503,5 @@ useUnsavedChangesWarning(() => isDirty.value)
 
 onUnmounted(() => {
   resetSlaDataErrors()
-  disableSettingModalOutsideClick.value = false
 })
 </script>

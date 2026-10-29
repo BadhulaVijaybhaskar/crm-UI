@@ -161,7 +161,6 @@ import WorkflowIcon from '~icons/lucide/workflow'
 import { ConfirmDelete } from '@/utils'
 import { createDialog } from '@/utils/dialogs'
 import { usersStore } from '@/stores/users'
-import { disableSettingModalOutsideClick } from '@/composables/settings'
 import {
   List,
   ListCell,
@@ -182,7 +181,7 @@ import {
   createListResource,
   toast,
 } from 'frappe-ui'
-import { computed, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref } from 'vue'
 
 const { getUser } = usersStore()
 
@@ -201,10 +200,6 @@ const listColumns = [
   'minmax(0, 1fr)',
   'minmax(0, 1.5fr)',
 ]
-
-// While the builder is up, a click outside must not take the settings dialog with it.
-watch(showBuilder, (open) => (disableSettingModalOutsideClick.value = open))
-onUnmounted(() => (disableSettingModalOutsideClick.value = false))
 
 const automations = createListResource({
   doctype: 'Automation Flow',

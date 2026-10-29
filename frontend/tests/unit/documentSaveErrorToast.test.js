@@ -13,8 +13,7 @@ vi.mock('@/composables/useAttachments', () => ({
   }),
 }))
 vi.mock('@/composables/settings', () => ({
-  showSettings: { value: false },
-  activeSettingsPage: { value: '' },
+  openSettings: vi.fn(),
 }))
 vi.mock('@/utils', () => ({
   runSequentially: vi.fn(),

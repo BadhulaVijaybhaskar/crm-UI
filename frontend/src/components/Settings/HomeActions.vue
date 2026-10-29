@@ -38,7 +38,6 @@
 <script setup>
 import Grid from '@/components/Controls/Grid.vue'
 import { ErrorMessage } from 'frappe-ui'
-import { showSettings } from '@/composables/settings'
 import { useDocument } from '@/data/document'
 import { ref, provide } from 'vue'
 
@@ -52,10 +51,6 @@ provide('triggerOnChange', triggerOnChange)
 const errorMessage = ref('')
 
 function updateSettings() {
-  document.save.submit(null, {
-    onSuccess: () => {
-      showSettings.value = false
-    },
-  })
+  document.save.submit()
 }
 </script>

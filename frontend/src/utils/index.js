@@ -448,11 +448,33 @@ export const colors = [
 ]
 
 export function parseColor(color) {
-  let textColor = `!text-${color}-600`
-  if (color == 'black') {
+  // Astra stage tokens (c1…c6, success, …) map to the closest Tailwind stem
+  // until IndicatorIcon can use --crm-* CSS vars from the shell branch.
+  let stem = color
+  if (
+    color &&
+    /^(c[1-6]|success|danger|warning|teal|blue)$/.test(String(color))
+  ) {
+    const map = {
+      c1: 'cyan',
+      c2: 'blue',
+      c3: 'teal',
+      c4: 'blue',
+      c5: 'amber',
+      c6: 'gray',
+      success: 'green',
+      danger: 'red',
+      warning: 'amber',
+      teal: 'teal',
+      blue: 'blue',
+    }
+    stem = map[color] || 'gray'
+  }
+  let textColor = `!text-${stem}-600`
+  if (stem == 'black' || color == 'black') {
     textColor = '!text-ink-gray-9'
-  } else if (['gray', 'green'].includes(color)) {
-    textColor = `!text-${color}-700`
+  } else if (['gray', 'green'].includes(stem)) {
+    textColor = `!text-${stem}-700`
   }
 
   return textColor

@@ -121,14 +121,12 @@ import ImageIcon from '~icons/lucide/image'
 import ImageUploader from '@/components/Controls/ImageUploader.vue'
 import { FormControl } from 'frappe-ui'
 import { getSettings } from '@/stores/settings'
-import { showSettings } from '@/composables/settings'
 
 const { _settings: settings, setupBrand } = getSettings()
 
 function updateSettings() {
   settings.save.submit(null, {
     onSuccess: () => {
-      showSettings.value = false
       setupBrand()
     },
   })

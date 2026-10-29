@@ -1,0 +1,16 @@
+[
+  {
+    "name": "inv-ritika",
+    "email": "ritika.s@example.in",
+    "full_name": "Ritika Sen",
+    "role": "Sales User",
+    "status": "Pending"
+  },
+  {
+    "name": "inv-kunal",
+    "email": "kunal.m@example.in",
+    "full_name": "Kunal Mishra",
+    "role": "Sales User",
+    "status": "Pending"
+  }
+]
