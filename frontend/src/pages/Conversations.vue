@@ -146,10 +146,10 @@
               {{ initialsFrom(thread.data?.meta?.title || selected.title) }}
             </span>
             <div class="min-w-0 leading-[1.45]">
-              <h2 class="m-0 truncate text-[14px] font-semibold text-crm-fg">
+              <h2 class="m-0 truncate text-[13px] font-semibold text-crm-fg">
                 {{ thread.data?.meta?.title || selected.title }}
               </h2>
-              <p class="m-0 truncate text-[12.5px] text-crm-muted-fg">
+              <p class="m-0 truncate text-[12px] text-crm-muted-fg">
                 {{ thread.data?.meta?.subtitle || selected.subtitle }}
               </p>
             </div>
@@ -167,7 +167,7 @@
             <template v-else>
               <template v-for="group in groupedEvents" :key="group.day">
                 <p
-                  class="m-0 mb-3 text-center text-[11px] font-bold uppercase leading-[1.45] tracking-[0.06em] text-crm-faint"
+                  class="relative top-px m-0 mb-3 text-center text-[11px] font-bold uppercase leading-[1.45] tracking-[0.06em] text-crm-faint"
                 >
                   {{ group.day }}
                 </p>
@@ -179,10 +179,18 @@
                     isOutgoing(event)
                       ? 'ml-auto w-fit max-w-full border-crm-border bg-crm-primary-soft'
                       : 'w-full border-crm-border bg-crm-card',
-                    event.channel !== 'call' && (isOutgoing(event) ? '!pb-[8px]' : '!pb-[7px]'),
+                    event.channel !== 'call' &&
+                      (event.channel === 'note'
+                        ? '!pb-[9px]'
+                        : isOutgoing(event)
+                          ? '!pb-[8px]'
+                          : '!pb-[7px]'),
                   ]"
                 >
-                  <div class="mb-[5.5px] flex items-center gap-2">
+                  <div
+                    class="mb-[5.5px] flex items-center gap-2"
+                    :class="{ 'relative -top-px': event.channel === 'call' }"
+                  >
                     <span
                       class="inline-flex h-[18px] items-center gap-1 rounded-[5px] px-1.5 text-[10.5px] font-semibold"
                       :class="channelTagClass(event.channel)"
@@ -207,13 +215,19 @@
                   <p
                     v-else
                     class="m-0 whitespace-pre-wrap text-crm-fg"
-                    :class="isOutgoing(event) ? 'pt-[2px]' : 'pt-[3px]'"
+                    :class="
+                      event.channel === 'note'
+                        ? 'pt-px'
+                        : isOutgoing(event)
+                          ? 'pt-[2px]'
+                          : 'pt-[3px]'
+                    "
                   >
                     {{ eventBody(event) }}
                   </p>
                   <p
                     v-if="event.channel === 'call' && event.data?.call_summary"
-                    class="m-0 pt-px text-crm-muted-fg"
+                    class="m-0 pt-px leading-[18px] text-crm-muted-fg"
                   >
                     {{ event.data.call_summary }}
                   </p>
@@ -226,7 +240,7 @@
                     :href="event.data.recording_url || undefined"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="mt-1.5 flex w-fit items-center gap-1.5 text-[12.5px] font-semibold text-crm-primary hover:underline"
+                    class="mt-[7px] flex w-fit items-center gap-1.5 text-[12.5px] font-semibold text-crm-primary hover:underline"
                   >
                     <LucidePlay class="size-3.5" aria-hidden="true" />
                     {{ __('Recording & transcript in Astra Connect') }}
@@ -274,7 +288,7 @@
         v-if="selected && thread.data"
         class="hidden min-h-0 overflow-y-auto border-l border-crm-border bg-crm-card lg:block"
       >
-        <div class="border-b border-crm-border px-4 pb-[10px] pt-3">
+        <div class="border-b border-crm-border px-4 pb-[10px] pt-[14px]">
           <div class="flex items-center justify-between gap-2">
             <p class="m-0 text-[12.5px] font-semibold text-crm-fg">
               {{ __('Linked record') }}
@@ -287,7 +301,7 @@
               {{ __('Open record') }}
             </router-link>
           </div>
-          <p class="m-0 mt-3.5 truncate text-[13.2px] font-semibold text-crm-fg">
+          <p class="m-0 mt-[11px] truncate text-[13.2px] font-semibold text-crm-fg">
             {{ linkedRecordTitle }}
           </p>
           <div v-if="thread.data.meta?.status" class="mt-1.5 flex items-center gap-2">
@@ -314,7 +328,7 @@
         <section class="border-b border-crm-border px-4 pb-3 pt-3.5">
           <h3 class="m-0 text-[12.5px] font-semibold text-crm-fg">{{ __('Contact') }}</h3>
           <dl
-            class="m-0 mt-[13px] grid grid-cols-[116px_1fr] gap-x-3 gap-y-2 text-[12.5px] leading-[18px]"
+            class="m-0 mt-3 grid grid-cols-[116px_1fr] gap-x-3 gap-y-2 text-[12.5px] leading-[18px]"
           >
             <template v-for="entry in contactEntries" :key="entry.label">
               <dt class="text-crm-muted-fg">{{ entry.label }}</dt>
@@ -327,7 +341,7 @@
             {{ __('In this thread') }}
           </h3>
           <dl
-            class="m-0 mt-2.5 grid grid-cols-[116px_1fr] gap-x-3 gap-y-2 text-[12.5px] leading-[18px]"
+            class="m-0 mt-[11px] grid grid-cols-[116px_1fr] gap-x-3 gap-y-[8.4px] text-[12.5px] leading-[18px]"
           >
             <template v-for="entry in threadCountEntries" :key="entry.label">
               <dt class="text-crm-muted-fg">{{ entry.label }}</dt>
