@@ -45,7 +45,10 @@
           {{ entity.label }}
         </button>
       </div>
-      <span class="hidden h-6 w-px bg-crm-border sm:block" aria-hidden="true" />
+      <span
+        class="hidden h-6 w-px bg-crm-border sm:mx-1 sm:block"
+        aria-hidden="true"
+      />
       <div
         class="inline-flex gap-0.5 rounded-crm-card border border-crm-border bg-crm-muted p-[3px]"
         role="group"
