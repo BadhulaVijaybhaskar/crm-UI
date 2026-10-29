@@ -256,7 +256,7 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       method.includes('get_unread_count') ||
       url.includes('notifications.get_unread_count')
     ) {
-      body = ok(1)
+      body = ok(fixture === 'm1-home' ? 0 : 1)
     } else if (url.includes('notifications.get_notifications')) {
       body = ok([])
     } else if (method.includes('get_organizations')) {

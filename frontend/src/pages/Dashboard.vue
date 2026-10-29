@@ -1,5 +1,114 @@
 <template>
   <div
+    v-if="isMobile"
+    class="min-h-0 flex-1 overflow-y-auto px-[14px] pb-24 pt-[14px] [text-rendering:geometricPrecision]"
+  >
+    <h1
+      class="relative top-px m-0 text-[18.7px] font-semibold leading-[26px] tracking-[-0.02em] text-crm-fg"
+    >
+      {{ summary.data?.greeting || __('Home') }}
+    </h1>
+    <p class="relative top-px m-0 text-[12px] leading-[17px] tracking-[-0.005em] text-crm-muted-fg">
+      {{ mobileDateLabel }}
+    </p>
+
+    <div class="mt-3.5 grid grid-cols-2 gap-x-2 gap-y-[9px]">
+      <div
+        v-for="kpi in visibleKpis"
+        :key="kpi.id"
+        class="h-[90px] rounded-crm-panel border border-crm-border bg-crm-card px-3 pt-[10px]"
+      >
+        <p class="m-0 text-[12px] leading-[1.45] text-crm-muted-fg">{{ kpi.label }}</p>
+        <p
+          class="m-0 mt-[7px] text-[20px] font-semibold leading-[1.2] tracking-[-0.02em] text-crm-fg"
+        >
+          {{ mobileKpiValue(kpi) }}
+        </p>
+        <p class="m-0 mt-[5px] text-[11.5px] leading-[1.45] text-crm-muted-fg">
+          {{ mobileKpiSub(kpi) }}
+        </p>
+      </div>
+    </div>
+
+    <section class="mt-[13px] overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card">
+      <div class="flex h-[43px] items-center border-b-2 border-crm-border px-3.5">
+        <h2 class="m-0 text-[14px] font-semibold text-crm-fg">{{ __('Today') }}</h2>
+        <div class="flex-1" />
+        <router-link
+          :to="{ name: 'Tasks', params: { viewType: 'list' } }"
+          class="text-[12.5px] font-semibold text-crm-primary"
+        >
+          {{ __('Tasks') }}
+        </router-link>
+      </div>
+      <template v-for="(row, index) in mobileTodayRows" :key="row.key">
+        <div
+          v-if="row.now"
+          class="flex h-[22px] items-center gap-2 border-t border-crm-border pl-[18px] pr-[18px] pt-[2px] text-[11px] font-semibold text-crm-danger"
+        >
+          <span class="size-1.5 shrink-0 rounded-full bg-crm-danger" />
+          <span class="whitespace-nowrap">{{ row.label }}</span>
+          <span class="h-px flex-1 bg-crm-danger opacity-[.45]" />
+        </div>
+        <div
+          v-else
+          class="flex items-center gap-0 px-3.5"
+          :class="index ? 'h-[58px] border-t border-crm-border pt-1' : 'h-[56px] pt-[3px]'"
+        >
+          <span class="w-[62px] shrink-0 text-[12.5px] font-semibold text-crm-fg">
+            {{ row.item.time_label || '—' }}
+          </span>
+          <div class="min-w-0 flex-1 leading-[1.45]">
+            <div class="truncate text-[12.5px] font-semibold text-crm-fg">{{ row.item.title }}</div>
+            <div class="truncate text-[11.5px] text-crm-muted-fg">{{ row.item.record_label }}</div>
+          </div>
+          <AstraBadge
+            v-if="row.item.badge"
+            :label="row.item.badge"
+            :tone="todayBadgeTone(row.item)"
+          />
+        </div>
+      </template>
+    </section>
+
+    <section
+      v-if="mobileDeadlines.length"
+      class="mt-3 overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card"
+    >
+      <div class="flex h-[43px] items-center border-b-2 border-crm-border px-3.5 pt-1">
+        <h2 class="m-0 text-[14px] font-semibold text-crm-fg">{{ __('Response deadlines') }}</h2>
+        <div class="flex-1" />
+        <router-link :to="{ name: 'Work Queue' }" class="text-[12.5px] font-semibold text-crm-primary">
+          {{ __('Queue') }}
+        </router-link>
+      </div>
+      <div
+        v-for="(row, index) in mobileDeadlines"
+        :key="row.name"
+        class="flex items-center gap-2.5 px-3.5"
+        :class="index ? 'h-[56px] border-t border-crm-border pt-[6px]' : 'h-[54px] pt-0.5'"
+      >
+        <span
+          class="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-crm-primary-soft text-[10.5px] font-bold text-crm-primary"
+          aria-hidden="true"
+        >
+          {{ initialsFrom(row.title) }}
+        </span>
+        <div class="min-w-0 flex-1 leading-[1.45]">
+          <div class="truncate text-[12.5px] font-semibold text-crm-fg">{{ row.title }}</div>
+          <div class="truncate text-[11.5px] text-crm-muted-fg">{{ row.sub_label }}</div>
+        </div>
+        <span
+          class="shrink-0 whitespace-nowrap text-[11.5px] font-semibold"
+          :class="row.state === 'overdue' ? 'text-crm-danger' : 'text-crm-warning'"
+        >
+          {{ (row.label || '').replace(/^due /, '') }}
+        </span>
+      </div>
+    </section>
+  </div>
+  <div
+    v-else
     class="flex h-full min-h-0 flex-col overflow-hidden bg-crm-bg [text-rendering:geometricPrecision]"
   >
     <div class="min-h-0 flex-1 overflow-y-auto">
@@ -415,6 +524,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { createResource, usePageMeta } from 'frappe-ui'
 import dayjs from 'dayjs'
 import LucideUsers from '~icons/lucide/users'
@@ -439,6 +549,7 @@ import { getSettings } from '@/stores/settings'
 import { ASTRA_FAVICON } from '@/assets/brand'
 
 const { brand } = getSettings()
+const isMobile = useMediaQuery('(max-width: 639px)')
 const period = ref('today')
 const periodOptions = [
   { value: 'today', label: __('Today') },
@@ -462,6 +573,36 @@ const dateLabel = computed(() => {
   if (!raw) return ''
   return formatDate(raw, 'dddd D MMM') + ' · ' + __('showing your records')
 })
+
+const mobileDateLabel = computed(() => {
+  const raw = summary.data?.date
+  if (!raw) return ''
+  return formatDate(raw, 'ddd D MMM') + ' · ' + __('your records')
+})
+
+const mobileTodayRows = computed(() => {
+  const open = todayRows.value.filter((r) => r.now || !isDone(r.item))
+  const out = []
+  let items = 0
+  for (const row of open) {
+    if (!row.now && items >= 3) continue
+    out.push(row)
+    if (!row.now) items++
+  }
+  return out
+})
+const mobileDeadlines = computed(() => deadlines.value.slice(0, 2))
+
+function mobileKpiValue(kpi) {
+  if (kpi.value_is_currency) return formatCompactCurrency(kpi.value)
+  return String(kpi.value ?? 0)
+}
+
+function mobileKpiSub(kpi) {
+  if (kpi.id === 'open_leads' && kpi.delta) return __('{0} new', [kpi.delta])
+  if (kpi.id === 'open_pipeline' && kpi.deal_count) return __('{0} deals', [kpi.deal_count])
+  return (kpi.subtitle || '').split(' · ')[0]
+}
 
 const visibleKpis = computed(() => summary.data?.kpis || [])
 const pipelineGroups = computed(() => summary.data?.pipeline || [])

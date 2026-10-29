@@ -118,19 +118,6 @@
     ],
     "today": [
       {
-        "name": "TASK-0001",
-        "title": "Send revised quote",
-        "time_label": "09:30",
-        "sub_label": "Done",
-        "badge": "Done",
-        "badge_tone": "success",
-        "done": true,
-        "status": "Done",
-        "due_date": "2026-10-28 09:30:00",
-        "record_label": "Lumen Logistics · Deal",
-        "kind": "task"
-      },
-      {
         "name": "TASK-0002",
         "title": "Call back Meera Iyer",
         "time_label": "11:00",
@@ -140,7 +127,7 @@
         "overdue": true,
         "status": "Todo",
         "due_date": "2026-10-28 11:00:00",
-        "record_label": "Brightpath Schools · Lead · asked for pricing",
+        "record_label": "Brightpath Schools · Lead",
         "kind": "task"
       },
       {
@@ -152,20 +139,8 @@
         "badge_tone": "info",
         "status": "Todo",
         "due_date": "2026-10-28 12:30:00",
-        "record_label": "Kaveri Foods · Deal · Demo/Making",
+        "record_label": "Kaveri Foods · Deal",
         "kind": "task"
-      },
-      {
-        "name": "EVT-0001",
-        "title": "Negotiation call · Lumen Logistics",
-        "time_label": "14:00",
-        "sub_label": "45 min",
-        "badge": "Meeting",
-        "badge_tone": "mute",
-        "kind": "meeting",
-        "due_date": "2026-10-28 14:00:00",
-        "starts_on": "2026-10-28 14:00:00",
-        "record_label": "Arjun Kapoor, Sana Qureshi"
       },
       {
         "name": "TASK-0004",
@@ -176,19 +151,7 @@
         "badge_tone": "warning",
         "status": "Todo",
         "due_date": "2026-10-28 16:00:00",
-        "record_label": "New lead · Website · Hot",
-        "kind": "task"
-      },
-      {
-        "name": "TASK-0005",
-        "title": "Update next step on Northwind Retail",
-        "time_label": "17:30",
-        "sub_label": "",
-        "badge": "Today",
-        "badge_tone": "mute",
-        "status": "Todo",
-        "due_date": "2026-10-28 17:30:00",
-        "record_label": "Deal · Proposal/Quotation",
+        "record_label": "New lead · Hot",
         "kind": "task"
       }
     ],
@@ -207,7 +170,7 @@
         "kind": "Rolling response",
         "mobile_no": "+91 98•• ••• 412",
         "temperature": "Hot",
-        "sub_label": "Brightpath Schools · Rolling response",
+        "sub_label": "Rolling response",
         "route": {
           "name": "Lead",
           "params": {
@@ -229,33 +192,11 @@
         "kind": "First response",
         "mobile_no": "+91 99•• ••• 130",
         "temperature": "Hot",
-        "sub_label": "Website form · 09:58 · First response",
+        "sub_label": "First response",
         "route": {
           "name": "Lead",
           "params": {
             "leadId": "LEAD-TB"
-          }
-        }
-      },
-      {
-        "name": "LEAD-FS",
-        "title": "Farah Shaikh",
-        "organization": "Saffron Studio",
-        "status": "New",
-        "source": "Referral",
-        "sla_status": "First Response Due",
-        "response_by": "2026-10-28 12:47:00",
-        "label": "due in 1 h 05 m",
-        "label_short": "in 1 h 05 m",
-        "state": "due",
-        "kind": "First response",
-        "mobile_no": "+91 98•• ••• 877",
-        "temperature": "Warm",
-        "sub_label": "Referral · First response",
-        "route": {
-          "name": "Lead",
-          "params": {
-            "leadId": "LEAD-FS"
           }
         }
       }
