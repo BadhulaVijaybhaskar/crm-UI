@@ -70,7 +70,7 @@
       <span class="flex-1" />
       <button
         type="button"
-        class="inline-flex h-7 items-center gap-1.5 rounded-[7px] px-2.5 text-crm-label font-medium text-crm-muted-fg hover:bg-crm-muted"
+        class="inline-flex h-7 items-center gap-[7px] rounded-[7px] px-2.5 text-[12.5px] font-medium text-crm-muted-fg hover:bg-crm-muted"
         @click="preview = !preview"
       >
         <Icon :icon="preview ? 'pencil' : 'eye'" class="size-3.5" />
@@ -78,8 +78,8 @@
       </button>
     </div>
 
-    <div class="flex min-h-0 flex-1 gap-4 overflow-hidden px-crm-page-x pb-6">
-      <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
+    <div class="flex items-stretch gap-4 px-crm-page-x pb-6">
+      <div class="min-w-0 flex-1">
         <div
           v-if="tabs.loading"
           class="py-16 text-center text-crm-body text-crm-muted-fg"
@@ -116,7 +116,7 @@
 
       <aside
         v-if="selectedField && !preview"
-        class="panel hidden w-[300px] shrink-0 self-start overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card lg:block"
+        class="panel hidden w-[300px] shrink-0 overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card lg:block"
       >
         <div
           class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
@@ -159,7 +159,7 @@
             >
               <span
                 class="absolute top-0.5 size-3.5 rounded-full bg-white transition-[left]"
-                :class="showInQuickEntry ? 'left-3.5' : 'left-0.5'"
+                :class="showInQuickEntry ? 'left-[14px]' : 'left-0.5'"
               />
             </button>
             {{ __('Show in quick entry') }}
@@ -175,7 +175,7 @@
             >
               <span
                 class="absolute top-0.5 size-3.5 rounded-full bg-white transition-[left]"
-                :class="isMandatory ? 'left-3.5' : 'left-0.5'"
+                :class="isMandatory ? 'left-[14px]' : 'left-0.5'"
               />
             </button>
             {{ __('Mandatory') }}
@@ -193,7 +193,7 @@
             >
               <span
                 class="absolute top-0.5 size-3.5 rounded-full bg-white transition-[left]"
-                :class="showInSidePanel ? 'left-3.5' : 'left-0.5'"
+                :class="showInSidePanel ? 'left-[14px]' : 'left-0.5'"
               />
             </button>
             {{ __('Show in side panel') }}
@@ -208,7 +208,7 @@
       </aside>
       <aside
         v-else
-        class="hidden w-[300px] shrink-0 flex-col gap-3 lg:flex"
+        class="hidden w-[300px] shrink-0 flex-col gap-3 self-start lg:flex"
       >
         <div
           class="flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
