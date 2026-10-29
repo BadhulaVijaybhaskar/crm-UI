@@ -161,7 +161,7 @@
               >
                 {{ initialsFrom(personName(item)) }}
               </span>
-              <div class="flex min-w-0 flex-col pt-0.5 leading-[1.3]">
+              <div class="relative -left-[0.5px] flex min-w-0 flex-col pt-0.5 leading-[1.3]">
                 <b class="truncate text-[12.5px] font-semibold text-crm-fg">
                   {{ personName(item) }}
                 </b>

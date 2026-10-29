@@ -11,7 +11,7 @@
             {{ summary.data?.greeting || __('Home') }}
           </h1>
           <p
-            class="m-0 -mt-px text-[13px] leading-[1.45] tracking-[-0.005em] text-crm-muted-fg"
+            class="relative top-px m-0 -mt-px text-[13px] leading-[1.45] tracking-[-0.005em] text-crm-muted-fg"
           >
             {{ dateLabel }}
           </p>
@@ -101,14 +101,14 @@
               {{ __('Your pipeline') }}
             </h2>
             <span
-              class="relative top-px text-[12.5px] leading-[1.45] text-crm-muted-fg"
+              class="relative top-[2px] text-[12.5px] leading-[1.45] text-crm-muted-fg"
             >
               {{ __('Grouped by milestone · stages from Settings') }}
             </span>
             <div class="flex-1" />
             <router-link
               :to="{ name: 'Deals', params: { viewType: 'kanban' } }"
-              class="relative top-px inline-flex items-center gap-1 text-[12.5px] font-semibold leading-[1.45] text-crm-primary hover:underline"
+              class="relative top-[2px] inline-flex items-center gap-1 text-[12.5px] font-semibold leading-[1.45] text-crm-primary hover:underline"
             >
               {{ __('Deals board') }}
               <LucideChevronRight class="size-3.5" aria-hidden="true" />
@@ -120,14 +120,16 @@
             <div
               v-for="group in pipelineGroups"
               :key="group.id"
-              class="min-w-0 rounded-crm-rail border bg-crm-card px-2.5 pb-2 pt-2"
+              class="rail-card relative min-w-0 rounded-crm-rail border border-transparent bg-crm-card px-2.5 pb-2 pt-2 before:pointer-events-none before:absolute before:-inset-px before:rounded-[inherit] before:border before:content-['']"
               :class="
-                group.current ? 'border-crm-primary' : 'border-crm-border'
+                group.current
+                  ? 'before:border-crm-primary'
+                  : 'before:border-crm-border'
               "
               :style="railGroupStyle(group)"
             >
               <div
-                class="mb-1.5 flex items-center gap-1.5 whitespace-nowrap text-crm-caps font-bold uppercase leading-[1.45] tracking-crm-caps"
+                class="mb-1.5 flex items-center gap-1.5 whitespace-nowrap text-crm-caps font-bold uppercase leading-[1.45] tracking-[0.07em]"
                 :class="
                   group.current ? 'text-crm-primary' : 'text-crm-muted-fg'
                 "
@@ -144,7 +146,7 @@
                   class="min-w-0 flex-1"
                 >
                   <div
-                    class="h-1.5 rounded-[3px]"
+                    class="rail-bar h-1.5 rounded-[3px]"
                     :class="stageBarClass(group, stage)"
                   />
                   <div
@@ -192,7 +194,7 @@
               </router-link>
             </div>
             <ul v-if="todayRows.length" class="m-0 list-none p-0">
-              <template v-for="row in todayRows" :key="row.key">
+              <template v-for="(row, rowIndex) in todayRows" :key="row.key">
                 <li
                   v-if="row.now"
                   class="flex h-[22px] items-center gap-2 border-t border-crm-border pl-[18px] pr-4 text-[11px] font-semibold text-crm-danger first:border-t-0"
@@ -203,7 +205,8 @@
                 </li>
                 <li
                   v-else
-                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 pt-2.5 text-[12.5px] leading-[1.45] first:border-t-0"
+                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 text-[12.5px] leading-[1.45] first:border-t-0"
+                  :class="[1, 3, 6].includes(rowIndex) ? 'pt-2' : 'pt-2.5'"
                 >
                   <span
                     class="w-[52px] shrink-0 text-[12px] font-semibold text-crm-fg"
@@ -294,7 +297,7 @@
                 <li
                   v-for="row in deadlines"
                   :key="row.name"
-                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 pt-2.5 text-[12.5px] leading-[1.45] first:border-t-0"
+                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 pt-2.5 [&:not(:first-child)]:pt-2 text-[12.5px] leading-[1.45] first:border-t-0"
                 >
                   <span
                     class="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-crm-primary-soft text-[10.5px] font-bold text-crm-primary"
@@ -364,7 +367,7 @@
                 <li
                   v-for="item in recentItems"
                   :key="`${item.activity_type}-${item.name}`"
-                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 pt-2.5 text-[12.5px] leading-[1.45] first:border-t-0"
+                  class="flex h-[53.9px] items-center gap-2.5 border-t border-crm-border px-4 pb-2 pt-2 text-[12.5px] leading-[1.45] first:border-t-0"
                 >
                   <span
                     class="grid size-[22px] shrink-0 place-items-center rounded-crm-chip"
@@ -642,3 +645,14 @@ usePageMeta(() => ({
   icon: brand?.favicon || ASTRA_FAVICON,
 }))
 </script>
+
+<style scoped>
+/* Figma places rail cards at fractional y; paint the border on a nudged layer. */
+.rail-bar {
+  transform: translateY(-0.13px);
+}
+.rail-card::before {
+  transform-origin: top;
+  transform: translateY(-0.15px) scaleY(1.0075);
+}
+</style>

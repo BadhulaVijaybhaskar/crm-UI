@@ -57,14 +57,21 @@
             />
           </SidebarItem>
 
-          <section v-for="section in navSections" :key="section.id">
+          <section
+            v-for="section in navSections"
+            :key="section.id"
+            :class="!mobile && NAV_SECTION_NUDGE[section.id]"
+          >
             <div
               v-if="!section.hideLabel && !isCollapsed"
               class="px-5 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[color:var(--crm-nav-faint)]"
             >
               {{ __(section.label) }}
             </div>
-            <nav class="flex flex-col gap-px px-2.5 py-1.5">
+            <nav
+              class="flex flex-col gap-px px-2.5 py-1.5"
+              :class="!mobile && section.id === 'connect' && 'pt-[7px]'"
+            >
               <AstraNavItem
                 v-for="link in section.views"
                 :key="link.key"
@@ -159,7 +166,10 @@
             </template>
           </SidebarItem>
 
-          <nav class="flex flex-col gap-px px-2.5 py-1.5">
+          <nav
+            class="flex flex-col gap-px px-2.5 pt-1.5"
+            :class="mobile ? 'pb-1.5' : 'pb-2'"
+          >
             <AstraNavItem
               v-for="link in footerLinks"
               :key="link.key"
@@ -226,6 +236,7 @@
 </template>
 
 <script setup>
+const NAV_SECTION_NUDGE = { activity: 'mt-px', insights: 'mt-px' }
 import BrushCleaningIcon from '~icons/lucide/brush-cleaning'
 import CRMLogo from '@/components/Icons/CRMLogo.vue'
 import InviteIcon from '@/components/Icons/InviteIcon.vue'
