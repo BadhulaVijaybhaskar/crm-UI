@@ -44,7 +44,7 @@
                 <template #trigger="{ open, setOpen }">
                   <button
                     type="button"
-                    class="inline-flex items-center gap-1 px-1 text-crm-label font-semibold text-crm-primary"
+                    class="inline-flex items-center gap-1 text-[12.5px] font-semibold text-crm-primary"
                     @click="setOpen(!open)"
                   >
                     <Icon icon="plus" class="size-3.5" />
@@ -52,20 +52,6 @@
                   </button>
                 </template>
               </Combobox>
-              <Dropdown
-                v-if="menuFor(section).length"
-                :options="menuFor(section)"
-              >
-                <template #default>
-                  <button
-                    type="button"
-                    class="inline-flex size-7 items-center justify-center rounded-crm-chip text-crm-faint hover:bg-crm-muted"
-                    :aria-label="__('Section actions')"
-                  >
-                    <Icon icon="more-horizontal" class="size-4" />
-                  </button>
-                </template>
-              </Dropdown>
             </div>
           </header>
           <div class="grid grid-cols-2 gap-2 px-3.5 py-3">
@@ -121,10 +107,10 @@
     </Draggable>
     <button
       type="button"
-      class="flex h-11 items-center justify-center gap-1.5 rounded-crm-control border border-dashed border-crm-border-strong text-crm-label font-semibold text-crm-primary hover:bg-crm-primary-soft"
+      class="flex h-[42px] items-center justify-center gap-2 rounded-crm-card border border-dashed border-crm-border-strong text-[12.5px] font-semibold text-crm-primary hover:bg-crm-primary-soft"
       @click="addSection"
     >
-      <Icon icon="plus" class="size-4" />
+      <Icon icon="plus" class="size-3.5" />
       {{ __('Add section') }}
     </button>
   </div>
@@ -134,7 +120,7 @@
 import DragVerticalIcon from '@/components/Icons/DragVerticalIcon.vue'
 import Icon from '@/components/Icon.vue'
 import { getRandom } from '@/utils'
-import { Combobox, Dropdown } from 'frappe-ui'
+import { Combobox } from 'frappe-ui'
 import Draggable from 'vuedraggable'
 import { watch } from 'vue'
 
