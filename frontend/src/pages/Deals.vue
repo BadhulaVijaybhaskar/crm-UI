@@ -297,7 +297,7 @@ const displayFilterChips = computed(() => {
       key: __(c.key || c.label),
       value: c.value,
       fieldname: c.fieldname,
-      active: true,
+      active: c.active === true,
       trailing: c.trailing || 'dismiss',
     }))
   }
