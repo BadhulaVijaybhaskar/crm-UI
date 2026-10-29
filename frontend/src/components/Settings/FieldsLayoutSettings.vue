@@ -9,7 +9,7 @@
         <AstraButton
           size="sm"
           :label="__('Discard')"
-          :disabled="!dirty || saving"
+          :disabled="saving"
           @click="reload"
         />
         <AstraButton
@@ -17,7 +17,7 @@
           variant="primary"
           :label="__('Save layout')"
           :loading="saving"
-          :disabled="!dirty"
+          :disabled="saving"
           @click="save"
         />
       </template>
@@ -326,6 +326,7 @@ function params() {
 }
 
 function reload() {
+  if (saving.value) return
   tabs.params = params()
   tabs.reload()
 }
@@ -371,6 +372,7 @@ function serializeLayout(data) {
 }
 
 async function save() {
+  if (!dirty.value || saving.value) return
   if (!isAdmin()) {
     toast.error(__('Only Admin can save fields layout'))
     return

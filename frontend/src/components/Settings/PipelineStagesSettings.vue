@@ -13,7 +13,7 @@
         <AstraButton
           size="sm"
           :label="__('Discard')"
-          :disabled="!dirty || saving"
+          :disabled="saving"
           @click="discard"
         />
         <AstraButton
@@ -21,7 +21,7 @@
           variant="primary"
           :label="__('Save changes')"
           :loading="saving"
-          :disabled="!dirty"
+          :disabled="saving"
           @click="save"
         />
       </template>
@@ -661,6 +661,7 @@ async function confirmDelete() {
 }
 
 function discard() {
+  if (!dirty.value || saving.value) return
   draft.value = JSON.parse(JSON.stringify(original.value))
   selectedKey.value = null
 }
@@ -677,6 +678,7 @@ function payload() {
 }
 
 async function save() {
+  if (!dirty.value || saving.value) return
   saving.value = true
   try {
     await call('crm.api.pipeline_stages.save_pipeline_stages', {
