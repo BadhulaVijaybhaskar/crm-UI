@@ -19,10 +19,10 @@
           <span class="leading-none text-crm-muted-fg">{{
             filter.key || filter.label
           }}</span>
-          <!-- Figma .fchip b — semibold fg (not primary), even when .on -->
           <span
             v-if="filter.value"
-            class="leading-none font-semibold text-crm-fg"
+            class="leading-none font-semibold"
+            :class="filter.active ? 'text-crm-primary' : 'text-crm-fg'"
           >
             {{ filter.value }}
           </span>
