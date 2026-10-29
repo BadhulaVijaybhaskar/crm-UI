@@ -129,11 +129,23 @@
                         class="size-2.5 shrink-0 rounded-[3px]"
                         :style="stageColourStyle(stage.color, stage.label)"
                       />
+                      <!-- Figma 21 rows use static <b>, not an input shell -->
+                      <span
+                        v-if="editingKey !== stage._key"
+                        class="min-w-0 flex-1 truncate text-[12.5px] font-semibold leading-[1.45] text-crm-fg"
+                        @click.stop="editingKey = stage._key"
+                        @dblclick.stop="editingKey = stage._key"
+                      >
+                        {{ stage.label || __('Stage name') }}
+                      </span>
                       <input
+                        v-else
                         v-model="stage.label"
-                        class="h-7 min-w-0 flex-1 border-0 bg-transparent p-0 text-crm-label font-semibold text-crm-fg shadow-none outline-none ring-0 focus:border-0 focus:outline-none focus:ring-0"
+                        class="h-[18px] min-w-0 flex-1 border-0 bg-transparent p-0 text-[12.5px] font-semibold leading-[1.45] text-crm-fg shadow-none outline-none ring-0 focus:border-0 focus:outline-none focus:ring-0"
                         :placeholder="__('Stage name')"
                         @click.stop
+                        @blur="editingKey = null"
+                        @keydown.enter="editingKey = null"
                       />
                     </label>
                     <label
@@ -429,6 +441,7 @@ const showRemap = ref(false)
 const pendingDelete = ref(null)
 const remapTo = ref('')
 const selectedKey = ref(null)
+const editingKey = ref(null)
 let keySeq = 0
 
 const { dealStatuses, leadStatuses } = statusesStore()
