@@ -117,6 +117,12 @@ async function runTheme({ screen, theme, origin, browser }) {
     },
     animations: 'disabled',
   })
+  // Keep a stable copy — parallel parity runners may unlink _tmp-* mid-flight.
+  const shotKeep = path.join(
+    PATHS.artifacts,
+    `${screen.id}-${theme}-built-keep.png`,
+  )
+  fs.copyFileSync(shotPath, shotKeep)
 
   const masks = await resolveMasks(page, screen)
   await context.close()
@@ -125,7 +131,7 @@ async function runTheme({ screen, theme, origin, browser }) {
   const tripletPath = path.join(PATHS.artifacts, `${screen.id}-${theme}.png`)
 
   const result = compareImages({
-    builtPath: shotPath,
+    builtPath: shotKeep,
     figmaPath,
     outTripletPath: tripletPath,
     masks,
@@ -150,9 +156,9 @@ async function runTheme({ screen, theme, origin, browser }) {
     })
     // Unedited HTML ↔ PNG (disagreement / MCP floor). Never edit the HTML.
     floorPct = realPercent(srcPath, figmaPath, masks)
-    realVsHtmlPct = realPercent(shotPath, srcPath, masks)
+    realVsHtmlPct = realPercent(shotKeep, srcPath, masks)
     try {
-      fs.unlinkSync(srcPath)
+      // fs.unlinkSync(srcPath) // keep for debug
     } catch {
       /* keep */
     }
@@ -185,7 +191,7 @@ async function runTheme({ screen, theme, origin, browser }) {
   }
 
   try {
-    fs.unlinkSync(shotPath)
+    // fs.unlinkSync(shotPath)
   } catch {
     /* keep */
   }
