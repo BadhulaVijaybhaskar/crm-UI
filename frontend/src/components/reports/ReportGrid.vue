@@ -188,13 +188,16 @@ function onLayout(newLayout) {
 
 :deep(.vgl-item--dragging) .report-tile-drag-ghost,
 .report-tile-drag-ghost {
-  /* Card sits inset in the soft slot with a slight tip + primary ring */
+  /*
+   * Figma 17 mid-drag: card fills the slot then shifts down-right so the
+   * soft dashed home-slot shows along the top/left and the card overhangs.
+   */
   position: absolute;
-  inset: 8px;
+  inset: 0;
   z-index: 2;
   width: auto;
   height: auto;
-  transform: rotate(-0.6deg);
+  transform: translate(10px, 22px) rotate(-0.6deg);
   box-shadow: var(
     --crm-shadow-tile-drag,
     0 14px 30px rgba(4, 20, 27, 0.2),
