@@ -616,7 +616,7 @@ function buildGetData(fixture, doctype, viewsPayload, request = {}) {
               to: 'Negotiation',
               // HTML absolute left: 916 inside .main (x=240) → viewport 916 for fixed.
               left: 916,
-              top: 448,
+              top: 439,
               width: 178,
               insert_after: 0,
               label: 'Moving to Negotiation · 70%',
