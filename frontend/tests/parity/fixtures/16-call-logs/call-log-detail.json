@@ -1,46 +1,6 @@
 {
-  "doctype": "CRM Call Log",
-  "total_count": 214,
-  "columns": [
-    {
-      "label": "Contact",
-      "type": "Data",
-      "key": "contact_name",
-      "width": "14rem"
-    },
-    {
-      "label": "Status",
-      "type": "Select",
-      "key": "status",
-      "width": "8rem"
-    },
-    {
-      "label": "Duration",
-      "type": "Duration",
-      "key": "duration",
-      "width": "8rem"
-    },
-    {
-      "label": "Outcome",
-      "type": "Data",
-      "key": "outcome",
-      "width": "14rem"
-    },
-    {
-      "label": "Disposition",
-      "type": "Data",
-      "key": "disposition",
-      "width": "10rem"
-    },
-    {
-      "label": "Started",
-      "type": "Datetime",
-      "key": "start_time",
-      "width": "10rem"
-    }
-  ],
-  "rows": [
-    {
+  "CALL-1": {
+    "message": {
       "name": "CALL-1",
       "contact_name": "Arjun Kapoor",
       "record_label": "Lumen Logistics · Deal",
@@ -67,8 +27,10 @@
       "summary": "Agreed on 120 vehicles in phase 1. Wants 3-year pricing and a 30-day pilot clause. Decision with CFO by 5 Nov.",
       "has_recording": true,
       "started_detail": "Today 09:14 · 6 m 12 s"
-    },
-    {
+    }
+  },
+  "CALL-2": {
+    "message": {
       "name": "CALL-2",
       "contact_name": "Tarun Bhatia",
       "record_label": "Pinecrest Hotels · Deal",
@@ -85,9 +47,13 @@
       "creation": "2026-10-28 08:30:00",
       "started_label": "Today 08:30",
       "caller": null,
-      "receiver": "rohan.mehta@example.com"
-    },
-    {
+      "receiver": "rohan.mehta@example.com",
+      "summary": null,
+      "qualified": false
+    }
+  },
+  "CALL-3": {
+    "message": {
       "name": "CALL-3",
       "contact_name": "Ayesha Dsouza",
       "record_label": "Cedar Clinics · Lead",
@@ -104,9 +70,13 @@
       "creation": "2026-10-27 17:10:00",
       "started_label": "Yesterday 17:10",
       "caller": "rohan.mehta@example.com",
-      "receiver": null
-    },
-    {
+      "receiver": null,
+      "summary": null,
+      "qualified": false
+    }
+  },
+  "CALL-4": {
+    "message": {
       "name": "CALL-4",
       "contact_name": "Karthik Rao",
       "record_label": "Kaveri Foods · Deal",
@@ -123,9 +93,13 @@
       "creation": "2026-10-27 15:02:00",
       "started_label": "Yesterday 15:02",
       "caller": "rohan.mehta@example.com",
-      "receiver": null
-    },
-    {
+      "receiver": null,
+      "summary": null,
+      "qualified": false
+    }
+  },
+  "CALL-5": {
+    "message": {
       "name": "CALL-5",
       "contact_name": "Meera Iyer",
       "record_label": "Brightpath Schools · Lead",
@@ -142,9 +116,13 @@
       "creation": "2026-10-26 16:20:00",
       "started_label": "26 Oct 16:20",
       "caller": "rohan.mehta@example.com",
-      "receiver": null
-    },
-    {
+      "receiver": null,
+      "summary": null,
+      "qualified": false
+    }
+  },
+  "CALL-6": {
+    "message": {
       "name": "CALL-6",
       "contact_name": "Vikram Sethi",
       "record_label": "Orbit Pharma · Lead",
@@ -161,9 +139,13 @@
       "creation": "2026-10-25 11:45:00",
       "started_label": "25 Oct 11:45",
       "caller": "rohan.mehta@example.com",
-      "receiver": null
-    },
-    {
+      "receiver": null,
+      "summary": null,
+      "qualified": false
+    }
+  },
+  "CALL-7": {
+    "message": {
       "name": "CALL-7",
       "contact_name": "Lakshmi Narayan",
       "record_label": "Vista Interiors · Deal",
@@ -180,9 +162,13 @@
       "creation": "2026-10-25 10:05:00",
       "started_label": "25 Oct 10:05",
       "caller": "rohan.mehta@example.com",
-      "receiver": null
-    },
-    {
+      "receiver": null,
+      "summary": null,
+      "qualified": false
+    }
+  },
+  "CALL-8": {
+    "message": {
       "name": "CALL-8",
       "contact_name": "Sneha Reddy",
       "record_label": "Bluewave Travel · Deal",
@@ -199,9 +185,13 @@
       "creation": "2026-10-23 14:30:00",
       "started_label": "23 Oct 14:30",
       "caller": null,
-      "receiver": "rohan.mehta@example.com"
-    },
-    {
+      "receiver": "rohan.mehta@example.com",
+      "summary": null,
+      "qualified": false
+    }
+  },
+  "CALL-9": {
+    "message": {
       "name": "CALL-9",
       "contact_name": "Imran Khan",
       "record_label": "Coastal Cement · Deal",
@@ -218,9 +208,13 @@
       "creation": "2026-10-18 12:00:00",
       "started_label": "18 Oct 12:00",
       "caller": "rohan.mehta@example.com",
-      "receiver": null
-    },
-    {
+      "receiver": null,
+      "summary": null,
+      "qualified": false
+    }
+  },
+  "CALL-10": {
+    "message": {
       "name": "CALL-10",
       "contact_name": "Rahul Gupta",
       "record_label": "Harbor Freight Co · Deal",
@@ -237,14 +231,9 @@
       "creation": "2026-10-17 16:40:00",
       "started_label": "17 Oct 16:40",
       "caller": "rohan.mehta@example.com",
-      "receiver": null
+      "receiver": null,
+      "summary": null,
+      "qualified": false
     }
-  ],
-  "footer": {
-    "shown": 10,
-    "total": 214,
-    "range": "last 30 days",
-    "avg_duration": "5 m 52 s",
-    "qualified": 31
   }
 }
