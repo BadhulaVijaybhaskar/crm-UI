@@ -14,7 +14,8 @@
       "load_default_columns": 1,
       "pinned": 0,
       "public": 0,
-      "user": "rohan.mehta@example.com"
+      "user": "priya.nair@example.com",
+      "parity_count": 386
     },
     {
       "name": "on-my-deals",
@@ -28,8 +29,7 @@
       "columns": [],
       "rows": [],
       "load_default_columns": 1,
-      "pinned": 0,
-      "public": 0
+      "parity_count": 24
     },
     {
       "name": "no-email",
@@ -43,8 +43,7 @@
       "columns": [],
       "rows": [],
       "load_default_columns": 1,
-      "pinned": 0,
-      "public": 0
+      "parity_count": 17
     }
   ]
 }

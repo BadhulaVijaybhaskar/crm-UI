@@ -1,0 +1,321 @@
+{
+  "message": {
+    "data": [
+      {
+        "name": "CONTACT-SQ",
+        "full_name": "Sana Qureshi",
+        "designation": "Procurement lead",
+        "company_name": "Lumen Logistics",
+        "email": "sana.q@example.in",
+        "mobile_no": "+91 99\u2022\u2022 \u2022\u2022\u2022 731",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b912.4 L",
+        "open_deals_count": 1,
+        "open_deals_value": 1240000,
+        "last_activity": "Email \u00b7 today"
+      },
+      {
+        "name": "CONTACT-AK",
+        "full_name": "Arjun Kapoor",
+        "designation": "Head of Operations",
+        "company_name": "Lumen Logistics",
+        "email": "arjun.k@example.in",
+        "mobile_no": "+91 97\u2022\u2022 \u2022\u2022\u2022 208",
+        "channels": "WhatsApp",
+        "open_deals": "1 \u00b7 \u20b912.4 L",
+        "open_deals_count": 1,
+        "open_deals_value": 1240000,
+        "last_activity": "Call \u00b7 today"
+      },
+      {
+        "name": "CONTACT-KR",
+        "full_name": "Karthik Rao",
+        "designation": "Founder",
+        "company_name": "Kaveri Foods",
+        "email": "karthik@example.in",
+        "mobile_no": "+91 98\u2022\u2022 \u2022\u2022\u2022 019",
+        "channels": "WhatsApp",
+        "open_deals": "1 \u00b7 \u20b96.4 L",
+        "open_deals_count": 1,
+        "open_deals_value": 640000,
+        "last_activity": "Call \u00b7 yesterday"
+      },
+      {
+        "name": "CONTACT-NA",
+        "full_name": "Neha Agarwal",
+        "designation": "IT manager",
+        "company_name": "Northwind Retail",
+        "email": "neha.a@example.in",
+        "mobile_no": "+91 90\u2022\u2022 \u2022\u2022\u2022 552",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b97.2 L",
+        "open_deals_count": 1,
+        "open_deals_value": 720000,
+        "last_activity": "Note \u00b7 22 Oct"
+      },
+      {
+        "name": "CONTACT-TB",
+        "full_name": "Tarun Bhatia",
+        "designation": "GM",
+        "company_name": "Pinecrest Hotels",
+        "email": "tarun.b@example.in",
+        "mobile_no": "+91 96\u2022\u2022 \u2022\u2022\u2022 300",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b94.3 L",
+        "open_deals_count": 1,
+        "open_deals_value": 430000,
+        "last_activity": "Email \u00b7 today"
+      },
+      {
+        "name": "CONTACT-VS",
+        "full_name": "Vikram Sethi",
+        "designation": "VP Sales",
+        "company_name": "Orbit Pharma",
+        "email": "vikram.s@example.in",
+        "mobile_no": "+91 98\u2022\u2022 \u2022\u2022\u2022 845",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b99.0 L",
+        "open_deals_count": 1,
+        "open_deals_value": 900000,
+        "last_activity": "Email \u00b7 19 Oct"
+      },
+      {
+        "name": "CONTACT-HP",
+        "full_name": "Hina Patel",
+        "designation": "Dealer ops",
+        "company_name": "Silverline Motors",
+        "email": "hina.p@example.in",
+        "mobile_no": "+91 93\u2022\u2022 \u2022\u2022\u2022 117",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b95.5 L",
+        "open_deals_count": 1,
+        "open_deals_value": 550000,
+        "last_activity": "Email \u00b7 24 Oct"
+      },
+      {
+        "name": "CONTACT-SR",
+        "full_name": "Sneha Reddy",
+        "designation": "Partner manager",
+        "company_name": "Bluewave Travel",
+        "email": "sneha.r@example.in",
+        "mobile_no": "+91 95\u2022\u2022 \u2022\u2022\u2022 640",
+        "channels": "WhatsApp",
+        "open_deals": "1 \u00b7 \u20b93.6 L",
+        "open_deals_count": 1,
+        "open_deals_value": 360000,
+        "last_activity": "Meeting \u00b7 23 Oct"
+      },
+      {
+        "name": "CONTACT-RG",
+        "full_name": "Rahul Gupta",
+        "designation": "COO",
+        "company_name": "Harbor Freight Co",
+        "email": "rahul.g@example.in",
+        "mobile_no": "+91 91\u2022\u2022 \u2022\u2022\u2022 288",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b98.1 L",
+        "open_deals_count": 1,
+        "open_deals_value": 810000,
+        "last_activity": "Email \u00b7 26 Oct"
+      },
+      {
+        "name": "CONTACT-LN",
+        "full_name": "Lakshmi Narayan",
+        "designation": "Owner",
+        "company_name": "Vista Interiors",
+        "email": "lakshmi@example.in",
+        "mobile_no": "+91 94\u2022\u2022 \u2022\u2022\u2022 903",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b94.8 L",
+        "open_deals_count": 1,
+        "open_deals_value": 475000,
+        "last_activity": "Call \u00b7 25 Oct"
+      },
+      {
+        "name": "CONTACT-PJ",
+        "full_name": "Pooja Joshi",
+        "designation": "Buyer",
+        "company_name": "Greenleaf Organics",
+        "email": "pooja.j@example.in",
+        "mobile_no": "+91 92\u2022\u2022 \u2022\u2022\u2022 476",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b92.1 L",
+        "open_deals_count": 1,
+        "open_deals_value": 210000,
+        "last_activity": "Email \u00b7 yesterday"
+      },
+      {
+        "name": "CONTACT-MA",
+        "full_name": "Mohan Arora",
+        "designation": "CFO",
+        "company_name": "Lumen Logistics",
+        "email": "mohan.a@example.in",
+        "mobile_no": "\u2014",
+        "channels": "",
+        "open_deals": "\u2014",
+        "open_deals_count": 0,
+        "open_deals_value": 0,
+        "last_activity": "\u2014"
+      },
+      {
+        "name": "CONTACT-DK",
+        "full_name": "Divya Krishnan",
+        "designation": "Admin head",
+        "company_name": "Kaveri Foods",
+        "email": "divya.k@example.in",
+        "mobile_no": "+91 99\u2022\u2022 \u2022\u2022\u2022 061",
+        "channels": "",
+        "open_deals": "\u2014",
+        "open_deals_count": 0,
+        "open_deals_value": 0,
+        "last_activity": "Email \u00b7 12 Oct"
+      },
+      {
+        "name": "CONTACT-AS",
+        "full_name": "Amit Shah",
+        "designation": "Purchase",
+        "company_name": "Coastal Cement",
+        "email": "amit.s@example.in",
+        "mobile_no": "+91 98\u2022\u2022 \u2022\u2022\u2022 330",
+        "channels": "",
+        "open_deals": "1 \u00b7 \u20b93.2 L",
+        "open_deals_count": 1,
+        "open_deals_value": 320000,
+        "last_activity": "Call \u00b7 18 Oct"
+      }
+    ],
+    "columns": [
+      {
+        "label": "Name",
+        "type": "Data",
+        "key": "full_name",
+        "width": "14rem"
+      },
+      {
+        "label": "Company",
+        "type": "Data",
+        "key": "company_name",
+        "width": "10rem"
+      },
+      {
+        "label": "Email",
+        "type": "Data",
+        "key": "email",
+        "width": "11rem"
+      },
+      {
+        "label": "Mobile",
+        "type": "Data",
+        "key": "mobile_no",
+        "width": "9rem"
+      },
+      {
+        "label": "Channels",
+        "type": "Data",
+        "key": "channels",
+        "width": "7rem"
+      },
+      {
+        "label": "Open deals",
+        "type": "Data",
+        "key": "open_deals",
+        "width": "8rem"
+      },
+      {
+        "label": "Last activity",
+        "type": "Data",
+        "key": "last_activity",
+        "width": "9rem"
+      }
+    ],
+    "rows": [
+      "full_name",
+      "company_name",
+      "email",
+      "mobile_no",
+      "channels",
+      "open_deals",
+      "last_activity",
+      "name",
+      "designation",
+      "open_deals_count",
+      "open_deals_value"
+    ],
+    "fields": [],
+    "column_field": null,
+    "title_field": "full_name",
+    "kanban_columns": [],
+    "kanban_fields": [],
+    "group_by_field": null,
+    "page_length": 20,
+    "page_length_count": 20,
+    "is_default": 1,
+    "views": [
+      {
+        "name": "all-contacts",
+        "label": "All contacts",
+        "route_name": "Contacts",
+        "doctype": "Contact",
+        "type": "list",
+        "is_standard": 1,
+        "is_default": 1,
+        "filters": [],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "pinned": 0,
+        "public": 0,
+        "user": "priya.nair@example.com",
+        "parity_count": 386
+      },
+      {
+        "name": "on-my-deals",
+        "label": "On my deals",
+        "route_name": "Contacts",
+        "doctype": "Contact",
+        "type": "list",
+        "is_standard": 1,
+        "is_default": 0,
+        "filters": [],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 24
+      },
+      {
+        "name": "no-email",
+        "label": "No email",
+        "route_name": "Contacts",
+        "doctype": "Contact",
+        "type": "list",
+        "is_standard": 1,
+        "is_default": 0,
+        "filters": [],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 17
+      }
+    ],
+    "total_count": 24,
+    "row_count": 14,
+    "form_script": "",
+    "list_script": "",
+    "view_type": "list",
+    "total_pages": 2,
+    "parity_filter_chips": [
+      {
+        "id": "company",
+        "key": "Company",
+        "value": "Any",
+        "trailing": "chevron",
+        "active": false
+      }
+    ],
+    "parity_footer": {
+      "left": "WhatsApp shows only for contacts with message history in Astra Connect \u00b7 1\u201314 of 24",
+      "right": ""
+    },
+    "parity_hover_keys": ["CONTACT-AK"]
+  }
+}

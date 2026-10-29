@@ -41,13 +41,19 @@
           v-for="row in rows"
           :key="rowKey(row)"
           class="cursor-pointer border-b border-crm-border hover:bg-crm-row-hover"
-          :class="{ 'bg-crm-row-selected': isSelected(row) }"
+          :class="{
+            'bg-crm-row-selected': isSelected(row),
+            'bg-crm-row-hover': isHovered(row) && !isSelected(row),
+          }"
           @click="$emit('row-click', row)"
         >
           <td
             v-if="selectable"
             class="h-crm-td w-[34px] px-2.5 text-center"
-            :class="{ 'bg-crm-row-selected': isSelected(row) }"
+            :class="{
+              'bg-crm-row-selected': isSelected(row),
+              'bg-crm-row-hover': isHovered(row) && !isSelected(row),
+            }"
             @click.stop
           >
             <AstraCheckbox
@@ -63,6 +69,7 @@
             :class="{
               'text-right': col.align === 'right',
               'bg-crm-row-selected': isSelected(row),
+              'bg-crm-row-hover': isHovered(row) && !isSelected(row),
             }"
           >
             <slot :name="`cell-${col.key}`" :row="row" :column="col">
@@ -86,6 +93,8 @@ const props = defineProps({
   rowKeyField: { type: String, default: 'id' },
   selectable: { type: Boolean, default: false },
   selectedKeys: { type: Array, default: () => [] },
+  /** Keys shown with row-hover (PNG parity snapshots often pin one .hov row). */
+  hoveredKeys: { type: Array, default: () => [] },
   emptyTitle: { type: String, default: 'No records' },
   emptyBody: {
     type: String,
@@ -103,6 +112,10 @@ function rowKey(row) {
 
 function isSelected(row) {
   return props.selectedKeys.includes(rowKey(row))
+}
+
+function isHovered(row) {
+  return props.hoveredKeys.includes(rowKey(row))
 }
 
 const allSelected = computed(
