@@ -1,10 +1,11 @@
 <template>
   <article
-    class="flex min-h-[118px] cursor-pointer flex-col gap-[7px] rounded-crm-card border bg-crm-card p-[10px_11px] text-[12px] transition-shadow"
+    class="flex cursor-pointer flex-col gap-[7px] rounded-crm-card border bg-crm-card p-[10px_11px] text-[12px] transition-shadow"
     :class="{
       // Figma .dc.drag: shadow includes 1.5px primary ring — no extra Tailwind ring
       'border-transparent shadow-crm-drag': dragging,
       'border-crm-border': !dragging && !faded,
+      'min-h-[118px]': !preview,
       'rotate-[-1.5deg]': dragging && !preview,
       'border-crm-border opacity-40 [border-style:dashed]': faded,
     }"
@@ -43,14 +44,19 @@
       </slot>
     </div>
 
-    <!-- PNG: single-line muted moving caption (HTML wrap disagrees) -->
+    <!-- PNG wraps after middot; mock label includes \n + whitespace-pre-line -->
     <div
       v-if="date || chips.length || badge || $slots.badge || $slots.chips || movingLabel"
-      class="flex h-[18px] items-center gap-2 overflow-visible text-[11.5px] text-crm-muted-fg"
+      class="gap-2 text-[11.5px] text-crm-muted-fg"
+      :class="
+        movingLabel
+          ? 'flex min-h-[18px] items-start'
+          : 'flex h-[18px] items-center'
+      "
     >
       <template v-if="movingLabel">
         <svg
-          class="size-3.5 shrink-0 text-crm-muted-fg"
+          class="mt-0.5 size-3.5 shrink-0 self-start text-crm-muted-fg"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -61,9 +67,13 @@
             d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"
           />
         </svg>
-        <span class="whitespace-nowrap text-crm-muted-fg">{{ movingLabel }}</span>
+        <span
+          class="min-w-0 flex-1 whitespace-pre-line leading-[1.25] text-crm-muted-fg"
+          >{{ movingLabel }}</span
+        >
       </template>
       <template v-else>
+
         <svg
           v-if="date"
           class="size-3.5 shrink-0"
