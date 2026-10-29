@@ -21,12 +21,26 @@
           }}</span>
           <span
             v-if="filter.value"
-            class="leading-none font-semibold text-crm-primary"
+            class="leading-none font-semibold"
+            :class="filter.active ? 'text-crm-primary' : 'text-crm-fg'"
           >
             {{ filter.value }}
           </span>
-          <!-- crm.css .fchip svg { color: faint }; re-check vs PNG if primary wins -->
+          <!-- Figma: Owner uses dismiss X; Close date uses chevron -->
           <svg
+            v-if="filter.trailing === 'chevron'"
+            class="size-3.5 text-crm-faint"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+          <svg
+            v-else
             class="size-3.5 text-crm-faint"
             viewBox="0 0 24 24"
             fill="none"

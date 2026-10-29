@@ -35,7 +35,11 @@ export function useRecordsViews({
 
   const viewTabs = computed(() => {
     const allParity = savedViews.value.find(
-      (v) => v.is_default || v.name === 'all-leads' || v.name === 'all-deals',
+      (v) =>
+        v.is_default ||
+        v.name === 'all-leads' ||
+        v.name === 'all-deals' ||
+        v.name === 'all-open-deals',
     )?.parity_count
     const tabs = [
       {
@@ -53,6 +57,7 @@ export function useRecordsViews({
         view.is_default ||
         view.name === 'all-leads' ||
         view.name === 'all-deals' ||
+        view.name === 'all-open-deals' ||
         view.name === 'all-contacts' ||
         view.name === 'all-companies'
       ) {
@@ -76,16 +81,32 @@ export function useRecordsViews({
 
   async function refreshViewCounts() {
     const next = { ...viewCounts.value }
-    try {
-      next.__all = await call('frappe.client.get_count', {
-        doctype,
-        filters: defaultFilters(),
-      })
-    } catch {
-      /* keep prior */
+    const defaultParity = savedViews.value.find(
+      (v) =>
+        v.is_default ||
+        v.name === 'all-leads' ||
+        v.name === 'all-deals' ||
+        v.name === 'all-open-deals',
+    )?.parity_count
+    if (defaultParity != null) {
+      next.__all = asCount(defaultParity)
+    } else {
+      try {
+        next.__all = await call('frappe.client.get_count', {
+          doctype,
+          filters: defaultFilters(),
+        })
+      } catch {
+        /* keep prior */
+      }
     }
     await Promise.all(
       savedViews.value.map(async (view) => {
+        // Fixture parity_count wins when present (avoids wrong get_count totals).
+        if (view.parity_count != null) {
+          next[view.name] = asCount(view.parity_count)
+          return
+        }
         let filters = view.filters || {}
         if (typeof filters === 'string') {
           try {
@@ -113,9 +134,8 @@ export function useRecordsViews({
           })
           const n = asCount(count)
           if (n != null) next[view.name] = n
-          else if (view.parity_count != null) next[view.name] = view.parity_count
         } catch {
-          if (view.parity_count != null) next[view.name] = view.parity_count
+          /* keep prior */
         }
       }),
     )

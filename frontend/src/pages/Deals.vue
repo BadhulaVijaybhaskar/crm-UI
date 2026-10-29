@@ -7,6 +7,7 @@
     :active-view="activeView"
     :show-save-view="true"
     :show-view-switch="true"
+    :view-switch-board-first="true"
     :view-type="viewType === 'kanban' ? 'kanban' : 'list'"
     :filter-chips="displayFilterChips"
     :show-filter-bar="true"
@@ -271,24 +272,20 @@ const PARITY_FILTER_CHIPS = [
   {
     id: 'owner',
     key: __('Owner'),
-    value: 'Me',
+    value: 'Me + team',
     active: true,
     trailing: 'dismiss',
   },
   {
-    id: 'close_date',
-    key: __('Close date'),
-    value: __('This quarter'),
-    active: false,
+    id: 'group_by',
+    key: __('Group by'),
+    value: __('Stage'),
+    active: true,
     trailing: 'chevron',
   },
 ]
 
 const displayFilterChips = computed(() => {
-  const fromList = filterChips.value
-  if (fromList.length) {
-    return fromList.map((c) => ({ ...c, active: true }))
-  }
   const fromData = deals.value?.data?.parity_filter_chips
   if (Array.isArray(fromData) && fromData.length) {
     return fromData.map((c) => ({
@@ -296,6 +293,14 @@ const displayFilterChips = computed(() => {
       key: __(c.key || c.label),
       value: c.value,
       fieldname: c.fieldname,
+      active: c.active === true,
+      trailing: c.trailing || 'dismiss',
+    }))
+  }
+  const fromList = filterChips.value
+  if (fromList.length) {
+    return fromList.map((c) => ({
+      ...c,
       active: c.active !== false,
       trailing: c.trailing || 'dismiss',
     }))
