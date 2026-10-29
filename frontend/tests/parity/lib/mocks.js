@@ -139,6 +139,8 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
   const home = readJson(fixture, 'home.json', null)
   const workQueue = readJson(fixture, 'work-queue.json', null)
   const workQueueDetail = readJson(fixture, 'work-queue-detail.json', {})
+  const taskBoard = readJson(fixture, 'task-board.json', null)
+  const taskDetail = readJson(fixture, 'task-detail.json', {})
   const conversations = readJson(fixture, 'conversations.json', null)
   const conversationThreads = readJson(fixture, 'conversation-thread.json', {})
   const hasLeads = fs.existsSync(path.join(PATHS.fixtures, fixture, 'leads.json'))
@@ -207,6 +209,10 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       body = workQueueDetail[key] || ok(null)
     } else if (workQueue && url.includes('work_queue.get_work_queue')) {
       body = workQueue
+    } else if (taskBoard && url.includes('task_board.get_task_board')) {
+      body = taskBoard
+    } else if (taskBoard && url.includes('task_board.get_task_detail')) {
+      body = taskDetail[postBody.name] || ok(null)
     } else if (
       conversations &&
       url.includes('conversations.get_conversation_thread')

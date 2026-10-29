@@ -1,170 +1,170 @@
 {
-  "doctype": "CRM Task",
-  "total_count": 9,
-  "title_field": "title",
-  "columns": [
-    {
-      "label": "Title",
-      "type": "Data",
-      "key": "title",
-      "width": "16rem"
-    },
-    {
-      "label": "Status",
-      "type": "Select",
-      "key": "status",
-      "width": "8rem"
-    },
-    {
-      "label": "Priority",
-      "type": "Select",
-      "key": "priority",
-      "width": "8rem"
-    },
-    {
-      "label": "Due Date",
-      "type": "Date",
-      "key": "due_date",
-      "width": "8rem"
-    },
-    {
-      "label": "Assigned To",
-      "type": "Link",
-      "key": "assigned_to",
-      "width": "10rem"
-    }
-  ],
-  "rows": [
-    {
+  "TASK-T1": {
+    "message": {
       "name": "TASK-T1",
       "title": "Call back about pricing",
       "status": "Todo",
       "priority": "High",
       "due_date": "2026-10-28 11:00:00",
+      "due_label": "11:00 · overdue",
       "assigned_to": "rohan.mehta@example.com",
       "reference_doctype": "CRM Lead",
       "reference_docname": "LEAD-MI",
       "record_label": "Meera Iyer · Lead",
       "description": "Share per-school pricing for 6 schools and a reference customer before Thursday.",
-      "modified": "2026-10-28 09:00:00",
       "creation": "2026-10-20 10:00:00",
-      "due_label": "11:00 · overdue",
+      "modified": "2026-10-28 09:00:00",
       "overdue": true,
-      "selected": true,
+      "assigned_name": "Rohan Mehta",
       "linked_label": "Lead · Meera Iyer · Brightpath Schools",
       "source_label": "From call · 26 Oct"
-    },
-    {
+    }
+  },
+  "TASK-T2": {
+    "message": {
       "name": "TASK-T2",
       "title": "Send revised quote",
       "status": "Todo",
       "priority": "High",
       "due_date": "2026-10-28 00:00:00",
+      "due_label": "Today",
       "assigned_to": "rohan.mehta@example.com",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-LL",
       "record_label": "Lumen Logistics · Deal",
       "description": "",
-      "modified": "2026-10-28 09:00:00",
       "creation": "2026-10-20 10:00:00",
-      "due_label": "Today"
-    },
-    {
+      "modified": "2026-10-28 09:00:00",
+      "overdue": false,
+      "assigned_name": "Rohan Mehta",
+      "linked_label": "Deal · Lumen Logistics",
+      "source_label": "Created 20 Oct"
+    }
+  },
+  "TASK-T3": {
+    "message": {
       "name": "TASK-T3",
       "title": "Demo follow-up email",
       "status": "Todo",
       "priority": "Medium",
       "due_date": "2026-10-28 12:30:00",
+      "due_label": "Today 12:30",
       "assigned_to": "rohan.mehta@example.com",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-KF",
       "record_label": "Kaveri Foods · Deal",
       "description": "",
-      "modified": "2026-10-28 09:00:00",
       "creation": "2026-10-20 10:00:00",
-      "due_label": "Today 12:30"
-    },
-    {
+      "modified": "2026-10-28 09:00:00",
+      "overdue": false,
+      "assigned_name": "Rohan Mehta",
+      "linked_label": "Deal · Kaveri Foods",
+      "source_label": "Created 20 Oct"
+    }
+  },
+  "TASK-T4": {
+    "message": {
       "name": "TASK-T4",
       "title": "Update next step",
       "status": "Todo",
       "priority": "Medium",
       "due_date": "2026-10-28 00:00:00",
+      "due_label": "Today",
       "assigned_to": "rohan.mehta@example.com",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-NR",
       "record_label": "Northwind Retail · Deal",
       "description": "",
-      "modified": "2026-10-28 09:00:00",
       "creation": "2026-10-20 10:00:00",
-      "due_label": "Today"
-    },
-    {
+      "modified": "2026-10-28 09:00:00",
+      "overdue": false,
+      "assigned_name": "Rohan Mehta",
+      "linked_label": "Deal · Northwind Retail",
+      "source_label": "Created 20 Oct"
+    }
+  },
+  "TASK-T5": {
+    "message": {
       "name": "TASK-T5",
       "title": "Prepare pilot scope",
       "status": "In Progress",
       "priority": "Medium",
       "due_date": "2026-10-30 00:00:00",
+      "due_label": "30 Oct",
       "assigned_to": "rohan.mehta@example.com",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-SM",
       "record_label": "Silverline Motors · Deal",
       "description": "",
-      "modified": "2026-10-28 09:00:00",
       "creation": "2026-10-20 10:00:00",
-      "due_label": "30 Oct"
-    },
-    {
+      "modified": "2026-10-28 09:00:00",
+      "overdue": false,
+      "assigned_name": "Rohan Mehta",
+      "linked_label": "Deal · Silverline Motors",
+      "source_label": "Created 20 Oct"
+    }
+  },
+  "TASK-T6": {
+    "message": {
       "name": "TASK-T6",
       "title": "Security questionnaire v2",
       "status": "In Progress",
       "priority": "Low",
       "due_date": "2026-10-31 00:00:00",
+      "due_label": "31 Oct",
       "assigned_to": "rohan.mehta@example.com",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-LL",
       "record_label": "Lumen Logistics · Deal",
       "description": "",
-      "modified": "2026-10-28 09:00:00",
       "creation": "2026-10-20 10:00:00",
-      "due_label": "31 Oct"
-    },
-    {
+      "modified": "2026-10-28 09:00:00",
+      "overdue": false,
+      "assigned_name": "Rohan Mehta",
+      "linked_label": "Deal · Lumen Logistics",
+      "source_label": "Created 20 Oct"
+    }
+  },
+  "TASK-T7": {
+    "message": {
       "name": "TASK-T7",
       "title": "CFO review call",
       "status": "Backlog",
       "priority": "Medium",
       "due_date": "2026-11-05 00:00:00",
+      "due_label": "05 Nov",
       "assigned_to": "rohan.mehta@example.com",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-LL",
       "record_label": "Lumen Logistics · Deal",
       "description": "",
-      "modified": "2026-10-28 09:00:00",
       "creation": "2026-10-20 10:00:00",
-      "due_label": "05 Nov"
-    },
-    {
+      "modified": "2026-10-28 09:00:00",
+      "overdue": false,
+      "assigned_name": "Rohan Mehta",
+      "linked_label": "Deal · Lumen Logistics",
+      "source_label": "Created 20 Oct"
+    }
+  },
+  "TASK-T8": {
+    "message": {
       "name": "TASK-T8",
       "title": "Reference customer list",
       "status": "Backlog",
       "priority": "Low",
       "due_date": null,
+      "due_label": "—",
       "assigned_to": "rohan.mehta@example.com",
       "reference_doctype": "CRM Lead",
       "reference_docname": "LEAD-BS",
       "record_label": "Brightpath Schools · Lead",
       "description": "",
-      "modified": "2026-10-28 09:00:00",
       "creation": "2026-10-20 10:00:00",
-      "due_label": "—"
+      "modified": "2026-10-28 09:00:00",
+      "overdue": false,
+      "assigned_name": "Rohan Mehta",
+      "linked_label": "Lead · Brightpath Schools",
+      "source_label": "Created 20 Oct"
     }
-  ],
-  "group_counts": {
-    "Todo": 4,
-    "In Progress": 2,
-    "Backlog": 2,
-    "Done": 23,
-    "Canceled": 2
   }
 }
