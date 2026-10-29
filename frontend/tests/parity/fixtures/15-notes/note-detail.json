@@ -1,27 +1,9 @@
 {
-  "doctype": "FCRM Note",
-  "total_count": 6,
-  "title_field": "title",
-  "columns": [
-    {
-      "label": "Title",
-      "type": "Data",
-      "key": "title",
-      "width": "16rem"
-    },
-    {
-      "label": "Last Modified",
-      "type": "Datetime",
-      "key": "modified",
-      "width": "8rem"
-    }
-  ],
-  "rows": [
-    {
+  "NOTE-N1": {
+    "message": {
       "name": "NOTE-N1",
       "title": "Hold price, offer pilot clause",
-      "preview": "Competitor quoted 8% lower. Hold price; offer the pilot clause i...",
-      "content": "<p>Competitor quoted 8% lower on hardware. We hold price.</p><p>Offer instead:</p><ul><li>30-day pilot clause on 20 vehicles, exit without penalty</li><li>Hardware and subscription as separate lines (CFO ask)</li><li>Free onboarding for depot managers</li></ul><p>Next: Rohan sends revised quote today; CFO review call 05 Nov.</p>",
+      "content": "<p>Competitor quoted 8% lower on hardware. We hold price.</p><p>Offer instead:</p><ul><li>30-day pilot clause on 20 vehicles, exit without penalty</li><li>Hardware and subscription as separate lines (CFO ask)</li><li>Free onboarding for depot managers</li></ul><p><small>Next: Rohan sends revised quote today; CFO review call 05 Nov.</small></p>",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-LL",
       "record_label": "Lumen Logistics · Deal",
@@ -34,12 +16,13 @@
       "pinned_by": "Priya",
       "pinned_on": "2026-10-22",
       "linked_title": "Lumen Logistics · Fleet telematics rollout",
-      "selected": true
-    },
-    {
+      "preview": "Competitor quoted 8% lower. Hold price; offer the pilot clause instead of discounting hardware."
+    }
+  },
+  "NOTE-N2": {
+    "message": {
       "name": "NOTE-N2",
       "title": "Referral context",
-      "preview": "Referred by Cedar Clinics. Decision maker; budget approved fo...",
       "content": "<p>Referred by Cedar Clinics. Decision maker; budget approved for this quarter.</p>",
       "reference_doctype": "CRM Lead",
       "reference_docname": "LEAD-MI",
@@ -52,12 +35,14 @@
       "pinned": 1,
       "pinned_by": "Priya",
       "pinned_on": "2026-10-24",
-      "linked_title": "Meera Iyer · Brightpath Schools"
-    },
-    {
+      "linked_title": "Meera Iyer · Brightpath Schools",
+      "preview": "Referred by Cedar Clinics. Decision maker; budget approved for this quarter."
+    }
+  },
+  "NOTE-N3": {
+    "message": {
       "name": "NOTE-N3",
       "title": "Quote structure",
-      "preview": "Split hardware and subscription lines (CFO ask).",
       "content": "<p>Split hardware and subscription lines (CFO ask).</p>",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-LL",
@@ -68,12 +53,14 @@
       "modified": "2026-10-28 09:30:00",
       "time_label": "Today",
       "pinned": 0,
-      "linked_title": "Lumen Logistics · Fleet telematics rollout"
-    },
-    {
+      "linked_title": "Lumen Logistics · Fleet telematics rollout",
+      "preview": "Split hardware and subscription lines (CFO ask)."
+    }
+  },
+  "NOTE-N4": {
+    "message": {
       "name": "NOTE-N4",
       "title": "Demo agenda",
-      "preview": "Distributor login, order tracking, credit limits. Karthik bringing fi...",
       "content": "<p>Distributor login, order tracking, credit limits. Karthik bringing finance.</p>",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-KF",
@@ -84,12 +71,14 @@
       "modified": "2026-10-27 15:00:00",
       "time_label": "Yesterday",
       "pinned": 0,
-      "linked_title": "Kaveri Foods · Demo/Making"
-    },
-    {
+      "linked_title": "Kaveri Foods · Demo/Making",
+      "preview": "Distributor login, order tracking, credit limits. Karthik bringing finance."
+    }
+  },
+  "NOTE-N5": {
+    "message": {
       "name": "NOTE-N5",
       "title": "Budget next quarter",
-      "preview": "No spend before January. Re-engage first week of Jan with ca...",
       "content": "<p>No spend before January. Re-engage first week of Jan with case studies.</p>",
       "reference_doctype": "CRM Lead",
       "reference_docname": "LEAD-RG",
@@ -100,12 +89,14 @@
       "modified": "2026-10-21 12:00:00",
       "time_label": "21 Oct",
       "pinned": 0,
-      "linked_title": "Rahul Gupta · Harbor Freight Co"
-    },
-    {
+      "linked_title": "Rahul Gupta · Harbor Freight Co",
+      "preview": "No spend before January. Re-engage first week of Jan with case studies."
+    }
+  },
+  "NOTE-N6": {
+    "message": {
       "name": "NOTE-N6",
       "title": "IT security review",
-      "preview": "Needs SOC report and data residency answer before pilot.",
       "content": "<p>Needs SOC report and data residency answer before pilot.</p>",
       "reference_doctype": "CRM Deal",
       "reference_docname": "DEAL-NR",
@@ -116,17 +107,8 @@
       "modified": "2026-10-22 14:00:00",
       "time_label": "22 Oct",
       "pinned": 0,
-      "linked_title": "Northwind Retail · Proposal/Quotation"
+      "linked_title": "Northwind Retail · Proposal/Quotation",
+      "preview": "Needs SOC report and data residency answer before pilot."
     }
-  ],
-  "sections": [
-    {
-      "id": "pinned",
-      "label": "Pinned"
-    },
-    {
-      "id": "recent",
-      "label": "Recent"
-    }
-  ]
+  }
 }

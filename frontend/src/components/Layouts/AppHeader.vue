@@ -5,8 +5,8 @@
       class="flex h-[34px] w-crm-search items-center gap-2 rounded-crm-control border border-crm-border bg-crm-muted px-2.5 text-left text-crm-label text-crm-faint hover:text-crm-muted-fg"
       @click="openCommandPalette"
     >
-      <FigmaSearchIcon class="size-3.5 shrink-0" />
-      <span class="min-w-0 flex-1 truncate">
+      <FigmaSearchIcon class="relative top-px size-3.5 shrink-0" />
+      <span class="relative top-px min-w-0 flex-1 truncate">
         {{ __('Search leads, deals, contacts, companies') }}
       </span>
       <!-- crm.css .gsearch kbd — Inter 600/11px (override Tailwind kbd mono preflight) -->
