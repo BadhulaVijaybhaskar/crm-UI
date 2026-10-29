@@ -178,7 +178,7 @@
 
                   <div>
                     <span
-                      class="inline-flex h-[22px] items-center gap-1.5 rounded-crm-chip px-2 text-[11.5px] font-semibold"
+                      class="inline-flex h-[22px] items-center gap-[5px] rounded-crm-chip px-2 text-[11.5px] font-semibold"
                       :class="
                         user.invited
                           ? 'bg-crm-warning-soft text-crm-warning'

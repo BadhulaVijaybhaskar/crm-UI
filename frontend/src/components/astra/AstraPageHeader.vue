@@ -7,10 +7,15 @@
       >
         {{ eyebrow }}
       </p>
-      <h1 class="m-0 text-crm-page font-semibold tracking-crm-tight text-crm-fg">
+      <h1
+        class="m-0 text-crm-page font-semibold leading-[1.45] tracking-crm-tight text-crm-fg"
+      >
         {{ title }}
       </h1>
-      <p v-if="description" class="mt-1 text-crm-body text-crm-muted-fg">
+      <p
+        v-if="description"
+        class="mt-0 text-crm-body leading-[1.45] text-crm-muted-fg"
+      >
         {{ description }}
       </p>
     </div>
