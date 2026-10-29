@@ -26,7 +26,28 @@
           {{ group.badge }}
         </span>
       </header>
-      <div class="flex gap-1">
+      <div v-if="group.asButtons" class="mt-0.5 flex gap-1.5">
+        <button
+          v-for="item in group.items"
+          :key="item.stage.name"
+          type="button"
+          class="inline-flex h-[30px] min-w-0 flex-1 items-center justify-center gap-1 rounded-crm-control-sm px-2 text-crm-label font-semibold"
+          :class="
+            item.stage.type === 'Won'
+              ? 'bg-crm-primary-soft text-crm-primary shadow-[inset_0_0_0_1px_var(--crm-primary)]'
+              : 'bg-crm-card text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)]'
+          "
+          @click="emit('select', item.stage.name)"
+        >
+          <span
+            v-if="item.stage.type === 'Won'"
+            class="lucide-check size-3.5"
+            aria-hidden="true"
+          />
+          {{ item.stage.label || item.stage.name }}
+        </button>
+      </div>
+      <div v-else class="flex gap-1">
         <button
           v-for="item in group.items"
           :key="item.stage.name"
@@ -121,18 +142,27 @@ const LEAD_PLAN = [
 
 const DEAL_PLAN = [
   {
+    key: 'lead',
+    label: __('Lead'),
+    names: ['Qualified'],
+    flex: 0.85,
+  },
+  {
     key: 'path',
-    label: __('Stages'),
+    label: __('Deal stages'),
     names: null,
-    flex: 4,
+    excludeNames: ['Qualified'],
+    flex: 5.6,
+    useSummary: true,
   },
   {
     key: 'close',
     label: __('Close'),
     names: null,
     closeOnly: true,
-    flex: 1.5,
+    flex: 1.45,
     dashed: true,
+    asButtons: true,
   },
 ]
 
@@ -158,7 +188,8 @@ function dateFor(stageName, state) {
 function buildPlan() {
   if (props.groupPlan?.length) return props.groupPlan
   const names = props.stages.map((s) => s.name)
-  const looksLikeLead = ['New', 'Contacted', 'Nurture', 'Qualified'].some((n) =>
+  // Lead rails always include New/Contacted; Qualified alone is the deal "from lead" chip.
+  const looksLikeLead = ['New', 'Contacted', 'Nurture'].some((n) =>
     names.includes(n),
   )
   return looksLikeLead ? LEAD_PLAN : DEAL_PLAN
@@ -186,6 +217,10 @@ const groups = computed(() => {
       } else {
         items = indexed.filter((item) => !isCloseStage(item.stage))
       }
+      if (spec.excludeNames?.length) {
+        const skip = new Set(spec.excludeNames)
+        items = items.filter((item) => !skip.has(item.stage.name))
+      }
       items = items.map((item) => ({
         ...item,
         date: dateFor(item.stage.name, item.state),
@@ -193,14 +228,18 @@ const groups = computed(() => {
       const current = items.some(
         (item) => item.state === 'current' || item.state === 'won',
       )
+      let badge = ''
+      if (spec.inProgress && current) badge = __('In progress')
+      else if (spec.badge) badge = spec.badge
+      else if (spec.useSummary && props.summary) badge = props.summary
       return {
         key: spec.key,
         label: spec.label,
         flex: spec.flex || Math.max(items.length, 1),
         dashed: !!spec.dashed,
+        asButtons: !!spec.asButtons,
         current,
-        badge:
-          spec.inProgress && current ? __('In progress') : spec.badge || '',
+        badge,
         items,
       }
     })

@@ -676,6 +676,12 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
           (leads ? unwrap(leads, emptyReportview()) : emptyReportview())
       }
     } else if (
+      method.includes('get_timeline') ||
+      url.includes('get_record_timeline')
+    ) {
+      const timeline = readJson(fixture, 'timeline.json', null)
+      body = timeline ? unwrap(timeline, ok([])) : ok([])
+    } else if (
       method.includes('get_activities') ||
       method.includes('get_events') ||
       url.includes('activities')

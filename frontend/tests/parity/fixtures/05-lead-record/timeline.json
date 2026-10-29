@@ -1,0 +1,77 @@
+{
+  "message": [
+    {
+      "label": "Today",
+      "items": [
+        {
+          "id": "t1",
+          "tone": "task",
+          "icon": "lucide-square-check",
+          "title": "Task overdue",
+          "subtitle": "Call back about pricing \u00b7 High",
+          "time": "11:00",
+          "card": {
+            "rows": [
+              "Due 11:00 \u00b7 High"
+            ],
+            "body": null
+          }
+        }
+      ]
+    },
+    {
+      "label": "26 Oct",
+      "items": [
+        {
+          "id": "t2",
+          "tone": "call",
+          "icon": "lucide-phone-outgoing",
+          "title": "Outgoing call",
+          "subtitle": "by Rohan \u00b7 4 m 38 s",
+          "chip": "Astra Connect",
+          "time": "16:20",
+          "card": {
+            "rows": [
+              "Outcome Callback requested \u00b7 Disposition Interested"
+            ],
+            "body": "Runs 6 schools, evaluating for next term. Wants per-school pricing and a reference customer before Thursday.",
+            "link": "Recording & transcript in Astra Connect"
+          }
+        },
+        {
+          "id": "t3",
+          "tone": "mail",
+          "icon": "lucide-mail",
+          "title": "Email sent",
+          "subtitle": "Brightpath \u2014 intro and brochure",
+          "time": "11:05"
+        }
+      ]
+    },
+    {
+      "label": "24 Oct",
+      "items": [
+        {
+          "id": "t4",
+          "tone": "stg",
+          "icon": "lucide-chart-column",
+          "title": "Status",
+          "fromChip": "New",
+          "toChip": "Contacted",
+          "time": "15:40"
+        },
+        {
+          "id": "t5",
+          "tone": "note",
+          "icon": "lucide-file-text",
+          "title": "Note",
+          "subtitle": "by Priya Nair",
+          "time": "10:12",
+          "card": {
+            "body": "Referred by Cedar Clinics. Decision maker; budget approved for Q1."
+          }
+        }
+      ]
+    }
+  ]
+}

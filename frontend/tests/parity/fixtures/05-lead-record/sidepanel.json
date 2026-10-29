@@ -1,0 +1,138 @@
+{
+  "message": [
+    {
+      "name": "details",
+      "label": "Details",
+      "opened": true,
+      "columns": [
+        {
+          "name": "col1",
+          "fields": [
+            {
+              "fieldname": "status",
+              "label": "Status",
+              "fieldtype": "Select",
+              "options": "New\nContacted\nNurture\nQualified\nConverted\nUnqualified\nJunk",
+              "read_only": 0
+            },
+            {
+              "fieldname": "temperature",
+              "label": "Temperature",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "lead_score",
+              "label": "Lead score",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "source",
+              "label": "Source",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "industry",
+              "label": "Industry",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "no_of_employees",
+              "label": "Employees",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "annual_revenue",
+              "label": "Annual revenue",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "territory",
+              "label": "Territory",
+              "fieldtype": "Data"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact",
+      "label": "Contact",
+      "opened": true,
+      "columns": [
+        {
+          "name": "col1",
+          "fields": [
+            {
+              "fieldname": "email",
+              "label": "Email",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "mobile_no",
+              "label": "Mobile",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "website",
+              "label": "Website",
+              "fieldtype": "Data"
+            },
+            {
+              "fieldname": "linkedin",
+              "label": "LinkedIn",
+              "fieldtype": "Data"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "response_sla",
+      "label": "Response SLA",
+      "opened": true,
+      "columns": [
+        {
+          "name": "col1",
+          "fields": [
+            {
+              "fieldname": "sla",
+              "label": "Policy",
+              "fieldtype": "Data",
+              "read_only": 1
+            },
+            {
+              "fieldname": "first_response_label",
+              "label": "First response",
+              "fieldtype": "Data",
+              "read_only": 1
+            },
+            {
+              "fieldname": "sla_status",
+              "label": "Status",
+              "fieldtype": "Data",
+              "read_only": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "owner",
+      "label": "Owner",
+      "opened": true,
+      "columns": [
+        {
+          "name": "col1",
+          "fields": [
+            {
+              "fieldname": "lead_owner",
+              "label": "Owner",
+              "fieldtype": "Link",
+              "options": "User"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

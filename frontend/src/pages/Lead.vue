@@ -132,7 +132,12 @@
           </span>
         </template>
         <template #tab-panel>
+          <AstraRecordActivity
+            v-if="activeTab === 'activity' && timelineGroups.length"
+            :groups="timelineGroups"
+          />
           <Activities
+            v-else
             ref="activities"
             v-model:reload="reload"
             v-model:activeTab="activeTab"
@@ -153,11 +158,6 @@
       >
         {{ leadId }}
       </button>
-      <SLASection
-        v-if="doc.sla_status"
-        v-model="doc"
-        @updateField="updateField"
-      />
       <SidePanelLayout
         v-if="sections.data"
         :sections="sections.data"
@@ -221,6 +221,7 @@ import AstraRecordHeader from '@/components/astra/AstraRecordHeader.vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
 import RecordAvatar from '@/components/Pipeline/RecordAvatar.vue'
 import StagePath from '@/components/Pipeline/StagePath.vue'
+import AstraRecordActivity from '@/components/Pipeline/AstraRecordActivity.vue'
 import { recordTabsClass } from '@/components/Pipeline/recordChrome'
 import {
   pipelineStages,
@@ -230,7 +231,6 @@ import ConnectCallSummary from '@/components/ConnectCallSummary.vue'
 import Activities from '@/components/Activities/Activities.vue'
 import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
-import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
 import ConnectActions from '@/components/AstraConnect/ConnectActions.vue'
@@ -678,6 +678,19 @@ const sections = createResource({
   cache: ['sidePanelSections', 'CRM Lead'],
   params: { doctype: 'CRM Lead' },
   auto: true,
+})
+
+/** Optional Figma-style timeline (parity fixtures); empty in production. */
+const recordTimeline = createResource({
+  url: 'crm.api.activities.get_timeline',
+  params: { name: props.leadId, doctype: 'CRM Lead' },
+  cache: ['record-timeline', 'CRM Lead', props.leadId],
+  auto: true,
+})
+
+const timelineGroups = computed(() => {
+  const rows = recordTimeline.data
+  return Array.isArray(rows) ? rows : []
 })
 
 async function triggerStatusChange(value) {
