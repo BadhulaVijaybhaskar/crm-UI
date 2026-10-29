@@ -106,7 +106,7 @@
                       :class="[
                         rowGridClass,
                         selectedKey === stage._key
-                          ? 'relative z-[2] rounded-crm-card border-t-transparent bg-crm-card shadow-[0_8px_20px_rgba(4,20,27,0.14),0_0_0_1.5px_var(--crm-primary)]'
+                          ? 'relative z-[2] rounded-crm-card bg-crm-card shadow-[0_8px_20px_rgba(4,20,27,0.14),0_0_0_1.5px_var(--crm-primary)]'
                           : 'bg-crm-card',
                       ]"
                       @click="selectedKey = stage._key"
@@ -202,7 +202,7 @@
                     <div class="relative" @click.stop>
                       <button
                         type="button"
-                        class="inline-flex h-7 items-center gap-1.5 rounded-crm-control-sm border border-crm-border-strong bg-crm-card px-2"
+                        class="inline-flex h-7 w-full items-center gap-1.5 rounded-crm-control-sm border border-crm-border-strong bg-crm-card py-0 pl-2.5 pr-2"
                         :aria-label="__('Pick colour')"
                         @click="togglePalette(stage._key)"
                       >
@@ -210,6 +210,7 @@
                           class="size-3.5 rounded"
                           :style="stageColourStyle(stage.color, stage.label)"
                         />
+                        <span class="flex-1" />
                         <Icon
                           icon="chevron-down"
                           class="size-3.5 text-crm-faint"
@@ -327,7 +328,7 @@
           >
             <Icon
               icon="triangle-alert"
-              class="mt-0.5 size-3.5 shrink-0 text-crm-warning"
+              class="mt-0.5 size-3.5 shrink-0 text-crm-faint"
             />
             <div>
               <b class="font-semibold text-crm-fg">
@@ -347,7 +348,7 @@
             class="note flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
           >
             <Icon
-              icon="shield"
+              icon="shield-alert"
               class="mt-0.5 size-3.5 shrink-0 text-crm-faint"
             />
             <span>
