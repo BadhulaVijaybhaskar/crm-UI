@@ -19,7 +19,7 @@
     >
       <nav
         ref="navEl"
-        class="flex max-h-40 shrink-0 flex-col gap-px overflow-y-auto border-b border-crm-border bg-crm-card px-2.5 pb-3 pt-[13px] sm:max-h-none sm:border-b-0 sm:border-r"
+        class="flex max-h-40 shrink-0 flex-col gap-px overflow-y-auto border-b border-crm-border bg-crm-card px-2.5 pb-3 pt-3.5 sm:max-h-none sm:border-b-0 sm:border-r"
         :aria-label="__('Settings')"
       >
         <template v-for="group in groups" :key="group.id">
