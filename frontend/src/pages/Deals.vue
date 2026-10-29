@@ -286,6 +286,10 @@ const PARITY_FILTER_CHIPS = [
 ]
 
 const displayFilterChips = computed(() => {
+  const fromList = filterChips.value
+  if (fromList.length) {
+    return fromList.map((c) => ({ ...c, active: true }))
+  }
   const fromData = deals.value?.data?.parity_filter_chips
   if (Array.isArray(fromData) && fromData.length) {
     return fromData.map((c) => ({
@@ -294,14 +298,6 @@ const displayFilterChips = computed(() => {
       value: c.value,
       fieldname: c.fieldname,
       active: c.active === true,
-      trailing: c.trailing || 'dismiss',
-    }))
-  }
-  const fromList = filterChips.value
-  if (fromList.length) {
-    return fromList.map((c) => ({
-      ...c,
-      active: c.active !== false,
       trailing: c.trailing || 'dismiss',
     }))
   }

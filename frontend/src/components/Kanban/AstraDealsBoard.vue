@@ -1,7 +1,7 @@
 <template>
   <div class="relative flex h-full min-h-0 flex-col">
     <div
-      class="flex shrink-0 items-end gap-3 px-crm-page-x pb-2 pt-1"
+      class="-translate-y-[5px] flex shrink-0 items-end gap-3 px-crm-page-x pb-2 pt-1"
     >
       <p
         class="m-0 min-w-0 flex-1 border-t-2 border-crm-border-strong pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-muted-fg"

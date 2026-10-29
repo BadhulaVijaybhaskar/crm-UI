@@ -435,6 +435,53 @@ function rowsFromListPayload(payload) {
 }
 
 /**
+ * frappe.client.get_list returns an array of row objects.
+ * Reportview fixtures use {keys,values} — convert + apply simple equality filters.
+ */
+function getListResponse(fixture, doctype, filters) {
+  const list = listForDoctype(fixture, doctype)
+  let rows = rowsFromListPayload(list?.message || list || {})
+  if (filters && typeof filters === 'object' && !Array.isArray(filters)) {
+    rows = rows.filter((row) => {
+      for (const [key, raw] of Object.entries(filters)) {
+        let expected = raw
+        if (Array.isArray(raw)) {
+          // ['=', value] / ['!=', value] — honor common list filter shapes
+          const op = String(raw[0] || '=').toLowerCase()
+          const val = raw[1]
+          const actual = row[key]
+          if (op === '!=' || op === 'not') {
+            if (actual == val || String(actual) === String(val)) return false
+            continue
+          }
+          expected = val
+        }
+        if (expected == null || expected === '') continue
+        const actual = row[key]
+        if (actual == expected || String(actual) === String(expected)) continue
+        // Organization/Contact links may be stored as title in fixtures
+        if (
+          key === 'organization' &&
+          (row.organization_name == expected ||
+            row.organization == expected)
+        ) {
+          continue
+        }
+        if (
+          key === 'company_name' &&
+          (row.company_name == expected || row.organization == expected)
+        ) {
+          continue
+        }
+        return false
+      }
+      return true
+    })
+  }
+  return ok(rows)
+}
+
+/**
  * Build kanban `data` columns from stages.json + deal/lead rows.
  * Matches crm.api.doc.get_data view_type=kanban shape.
  */
@@ -567,9 +614,11 @@ function buildGetData(fixture, doctype, viewsPayload, request = {}) {
               name: 'DEAL-KF',
               from: 'Demo/Making',
               to: 'Negotiation',
-              left: 916,
-              top: 452,
+              // HTML absolute left:676 inside .main (x=240) → viewport 916 for fixed.
+              left: 900,
+              top: 440,
               width: 178,
+              insert_after: 0,
               label: 'Moving to Negotiation · 70%',
             }
           : null,
@@ -819,13 +868,15 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
         if (parityHit != null) {
           body = ok(parityHit)
         } else {
-          const list = listForDoctype(fixture, effectiveDt)
-          const total =
-            list?.message?.total_count ??
-            (Array.isArray(list?.message) ? list.message.length : 0)
-          body = ok(total)
+          const listBody = getListResponse(fixture, effectiveDt, post.filters)
+          body = ok(
+            Array.isArray(listBody.message) ? listBody.message.length : 0,
+          )
         }
+      } else if (method.includes('frappe.client.get_list')) {
+        body = getListResponse(fixture, effectiveDt, post.filters)
       } else {
+        // reportview.get keeps keys/values shape
         body =
           listForDoctype(fixture, effectiveDt) ||
           (leads ? unwrap(leads, emptyReportview()) : emptyReportview())
