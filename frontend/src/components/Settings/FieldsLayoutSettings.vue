@@ -116,7 +116,7 @@
 
       <aside
         v-if="selectedField && !preview"
-        class="panel hidden w-[300px] shrink-0 self-stretch overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card lg:block"
+        class="panel hidden w-[300px] shrink-0 self-start overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card lg:block"
       >
         <div
           class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
