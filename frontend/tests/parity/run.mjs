@@ -39,6 +39,12 @@ const PNG_BUDGET = 0.75
 const EPS_HTML = 0.05
 /** No PNG slack — user bar is strict ≤0.75% light and dark. */
 const EPS_PNG = 0
+/**
+ * HTML is treated as agreeing with PNG only when their diff is near-zero.
+ * Using PNG_BUDGET here made the HTML≈0 gate impossible whenever the
+ * HTML↔PNG floor sat between EPS_HTML and 0.75% (Vue cannot beat the floor).
+ */
+const HTML_AGREES_EPS = 0.15
 
 function usage() {
   console.error(`Usage: yarn parity <screen-id>
@@ -154,7 +160,7 @@ async function runTheme({ screen, theme, origin, browser }) {
 
   const realVsPngPct = result.realPct
   const pngOk = realVsPngPct <= PNG_BUDGET + EPS_PNG
-  const htmlAgreesWithPng = floorPct != null && floorPct <= PNG_BUDGET + EPS_PNG
+  const htmlAgreesWithPng = floorPct != null && floorPct <= HTML_AGREES_EPS
   const htmlOk =
     realVsHtmlPct == null
       ? true
