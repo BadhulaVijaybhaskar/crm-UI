@@ -207,13 +207,13 @@
                         @click="togglePalette(stage._key)"
                       >
                         <span
-                          class="size-3.5 rounded"
+                          class="h-[14px] w-[14px] shrink-0 rounded-[4px]"
                           :style="stageColourStyle(stage.color, stage.label)"
                         />
                         <span class="flex-1" />
                         <Icon
                           icon="chevron-down"
-                          class="size-3.5 text-crm-faint"
+                          class="size-3.5 shrink-0 text-crm-faint"
                         />
                       </button>
                       <div
