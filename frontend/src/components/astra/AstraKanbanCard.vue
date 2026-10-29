@@ -46,7 +46,7 @@
     <!-- PNG: single-line muted moving caption (HTML wrap disagrees) -->
     <div
       v-if="date || chips.length || badge || $slots.badge || $slots.chips || movingLabel"
-      class="flex h-[18px] items-center gap-1.5 overflow-visible text-[11.5px] text-crm-muted-fg"
+      class="flex h-[18px] items-center gap-2 overflow-visible text-[11.5px] text-crm-muted-fg"
     >
       <template v-if="movingLabel">
         <svg
@@ -61,7 +61,7 @@
             d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"
           />
         </svg>
-        <span class="whitespace-nowrap text-[10.5px] tracking-tight text-crm-muted-fg">{{ movingLabel }}</span>
+        <span class="whitespace-nowrap text-crm-muted-fg">{{ movingLabel }}</span>
       </template>
       <template v-else>
         <svg
