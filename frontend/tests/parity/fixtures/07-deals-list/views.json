@@ -14,7 +14,8 @@
       "load_default_columns": 1,
       "pinned": 0,
       "public": 0,
-      "user": "priya.nair@example.com"
+      "user": "priya.nair@example.com",
+      "parity_count": 14
     },
     {
       "name": "mine-deals",
@@ -24,12 +25,11 @@
       "type": "list",
       "is_standard": 1,
       "is_default": 0,
-      "filters": [],
+      "filters": [["deal_owner", "=", "@me"]],
       "columns": [],
       "rows": [],
       "load_default_columns": 1,
-      "pinned": 0,
-      "public": 0
+      "parity_count": 9
     },
     {
       "name": "closing-this-month",
@@ -43,8 +43,7 @@
       "columns": [],
       "rows": [],
       "load_default_columns": 1,
-      "pinned": 0,
-      "public": 0
+      "parity_count": 5
     },
     {
       "name": "no-next-step",
@@ -58,8 +57,7 @@
       "columns": [],
       "rows": [],
       "load_default_columns": 1,
-      "pinned": 0,
-      "public": 0
+      "parity_count": 3
     }
   ]
 }

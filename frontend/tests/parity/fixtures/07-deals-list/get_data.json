@@ -1,0 +1,402 @@
+{
+  "message": {
+    "data": [
+      {
+        "name": "DEAL-PH",
+        "organization": "Pinecrest Hotels",
+        "deal_name": "Front desk suite",
+        "deal_value": 430000,
+        "probability": 90,
+        "expected_closure_date": "2026-10-31",
+        "next_step": "PO expected Thu",
+        "contacts_label": "Tarun Bhatia",
+        "last_activity": "Email \u00b7 today",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Ready to Close",
+        "contact": "Tarun Bhatia",
+        "currency": "INR",
+        "modified": "2026-10-28 08:00:00",
+        "creation": "2026-10-12 10:00:00"
+      },
+      {
+        "name": "DEAL-LL",
+        "organization": "Lumen Logistics",
+        "deal_name": "Fleet telematics rollout",
+        "deal_value": 1240000,
+        "probability": 70,
+        "expected_closure_date": "2026-11-08",
+        "next_step": "Send revised quote",
+        "contacts_label": "Sana Qureshi +1",
+        "last_activity": "Call \u00b7 today",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Negotiation",
+        "contact": "Sana Qureshi",
+        "currency": "INR",
+        "modified": "2026-10-28 09:14:00",
+        "creation": "2026-10-03 10:00:00"
+      },
+      {
+        "name": "DEAL-HF",
+        "organization": "Harbor Freight Co",
+        "deal_name": "Warehouse sensors",
+        "deal_value": 810000,
+        "probability": 70,
+        "expected_closure_date": "2026-11-20",
+        "next_step": "Legal review of MSA",
+        "contacts_label": "Rahul Gupta",
+        "last_activity": "Email \u00b7 26 Oct",
+        "deal_owner": "sara.khan@example.com",
+        "status": "Negotiation",
+        "contact": "Rahul Gupta",
+        "currency": "INR",
+        "modified": "2026-10-26 14:00:00",
+        "creation": "2026-10-05 10:00:00"
+      },
+      {
+        "name": "DEAL-NR",
+        "organization": "Northwind Retail",
+        "deal_name": "POS integration",
+        "deal_value": 720000,
+        "probability": 50,
+        "expected_closure_date": "2026-11-14",
+        "next_step": "Not set",
+        "contacts_label": "Neha Agarwal",
+        "last_activity": "Note \u00b7 22 Oct",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Proposal/Quotation",
+        "contact": "Neha Agarwal",
+        "currency": "INR",
+        "modified": "2026-10-22 14:00:00",
+        "creation": "2026-10-08 10:00:00"
+      },
+      {
+        "name": "DEAL-SM",
+        "organization": "Silverline Motors",
+        "deal_name": "Dealer CRM pilot",
+        "deal_value": 550000,
+        "probability": 50,
+        "expected_closure_date": "2026-11-28",
+        "next_step": "Pilot scope call",
+        "contacts_label": "Hina Patel",
+        "last_activity": "Email \u00b7 24 Oct",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Proposal/Quotation",
+        "contact": "Hina Patel",
+        "currency": "INR",
+        "modified": "2026-10-24 12:00:00",
+        "creation": "2026-09-30 10:00:00"
+      },
+      {
+        "name": "DEAL-BT",
+        "organization": "Bluewave Travel",
+        "deal_name": "Agent onboarding",
+        "deal_value": 360000,
+        "probability": 50,
+        "expected_closure_date": "2026-11-21",
+        "next_step": "Share proposal v2",
+        "contacts_label": "Sneha Reddy",
+        "last_activity": "Meeting \u00b7 23 Oct",
+        "deal_owner": "sara.khan@example.com",
+        "status": "Proposal/Quotation",
+        "contact": "Sneha Reddy",
+        "currency": "INR",
+        "modified": "2026-10-23 11:00:00",
+        "creation": "2026-10-11 10:00:00"
+      },
+      {
+        "name": "DEAL-OP",
+        "organization": "Orbit Pharma",
+        "deal_name": "Field force app",
+        "deal_value": 900000,
+        "probability": 25,
+        "expected_closure_date": "2026-12-12",
+        "next_step": "Book demo",
+        "contacts_label": "Vikram Sethi",
+        "last_activity": "Email \u00b7 19 Oct",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Demo/Making",
+        "contact": "Vikram Sethi",
+        "currency": "INR",
+        "modified": "2026-10-19 11:00:00",
+        "creation": "2026-10-09 10:00:00"
+      },
+      {
+        "name": "DEAL-KF",
+        "organization": "Kaveri Foods",
+        "deal_name": "Distributor portal",
+        "deal_value": 640000,
+        "probability": 25,
+        "expected_closure_date": "2026-11-18",
+        "next_step": "Demo follow-up",
+        "contacts_label": "Karthik Rao +2",
+        "last_activity": "Call \u00b7 yesterday",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Demo/Making",
+        "contact": "Karthik Rao",
+        "currency": "INR",
+        "modified": "2026-10-27 16:00:00",
+        "creation": "2026-10-10 10:00:00"
+      },
+      {
+        "name": "DEAL-VI",
+        "organization": "Vista Interiors",
+        "deal_name": "Quote builder",
+        "deal_value": 475000,
+        "probability": 25,
+        "expected_closure_date": "2026-12-05",
+        "next_step": "Send case study",
+        "contacts_label": "Lakshmi Narayan",
+        "last_activity": "Call \u00b7 25 Oct",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Demo/Making",
+        "contact": "Lakshmi Narayan",
+        "currency": "INR",
+        "modified": "2026-10-25 13:00:00",
+        "creation": "2026-10-19 10:00:00"
+      },
+      {
+        "name": "DEAL-GO",
+        "organization": "Greenleaf Organics",
+        "deal_name": "Retail ordering",
+        "deal_value": 210000,
+        "probability": 25,
+        "expected_closure_date": "2026-11-30",
+        "next_step": "Demo Friday",
+        "contacts_label": "Pooja Joshi",
+        "last_activity": "Email \u00b7 yesterday",
+        "deal_owner": "sara.khan@example.com",
+        "status": "Demo/Making",
+        "contact": "Pooja Joshi",
+        "currency": "INR",
+        "modified": "2026-10-27 16:00:00",
+        "creation": "2026-10-22 10:00:00"
+      },
+      {
+        "name": "DEAL-CC",
+        "organization": "Coastal Cement",
+        "deal_name": "Coastal Cement",
+        "deal_value": 320000,
+        "probability": 10,
+        "expected_closure_date": "2026-12-02",
+        "next_step": "Not set",
+        "contacts_label": "Imran Khan",
+        "last_activity": "Call \u00b7 18 Oct",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Qualification",
+        "contact": "Imran Khan",
+        "currency": "INR",
+        "modified": "2026-10-18 10:00:00",
+        "creation": "2026-10-02 10:00:00"
+      },
+      {
+        "name": "DEAL-MD",
+        "organization": "Metro Dental",
+        "deal_name": "Metro Dental",
+        "deal_value": 180000,
+        "probability": 10,
+        "expected_closure_date": "2026-12-15",
+        "next_step": "Not set",
+        "contacts_label": "Gaurav Bose",
+        "last_activity": "\u2014",
+        "deal_owner": "sara.khan@example.com",
+        "status": "Qualification",
+        "contact": "Gaurav Bose",
+        "currency": "INR",
+        "modified": "2026-10-28 08:30:00",
+        "creation": "2026-10-28 07:30:00"
+      },
+      {
+        "name": "DEAL-PF",
+        "organization": "Peak Fitness",
+        "deal_name": "Peak Fitness",
+        "deal_value": 95000,
+        "probability": 10,
+        "expected_closure_date": "2026-12-20",
+        "next_step": "Not set",
+        "contacts_label": "Yash Kulkarni",
+        "last_activity": "\u2014",
+        "deal_owner": "rohan.mehta@example.com",
+        "status": "Qualification",
+        "contact": "Yash Kulkarni",
+        "currency": "INR",
+        "modified": "2026-10-27 10:00:00",
+        "creation": "2026-10-20 10:00:00"
+      }
+    ],
+    "columns": [
+      {
+        "label": "Deal",
+        "type": "Data",
+        "key": "organization",
+        "width": "12rem"
+      },
+      {
+        "label": "Value",
+        "type": "Data",
+        "key": "deal_value",
+        "width": "8rem"
+      },
+      {
+        "label": "Prob.",
+        "type": "Data",
+        "key": "probability",
+        "width": "5rem"
+      },
+      {
+        "label": "Expected close",
+        "type": "Data",
+        "key": "expected_closure_date",
+        "width": "8rem"
+      },
+      {
+        "label": "Next step",
+        "type": "Data",
+        "key": "next_step",
+        "width": "10rem"
+      },
+      {
+        "label": "Contacts",
+        "type": "Data",
+        "key": "contacts_label",
+        "width": "9rem"
+      },
+      {
+        "label": "Last activity",
+        "type": "Data",
+        "key": "last_activity",
+        "width": "9rem"
+      },
+      {
+        "label": "Owner",
+        "type": "Data",
+        "key": "deal_owner",
+        "width": "5rem"
+      }
+    ],
+    "rows": [
+      "organization",
+      "deal_value",
+      "probability",
+      "expected_closure_date",
+      "next_step",
+      "contacts_label",
+      "last_activity",
+      "deal_owner",
+      "deal_name",
+      "status",
+      "name",
+      "contact"
+    ],
+    "fields": [],
+    "column_field": "status",
+    "title_field": "organization",
+    "kanban_columns": [],
+    "kanban_fields": [],
+    "group_by_field": null,
+    "page_length": 20,
+    "page_length_count": 20,
+    "is_default": 1,
+    "views": [
+      {
+        "name": "all-open-deals",
+        "label": "All open deals",
+        "route_name": "Deals",
+        "doctype": "CRM Deal",
+        "type": "list",
+        "is_standard": 1,
+        "is_default": 1,
+        "filters": [],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "pinned": 0,
+        "public": 0,
+        "user": "priya.nair@example.com",
+        "parity_count": 14
+      },
+      {
+        "name": "mine-deals",
+        "label": "Mine",
+        "route_name": "Deals",
+        "doctype": "CRM Deal",
+        "type": "list",
+        "is_standard": 1,
+        "is_default": 0,
+        "filters": [
+          [
+            "deal_owner",
+            "=",
+            "@me"
+          ]
+        ],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 9
+      },
+      {
+        "name": "closing-this-month",
+        "label": "Closing this month",
+        "route_name": "Deals",
+        "doctype": "CRM Deal",
+        "type": "list",
+        "is_standard": 1,
+        "is_default": 0,
+        "filters": [],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 5
+      },
+      {
+        "name": "no-next-step",
+        "label": "No next step",
+        "route_name": "Deals",
+        "doctype": "CRM Deal",
+        "type": "list",
+        "is_standard": 1,
+        "is_default": 0,
+        "filters": [],
+        "columns": [],
+        "rows": [],
+        "load_default_columns": 1,
+        "parity_count": 3
+      }
+    ],
+    "total_count": 14,
+    "row_count": 13,
+    "form_script": "",
+    "list_script": "",
+    "view_type": "list",
+    "total_pages": 1,
+    "parity_filter_chips": [
+      {
+        "id": "owner",
+        "key": "Owner",
+        "value": "Me + team",
+        "trailing": "dismiss",
+        "active": true
+      },
+      {
+        "id": "group_by",
+        "key": "Group by",
+        "value": "Stage",
+        "trailing": "chevron",
+        "active": true
+      }
+    ],
+    "parity_footer": {
+      "left": "10 of 14 open deals \u00b7 Open \u20b963.6 L \u00b7 weighted \u20b935.2 L",
+      "right": "Qualification (3) below"
+    },
+    "parity_group_summaries": {
+      "Ready to Close": "1 deal \u00b7 \u20b94.3 L",
+      "Negotiation": "2 deals \u00b7 \u20b920.5 L",
+      "Proposal/Quotation": "3 deals \u00b7 \u20b916.3 L",
+      "Demo/Making": "4 deals \u00b7 \u20b922.2 L"
+    },
+    "parity_collapsed_stages": [
+      "Qualification"
+    ]
+  }
+}

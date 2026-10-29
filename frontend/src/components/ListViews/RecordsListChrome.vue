@@ -77,15 +77,18 @@
           HTML capture, so List/Board render at 38px and the tabs row is 46px.
           Match that signed-off height (app.css .seg span 26px is overridden).
         -->
+        <!-- Figma: list screens show List|Board; board/deals-list show Board|List -->
         <button
+          v-for="opt in viewSwitchOrder"
+          :key="opt.type"
           type="button"
           class="inline-flex h-[38px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
-            viewType === 'kanban'
+            viewType === opt.type
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
               : 'text-crm-muted-fg'
           "
-          @click="$emit('set-view-type', 'kanban')"
+          @click="$emit('set-view-type', opt.type)"
         >
           <svg
             class="size-3.5"
@@ -95,32 +98,16 @@
             stroke-width="1.75"
             aria-hidden="true"
           >
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M8 7v7M12 7v4M16 7v9" />
+            <path
+              v-if="opt.type === 'list'"
+              d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+            />
+            <template v-else>
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M8 7v7M12 7v4M16 7v9" />
+            </template>
           </svg>
-          {{ __('Board') }}
-        </button>
-        <button
-          type="button"
-          class="inline-flex h-[38px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
-          :class="
-            viewType === 'list'
-              ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
-              : 'text-crm-muted-fg'
-          "
-          @click="$emit('set-view-type', 'list')"
-        >
-          <svg
-            class="size-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            aria-hidden="true"
-          >
-            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-          </svg>
-          {{ __('List') }}
+          {{ opt.label }}
         </button>
       </div>
     </div>
@@ -151,11 +138,12 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import AstraButton from '@/components/astra/AstraButton.vue'
 import AstraFilterBar from '@/components/astra/AstraFilterBar.vue'
 import AstraPageHeader from '@/components/astra/AstraPageHeader.vue'
 
-defineProps({
+const props = defineProps({
   title: { type: String, required: true },
   description: { type: String, default: '' },
   createLabel: { type: String, default: '' },
@@ -164,10 +152,21 @@ defineProps({
   showSaveView: { type: Boolean, default: false },
   showViewSwitch: { type: Boolean, default: false },
   viewType: { type: String, default: 'list' },
+  /** Deals list PNG: Board then List; leads: List then Board. */
+  viewSwitchBoardFirst: { type: Boolean, default: false },
   filterChips: { type: Array, default: () => [] },
   showFilterBar: { type: Boolean, default: true },
   showAddFilter: { type: Boolean, default: true },
   sortLabel: { type: String, default: '' },
+})
+
+const viewSwitchOrder = computed(() => {
+  const list = { type: 'list', label: __('List') }
+  const board = { type: 'kanban', label: __('Board') }
+  if (props.viewSwitchBoardFirst || props.viewType === 'kanban') {
+    return [board, list]
+  }
+  return [list, board]
 })
 
 defineEmits([

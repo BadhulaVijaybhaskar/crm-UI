@@ -29,7 +29,7 @@
             <template v-for="group in groups" :key="group.stage">
               <tr class="astra-deals-ghead">
                 <td :colspan="displayColumns.length + 2">
-                  <div class="flex h-[34px] items-center gap-2.5">
+                  <div class="flex h-full items-center gap-2.5">
                     <svg
                       class="size-3.5 text-crm-muted-fg"
                       viewBox="0 0 24 24"
@@ -79,7 +79,7 @@
                       squared
                       tone="company"
                     />
-                    <div class="tx flex min-w-0 translate-y-px flex-col leading-[1.3]">
+                    <div class="tx flex min-w-0 flex-col leading-[1.3]">
                       <span
                         class="truncate text-[12.5px] font-semibold leading-[1.3] text-crm-fg"
                       >
@@ -140,9 +140,9 @@
                     fill="currentColor"
                     aria-hidden="true"
                   >
-                    <circle cx="5" cy="12" r="1.5" />
-                    <circle cx="12" cy="12" r="1.5" />
-                    <circle cx="19" cy="12" r="1.5" />
+                    <circle cx="5" cy="12" r="1" />
+                    <circle cx="12" cy="12" r="1" />
+                    <circle cx="19" cy="12" r="1" />
                   </svg>
                 </td>
               </tr>
@@ -486,7 +486,7 @@ defineExpose({
 .astra-deals-table th {
   height: 34px;
   padding: 0 10px;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   font-size: 11.5px;
   font-weight: 600;
   text-align: left;
@@ -495,6 +495,14 @@ defineExpose({
   background: var(--crm-muted);
   border-bottom: 1px solid var(--crm-border);
   white-space: nowrap;
+  box-sizing: border-box;
+}
+/* crm.css .tbl th.r / td.r — Value + Prob. (scoped th {left} beats utility text-right) */
+.astra-deals-table th:nth-child(3),
+.astra-deals-table td:nth-child(3),
+.astra-deals-table th:nth-child(4),
+.astra-deals-table td:nth-child(4) {
+  text-align: right;
 }
 .astra-deals-table td {
   height: 44px;
@@ -505,18 +513,20 @@ defineExpose({
   vertical-align: middle;
   border-bottom: 1px solid var(--crm-border);
   white-space: nowrap;
+  box-sizing: border-box;
 }
 .astra-deals-ghead td {
   height: 34px;
   max-height: 34px;
   padding: 0 10px;
   background: var(--crm-muted);
+  box-sizing: border-box;
 }
 .astra-deals-table th:nth-child(1),
 .astra-deals-table td:nth-child(1) {
-  width: 35px;
-  min-width: 35px;
-  max-width: 35px;
+  width: 34px;
+  min-width: 34px;
+  max-width: 34px;
 }
 .astra-deals-table th:nth-child(2),
 .astra-deals-table td:nth-child(2) {

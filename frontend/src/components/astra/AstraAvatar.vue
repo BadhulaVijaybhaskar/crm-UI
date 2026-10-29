@@ -48,10 +48,14 @@ const chipStyle = computed(() => {
     return { backgroundColor: '#16264A', color: '#C9D3E6' }
   }
   if (props.tone === 'company' || (props.squared && props.tone !== 'primary')) {
-    // crm.css .av2.co — neutral chip + muted initials (list company cells)
+    // Record .bigav.co (PNG): neutral chip + ink initials; list .av2.co uses muted
+    const ink =
+      props.size === 'lg' || props.size === 'xl'
+        ? 'var(--crm-fg)'
+        : 'var(--crm-muted-fg)'
     return {
       backgroundColor: 'var(--crm-neutral-soft)',
-      color: 'var(--crm-muted-fg)',
+      color: ink,
     }
   }
   if (props.squared) {

@@ -1,7 +1,7 @@
 <template>
   <RecordsListChrome
     :title="__('Deals')"
-    :description="__('Your deals · drag a card to change its stage')"
+    :description="__('Manager view · grouped by stage')"
     :create-label="__('+ New deal')"
     :view-tabs="viewTabs"
     :active-view="activeView"
@@ -297,7 +297,7 @@ const displayFilterChips = computed(() => {
       key: __(c.key || c.label),
       value: c.value,
       fieldname: c.fieldname,
-      active: c.active === true,
+      active: true,
       trailing: c.trailing || 'dismiss',
     }))
   }
