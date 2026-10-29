@@ -21,7 +21,7 @@
     "values": [
       [
         "DEAL-LL",
-        "Lumen Logistics",
+        "ORG-LL",
         "Fleet telematics rollout",
         1240000,
         "Negotiation",
@@ -39,7 +39,7 @@
       ],
       [
         "DEAL-LL-CC",
-        "Lumen Logistics",
+        "ORG-LL",
         "Cold-chain add-on",
         810000,
         "Demo/Making",
@@ -57,7 +57,7 @@
       ],
       [
         "DEAL-LL-RP",
-        "Lumen Logistics",
+        "ORG-LL",
         "Route planning pilot",
         620000,
         "Won",

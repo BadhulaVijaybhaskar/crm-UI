@@ -4,11 +4,15 @@
       "name",
       "full_name",
       "designation",
+      "email_id",
       "email",
       "company_name",
       "chip",
       "channels",
-      "last_activity"
+      "last_activity",
+      "image",
+      "mobile_no",
+      "modified"
     ],
     "values": [
       [
@@ -16,40 +20,56 @@
         "Sana Qureshi",
         "Procurement lead",
         "sana.q@example.in",
-        "Lumen Logistics",
+        "sana.q@example.in",
+        "ORG-LL",
         "Primary · deal",
         "",
-        ""
+        "",
+        "",
+        "",
+        "2026-10-28 08:52:00"
       ],
       [
         "CONTACT-AK",
         "Arjun Kapoor",
         "Head of Operations",
         "arjun.k@example.in",
-        "Lumen Logistics",
+        "arjun.k@example.in",
+        "ORG-LL",
         "WhatsApp",
         "WhatsApp",
-        ""
+        "",
+        "",
+        "",
+        "2026-10-28 09:14:00"
       ],
       [
         "CONTACT-MA",
         "Mohan Arora",
         "CFO",
         "mohan.a@example.in",
-        "Lumen Logistics",
+        "mohan.a@example.in",
+        "ORG-LL",
         "",
         "",
-        "No activity yet"
+        "No activity yet",
+        "",
+        "",
+        "2026-10-01 10:00:00"
       ],
       [
         "CONTACT-RS",
         "Ritu Sharma",
         "Fleet manager",
         "ritu.s@example.in",
-        "Lumen Logistics",
+        "ritu.s@example.in",
+        "ORG-LL",
         "",
         "",
-        "Email · 02 Oct"
+        "Email · 02 Oct",
+        "",
+        "",
+        "2026-10-02 11:00:00"
       ]
     ],
     "user_info": {},
