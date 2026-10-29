@@ -81,28 +81,6 @@
           type="button"
           class="inline-flex h-[38px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
-            viewType === 'list'
-              ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
-              : 'text-crm-muted-fg'
-          "
-          @click="$emit('set-view-type', 'list')"
-        >
-          <svg
-            class="size-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            aria-hidden="true"
-          >
-            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-          </svg>
-          {{ __('List') }}
-        </button>
-        <button
-          type="button"
-          class="inline-flex h-[38px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
-          :class="
             viewType === 'kanban'
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
               : 'text-crm-muted-fg'
@@ -121,6 +99,28 @@
             <path d="M8 7v7M12 7v4M16 7v9" />
           </svg>
           {{ __('Board') }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-[38px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
+          :class="
+            viewType === 'list'
+              ? 'bg-crm-card font-semibold text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-border)]'
+              : 'text-crm-muted-fg'
+          "
+          @click="$emit('set-view-type', 'list')"
+        >
+          <svg
+            class="size-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            aria-hidden="true"
+          >
+            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+          {{ __('List') }}
         </button>
       </div>
     </div>

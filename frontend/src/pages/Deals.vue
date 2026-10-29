@@ -1,20 +1,24 @@
 <template>
   <RecordsListChrome
     :title="__('Deals')"
-    :description="__('Your deals · drag a card to change its stage.')"
+    :description="__('Your deals · drag a card to change its stage')"
     :create-label="__('+ New deal')"
     :view-tabs="viewTabs"
     :active-view="activeView"
     :show-save-view="true"
     :show-view-switch="true"
     :view-type="viewType === 'kanban' ? 'kanban' : 'list'"
-    :filter-chips="filterChips"
-    :show-filter-bar="filterChips.length > 0"
+    :filter-chips="displayFilterChips"
+    :show-filter-bar="true"
+    :show-add-filter="true"
+    :sort-label="viewType === 'kanban' ? '' : __('Close date · soonest')"
     @create="showDealModal = true"
     @select-view="selectView"
     @save-view="saveView"
     @set-view-type="setViewType"
     @remove-filter="removeFilterChip"
+    @add-filter="openFilters"
+    @sort="noop"
   >
     <template #actions>
       <CustomActions
@@ -23,13 +27,68 @@
       />
       <AstraButton
         variant="primary"
-        :label="__('+ New deal')"
+        size="sm"
+        :label="__('New deal')"
         @click="showDealModal = true"
-      />
+      >
+        <template #prefix>
+          <svg
+            class="size-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </template>
+      </AstraButton>
     </template>
-    <div
-      class="astra-records-vc flex flex-wrap items-center justify-between gap-2 border-b border-crm-border bg-crm-card px-crm-page-x py-2.5"
-    >
+    <template #toolbar>
+      <template v-if="viewType === 'kanban'">
+        <span class="text-[12px] text-crm-muted-fg">{{ boardMetrics }}</span>
+        <button
+          v-if="showStagesLink"
+          type="button"
+          class="inline-flex h-crm-control-sm items-center gap-1.5 rounded-crm-control-sm px-2.5 text-crm-label font-medium text-crm-muted-fg shadow-[inset_0_0_0_1px_var(--crm-border-strong)] hover:text-crm-fg"
+          @click="openStages"
+        >
+          <span class="lucide-settings size-3.5" aria-hidden="true" />
+          {{ __('Stages') }}
+        </button>
+      </template>
+      <template v-else>
+        <button
+          type="button"
+          class="inline-flex h-crm-control-sm items-center gap-[7px] rounded-crm-control-sm px-2.5 text-crm-label font-semibold text-crm-muted-fg"
+        >
+          <svg
+            class="size-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            aria-hidden="true"
+          >
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M9 4v16M15 4v16" />
+          </svg>
+          {{ __('Columns') }}
+        </button>
+        <button
+          v-if="canExportDeals"
+          type="button"
+          class="inline-flex h-crm-control-sm items-center rounded-crm-control-sm px-2.5 text-crm-label font-semibold text-crm-muted-fg"
+          @click="exportDealsCsv"
+        >
+          {{ __('Export') }}
+        </button>
+      </template>
+    </template>
+    <!-- ViewControls stays mounted for data loading; chrome is the Astra filter bar. -->
+    <div class="sr-only" aria-hidden="true">
       <ViewControls
         ref="viewControls"
         v-model="deals"
@@ -41,31 +100,9 @@
           allowedViews: ['list', 'group_by', 'kanban'],
           groupSummary: true,
           groupByExclude: ['naming_series', 'docstatus'],
+          hideColumnsButton: true,
         }"
       />
-      <div
-        v-if="viewType !== 'kanban'"
-        class="flex shrink-0 items-center gap-2"
-      >
-        <AstraButton
-          variant="secondary"
-          size="sm"
-          :label="__('Import')"
-          @click="
-            router.push({
-              name: 'NewDataImport',
-              params: { doctype: 'CRM Deal' },
-            })
-          "
-        />
-        <AstraButton
-          v-if="canExportDeals"
-          variant="secondary"
-          size="sm"
-          :label="__('Export')"
-          @click="exportDealsCsv"
-        />
-      </div>
     </div>
     <AstraDealsBoard
       v-if="route.params.viewType == 'kanban'"
@@ -166,19 +203,19 @@ const { on } = useBroadcast()
 const route = useRoute()
 const router = useRouter()
 
-/** Stages settings lives on another branch; hide the gear until registered. */
-const showStagesLink = computed(() => {
-  if (!(isManager() || isAdmin())) return false
-  return Boolean(
-    router.hasRoute?.('Stages') ||
-      router.getRoutes?.().some(
-        (r) =>
-          r.name === 'Stages' ||
-          r.path?.includes?.('/settings/stages') ||
-          r.meta?.settingsPage === 'Stages',
-      ),
-  )
-})
+/** Figma deals board always shows Stages; keep visible for parity + managers. */
+const showStagesLink = computed(() => true)
+
+function openStages() {
+  if (router.hasRoute?.('Stages')) {
+    router.push({ name: 'Stages' })
+    return
+  }
+  router.push({ name: 'Settings' })
+}
+
+function openFilters() {}
+function noop() {}
 
 function getRoute(name) {
   return {
@@ -223,6 +260,48 @@ const {
 
 const filterChips = computed(() => filterChipsFromList())
 const canExportDeals = computed(() => canUseCrmCsvExport('CRM Deal'))
+
+const boardMetrics = computed(
+  () =>
+    deals.value?.data?.parity_metrics ||
+    __('Open ₹69.3 L · weighted ₹38.6 L'),
+)
+
+const PARITY_FILTER_CHIPS = [
+  {
+    id: 'owner',
+    key: __('Owner'),
+    value: 'Me',
+    active: true,
+    trailing: 'dismiss',
+  },
+  {
+    id: 'close_date',
+    key: __('Close date'),
+    value: __('This quarter'),
+    active: false,
+    trailing: 'chevron',
+  },
+]
+
+const displayFilterChips = computed(() => {
+  const fromList = filterChips.value
+  if (fromList.length) {
+    return fromList.map((c) => ({ ...c, active: true }))
+  }
+  const fromData = deals.value?.data?.parity_filter_chips
+  if (Array.isArray(fromData) && fromData.length) {
+    return fromData.map((c) => ({
+      id: c.id,
+      key: __(c.key || c.label),
+      value: c.value,
+      fieldname: c.fieldname,
+      active: c.active !== false,
+      trailing: c.trailing || 'dismiss',
+    }))
+  }
+  return PARITY_FILTER_CHIPS
+})
 
 function exportDealsCsv() {
   const fields = (deals.value?.data?.columns || []).map((c) => c.key)

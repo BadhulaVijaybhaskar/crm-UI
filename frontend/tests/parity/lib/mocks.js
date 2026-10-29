@@ -104,12 +104,30 @@ function defaultMeta(doctype) {
       { fieldname: 'sla_status', fieldtype: 'Data', label: 'SLA Status' },
     ]
   } else if (d.includes('deal') && !d.includes('status')) {
-    title_field = 'organization'
+    title_field = 'organization_name'
     fields = [
       { fieldname: 'organization', fieldtype: 'Link', label: 'Organization', options: 'CRM Organization' },
-      { fieldname: 'status', fieldtype: 'Link', label: 'Status', options: 'CRM Deal Status' },
+      { fieldname: 'organization_name', fieldtype: 'Data', label: 'Organization Name' },
+      { fieldname: 'deal_name', fieldtype: 'Data', label: 'Deal Name' },
+      { fieldname: 'status', fieldtype: 'Link', label: 'Stage', options: 'CRM Deal Status' },
+      { fieldname: 'deal_value', fieldtype: 'Currency', label: 'Deal value', options: 'currency', precision: 0 },
+      {
+        fieldname: 'expected_deal_value',
+        fieldtype: 'Currency',
+        label: 'Expected value',
+        options: 'currency',
+        precision: 0,
+      },
+      { fieldname: 'expected_closure_date', fieldtype: 'Date', label: 'Expected close' },
+      { fieldname: 'currency', fieldtype: 'Link', label: 'Currency', options: 'Currency' },
+      { fieldname: 'probability', fieldtype: 'Percent', label: 'Probability' },
+      { fieldname: 'source', fieldtype: 'Data', label: 'Source' },
+      { fieldname: 'territory', fieldtype: 'Data', label: 'Territory' },
       { fieldname: 'deal_owner', fieldtype: 'Link', label: 'Owner', options: 'User' },
-      { fieldname: 'annual_revenue', fieldtype: 'Currency', label: 'Amount' },
+      { fieldname: 'next_step', fieldtype: 'Data', label: 'Next step' },
+      { fieldname: 'website', fieldtype: 'Data', label: 'Website' },
+      { fieldname: 'email', fieldtype: 'Data', label: 'Email' },
+      { fieldname: 'mobile_no', fieldtype: 'Data', label: 'Mobile' },
     ]
   } else if (d.includes('contact')) {
     title_field = 'full_name'
@@ -400,53 +418,190 @@ function sessionFullName(email) {
   return email?.split('@')[0] || 'User'
 }
 
-/**
- * crm.api.doc.get_data response. Prefers fixture get_data.json; otherwise
- * synthesizes from reportview-style leads/deals/contacts/organizations.json.
- */
-function buildGetData(fixture, doctype, viewsPayload) {
-  const cached = readJson(fixture, 'get_data.json', null)
-  if (cached) {
-    const msg = cached.message || cached
-    if (viewsPayload?.message && !msg.views?.length) {
-      msg.views = viewsPayload.message
-    }
-    return ok(msg)
-  }
-
-  const list = listForDoctype(fixture, doctype)
-  const payload = list?.message || list || {}
-  let data = []
-  if (Array.isArray(payload.data)) data = payload.data
-  else if (Array.isArray(payload.values) && Array.isArray(payload.keys)) {
-    data = payload.values.map((row) => {
+/** Flatten reportview / list payloads into row objects. */
+function rowsFromListPayload(payload) {
+  if (Array.isArray(payload?.data)) return payload.data
+  if (Array.isArray(payload?.values) && Array.isArray(payload?.keys)) {
+    return payload.values.map((row) => {
       const obj = {}
       payload.keys.forEach((k, i) => {
         obj[k] = row[i]
       })
       return obj
     })
-  } else if (Array.isArray(payload)) data = payload
+  }
+  if (Array.isArray(payload)) return payload
+  return []
+}
+
+/**
+ * Build kanban `data` columns from stages.json + deal/lead rows.
+ * Matches crm.api.doc.get_data view_type=kanban shape.
+ */
+function buildKanbanColumns(fixture, doctype, rows) {
+  const stagesPayload = readJson(fixture, 'stages.json', null)
+  const stagesMsg = stagesPayload?.message || stagesPayload
+  let stages = Array.isArray(stagesMsg) ? stagesMsg : null
+  if (!stages?.length) {
+    const d = (doctype || '').toLowerCase()
+    stages = d.includes('deal') ? DEFAULT_DEAL_STATUSES : DEFAULT_LEAD_STATUSES
+  }
+
+  const kanban_fields = dIncludesDeal(doctype)
+    ? [
+        'organization',
+        'deal_value',
+        'expected_deal_value',
+        'deal_owner',
+        'contact',
+        'expected_closure_date',
+        'next_step',
+        'chip',
+        'probability',
+        'status',
+        'modified',
+        'last_activity',
+      ]
+    : ['lead_name', 'organization', 'status', 'lead_owner', 'modified']
+
+  const kanban_columns = []
+  const data = []
+  for (const stage of stages) {
+    const name = stage.name || stage.deal_status
+    const columnRows = rows.filter((r) => (r.status || '') === name)
+    const kc = {
+      name,
+      color: stage.color || 'gray',
+      position: stage.position,
+      type: stage.type || 'Open',
+      probability: stage.probability,
+      count: stage.count ?? columnRows.length,
+      all_count: stage.count ?? columnRows.length,
+      total: stage.total,
+      period: stage.period,
+    }
+    kanban_columns.push(kc)
+    data.push({ column: kc, fields: kanban_fields, data: columnRows })
+  }
+  return { data, kanban_columns, kanban_fields }
+}
+
+function dIncludesDeal(doctype) {
+  const d = (doctype || '').toLowerCase()
+  return d.includes('deal') && !d.includes('status')
+}
+
+/**
+ * crm.api.doc.get_data response. Prefers fixture get_data.json; otherwise
+ * synthesizes from reportview-style leads/deals/contacts/organizations.json.
+ * Honors request view_type=kanban (parity boards need column-shaped data).
+ */
+function buildGetData(fixture, doctype, viewsPayload, request = {}) {
+  const viewType =
+    request.view?.view_type ||
+    request.view_type ||
+    (typeof request.view === 'string' ? request.view : null) ||
+    'list'
+
+  const cached = readJson(fixture, 'get_data.json', null)
+  if (cached) {
+    const msg = { ...(cached.message || cached) }
+    if (viewsPayload?.message && !msg.views?.length) {
+      msg.views = viewsPayload.message
+    }
+    // Prefer synthesizing kanban when the cached fixture is list-shaped.
+    if (!(viewType === 'kanban' && msg.view_type !== 'kanban')) {
+      return ok(msg)
+    }
+  }
+
+  const list = listForDoctype(fixture, doctype)
+  const payload = list?.message || list || {}
+  let rows = rowsFromListPayload(payload)
 
   const columns = (payload.columns || []).length
     ? payload.columns
-    : Object.keys(data[0] || { name: 1 }).map((key) => ({
+    : Object.keys(rows[0] || { name: 1 }).map((key) => ({
         label: key,
         type: 'Data',
         key,
         width: '8rem',
       }))
-  const rows = payload.rows || columns.map((c) => c.key || c)
+  const rowKeys = payload.rows || columns.map((c) => c.key || c)
+
+  if (viewType === 'kanban') {
+    const { data, kanban_columns, kanban_fields } = buildKanbanColumns(
+      fixture,
+      doctype,
+      rows,
+    )
+    const stagesPayload = readJson(fixture, 'stages.json', null)
+    const metrics = stagesPayload?.metrics || null
+    return ok({
+      data,
+      columns,
+      rows: rowKeys,
+      fields: kanban_fields.map((fieldname) => ({
+        label: fieldname,
+        fieldtype: 'Data',
+        fieldname,
+      })),
+      column_field: request.column_field || 'status',
+      title_field: dIncludesDeal(doctype) ? 'organization' : 'lead_name',
+      kanban_columns,
+      kanban_fields,
+      group_by_field: null,
+      page_length: 20,
+      page_length_count: 20,
+      is_default: 1,
+      views: viewsPayload?.message || [],
+      total_count: payload.total_count ?? rows.length,
+      row_count: data.length,
+      form_script: '',
+      list_script: '',
+      view_type: 'kanban',
+      // Design-capture drag snapshot (06-deals-board PNG/HTML).
+      parity_drag:
+        fixture === '06-deals-board'
+          ? {
+              name: 'DEAL-KF',
+              from: 'Demo/Making',
+              to: 'Negotiation',
+              left: 916,
+              top: 452,
+              width: 178,
+              label: 'Moving to Negotiation · 70%',
+            }
+          : null,
+      parity_filter_chips: [
+        {
+          id: 'owner',
+          key: 'Owner',
+          value: 'Me',
+          active: true,
+          trailing: 'dismiss',
+        },
+        {
+          id: 'close_date',
+          key: 'Close date',
+          value: 'This quarter',
+          active: false,
+          trailing: 'chevron',
+        },
+      ],
+      parity_metrics: metrics?.open_label || 'Open ₹69.3 L · weighted ₹38.6 L',
+    })
+  }
 
   return ok({
-    data,
+    data: rows,
     columns,
-    rows,
+    rows: rowKeys,
     fields: [],
     column_field: 'status',
-    title_field: data[0]?.lead_name
+    title_field: rows[0]?.lead_name
       ? 'lead_name'
-      : data[0]?.organization_name
+      : rows[0]?.organization_name
         ? 'organization_name'
         : 'name',
     kanban_columns: payload.kanban_columns || [],
@@ -456,8 +611,8 @@ function buildGetData(fixture, doctype, viewsPayload) {
     page_length_count: 20,
     is_default: 1,
     views: viewsPayload?.message || [],
-    total_count: payload.total_count ?? data.length,
-    row_count: data.length,
+    total_count: payload.total_count ?? rows.length,
+    row_count: rows.length,
     form_script: '',
     list_script: '',
     view_type: 'list',
@@ -615,7 +770,7 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       url.includes('crm.api.doc.get_data')
     ) {
       const { dt } = resolveDocArgs(post, parsed, doctype || post.doctype || 'CRM Lead')
-      body = buildGetData(fixture, dt || 'CRM Lead', views)
+      body = buildGetData(fixture, dt || 'CRM Lead', views, post)
     } else if (
       method.includes('frappe.client.get_list') ||
       method.includes('frappe.client.get_count') ||
@@ -681,6 +836,17 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
     ) {
       const timeline = readJson(fixture, 'timeline.json', null)
       body = timeline ? unwrap(timeline, ok([])) : ok([])
+    } else if (
+      method.includes('get_deal_contacts') ||
+      url.includes('get_deal_contacts')
+    ) {
+      const fromContacts = readJson(fixture, 'contacts.json', null)
+      const fromDeal = readJson(fixture, 'deal.json', null)
+      const rows =
+        fromContacts?.message ||
+        fromDeal?.message?.contacts ||
+        []
+      body = ok(rows)
     } else if (
       method.includes('get_activities') ||
       method.includes('get_events') ||

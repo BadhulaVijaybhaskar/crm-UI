@@ -47,6 +47,13 @@ const chipStyle = computed(() => {
     // Exact capture values from app.css .nav .foot .av
     return { backgroundColor: '#16264A', color: '#C9D3E6' }
   }
+  if (props.tone === 'company' || (props.squared && props.tone !== 'primary')) {
+    // crm.css .av2.co — neutral chip + muted initials (list company cells)
+    return {
+      backgroundColor: 'var(--crm-neutral-soft)',
+      color: 'var(--crm-muted-fg)',
+    }
+  }
   if (props.squared) {
     // Figma .bigav — primary-soft chip + primary initials (not muted ink)
     return {
@@ -58,8 +65,13 @@ const chipStyle = computed(() => {
 })
 
 const sizeClass = computed(() => {
-  // Figma .bigav uses 10px radius on record avatars
-  const radius = props.squared ? 'rounded-[10px]' : 'rounded-full'
+  // List .av2.co is 6px; record .bigav is 10px
+  const radius =
+    props.tone === 'company'
+      ? 'rounded-[6px]'
+      : props.squared
+        ? 'rounded-[10px]'
+        : 'rounded-full'
   if (props.size === 'xs') return `${radius} size-5 text-[9px] font-semibold`
   // PNG av2 initials ink is lighter than Inter 700 in Chromium — match PNG
   // (approved) with 600; HTML .av2 {700} disagrees with the capture.

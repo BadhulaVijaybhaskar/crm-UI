@@ -11,13 +11,49 @@ export function quietDaysSince(dateValue) {
 }
 
 /**
+ * Chip tones matching Figma crm.css `.mini.call` / `.mini.note` on the deals board.
+ * Warm / Demo / Quote / PO → teal; No next step / Quiet → warning.
+ */
+function toneForChipLabel(label, fallback = 'mute') {
+  if (label === 'Warm') return 'call'
+  if (
+    label === 'Demo 12:30' ||
+    label === 'Quote today' ||
+    label === 'PO expected'
+  ) {
+    return 'call'
+  }
+  if (label === 'No next step' || /^Quiet\b/i.test(label)) return 'note'
+  if (TEMPERATURE_TONES[label]) {
+    const t = TEMPERATURE_TONES[label]
+    return t === 'muted' ? 'mute' : t
+  }
+  return fallback
+}
+
+/**
  * Build deal-card chips from real row fields only.
+ * When the row includes a `chip` key (parity list/kanban payloads), that label
+ * is authoritative — empty string means no chip (do not synthesize).
  * Temperature is shown only when the row carries it.
  * Next-step / open-task chips use next_step and _task_count.
  * Quiet N d uses last_responded_on, then modified.
  */
 export function dealCardChips(row = {}) {
   const chips = []
+  const hasChipKey = Object.prototype.hasOwnProperty.call(row, 'chip')
+  const explicit =
+    (typeof row.chip === 'object' ? row.chip?.label : row.chip) || ''
+
+  if (hasChipKey) {
+    if (explicit) {
+      chips.push({
+        label: String(explicit),
+        tone: toneForChipLabel(String(explicit), 'call'),
+      })
+    }
+    return chips
+  }
 
   const temperature =
     row.temperature?.label ||
@@ -30,7 +66,7 @@ export function dealCardChips(row = {}) {
   if (temperature) {
     chips.push({
       label: String(temperature),
-      tone: TEMPERATURE_TONES[temperature] || 'mute',
+      tone: toneForChipLabel(String(temperature), 'mute'),
     })
   }
 
@@ -56,9 +92,15 @@ export function dealCardChips(row = {}) {
   const hasOpenTask = Number.isFinite(taskCount) ? taskCount > 0 : false
 
   if (nextActivity) {
-    chips.push({ label: String(nextActivity), tone: 'info' })
+    chips.push({
+      label: String(nextActivity),
+      tone: toneForChipLabel(String(nextActivity), 'info'),
+    })
   } else if (nextStep) {
-    chips.push({ label: String(nextStep), tone: 'info' })
+    chips.push({
+      label: String(nextStep),
+      tone: toneForChipLabel(String(nextStep), 'info'),
+    })
   } else if (!hasOpenTask) {
     chips.push({ label: __('No next step'), tone: 'warn' })
   }

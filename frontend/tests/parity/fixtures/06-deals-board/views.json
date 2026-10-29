@@ -5,7 +5,7 @@
       "label": "All open deals",
       "route_name": "Deals",
       "doctype": "CRM Deal",
-      "type": "list",
+      "type": "kanban",
       "is_standard": 1,
       "is_default": 1,
       "filters": [],
@@ -14,14 +14,15 @@
       "load_default_columns": 1,
       "pinned": 0,
       "public": 0,
-      "user": "rohan.mehta@example.com"
+      "user": "rohan.mehta@example.com",
+      "parity_count": 14
     },
     {
       "name": "mine-deals",
       "label": "Mine",
       "route_name": "Deals",
       "doctype": "CRM Deal",
-      "type": "list",
+      "type": "kanban",
       "is_standard": 1,
       "is_default": 0,
       "filters": [],
@@ -29,14 +30,15 @@
       "rows": [],
       "load_default_columns": 1,
       "pinned": 0,
-      "public": 0
+      "public": 0,
+      "parity_count": 9
     },
     {
       "name": "closing-this-month",
       "label": "Closing this month",
       "route_name": "Deals",
       "doctype": "CRM Deal",
-      "type": "list",
+      "type": "kanban",
       "is_standard": 1,
       "is_default": 0,
       "filters": [],
@@ -44,14 +46,15 @@
       "rows": [],
       "load_default_columns": 1,
       "pinned": 0,
-      "public": 0
+      "public": 0,
+      "parity_count": 5
     },
     {
       "name": "no-next-step",
       "label": "No next step",
       "route_name": "Deals",
       "doctype": "CRM Deal",
-      "type": "list",
+      "type": "kanban",
       "is_standard": 1,
       "is_default": 0,
       "filters": [],
@@ -59,7 +62,8 @@
       "rows": [],
       "load_default_columns": 1,
       "pinned": 0,
-      "public": 0
+      "public": 0,
+      "parity_count": 3
     }
   ]
 }
