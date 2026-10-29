@@ -1,4 +1,5 @@
 import frappeUIPreset, { content as frappeUIContent } from 'frappe-ui/tailwind'
+import astra from './tailwind.astra.js'
 
 export default {
   presets: [frappeUIPreset],
@@ -28,7 +29,7 @@ export default {
     '!text-ink-gray-9',
   ],
   theme: {
-    extend: {},
+    extend: astra.extend,
   },
   plugins: [],
 }

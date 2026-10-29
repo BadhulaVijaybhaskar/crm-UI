@@ -1,0 +1,106 @@
+<template>
+  <div class="w-full overflow-auto bg-crm-card" :class="{ 'min-h-64': !rows.length }">
+    <div v-if="!rows.length">
+      <slot name="empty">
+        <AstraEmptyState :title="emptyTitle" :body="emptyBody" />
+      </slot>
+    </div>
+    <table v-else class="w-full border-collapse">
+      <thead>
+        <tr>
+          <th
+            v-if="selectable"
+            class="h-crm-th w-10 border-b border-crm-border bg-crm-muted px-2.5 text-center"
+          >
+            <input
+              type="checkbox"
+              class="size-[15px] rounded-crm-mini accent-crm-primary"
+              :checked="allSelected"
+              :indeterminate.prop="someSelected && !allSelected"
+              @change="$emit('toggle-all', $event.target.checked)"
+            />
+          </th>
+          <th
+            v-for="col in columns"
+            :key="col.key"
+            class="h-crm-th border-b border-crm-border bg-crm-muted px-2.5 text-left text-crm-meta font-semibold text-crm-muted-fg"
+            :class="{ 'text-right': col.align === 'right' }"
+            :style="col.width ? { width: col.width } : undefined"
+          >
+            {{ col.label }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="row in rows"
+          :key="rowKey(row)"
+          class="cursor-pointer border-b border-crm-border hover:bg-crm-row-hover"
+          :class="{ 'bg-crm-row-selected': isSelected(row) }"
+          @click="$emit('row-click', row)"
+        >
+          <td
+            v-if="selectable"
+            class="h-crm-td w-10 px-2.5 text-center"
+            @click.stop
+          >
+            <input
+              type="checkbox"
+              class="size-[15px] rounded-crm-mini accent-crm-primary"
+              :checked="isSelected(row)"
+              @change="$emit('toggle-row', row, $event.target.checked)"
+            />
+          </td>
+          <td
+            v-for="col in columns"
+            :key="col.key"
+            class="h-crm-td whitespace-nowrap px-2.5 text-crm-label text-crm-fg"
+            :class="{ 'text-right': col.align === 'right' }"
+          >
+            <slot :name="`cell-${col.key}`" :row="row" :column="col">
+              {{ row[col.key] }}
+            </slot>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import AstraEmptyState from '@/components/astra/AstraEmptyState.vue'
+
+const props = defineProps({
+  columns: { type: Array, default: () => [] },
+  rows: { type: Array, default: () => [] },
+  rowKeyField: { type: String, default: 'id' },
+  selectable: { type: Boolean, default: false },
+  selectedKeys: { type: Array, default: () => [] },
+  emptyTitle: { type: String, default: 'No records' },
+  emptyBody: {
+    type: String,
+    default: 'Try adjusting filters or create a new record.',
+  },
+})
+
+defineEmits(['row-click', 'toggle-row', 'toggle-all'])
+
+function rowKey(row) {
+  return row?.[props.rowKeyField] ?? row?.name ?? row?.id
+}
+
+function isSelected(row) {
+  return props.selectedKeys.includes(rowKey(row))
+}
+
+const allSelected = computed(
+  () =>
+    props.rows.length > 0 &&
+    props.rows.every((row) => props.selectedKeys.includes(rowKey(row))),
+)
+
+const someSelected = computed(() =>
+  props.rows.some((row) => props.selectedKeys.includes(rowKey(row))),
+)
+</script>

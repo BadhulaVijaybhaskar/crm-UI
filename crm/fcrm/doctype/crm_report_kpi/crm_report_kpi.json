@@ -1,0 +1,180 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2026-10-28 18:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "kpi_type",
+  "column_break_vis",
+  "visibility",
+  "owner_user",
+  "shared_role",
+  "section_simple",
+  "source_doctype",
+  "aggregation",
+  "aggregate_field",
+  "date_field",
+  "filters_json",
+  "section_formula",
+  "formula",
+  "formula_inputs",
+  "section_display",
+  "format",
+  "compare_with"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "Simple",
+   "fieldname": "kpi_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "Simple\nCalculated",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_vis",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Only Me",
+   "fieldname": "visibility",
+   "fieldtype": "Select",
+   "label": "Visible to",
+   "options": "Only Me\nRole\nEveryone"
+  },
+  {
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "label": "Owner",
+   "options": "User"
+  },
+  {
+   "depends_on": "eval:doc.visibility=='Role'",
+   "fieldname": "shared_role",
+   "fieldtype": "Link",
+   "label": "Shared role",
+   "options": "Role"
+  },
+  {
+   "depends_on": "eval:doc.kpi_type=='Simple'",
+   "fieldname": "section_simple",
+   "fieldtype": "Section Break",
+   "label": "Data"
+  },
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Select",
+   "label": "Module",
+   "options": "CRM Lead\nCRM Deal\nContact\nCRM Organization\nCRM Task\nCRM Call Log"
+  },
+  {
+   "default": "count",
+   "fieldname": "aggregation",
+   "fieldtype": "Select",
+   "label": "Aggregate",
+   "options": "count\nsum\navg\nmin\nmax"
+  },
+  {
+   "fieldname": "aggregate_field",
+   "fieldtype": "Data",
+   "label": "Field"
+  },
+  {
+   "fieldname": "date_field",
+   "fieldtype": "Data",
+   "label": "Date field"
+  },
+  {
+   "default": "[]",
+   "fieldname": "filters_json",
+   "fieldtype": "Code",
+   "label": "Filters",
+   "options": "JSON"
+  },
+  {
+   "depends_on": "eval:doc.kpi_type=='Calculated'",
+   "fieldname": "section_formula",
+   "fieldtype": "Section Break",
+   "label": "Formula"
+  },
+  {
+   "fieldname": "formula",
+   "fieldtype": "Small Text",
+   "label": "Formula"
+  },
+  {
+   "default": "{}",
+   "description": "Map of reference name to simple KPI config objects.",
+   "fieldname": "formula_inputs",
+   "fieldtype": "Code",
+   "label": "Formula inputs",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "section_display",
+   "fieldtype": "Section Break",
+   "label": "Display"
+  },
+  {
+   "default": "number",
+   "fieldname": "format",
+   "fieldtype": "Select",
+   "label": "Format",
+   "options": "number\ncurrency\npercent"
+  },
+  {
+   "default": "previous_period",
+   "fieldname": "compare_with",
+   "fieldtype": "Select",
+   "label": "Compare with",
+   "options": "none\nprevious_period"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-28 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "CRM Report KPI",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Sales Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Sales User",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}
