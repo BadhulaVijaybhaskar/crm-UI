@@ -1,9 +1,12 @@
 <template>
   <article
-    class="flex min-h-[118px] cursor-pointer flex-col gap-[7px] rounded-crm-card border border-crm-border bg-crm-card p-[10px_11px] text-[12px] transition-shadow"
+    class="flex min-h-[118px] cursor-pointer flex-col gap-[7px] rounded-crm-card border bg-crm-card p-[10px_11px] text-[12px] transition-shadow"
     :class="{
-      'rotate-[-1.5deg] shadow-crm-drag ring-[1.5px] ring-crm-primary': dragging,
-      'opacity-40 [border-style:dashed]': faded,
+      // Figma .dc.drag: shadow includes 1.5px primary ring — no extra Tailwind ring
+      'border-transparent shadow-crm-drag': dragging,
+      'border-crm-border': !dragging && !faded,
+      'rotate-[-1.5deg]': dragging && !preview,
+      'border-crm-border opacity-40 [border-style:dashed]': faded,
     }"
     role="button"
     tabindex="0"
@@ -41,14 +44,14 @@
       </slot>
     </div>
 
-    <!-- Date + chips row -->
+    <!-- Date + chips / moving label (Figma .dc .f — muted) -->
     <div
       v-if="date || chips.length || badge || $slots.badge || $slots.chips || movingLabel"
       class="flex h-[18px] items-center gap-2 text-[11.5px] text-crm-muted-fg"
     >
       <template v-if="movingLabel">
         <svg
-          class="size-3.5 shrink-0 text-crm-primary"
+          class="size-3.5 shrink-0 text-crm-muted-fg"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -59,7 +62,7 @@
             d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"
           />
         </svg>
-        <span class="min-w-0 truncate font-medium text-crm-primary">{{
+        <span class="min-w-0 truncate whitespace-nowrap text-crm-muted-fg">{{
           movingLabel
         }}</span>
       </template>
@@ -123,6 +126,11 @@ defineProps({
   faded: { type: Boolean, default: false },
   /** Drag helper caption, e.g. "Moving to Negotiation · 70%". */
   movingLabel: { type: String, default: '' },
+  /**
+   * When true, parent applies the drag rotate (HTML .dc.drag pattern).
+   * Avoids double-rotate when the fixed wrapper is already rotated.
+   */
+  preview: { type: Boolean, default: false },
 })
 
 defineEmits(['click', 'activate'])

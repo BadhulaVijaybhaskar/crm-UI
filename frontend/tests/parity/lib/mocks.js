@@ -614,8 +614,8 @@ function buildGetData(fixture, doctype, viewsPayload, request = {}) {
               name: 'DEAL-KF',
               from: 'Demo/Making',
               to: 'Negotiation',
-              // HTML absolute left:676 inside .main (x=240) → viewport 916 for fixed.
-              left: 900,
+              // HTML absolute left: 912 inside .main (x=240) → viewport 916 for fixed.
+              left: 912,
               top: 440,
               width: 178,
               insert_after: 0,

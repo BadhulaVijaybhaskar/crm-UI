@@ -1,7 +1,7 @@
 <template>
   <div class="relative flex h-full min-h-0 flex-col">
     <div
-      class="-translate-y-[5px] flex shrink-0 items-end gap-3 px-crm-page-x pb-2 pt-1"
+      class="-translate-y-[3px] flex shrink-0 items-end gap-3 px-crm-page-x pb-2 pt-1"
     >
       <p
         class="m-0 min-w-0 flex-1 border-t-2 border-crm-border-strong pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-muted-fg"
@@ -18,7 +18,7 @@
     </div>
 
     <div
-      class="-translate-y-[5px] flex min-h-0 flex-1 gap-3 overflow-x-auto px-crm-page-x pb-6"
+      class="-translate-y-[3px] flex min-h-0 flex-1 gap-3 overflow-x-auto px-crm-page-x pb-6"
     >
       <div class="flex h-full min-h-0 gap-3">
         <AstraKanbanColumn
@@ -203,10 +203,10 @@
       </section>
     </div>
 
-    <!-- Drag preview — fixture left/top match Figma PNG viewport coords -->
+    <!-- Drag preview — fixed + rotate on same box as HTML .dc.drag -->
     <div
       v-if="parityDragCard"
-      class="pointer-events-none fixed z-[40]"
+      class="pointer-events-none fixed z-[40] rotate-[-1.5deg]"
       :style="{
         left: `${parityDrag.left || 0}px`,
         top: `${parityDrag.top || 0}px`,
@@ -220,6 +220,7 @@
         :avatar-name="cardOwner(parityDragCard)"
         dragging
         :moving-label="parityDrag.label"
+        preview
       />
     </div>
   </div>
@@ -490,9 +491,11 @@ function onCardMove(d) {
 
 <style scoped>
 :deep(.astra-kanban-ghost) {
+  height: 84px;
   min-height: 84px;
   border-radius: 8px;
   border: 1.5px dashed var(--crm-primary);
   background: var(--crm-primary-soft);
+  box-sizing: border-box;
 }
 </style>
