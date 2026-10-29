@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="flex h-[60px] shrink-0 items-stretch border-t border-crm-border bg-crm-card"
+    class="flex h-[60px] shrink-0 items-stretch justify-around border-t border-crm-border bg-crm-card"
     :aria-label="__('Primary')"
   >
     <template v-for="item in items" :key="item.key">
@@ -10,7 +10,7 @@
         class="astra-mobile-tab"
         :class="isActive(item) ? 'font-semibold text-crm-primary' : 'font-medium text-crm-muted-fg'"
       >
-        <component :is="item.icon" class="size-[18px]" />
+        <component :is="item.icon" class="size-4" />
         {{ item.label }}
       </router-link>
       <button
@@ -20,7 +20,7 @@
         :class="isActive(item) ? 'font-semibold text-crm-primary' : 'font-medium text-crm-muted-fg'"
         @click="item.action && item.action()"
       >
-        <component :is="item.icon" class="size-[18px]" />
+        <component :is="item.icon" class="size-4" />
         {{ item.label }}
       </button>
     </template>
@@ -63,11 +63,11 @@ function isActive(item) {
 <style scoped>
 .astra-mobile-tab {
   display: flex;
-  flex: 1;
+  flex: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   padding-bottom: 1px;
   padding: 0;
   border: 0;

@@ -31,7 +31,7 @@
     </div>
 
     <section class="mt-[13px] overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card">
-      <div class="flex h-[43px] items-center border-b-2 border-crm-border px-3.5">
+      <div class="flex h-[43px] items-center border-b-2 border-crm-border px-3.5 pt-[2px]">
         <h2 class="m-0 text-[14px] font-semibold text-crm-fg">{{ __('Today') }}</h2>
         <div class="flex-1" />
         <router-link
@@ -59,11 +59,12 @@
             {{ row.item.time_label || '—' }}
           </span>
           <div class="min-w-0 flex-1 leading-[1.45]">
-            <div class="truncate text-[12.5px] font-semibold text-crm-fg">{{ row.item.title }}</div>
-            <div class="truncate text-[11.5px] text-crm-muted-fg">{{ row.item.record_label }}</div>
+            <div class="truncate text-[12.3px] font-semibold text-crm-fg">{{ row.item.title }}</div>
+            <div class="truncate text-[11.3px] text-crm-muted-fg">{{ row.item.record_label }}</div>
           </div>
           <AstraBadge
             v-if="row.item.badge"
+            class="!text-[11.2px]"
             :label="row.item.badge"
             :tone="todayBadgeTone(row.item)"
           />
@@ -86,7 +87,7 @@
         v-for="(row, index) in mobileDeadlines"
         :key="row.name"
         class="flex items-center gap-2.5 px-3.5"
-        :class="index ? 'h-[56px] border-t border-crm-border pt-[6px]' : 'h-[54px] pt-0.5'"
+        :class="index ? 'h-[56px] border-t border-crm-border pt-1' : 'h-[54px] pt-0.5'"
       >
         <span
           class="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-crm-primary-soft text-[10.5px] font-bold text-crm-primary"
@@ -95,8 +96,8 @@
           {{ initialsFrom(row.title) }}
         </span>
         <div class="min-w-0 flex-1 leading-[1.45]">
-          <div class="truncate text-[12.5px] font-semibold text-crm-fg">{{ row.title }}</div>
-          <div class="truncate text-[11.5px] text-crm-muted-fg">{{ row.sub_label }}</div>
+          <div class="truncate text-[12.3px] font-semibold text-crm-fg">{{ row.title }}</div>
+          <div class="truncate text-[11.3px] text-crm-muted-fg">{{ row.sub_label }}</div>
         </div>
         <span
           class="shrink-0 whitespace-nowrap text-[11.5px] font-semibold"
