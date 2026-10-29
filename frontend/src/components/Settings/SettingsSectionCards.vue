@@ -81,7 +81,7 @@
             >
               <template #item="{ element: field }">
                 <div
-                  class="group flex h-[34px] min-w-0 items-center gap-2 rounded-[7px] bg-crm-card px-2.5 text-left"
+                  class="group relative flex h-[34px] min-w-0 items-center gap-2 rounded-[7px] bg-crm-card px-2.5 text-left"
                   :class="
                     selected === field
                       ? 'border border-crm-primary shadow-[0_0_0_3px_var(--crm-primary-soft)]'
@@ -96,7 +96,7 @@
                     class="field-drag-handle size-3.5 shrink-0 cursor-grab text-crm-faint"
                   />
                   <span
-                    class="min-w-0 flex-1 truncate text-crm-label font-semibold text-crm-fg"
+                    class="min-w-0 flex-1 truncate text-[13px] font-semibold leading-none text-crm-fg"
                   >
                     {{ field.label || field.fieldname }}
                     <span v-if="field.reqd" class="text-crm-danger">*</span>
@@ -106,7 +106,7 @@
                   </span>
                   <button
                     type="button"
-                    class="inline-flex size-4 items-center justify-center text-crm-faint opacity-0 hover:text-crm-fg group-hover:opacity-100"
+                    class="absolute right-1.5 top-1/2 hidden size-4 -translate-y-1/2 items-center justify-center text-crm-faint hover:text-crm-fg group-hover:inline-flex"
                     :aria-label="__('Remove field')"
                     @click.stop="removeField(column, field)"
                   >

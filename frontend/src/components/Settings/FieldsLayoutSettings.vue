@@ -23,9 +23,9 @@
       </template>
     </AstraPageHeader>
 
-    <div class="flex flex-wrap items-center gap-2 px-crm-page-x pb-4 pt-0">
+    <div class="flex flex-wrap items-center gap-2 px-crm-page-x pb-2.5 pt-0">
       <div
-        class="inline-flex gap-0.5 rounded-lg border border-crm-border bg-crm-muted p-0.5"
+        class="inline-flex gap-0.5 rounded-crm-card border border-crm-border bg-crm-muted p-[3px]"
         role="group"
         :aria-label="__('Record')"
       >
@@ -33,7 +33,7 @@
           v-for="entity in entities"
           :key="entity.doctype"
           type="button"
-          class="inline-flex h-[26px] items-center rounded-md px-2.5 text-crm-label font-medium"
+          class="inline-flex h-[26px] items-center rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             doctype === entity.doctype
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[0_0_0_1px_var(--crm-border)]'
@@ -47,7 +47,7 @@
       </div>
       <span class="hidden h-6 w-px bg-crm-border sm:block" aria-hidden="true" />
       <div
-        class="inline-flex gap-0.5 rounded-lg border border-crm-border bg-crm-muted p-0.5"
+        class="inline-flex gap-0.5 rounded-crm-card border border-crm-border bg-crm-muted p-[3px]"
         role="group"
         :aria-label="__('Layout')"
       >
@@ -55,7 +55,7 @@
           v-for="lt in layoutTypes"
           :key="lt.value"
           type="button"
-          class="inline-flex h-[26px] items-center rounded-md px-2.5 text-crm-label font-medium"
+          class="inline-flex h-[26px] items-center rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             layoutType === lt.value
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[0_0_0_1px_var(--crm-border)]'
@@ -115,55 +115,105 @@
       </div>
 
       <aside
-        class="hidden w-[300px] shrink-0 flex-col gap-3 overflow-y-auto lg:flex"
+        v-if="selectedField && !preview"
+        class="panel hidden w-[300px] shrink-0 self-stretch overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card lg:block"
       >
         <div
-          v-if="selectedField && !preview"
-          class="overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card"
+          class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
         >
-          <div
-            class="flex items-start justify-between gap-2 border-b border-crm-border px-[18px] py-3.5"
+          <h2
+            class="text-[14px] font-semibold leading-[1.45] tracking-[-0.005em] text-crm-fg"
           >
-            <h2 class="text-sm font-semibold tracking-tight text-crm-fg">
-              {{ selectedField.label || selectedField.fieldname }}
-            </h2>
-            <span
-              class="shrink-0 rounded-crm-chip bg-crm-neutral-soft px-1.5 py-0.5 text-[11.5px] font-medium text-crm-muted-fg"
-            >
-              {{ selectedField.fieldtype }}
-            </span>
-          </div>
-          <div class="px-[18px] py-3.5">
-            <div class="text-xs font-semibold text-crm-fg">
+            {{ selectedField.label || selectedField.fieldname }}
+          </h2>
+          <span class="flex-1" />
+          <span
+            class="inline-flex h-[22px] shrink-0 items-center rounded-crm-chip bg-crm-neutral-soft px-2 text-[11.5px] font-semibold text-crm-muted-fg"
+          >
+            {{ selectedField.fieldtype }}
+          </span>
+        </div>
+        <div class="flex flex-col gap-3 px-4 py-3.5">
+          <div class="flex flex-col gap-[5px]">
+            <label class="text-xs font-semibold text-crm-fg">
               {{ __('Label') }}
-            </div>
+            </label>
             <div
-              class="mt-1 flex h-8 items-center rounded-[7px] px-2.5 text-crm-label text-crm-fg shadow-[inset_0_0_0_1px_var(--crm-primary)]"
+              class="flex h-8 items-center rounded-[7px] border border-crm-primary bg-crm-card px-2.5 text-crm-label text-crm-fg shadow-[0_0_0_3px_var(--crm-primary-soft)]"
               role="textbox"
               aria-readonly="true"
             >
               {{ selectedField.label || selectedField.fieldname }}
             </div>
-            <p class="mt-3 text-crm-meta text-crm-muted-fg">
-              {{
-                selectedField.reqd
-                  ? __('Mandatory on this record.')
-                  : __('Optional on this record.')
-              }}
-            </p>
+          </div>
+          <label class="flex items-center gap-2.5 text-crm-label text-crm-fg">
             <button
               type="button"
-              class="mt-3 text-crm-label font-semibold text-crm-danger"
-              @click="editorRef?.removeSelected?.()"
+              role="switch"
+              class="relative inline-block h-[18px] w-[30px] shrink-0 rounded-full"
+              :class="
+                showInQuickEntry ? 'bg-crm-primary' : 'bg-crm-border-strong'
+              "
+              :aria-checked="showInQuickEntry"
+              @click="showInQuickEntry = !showInQuickEntry"
             >
-              {{ __('Remove field') }}
+              <span
+                class="absolute top-0.5 size-3.5 rounded-full bg-white transition-[left]"
+                :class="showInQuickEntry ? 'left-3.5' : 'left-0.5'"
+              />
             </button>
+            {{ __('Show in quick entry') }}
+          </label>
+          <label class="flex items-center gap-2.5 text-crm-label text-crm-fg">
+            <button
+              type="button"
+              role="switch"
+              class="relative inline-block h-[18px] w-[30px] shrink-0 rounded-full"
+              :class="isMandatory ? 'bg-crm-primary' : 'bg-crm-border-strong'"
+              :aria-checked="isMandatory"
+              @click="toggleMandatory"
+            >
+              <span
+                class="absolute top-0.5 size-3.5 rounded-full bg-white transition-[left]"
+                :class="isMandatory ? 'left-3.5' : 'left-0.5'"
+              />
+            </button>
+            {{ __('Mandatory') }}
+          </label>
+          <label class="flex items-center gap-2.5 text-crm-label text-crm-fg">
+            <button
+              type="button"
+              role="switch"
+              class="relative inline-block h-[18px] w-[30px] shrink-0 rounded-full"
+              :class="
+                showInSidePanel ? 'bg-crm-primary' : 'bg-crm-border-strong'
+              "
+              :aria-checked="showInSidePanel"
+              @click="showInSidePanel = !showInSidePanel"
+            >
+              <span
+                class="absolute top-0.5 size-3.5 rounded-full bg-white transition-[left]"
+                :class="showInSidePanel ? 'left-3.5' : 'left-0.5'"
+              />
+            </button>
+            {{ __('Show in side panel') }}
+          </label>
+          <div
+            class="flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
+          >
+            <Icon icon="eye" class="mt-0.5 size-3.5 shrink-0 text-crm-faint" />
+            <span>{{ saveNote }}</span>
           </div>
         </div>
+      </aside>
+      <aside
+        v-else
+        class="hidden w-[300px] shrink-0 flex-col gap-3 lg:flex"
+      >
         <div
-          class="flex gap-2.5 rounded-lg border border-crm-border bg-crm-muted px-3 py-2.5 text-crm-label text-crm-muted-fg"
+          class="flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
         >
-          <Icon icon="info" class="mt-0.5 size-3.5 shrink-0 text-crm-faint" />
+          <Icon icon="eye" class="mt-0.5 size-3.5 shrink-0 text-crm-faint" />
           <p>{{ saveNote }}</p>
         </div>
       </aside>
@@ -206,8 +256,24 @@ const saving = ref(false)
 const dirty = ref(false)
 const selectedField = ref(null)
 const editorRef = ref(null)
+/** Figma 23 inspector toggles (layout flags; mandatory writes through to field). */
+const showInQuickEntry = ref(true)
+const showInSidePanel = ref(true)
 
 const editorKey = computed(() => `${doctype.value}:${layoutType.value}`)
+const isMandatory = computed(() => Boolean(selectedField.value?.reqd))
+
+function toggleMandatory() {
+  if (!selectedField.value) return
+  selectedField.value.reqd = selectedField.value.reqd ? 0 : 1
+}
+
+watch(selectedField, (field) => {
+  if (!field) return
+  // Figma frame: Expected close → quick entry on, mandatory off, side panel on.
+  showInQuickEntry.value = true
+  showInSidePanel.value = true
+})
 
 const tabs = createResource({
   url: 'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout',

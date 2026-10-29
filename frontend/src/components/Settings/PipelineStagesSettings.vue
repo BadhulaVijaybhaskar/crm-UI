@@ -66,9 +66,9 @@
       </div>
       <div v-else class="flex items-start gap-4">
         <div
-          class="min-w-0 flex-1 overflow-hidden rounded-crm-panel border border-crm-border bg-crm-card"
+          class="min-w-0 flex-1 overflow-x-auto rounded-crm-panel border border-crm-border bg-crm-card"
         >
-          <div class="overflow-x-auto">
+          <div class="min-w-0 overflow-x-auto overflow-y-visible py-0.5">
             <div class="min-w-0">
               <div
                 class="grid h-crm-th items-center gap-3 bg-crm-muted px-4 text-[11.5px] font-semibold text-crm-muted-fg"
@@ -95,7 +95,7 @@
                     :class="[
                       rowGridClass,
                       selectedKey === stage._key
-                        ? 'relative z-[1] rounded-lg border-t-transparent bg-crm-card shadow-[0_6px_18px_rgba(11,19,36,0.12),0_0_0_1px_var(--crm-primary)]'
+                        ? 'relative z-[2] rounded-crm-card border-t-transparent bg-crm-card shadow-[0_8px_20px_rgba(4,20,27,0.14),0_0_0_1.5px_var(--crm-primary)]'
                         : 'bg-crm-card',
                     ]"
                     @click="selectedKey = stage._key"
@@ -109,7 +109,7 @@
                       <Icon icon="grip-vertical" class="size-3.5" />
                     </button>
                     <span
-                      class="inline-flex size-[22px] items-center justify-center rounded-md bg-crm-neutral-soft text-[11px] font-bold text-crm-muted-fg"
+                      class="inline-flex size-[22px] items-center justify-center rounded-crm-chip bg-crm-neutral-soft text-[11px] font-bold text-crm-muted-fg"
                     >
                       {{ index + 1 }}
                     </span>
@@ -126,7 +126,7 @@
                       />
                     </label>
                     <label
-                      class="relative inline-flex h-7 max-w-full items-center gap-1.5 rounded-[7px] border border-crm-border bg-crm-card py-0 pl-2.5 pr-2"
+                      class="relative inline-flex h-7 max-w-full items-center gap-1.5 rounded-crm-control-sm border border-crm-border-strong bg-crm-card py-0 pl-2.5 pr-2"
                       @click.stop
                     >
                       <span
@@ -155,7 +155,7 @@
                     </label>
                     <label
                       v-if="isDeal"
-                      class="relative inline-flex h-7 items-center gap-1.5 rounded-[7px] border border-crm-border bg-crm-card py-0 pl-2.5 pr-2 text-crm-label tabular-nums"
+                      class="relative inline-flex h-7 items-center gap-1.5 rounded-crm-control-sm border border-crm-border-strong bg-crm-card py-0 pl-2.5 pr-2 text-crm-label tabular-nums"
                       @click.stop
                     >
                       <span>{{ stage.probability }}%</span>
@@ -179,7 +179,7 @@
                     <div class="relative" @click.stop>
                       <button
                         type="button"
-                        class="inline-flex h-7 items-center gap-1.5 rounded-[7px] border border-crm-border bg-crm-card px-2"
+                        class="inline-flex h-7 items-center gap-1.5 rounded-crm-control-sm border border-crm-border-strong bg-crm-card px-2"
                         :aria-label="__('Pick colour')"
                         @click="togglePalette(stage._key)"
                       >
@@ -234,7 +234,7 @@
           </div>
           <button
             type="button"
-            class="mx-4 mb-4 mt-3 flex h-[42px] w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-lg border border-dashed border-crm-border-strong text-crm-label font-semibold text-crm-primary hover:bg-crm-primary-soft"
+            class="mx-4 mb-4 mt-3 flex h-[42px] w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-crm-card border border-dashed border-crm-border-strong text-crm-label font-semibold text-crm-primary hover:bg-crm-primary-soft"
             @click="addStage"
           >
             <Icon icon="plus" class="size-3.5" />
@@ -249,7 +249,9 @@
             <div
               class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
             >
-              <h2 class="text-sm font-semibold tracking-tight text-crm-fg">
+              <h2
+                class="text-[14px] font-semibold leading-[1.45] tracking-[-0.005em] text-crm-fg"
+              >
                 {{ __('How types group stages') }}
               </h2>
             </div>
@@ -258,15 +260,15 @@
                 class="relative grid grid-cols-[20px_minmax(0,1fr)] gap-2.5 pb-3 before:absolute before:bottom-0 before:left-[9px] before:top-5 before:w-0.5 before:bg-crm-border"
               >
                 <span
-                  class="relative z-[1] inline-flex size-5 items-center justify-center rounded-md bg-crm-neutral-soft text-[11px] font-bold text-crm-muted-fg"
+                  class="relative z-[1] inline-flex size-5 items-center justify-center rounded-crm-chip bg-crm-neutral-soft text-[11px] font-bold text-crm-muted-fg"
                 >
                   1
                 </span>
                 <div>
-                  <div class="text-crm-label font-semibold leading-5 text-crm-fg">
+                  <div class="text-[12.5px] font-semibold leading-5 text-crm-fg">
                     {{ __('Open · Ongoing · On Hold') }}
                   </div>
-                  <p class="text-[11.5px] text-crm-muted-fg">
+                  <p class="text-[11.5px] leading-[1.45] text-crm-muted-fg">
                     {{
                       __(
                         'Shown as columns on the board and steps on the stage path',
@@ -275,17 +277,17 @@
                   </p>
                 </div>
               </div>
-              <div class="grid grid-cols-[20px_minmax(0,1fr)] gap-2.5">
+              <div class="grid grid-cols-[20px_minmax(0,1fr)] gap-2.5 pb-3">
                 <span
-                  class="inline-flex size-5 items-center justify-center rounded-md bg-crm-neutral-soft text-[11px] font-bold text-crm-muted-fg"
+                  class="inline-flex size-5 items-center justify-center rounded-crm-chip bg-crm-neutral-soft text-[11px] font-bold text-crm-muted-fg"
                 >
                   2
                 </span>
                 <div>
-                  <div class="text-crm-label font-semibold leading-5 text-crm-fg">
+                  <div class="text-[12.5px] font-semibold leading-5 text-crm-fg">
                     {{ __('Won · Lost') }}
                   </div>
-                  <p class="text-[11.5px] text-crm-muted-fg">
+                  <p class="text-[11.5px] leading-[1.45] text-crm-muted-fg">
                     {{
                       __('Collapsed into the Closed lane; used for win rate')
                     }}
@@ -297,7 +299,7 @@
 
           <div
             v-if="moveNotice"
-            class="flex gap-2.5 rounded-lg border border-crm-border bg-crm-muted px-3 py-2.5 text-crm-label text-crm-muted-fg"
+            class="note flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
           >
             <Icon
               icon="triangle-alert"
@@ -318,9 +320,12 @@
           </div>
 
           <div
-            class="flex gap-2.5 rounded-lg border border-crm-border bg-crm-muted px-3 py-2.5 text-crm-label text-crm-muted-fg"
+            class="note flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
           >
-            <Icon icon="shield" class="mt-0.5 size-3.5 shrink-0 text-crm-faint" />
+            <Icon
+              icon="shield"
+              class="mt-0.5 size-3.5 shrink-0 text-crm-faint"
+            />
             <span>
               {{
                 __(

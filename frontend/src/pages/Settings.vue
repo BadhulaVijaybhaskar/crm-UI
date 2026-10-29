@@ -2,7 +2,7 @@
   <div class="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-crm-bg">
     <div
       v-if="showConceptBar"
-      class="flex h-[30px] shrink-0 items-center gap-2 border-b border-dashed border-crm-border-strong bg-crm-muted px-6 text-crm-label text-crm-muted-fg"
+      class="flex h-[30px] shrink-0 items-center gap-2 border-b border-dashed border-crm-border-strong bg-crm-muted px-6 text-[12px] leading-none text-crm-muted-fg"
     >
       <Icon icon="triangle-alert" class="size-3.5 shrink-0 text-crm-warning" />
       <b class="font-semibold text-crm-fg">{{ __('Concept') }}</b>
@@ -19,34 +19,32 @@
     >
       <nav
         ref="navEl"
-        class="flex max-h-40 shrink-0 flex-col gap-0.5 overflow-y-auto border-b border-crm-border bg-crm-card px-2.5 py-3 sm:max-h-none sm:border-b-0 sm:border-r"
+        class="flex max-h-40 shrink-0 flex-col gap-px overflow-y-auto border-b border-crm-border bg-crm-card px-2.5 py-3 sm:max-h-none sm:border-b-0 sm:border-r"
         :aria-label="__('Settings')"
       >
-        <div v-for="group in groups" :key="group.id">
+        <template v-for="group in groups" :key="group.id">
           <div
-            class="px-2.5 pb-1 pt-2.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-faint"
+            class="px-2.5 pb-1 pt-2.5 text-[10.5px] font-bold uppercase leading-[1.45] tracking-[0.06em] text-crm-faint"
           >
             {{ __(group.label) }}
           </div>
-          <div class="flex flex-col gap-0.5">
-            <button
-              v-for="item in group.items"
-              :key="item.slug"
-              type="button"
-              class="flex h-[30px] w-full items-center !rounded-[4px] border-0 px-2.5 text-left text-[12.5px] font-medium text-crm-muted-fg focus-visible:outline-none focus-visible:shadow-crm-focus"
-              :class="
-                item.slug === active?.slug
-                  ? 'bg-crm-primary-soft font-semibold text-crm-primary'
-                  : 'bg-transparent hover:bg-crm-muted'
-              "
-              :data-section="item.slug"
-              :aria-current="item.slug === active?.slug ? 'page' : undefined"
-              @click="open(item.slug)"
-            >
-              <span class="truncate">{{ __(item.label) }}</span>
-            </button>
-          </div>
-        </div>
+          <button
+            v-for="item in group.items"
+            :key="item.slug"
+            type="button"
+            class="flex h-[30px] w-full shrink-0 items-center rounded-crm-chip border-0 px-2.5 text-left text-[12.5px] leading-none font-medium text-crm-muted-fg focus-visible:outline-none focus-visible:shadow-crm-focus"
+            :class="
+              item.slug === active?.slug
+                ? 'bg-crm-primary-soft font-semibold text-crm-primary'
+                : 'bg-transparent hover:bg-crm-muted'
+            "
+            :data-section="item.slug"
+            :aria-current="item.slug === active?.slug ? 'page' : undefined"
+            @click="open(item.slug)"
+          >
+            <span class="truncate">{{ __(item.label) }}</span>
+          </button>
+        </template>
       </nav>
       <div class="min-h-0 min-w-0 flex-1 overflow-y-auto bg-crm-bg">
         <component :is="active.component" v-if="ready && active" />

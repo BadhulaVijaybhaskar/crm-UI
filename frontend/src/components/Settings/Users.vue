@@ -38,7 +38,7 @@
         </template>
       </AstraInput>
       <div
-        class="inline-flex gap-0.5 rounded-lg border border-crm-border bg-crm-muted p-0.5"
+        class="inline-flex gap-0.5 rounded-crm-card border border-crm-border bg-crm-muted p-[3px]"
         role="group"
         :aria-label="__('Role')"
       >
@@ -46,7 +46,7 @@
           v-for="chip in roleFilters"
           :key="chip.value"
           type="button"
-          class="inline-flex h-[26px] items-center gap-1.5 rounded-md px-2.5 text-crm-label font-medium"
+          class="inline-flex h-[26px] items-center gap-1.5 rounded-crm-chip px-2.5 text-crm-label font-medium"
           :class="
             currentRole === chip.value
               ? 'bg-crm-card font-semibold text-crm-fg shadow-[0_0_0_1px_var(--crm-border)]'
@@ -228,21 +228,25 @@
             <div
               class="flex items-center gap-2.5 border-b border-crm-border px-[18px] py-3.5"
             >
-              <h2 class="text-sm font-semibold tracking-tight text-crm-fg">
+              <h2
+                class="text-[14px] font-semibold leading-[1.45] tracking-[-0.005em] text-crm-fg"
+              >
                 {{ __('What each role sees') }}
               </h2>
             </div>
             <dl
-              class="grid grid-cols-[86px_minmax(0,1fr)] gap-x-3 gap-y-2.5 px-[18px] py-3.5 text-crm-label"
+              class="grid grid-cols-[86px_minmax(0,1fr)] gap-x-3 gap-y-[9px] px-[18px] py-3.5 text-[12.5px]"
             >
               <template v-for="note in roleNotes" :key="note.role">
                 <dt class="text-crm-muted-fg">{{ note.role }}</dt>
-                <dd class="whitespace-normal text-crm-fg">{{ note.detail }}</dd>
+                <dd class="whitespace-normal font-medium text-crm-fg">
+                  {{ note.detail }}
+                </dd>
               </template>
             </dl>
           </section>
           <div
-            class="flex gap-2.5 rounded-lg border border-crm-border bg-crm-muted px-3 py-2.5 text-crm-label text-crm-muted-fg"
+            class="note flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
           >
             <Icon icon="lock" class="mt-0.5 size-3.5 shrink-0 text-crm-faint" />
             <span>
