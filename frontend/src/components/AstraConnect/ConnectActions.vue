@@ -1,11 +1,25 @@
 <template>
-  <div v-if="configured" class="flex gap-1.5">
+  <div v-if="configured" class="flex" :class="shortLabels ? 'gap-2' : 'gap-1.5'">
+    <AstraButton
+      v-if="shortLabels"
+      variant="secondary"
+      :size="size"
+      :label="callLabel"
+      @click="openCall"
+    >
+      <template #prefix>
+        <LucidePhone class="size-3.5" aria-hidden="true" />
+      </template>
+      <template #suffix>
+        <LucideExternalLink class="size-3.5" aria-hidden="true" />
+      </template>
+    </AstraButton>
     <Button
+      v-else
       :tooltip="callLabel"
       :label="showLabels ? callLabel : undefined"
       :icon="showLabels ? undefined : LucidePhone"
       :iconLeft="showLabels ? LucidePhone : undefined"
-      :iconRight="showLabels && shortLabels ? LucideExternalLink : undefined"
       :size="size"
       @click="openCall"
     />
@@ -27,6 +41,7 @@ import { Button } from 'frappe-ui'
 import LucidePhone from '~icons/lucide/phone'
 import LucideMessagesSquare from '~icons/lucide/messages-square'
 import LucideExternalLink from '~icons/lucide/external-link'
+import AstraButton from '@/components/astra/AstraButton.vue'
 import {
   isAstraConnectConfigured,
   openConnectCompose,

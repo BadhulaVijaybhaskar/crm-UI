@@ -110,6 +110,8 @@ export const SCREENS = {
     id: '08-deal-record',
     route: '/crm/deals/DEAL-LL',
     fixture: '08-deal-record',
+    // PNG/HTML nav foot is Rohan Mehta · Sales user (not Priya).
+    sessionUser: 'rohan.mehta@example.com',
   }),
   '09-contacts-list': screenEntry({
     id: '09-contacts-list',
@@ -122,6 +124,8 @@ export const SCREENS = {
     id: '10-contact-record',
     route: '/crm/contacts/CONTACT-AK',
     fixture: '10-contact-record',
+    // PNG/HTML nav foot is Rohan Mehta · Sales user (not Priya).
+    sessionUser: 'rohan.mehta@example.com',
   }),
   '11-companies-list': screenEntry({
     id: '11-companies-list',
@@ -132,6 +136,8 @@ export const SCREENS = {
     id: '12-company-record',
     route: '/crm/organizations/ORG-LL',
     fixture: '12-company-record',
+    // PNG/HTML nav foot is Rohan Mehta · Sales user (not Priya).
+    sessionUser: 'rohan.mehta@example.com',
   }),
   'm2-deal-record': screenEntry({
     id: 'm2-deal-record',

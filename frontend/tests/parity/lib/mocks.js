@@ -911,9 +911,15 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
           : []
       body = ok(rows)
     } else if (
+      conversations &&
+      (method.includes('conversation') || url.includes('conversation'))
+    ) {
+      // Before activities — url `crm.api.activities.get_conversations` contains "activities"
+      body = unwrap(conversations, ok([]))
+    } else if (
       method.includes('get_activities') ||
       method.includes('get_events') ||
-      url.includes('activities')
+      (url.includes('activities') && !url.includes('conversation'))
     ) {
       body = activities ? unwrap(activities, ok([])) : ok([])
     } else if (method.includes('get_tasks') || url.includes('CRM Task')) {
@@ -958,8 +964,6 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
       method.includes('CRM Deal Status')
     ) {
       body = stages ? unwrap(stages, ok([])) : ok([])
-    } else if (conversations && method.includes('conversation')) {
-      body = unwrap(conversations, ok([]))
     } else if (
       method.includes('crm.api.') ||
       method.includes('frappe.') ||

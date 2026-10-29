@@ -16,7 +16,8 @@
       "modified",
       "creation",
       "currency",
-      "contacts_label"
+      "contacts_label",
+      "role"
     ],
     "values": [
       [
@@ -35,7 +36,8 @@
         "",
         "",
         "INR",
-        ""
+        "",
+        "Contact"
       ],
       [
         "DEAL-LL-RP",
@@ -53,7 +55,8 @@
         "",
         "",
         "INR",
-        ""
+        "",
+        "Primary"
       ]
     ],
     "user_info": {},
