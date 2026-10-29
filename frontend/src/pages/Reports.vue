@@ -209,7 +209,10 @@
       <b class="shrink-0 font-semibold text-[color:var(--crm-fg,#0b1324)]">{{
         current?.title || __('Dashboard')
       }}</b>
-      <span class="min-w-0 truncate text-[color:var(--crm-muted-fg,#5b6478)]">
+      <span
+        class="min-w-0 truncate font-normal text-[color:var(--crm-muted-fg,#5b6478)]"
+        style="font-weight: 400"
+      >
         {{
           __(
             'Drag a tile to move it, drag a corner to resize. Tiles snap to a 12-column grid.',
