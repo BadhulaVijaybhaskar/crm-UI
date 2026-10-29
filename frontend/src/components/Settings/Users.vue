@@ -111,21 +111,21 @@
                   :key="user.invited ? `invite-${user.name}` : user.name"
                   class="grid h-[52px] grid-cols-[minmax(0,1fr)_150px_90px_90px_16px] items-center gap-3 border-t border-crm-border px-4"
                 >
-                  <div class="flex min-w-0 items-center gap-2.5">
+                  <div class="flex min-w-0 items-center gap-[9px]">
                     <AstraAvatar
                       :name="user.full_name"
                       :seed="user.email || user.name"
                       :src="user.user_image || ''"
                     />
-                    <div class="min-w-0">
+                    <div class="flex min-w-0 flex-col leading-[1.3]">
                       <div
-                        class="truncate text-crm-label font-semibold text-crm-fg"
+                        class="truncate text-[12.5px] font-semibold text-crm-fg"
                       >
                         {{ displayName(user) }}
                       </div>
                       <div
                         v-if="user.email && user.email !== user.full_name"
-                        class="truncate text-[11.5px] text-crm-faint"
+                        class="truncate text-[11.5px] text-crm-muted-fg"
                       >
                         {{ user.email }}
                       </div>

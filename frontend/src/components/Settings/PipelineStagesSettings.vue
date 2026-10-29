@@ -68,7 +68,7 @@
         <div
           class="min-w-0 flex-1 overflow-x-auto rounded-crm-panel border border-crm-border bg-crm-card"
         >
-          <div class="min-w-0 overflow-x-auto overflow-y-visible py-0.5">
+          <div class="min-w-0 overflow-x-auto overflow-y-visible">
             <div class="min-w-0">
               <div
                 class="grid h-crm-th items-center gap-3 bg-crm-muted px-4 text-[11.5px] font-semibold text-crm-muted-fg"
@@ -90,16 +90,27 @@
                 @end="renumber"
               >
                 <template #item="{ element: stage, index }">
-                  <div
-                    class="grid h-[46px] items-center gap-3 border-t border-crm-border px-4 text-crm-label"
-                    :class="[
-                      rowGridClass,
-                      selectedKey === stage._key
-                        ? 'relative z-[2] rounded-crm-card border-t-transparent bg-crm-card shadow-[0_8px_20px_rgba(4,20,27,0.14),0_0_0_1.5px_var(--crm-primary)]'
-                        : 'bg-crm-card',
-                    ]"
-                    @click="selectedKey = stage._key"
-                  >
+                  <div>
+                    <!-- Figma 21: 3px primary drop line above Negotiation while move notice shows -->
+                    <div
+                      v-if="
+                        moveNotice &&
+                        selectedKey === stage._key &&
+                        stage.label === 'Negotiation'
+                      "
+                      class="mx-4 h-[3px] rounded-[2px] bg-crm-primary"
+                      aria-hidden="true"
+                    />
+                    <div
+                      class="grid h-[46px] items-center gap-3 border-t border-crm-border px-4 text-crm-label"
+                      :class="[
+                        rowGridClass,
+                        selectedKey === stage._key
+                          ? 'relative z-[2] rounded-crm-card border-t-transparent bg-crm-card shadow-[0_8px_20px_rgba(4,20,27,0.14),0_0_0_1.5px_var(--crm-primary)]'
+                          : 'bg-crm-card',
+                      ]"
+                      @click="selectedKey = stage._key"
+                    >
                     <button
                       type="button"
                       class="stage-drag-handle flex size-4 cursor-grab items-center justify-center text-crm-faint"
@@ -227,6 +238,7 @@
                         </button>
                       </template>
                     </Dropdown>
+                    </div>
                   </div>
                 </template>
               </Draggable>

@@ -135,18 +135,18 @@
         </div>
         <div class="flex flex-col gap-3 px-4 py-3.5">
           <div class="flex flex-col gap-[5px]">
-            <label class="text-xs font-semibold text-crm-fg">
+            <label class="text-[12px] font-semibold leading-[1.45] text-crm-fg">
               {{ __('Label') }}
             </label>
             <div
-              class="flex h-8 items-center rounded-[7px] border border-crm-primary bg-crm-card px-2.5 text-crm-label text-crm-fg shadow-[0_0_0_3px_var(--crm-primary-soft)]"
+              class="flex h-8 items-center rounded-[7px] border border-crm-primary bg-crm-card px-2.5 text-[12.5px] text-crm-fg shadow-[0_0_0_3px_var(--crm-primary-soft)]"
               role="textbox"
               aria-readonly="true"
             >
               {{ selectedField.label || selectedField.fieldname }}
             </div>
           </div>
-          <label class="flex items-center gap-2.5 text-crm-label text-crm-fg">
+          <label class="flex items-center gap-2.5 text-[12.5px] text-crm-fg">
             <button
               type="button"
               role="switch"
@@ -164,7 +164,7 @@
             </button>
             {{ __('Show in quick entry') }}
           </label>
-          <label class="flex items-center gap-2.5 text-crm-label text-crm-fg">
+          <label class="flex items-center gap-2.5 text-[12.5px] text-crm-fg">
             <button
               type="button"
               role="switch"
@@ -180,7 +180,7 @@
             </button>
             {{ __('Mandatory') }}
           </label>
-          <label class="flex items-center gap-2.5 text-crm-label text-crm-fg">
+          <label class="flex items-center gap-2.5 text-[12.5px] text-crm-fg">
             <button
               type="button"
               role="switch"
@@ -199,7 +199,7 @@
             {{ __('Show in side panel') }}
           </label>
           <div
-            class="flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
+            class="note flex gap-2.5 rounded-crm-card border border-crm-border bg-crm-muted px-3 py-2.5 text-[12.5px] leading-[1.45] text-crm-muted-fg"
           >
             <Icon icon="eye" class="mt-0.5 size-3.5 shrink-0 text-crm-faint" />
             <span>{{ saveNote }}</span>
