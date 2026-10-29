@@ -87,7 +87,9 @@ async function runTheme({ screen, theme, origin, browser }) {
   const page = await context.newPage()
 
   await page.addInitScript(clockInitScript(PARITY_CLOCK))
-  await page.addInitScript(sessionInitScript('priya.nair@example.com'))
+  await page.addInitScript(
+    sessionInitScript(screen.sessionUser || 'priya.nair@example.com'),
+  )
   await page.addInitScript(themeInitScript(theme))
 
   await installParityMocks(page, { fixture: screen.fixture || screen.id })

@@ -317,7 +317,7 @@ defineExpose({
   height: 34px;
   padding: 0 10px;
   /* PNG uppercase caps track — match leads (0.03em) */
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   font-size: 11.5px;
   font-weight: 600;
 }
@@ -369,15 +369,15 @@ defineExpose({
 }
 .astra-contacts-table :deep(th:nth-child(6)),
 .astra-contacts-table :deep(td:nth-child(6)) {
-  width: 112px;
-  min-width: 112px;
-  max-width: 112px;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
 }
 .astra-contacts-table :deep(th:nth-child(7)),
 .astra-contacts-table :deep(td:nth-child(7)) {
-  width: 130px;
-  min-width: 130px;
-  max-width: 130px;
+  width: 128px;
+  min-width: 128px;
+  max-width: 128px;
 }
 .astra-contacts-table :deep(th:nth-child(8)),
 .astra-contacts-table :deep(td:nth-child(8)) {

@@ -49,6 +49,7 @@ function screenEntry({
   fixture,
   exampleFallback = { x: 1188, y: 70, width: 118, height: 28 },
   shellRegions,
+  sessionUser = 'priya.nair@example.com',
 }) {
   return {
     id,
@@ -79,6 +80,7 @@ function screenEntry({
           ]
         : []),
     fixture: fixture || id,
+    sessionUser,
   }
 }
 
@@ -113,6 +115,8 @@ export const SCREENS = {
     id: '09-contacts-list',
     route: '/crm/contacts/view/list',
     fixture: '09-contacts-list',
+    // PNG/HTML nav foot is Rohan Mehta · Sales user (not Priya).
+    sessionUser: 'rohan.mehta@example.com',
   }),
   '10-contact-record': screenEntry({
     id: '10-contact-record',
