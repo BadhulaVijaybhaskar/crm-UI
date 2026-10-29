@@ -19,7 +19,10 @@
         {{ description }}
       </p>
     </div>
-    <div v-if="$slots.actions || $slots.default" class="flex flex-wrap items-center justify-end gap-2">
+    <div
+      v-if="$slots.actions || $slots.default"
+      class="flex flex-wrap items-center justify-end gap-3"
+    >
       <slot name="actions" />
       <slot />
     </div>
