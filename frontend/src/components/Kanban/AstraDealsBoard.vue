@@ -4,14 +4,14 @@
       class="flex shrink-0 items-end gap-3 px-crm-page-x pb-2 pt-1"
     >
       <p
-        class="m-0 min-w-0 flex-1 border-t-2 border-crm-border-strong pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-muted-fg"
+        class="m-0 min-w-0 flex-1 border-t-2 border-crm-border-strong pt-[6px] text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-muted-fg"
         :style="{ maxWidth: '1008px' }"
       >
         {{ __('Deal stages · open · set by your admin in Settings → Pipeline stages') }}
       </p>
       <p
         v-if="wonColumn || lostColumn"
-        class="m-0 w-[126px] shrink-0 border-t-2 border-crm-success pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-success"
+        class="m-0 w-[126px] shrink-0 border-t-2 border-crm-success pt-[6px] text-[10.5px] font-bold uppercase tracking-[0.06em] text-crm-success"
       >
         {{ __('Won / Lost') }}
       </p>

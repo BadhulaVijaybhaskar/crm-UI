@@ -899,6 +899,18 @@ export async function installParityMocks(page, { fixture = '04-leads-list' } = {
         []
       body = ok(rows)
     } else if (
+      method.includes('get_linked_deals') ||
+      url.includes('get_linked_deals')
+    ) {
+      // crm.api.contact.get_linked_deals — deal row objects (not reportview)
+      const list = getListResponse(fixture, 'CRM Deal', {})
+      const rows = Array.isArray(list?.message)
+        ? list.message
+        : Array.isArray(list)
+          ? list
+          : []
+      body = ok(rows)
+    } else if (
       method.includes('get_activities') ||
       method.includes('get_events') ||
       url.includes('activities')

@@ -22,6 +22,7 @@
       {{ value }}
     </div>
 
+    <!-- Owner row: icon + name ··· avatar (Figma .dc .f) -->
     <div
       v-if="owner || $slots.owner"
       class="flex h-[18px] items-center gap-2 text-[11.5px] text-crm-muted-fg"
@@ -44,7 +45,7 @@
       </slot>
     </div>
 
-    <!-- PNG wraps after middot; mock label includes \n + whitespace-pre-line -->
+    <!-- PNG: wrap moving caption after middot (pre-line + mock \\n) -->
     <div
       v-if="date || chips.length || badge || $slots.badge || $slots.chips || movingLabel"
       class="gap-2 text-[11.5px] text-crm-muted-fg"
@@ -73,7 +74,6 @@
         >
       </template>
       <template v-else>
-
         <svg
           v-if="date"
           class="size-3.5 shrink-0"
@@ -119,7 +119,9 @@ defineProps({
   title: { type: String, required: true },
   value: { type: String, default: '' },
   owner: { type: String, default: '' },
+  /** Avatar initials source (deal owner); defaults to owner text. */
   avatarName: { type: String, default: '' },
+  /** @deprecated Prefer owner row; kept for callers that still pass meta. */
   ownerRight: { type: Boolean, default: false },
   meta: { type: String, default: '' },
   date: { type: String, default: '' },
@@ -127,8 +129,14 @@ defineProps({
   badgeTone: { type: String, default: 'mute' },
   chips: { type: Array, default: () => [] },
   dragging: { type: Boolean, default: false },
+  /** Source-column placeholder while a card is mid-drag (parity / DnD). */
   faded: { type: Boolean, default: false },
+  /** Drag helper caption, e.g. "Moving to Negotiation · 70%". */
   movingLabel: { type: String, default: '' },
+  /**
+   * When true, parent applies the drag rotate (HTML .dc.drag pattern).
+   * Avoids double-rotate when the fixed wrapper is already rotated.
+   */
   preview: { type: Boolean, default: false },
 })
 
