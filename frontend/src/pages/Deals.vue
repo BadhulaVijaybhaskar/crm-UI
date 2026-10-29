@@ -1,7 +1,11 @@
 <template>
   <RecordsListChrome
     :title="__('Deals')"
-    :description="__('Manager view · grouped by stage')"
+    :description="
+      viewType === 'kanban'
+        ? __('Your deals · drag a card to change its stage')
+        : __('Manager view · grouped by stage')
+    "
     :create-label="__('+ New deal')"
     :view-tabs="viewTabs"
     :active-view="activeView"
