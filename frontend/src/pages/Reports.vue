@@ -9,6 +9,7 @@
     />
 
     <AstraPageHeader
+      class="!pb-2.5"
       :title="__('Reports')"
       :description="
         __(
@@ -29,130 +30,186 @@
     </AstraPageHeader>
 
     <div
-      class="flex h-10 shrink-0 items-center gap-0.5 px-crm-page-x"
+      class="flex flex-nowrap items-center gap-2 px-crm-page-x pb-2.5 pt-0"
     >
-      <Dropdown
-        :options="dashboardMenuOptions"
-        :button="{
-          label: current?.title || __('Dashboards'),
-          variant: 'outline',
-          iconLeft: 'lucide-layout-grid',
-          iconRight: 'lucide-chevron-down',
-        }"
-      />
-      <button
-        type="button"
-        class="inline-flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium"
-        :class="
-          tab === 'personal'
-            ? 'border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] font-semibold text-[color:var(--crm-fg,#0b1324)]'
-            : 'text-[color:var(--crm-muted-fg,#5b6478)]'
-        "
-        @click="tab = 'personal'"
+      <Dropdown :options="dashboardMenuOptions">
+        <template #default="{ open }">
+          <button
+            type="button"
+            class="inline-flex h-7 min-w-[156px] items-center gap-[7px] rounded-[7px] border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px] font-semibold text-[color:var(--crm-fg,#0b1324)]"
+            @click="open"
+          >
+            <!-- Figma .btn.sm grid icon (four rx=1 rects) — not LucideLayoutGrid -->
+            <svg
+              class="size-3.5 shrink-0 text-[color:var(--crm-muted-fg,#5b6478)]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            {{ current?.title || __('Dashboards') }}
+            <svg
+              class="size-3.5 shrink-0 text-[color:var(--crm-faint,#8a94a6)]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        </template>
+      </Dropdown>
+      <div
+        class="inline-flex gap-0.5 rounded-lg border border-[color:var(--crm-border,#e1e7ec)] bg-[color:var(--crm-muted,#f6f8fa)] p-[3px]"
       >
-        {{ __('My dashboards') }}
-        <em
-          class="not-italic"
+        <button
+          type="button"
+          class="inline-flex h-[26px] items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium"
           :class="
             tab === 'personal'
-              ? 'text-[color:var(--crm-primary,#0a7393)]'
-              : 'text-[color:var(--crm-faint,#8a94a6)]'
+              ? 'bg-[color:var(--crm-card,#fff)] font-semibold text-[color:var(--crm-fg,#0b1324)] shadow-[0_0_0_1px_var(--crm-border,#e1e7ec)]'
+              : 'text-[color:var(--crm-muted-fg,#5b6478)]'
           "
-          >{{ lists.personal.length }}</em
+          @click="tab = 'personal'"
         >
-      </button>
+          {{ __('My dashboards') }}
+          <em
+            class="not-italic text-[11px] font-semibold"
+            :class="
+              tab === 'personal'
+                ? 'text-[color:var(--crm-primary,#0a7393)]'
+                : 'text-[color:var(--crm-faint,#8a94a6)]'
+            "
+            >{{ lists.personal.length }}</em
+          >
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-[26px] items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium"
+          :class="
+            tab === 'team'
+              ? 'bg-[color:var(--crm-card,#fff)] font-semibold text-[color:var(--crm-fg,#0b1324)] shadow-[0_0_0_1px_var(--crm-border,#e1e7ec)]'
+              : 'text-[color:var(--crm-muted-fg,#5b6478)]'
+          "
+          @click="tab = 'team'"
+        >
+          {{ __('Team') }}
+          <em
+            class="not-italic text-[11px] font-semibold text-[color:var(--crm-faint,#8a94a6)]"
+            >{{ lists.team.length }}</em
+          >
+        </button>
+      </div>
       <button
         type="button"
-        class="inline-flex h-7 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium"
-        :class="
-          tab === 'team'
-            ? 'bg-[color:var(--crm-muted,#f6f8fa)] font-semibold text-[color:var(--crm-fg,#0b1324)]'
-            : 'text-[color:var(--crm-muted-fg,#5b6478)]'
-        "
-        @click="tab = 'team'"
-      >
-        {{ __('Team') }}
-        <em class="not-italic text-[color:var(--crm-faint,#8a94a6)]">{{
-          lists.team.length
-        }}</em>
-      </button>
-      <button
-        type="button"
-        class="inline-flex h-7 items-center gap-1 px-2 text-[12.5px] font-semibold text-[color:var(--crm-muted-fg,#5b6478)] hover:text-[color:var(--crm-primary,#0a7393)]"
+        class="inline-flex h-7 items-center gap-[7px] rounded-[7px] border border-transparent bg-transparent px-2.5 text-[12.5px] font-semibold text-[color:var(--crm-muted-fg,#5b6478)] hover:bg-[color:var(--crm-muted,#f6f8fa)] hover:text-[color:var(--crm-fg,#0b1324)]"
         @click="createDashboard"
       >
-        <LucidePlus class="size-3.5" aria-hidden="true" />
+        <svg
+          class="size-3.5 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
         {{ __('New dashboard') }}
       </button>
-
-      <div
-        class="ml-auto flex flex-wrap items-center gap-3.5 text-[12px] text-[color:var(--crm-muted-fg,#5b6478)]"
+      <span
+        v-if="current?.is_default"
+        class="whitespace-nowrap text-[12px] text-[color:var(--crm-faint,#8a94a6)]"
       >
-        <span v-if="current?.is_default">
-          {{ __('Default') }}
-          <template v-if="current.shared_role">
-            · {{ __('shared with') }} {{ current.shared_role }}
-          </template>
-        </span>
-        <button
-          type="button"
-          class="inline-flex h-7 items-center gap-1.5 rounded-lg border border-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px]"
-          @click="cyclePeriod"
+        {{ __('Default') }}
+        <template v-if="current.shared_role">
+          · {{ __('shared with') }} {{ current.shared_role }}
+        </template>
+      </span>
+      <span class="flex-1" />
+      <button
+        type="button"
+        class="inline-flex h-7 items-center gap-1.5 rounded-[7px] border border-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-primary-soft,#e4f2f6)] py-0 pl-2.5 pr-2 text-[12.5px] font-medium text-[color:var(--crm-primary,#0a7393)]"
+        @click="cyclePeriod"
+      >
+        <span class="text-[color:var(--crm-muted-fg,#5b6478)]">{{
+          __('Date')
+        }}</span>
+        <b class="font-semibold">{{ periodLabel }}</b>
+        <svg
+          class="size-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          <span class="text-[color:var(--crm-muted-fg,#5b6478)]">{{
-            __('Date')
-          }}</span>
-          <b class="font-semibold text-[color:var(--crm-primary,#0a7393)]">{{
-            periodLabel
-          }}</b>
-          <LucideChevronDown
-            class="size-3.5 text-[color:var(--crm-faint,#8a94a6)]"
-            aria-hidden="true"
-          />
-        </button>
-        <button
-          v-if="editing || isAdmin() || isManager()"
-          type="button"
-          class="inline-flex h-7 items-center gap-1.5 rounded-lg border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px]"
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      <button
+        v-if="editing || isAdmin() || isManager()"
+        type="button"
+        class="inline-flex h-7 items-center gap-1.5 rounded-[7px] border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] py-0 pl-2.5 pr-2 text-[12.5px]"
+      >
+        <span class="text-[color:var(--crm-muted-fg,#5b6478)]">{{
+          __('Sales user')
+        }}</span>
+        <b class="font-semibold text-[color:var(--crm-fg,#0b1324)]">{{
+          salesUserLabel
+        }}</b>
+        <svg
+          class="size-3.5 text-[color:var(--crm-faint,#8a94a6)]"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          <span class="text-[color:var(--crm-muted-fg,#5b6478)]">{{
-            __('Sales user')
-          }}</span>
-          <b class="font-semibold text-[color:var(--crm-fg,#0b1324)]">{{
-            salesUserLabel
-          }}</b>
-          <LucideChevronDown
-            class="size-3.5 text-[color:var(--crm-faint,#8a94a6)]"
-            aria-hidden="true"
-          />
-        </button>
-        <Button
-          v-if="!editing"
-          size="sm"
-          :label="__('Edit')"
-          :iconLeft="LucidePenLine"
-          @click="startEdit"
-        />
-      </div>
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      <Button
+        v-if="!editing"
+        size="sm"
+        :label="__('Edit')"
+        :iconLeft="LucidePenLine"
+        @click="startEdit"
+      />
     </div>
 
     <div
       v-if="editing"
-      class="mx-crm-page-x mt-0 flex h-[46px] shrink-0 items-center gap-2.5 rounded-lg border border-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-primary-soft,#e4f2f6)] px-3"
+      class="mx-crm-page-x mt-0 flex shrink-0 items-center gap-2 rounded-[9px] border border-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-primary-soft,#e4f2f6)] py-2 pl-3.5 pr-2 text-[12.5px]"
     >
-      <i
-        class="block size-1.5 shrink-0 rounded-full bg-[color:var(--crm-success,#0f8a5f)]"
-        aria-hidden="true"
-      />
       <span
-        class="shrink-0 text-[12.5px] font-semibold text-[color:var(--crm-primary,#0a7393)]"
+        class="inline-flex h-[22px] shrink-0 items-center gap-[5px] rounded-md bg-[color:var(--crm-teal-soft,#e2f5f2)] px-2 text-[11.5px] font-semibold text-[color:var(--crm-teal,#0e8f83)]"
       >
+        <i class="block size-1.5 rounded-full bg-current" aria-hidden="true" />
         {{ __('Editing') }}
       </span>
-      <span class="min-w-0 truncate text-[12.5px] text-[color:var(--crm-muted-fg,#5b6478)]">
-        <b class="font-semibold text-[color:var(--crm-fg,#0b1324)]">{{
-          current?.title || __('Dashboard')
-        }}</b>
+      <b class="shrink-0 font-semibold text-[color:var(--crm-fg,#0b1324)]">{{
+        current?.title || __('Dashboard')
+      }}</b>
+      <span class="min-w-0 truncate text-[color:var(--crm-muted-fg,#5b6478)]">
         {{
           __(
             'Drag a tile to move it, drag a corner to resize. Tiles snap to a 12-column grid.',
@@ -160,27 +217,53 @@
         }}
       </span>
       <span class="flex-1" />
-      <Button
-        size="sm"
-        :label="__('Add tile')"
-        iconLeft="lucide-plus"
+      <!-- Native .btn.sm — matches Figma chrome better than frappe-ui Button -->
+      <button
+        type="button"
+        class="inline-flex h-7 items-center gap-[7px] rounded-[7px] border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px] font-semibold text-[color:var(--crm-fg,#0b1324)]"
         @click="showAddTile = true"
-      />
-      <Button
-        size="sm"
-        variant="ghost"
-        :label="__('Reset to default')"
+      >
+        <svg
+          class="size-3.5 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        {{ __('Add tile') }}
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-7 items-center rounded-[7px] border border-transparent bg-transparent px-2.5 text-[12.5px] font-semibold text-[color:var(--crm-muted-fg,#5b6478)]"
         @click="resetLayout"
-      />
-      <Button size="sm" :label="__('Cancel')" @click="cancelEdit" />
-      <AstraButton
-        size="sm"
-        variant="primary"
-        :loading="saving"
+      >
+        {{ __('Reset to default') }}
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-7 items-center gap-[7px] rounded-[7px] border border-[color:var(--crm-border-strong,#d0d9e0)] bg-[color:var(--crm-card,#fff)] px-2.5 text-[12.5px] font-semibold text-[color:var(--crm-fg,#0b1324)]"
+        @click="cancelEdit"
+      >
+        {{ __('Cancel') }}
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-7 items-center gap-[7px] rounded-[7px] border border-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-primary,#0a7393)] px-2.5 text-[12.5px] font-semibold text-[color:var(--crm-primary-fg,#fff)] disabled:cursor-not-allowed disabled:opacity-55"
+        :disabled="saving"
         @click="saveLayout"
       >
+        <span
+          v-if="saving"
+          class="size-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"
+          aria-hidden="true"
+        />
         {{ __('Save dashboard') }}
-      </AstraButton>
+      </button>
     </div>
 
     <ReportGrid
@@ -221,12 +304,9 @@ import AddTileModal from '@/components/reports/AddTileModal.vue'
 import ChartBuilderModal from '@/components/reports/ChartBuilderModal.vue'
 import KpiBuilderModal from '@/components/reports/KpiBuilderModal.vue'
 import ReportGrid from '@/components/reports/ReportGrid.vue'
-import AstraButton from '@/components/astra/AstraButton.vue'
 import AstraConceptBanner from '@/components/astra/AstraConceptBanner.vue'
 import AstraPageHeader from '@/components/astra/AstraPageHeader.vue'
-import LucideChevronDown from '~icons/lucide/chevron-down'
 import LucidePenLine from '~icons/lucide/pen-line'
-import LucidePlus from '~icons/lucide/plus'
 import { usersStore } from '@/stores/users'
 import { getSettings } from '@/stores/settings'
 import {
@@ -591,3 +671,10 @@ watch(
 
 watch(period, () => reloadDashboard())
 </script>
+
+<style scoped>
+/* Figma svg.i stroke-width 1.75 on filter/edit chrome icons */
+:deep(svg[width='24']) {
+  stroke-width: 1.75;
+}
+</style>

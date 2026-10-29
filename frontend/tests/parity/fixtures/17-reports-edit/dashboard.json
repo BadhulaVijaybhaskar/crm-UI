@@ -91,7 +91,7 @@
             "Ready to Close"
           ],
           "values": [18.0, 22.2, 16.3, 20.5, 4.3],
-          "heights": [55, 70, 48, 62, 18],
+          "heights": [137, 170, 124, 156, 32],
           "colors": [
             "var(--crm-c6)",
             "var(--crm-c4)",
@@ -163,17 +163,20 @@
         "data": {
           "subtitle": "· vs last year",
           "labels": ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
+          "grid_ys": [27, 55, 82],
           "series": [
-            {
-              "name": "This year",
-              "data": [12, 14, 13, 18, 16, 22, 24],
-              "color": "var(--crm-c1)"
-            },
             {
               "name": "Last year",
               "data": [10, 11, 12, 14, 13, 15, 16],
               "dashed": true,
-              "color": "var(--crm-c6)"
+              "color": "var(--crm-c6)",
+              "points": "0,91 47,84 94,87 141,74 189,77 236,65 283,69 330,57 378,60 425,53 472,48 520,41"
+            },
+            {
+              "name": "This year",
+              "data": [12, 14, 13, 18, 16, 22, 24],
+              "color": "var(--crm-c1)",
+              "points": "0,83 47,73 94,78 141,59 189,63 236,46 283,52 330,35 378,39 425,29 472,22 520,12"
             }
           ]
         }

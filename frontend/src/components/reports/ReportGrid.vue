@@ -1,7 +1,11 @@
 <template>
   <div
-    class="report-grid min-h-0 flex-1 overflow-y-auto pb-6 pt-1"
-    :class="editing ? 'report-grid--editing mx-crm-page-x' : 'px-crm-page-x'"
+    class="report-grid min-h-0 flex-1 pb-6 pt-1"
+    :class="
+      editing
+        ? 'report-grid--editing mx-crm-page-x overflow-visible'
+        : 'overflow-y-auto px-crm-page-x'
+    "
   >
     <GridLayout
       v-if="items.length > 0"
@@ -36,7 +40,10 @@
           v-if="draggingId && draggingId === tile.id"
           class="report-tile-drop-slot"
           aria-hidden="true"
-        />
+        >
+          <LucideMove class="size-3.5" aria-hidden="true" />
+          {{ __('Drop here · {0} × {1}', [tile.layout.w, tile.layout.h]) }}
+        </div>
         <div
           v-if="layoutReady"
           class="h-full w-full"
@@ -48,6 +55,7 @@
             :tile="tile"
             :editing="editing"
             :selected="selectedId === tile.id"
+            :dragging="draggingId === tile.id"
             @select="$emit('select', tile)"
             @edit="$emit('edit', tile)"
             @duplicate="$emit('duplicate', tile)"
@@ -85,6 +93,7 @@
 <script setup>
 import ReportTile from './ReportTile.vue'
 import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
+import LucideMove from '~icons/lucide/move'
 import { Button } from 'frappe-ui'
 import { GridItem, GridLayout } from 'grid-layout-plus'
 import { ref } from 'vue'
@@ -108,7 +117,13 @@ function onLayout(newLayout) {
 </script>
 
 <style scoped>
+/*
+ * Figma .dgrid.edit grid fill + dashed outline. ::before covers the top
+ * gutter so vertical lines don’t paint into the solid body pad (HTML has
+ * no grid there — dark-mode agree-disagree hotspot when they leak).
+ */
 .report-grid--editing {
+  position: relative;
   background-image:
     linear-gradient(
       to right,
@@ -124,6 +139,17 @@ function onLayout(newLayout) {
   outline: 1px dashed var(--crm-border-strong, #d0d9e0);
   outline-offset: 6px;
   border-radius: 4px;
+}
+.report-grid--editing::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background: var(--crm-bg, #f3f6f8);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .vgl-layout {
@@ -141,6 +167,8 @@ function onLayout(newLayout) {
  * one margin so tile left edges match the Figma PNG / HTML dgrid.
  */
 .report-grid-layout {
+  position: relative;
+  z-index: 1;
   margin-left: -12px;
   margin-right: -12px;
   width: calc(100% + 24px);
@@ -180,42 +208,55 @@ function onLayout(newLayout) {
   position: absolute;
   inset: 0;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 2px dashed var(--crm-primary, #0a7393);
   border-radius: 10px;
   background: var(--crm-primary-soft, #e4f2f6);
+  color: var(--crm-primary, #0a7393);
+  font-size: 12px;
+  font-weight: 600;
   pointer-events: none;
+}
+.report-tile-drop-slot :deep(svg) {
+  /* Figma svg.i stroke-width 1.75 */
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.75;
 }
 
 :deep(.vgl-item--dragging) .report-tile-drag-ghost,
 .report-tile-drag-ghost {
   /*
-   * Figma 17 mid-drag: card fills the slot then shifts down-right so the
-   * soft dashed home-slot shows along the top/left and the card overhangs.
+   * Figma 17: .tile.drag is absolutely positioned then rotate(-0.6deg)
+   * around its own centre. Offset with top/left (not translate) so the
+   * rotation origin matches HTML — translate()+rotate() was rotating
+   * around the pre-offset centre and fringing the ring.
    */
   position: absolute;
-  inset: 0;
+  top: 30px;
+  left: 28px;
   z-index: 2;
-  width: auto;
-  height: auto;
-  transform: translate(10px, 22px) rotate(-0.6deg);
-  box-shadow: var(
-    --crm-shadow-tile-drag,
-    0 14px 30px rgba(4, 20, 27, 0.2),
-    0 0 0 2px var(--crm-primary, #0a7393)
-  );
-  border-radius: 10px;
-  background: var(--crm-card, #fff);
+  width: calc(100% - 30px);
+  height: calc(100% - 18px);
+  transform: rotate(-0.6deg);
+  background: transparent;
 }
 
+/*
+ * Hide grid-layout-plus resizer chrome — ReportTile draws Figma .hdl on every
+ * edit tile (and selection handles when selected) so we don't double-draw.
+ * Keep the hit target so resize still works.
+ */
 :deep(.vgl-item__resizer) {
-  right: 3px;
-  bottom: 3px;
-  width: 12px;
-  height: 12px;
-  border-right: 2px solid var(--crm-primary, #0a7393);
-  border-bottom: 2px solid var(--crm-primary, #0a7393);
-  border-radius: 0 0 3px 0;
-  box-sizing: border-box;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  border: 0;
   background: transparent;
+  opacity: 0;
 }
 </style>

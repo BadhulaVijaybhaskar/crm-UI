@@ -3,33 +3,59 @@
     <div
       class="flex items-center gap-1.5 text-[12px] font-semibold text-[color:var(--crm-muted-fg,#5b6478)]"
     >
-      <LucideGripVertical
+      <svg
         v-if="editing"
         class="size-3.5 shrink-0 text-[color:var(--crm-faint,#8a94a6)]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
         aria-hidden="true"
-      />
+      >
+        <circle cx="9" cy="6" r="1" />
+        <circle cx="15" cy="6" r="1" />
+        <circle cx="9" cy="12" r="1" />
+        <circle cx="15" cy="12" r="1" />
+        <circle cx="9" cy="18" r="1" />
+        <circle cx="15" cy="18" r="1" />
+      </svg>
+      <span class="min-w-0 truncate">{{ title }}</span>
       <span
         v-if="data?.kpi_type === 'calculated'"
-        class="inline-flex h-4 items-center rounded px-[5px] text-[10px] font-semibold text-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-primary-soft,#e4f2f6)]"
+        class="ml-1 inline-flex h-[18px] shrink-0 items-center rounded-[5px] px-[7px] text-[10px] font-semibold text-[color:var(--crm-primary,#0a7393)] bg-[color:var(--crm-primary-soft,#e4f2f6)]"
       >
         ƒ calc
       </span>
-      <span class="min-w-0 flex-1 truncate">{{ title }}</span>
-      <LucideEllipsis
-        v-if="editing"
+      <span class="flex-1" />
+      <svg
+        v-if="editing && !dragging && !selected"
         class="size-3.5 shrink-0 text-[color:var(--crm-faint,#8a94a6)]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
         aria-hidden="true"
-      />
+      >
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </svg>
     </div>
     <div
-      class="mt-1.5 text-[26px] font-semibold leading-[1.1] tracking-[-0.02em] text-[color:var(--crm-fg,#0b1324)]"
+      class="mt-1.5 text-[26px] font-semibold tracking-[-0.02em] text-[color:var(--crm-fg,#0b1324)] tabular-nums"
     >
       {{ displayValue }}
     </div>
-    <div v-if="deltaParts.lead || deltaParts.trail" class="mt-1 text-[11.5px]">
+    <div
+      v-if="deltaParts.lead || deltaParts.trail"
+      class="text-[11.5px] font-semibold leading-[16.7px]"
+    >
       <span
         v-if="deltaParts.lead"
-        class="font-semibold"
         :class="
           delta?.direction === 'up'
             ? 'text-[color:var(--crm-success,#0f8a5f)]'
@@ -42,7 +68,7 @@
       </span>
       <span
         v-if="deltaParts.trail"
-        class="text-[color:var(--crm-muted-fg,#5b6478)]"
+        class="font-medium text-[color:var(--crm-muted-fg,#5b6478)]"
         :class="deltaParts.lead ? '' : 'font-semibold'"
       >
         {{ deltaParts.trail }}
@@ -53,14 +79,14 @@
 
 <script setup>
 import { formatDelta, formatKpiValue } from '@/utils/reports/formatKpi'
-import LucideEllipsis from '~icons/lucide/ellipsis'
-import LucideGripVertical from '~icons/lucide/grip-vertical'
 import { computed } from 'vue'
 
 const props = defineProps({
   title: { type: String, default: '' },
   data: { type: Object, default: null },
   editing: { type: Boolean, default: false },
+  dragging: { type: Boolean, default: false },
+  selected: { type: Boolean, default: false },
 })
 
 const displayValue = computed(() => {
@@ -97,7 +123,8 @@ const deltaParts = computed(() => {
     return { lead, trail: ` = ${hint}` }
   }
   if (props.data?.secondary) {
-    return { lead, trail: ` · ${props.data.secondary}` }
+    // Figma: "▲ 14% 4 deals" — space only, no middle dot
+    return { lead, trail: ` ${props.data.secondary}` }
   }
   const compare = props.data?.compare_label
   if (compare === '') return { lead, trail: '' }

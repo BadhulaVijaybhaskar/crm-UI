@@ -3,47 +3,73 @@
     <div
       class="mb-0 flex items-center gap-1.5 truncate text-[12px] font-semibold text-[color:var(--crm-muted-fg,#5b6478)]"
     >
-      <LucideGripVertical
+      <!-- Figma .grab: circles at y=6/12/18 (not Lucide 5/12/19) -->
+      <svg
         v-if="editing"
         class="size-3.5 shrink-0 text-[color:var(--crm-faint,#8a94a6)]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
         aria-hidden="true"
-      />
+      >
+        <circle cx="9" cy="6" r="1" />
+        <circle cx="15" cy="6" r="1" />
+        <circle cx="9" cy="12" r="1" />
+        <circle cx="15" cy="12" r="1" />
+        <circle cx="9" cy="18" r="1" />
+        <circle cx="15" cy="18" r="1" />
+      </svg>
       <span class="truncate">{{ title }}</span>
       <span
         v-if="subtitle"
-        class="shrink-0 font-medium text-[color:var(--crm-faint,#8a94a6)]"
+        class="shrink-0 font-medium text-[color:var(--crm-muted-fg,#5b6478)]"
       >
         · {{ subtitle }}
       </span>
       <span class="flex-1" />
-      <LucideEllipsis
-        v-if="editing"
+      <svg
+        v-if="editing && !dragging && !selected"
         class="size-3.5 shrink-0 text-[color:var(--crm-faint,#8a94a6)]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
         aria-hidden="true"
-      />
+      >
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </svg>
     </div>
 
-    <!-- Funnel — centered taper (Figma PNG); label left, value right -->
+    <!-- Funnel — Figma: label 62px muted, bar h=20 r=4, value 34px, gap 6/8 -->
     <div v-if="kind === 'funnel'" class="mt-2.5 flex min-h-0 flex-1 flex-col gap-1.5">
       <div
         v-for="(step, i) in funnelSteps"
         :key="i"
-        class="grid grid-cols-[70px_1fr_36px] items-center gap-2 text-[11.5px]"
+        class="flex items-center gap-2 text-[11.5px]"
       >
-        <span class="truncate text-[color:var(--crm-fg,#0b1324)]">{{
-          step.label
-        }}</span>
-        <div class="flex min-w-0 justify-center">
+        <span
+          class="w-[62px] shrink-0 truncate text-[color:var(--crm-muted-fg,#5b6478)]"
+          >{{ step.label }}</span
+        >
+        <div class="flex min-w-0 flex-1 justify-center">
           <div
-            class="h-5 rounded"
+            class="h-5"
             :style="{
               width: `${step.width}%`,
               background: step.color,
+              borderRadius: '4px',
             }"
           />
         </div>
         <span
-          class="text-right font-semibold tabular-nums text-[color:var(--crm-fg,#0b1324)]"
+          class="w-[34px] shrink-0 text-right font-semibold tabular-nums text-[color:var(--crm-fg,#0b1324)]"
         >
           {{ step.value }}
         </span>
@@ -82,70 +108,71 @@
       </ul>
     </div>
 
-    <!-- Table / deal rows -->
-    <div v-else-if="kind === 'table'" class="mt-1 min-h-0 flex-1 overflow-auto">
-      <div
-        v-for="(row, i) in tableRows"
-        :key="i"
-        class="flex h-11 items-center gap-2.5 border-t border-[color:var(--crm-border,#e1e7ec)] text-[12.5px] first:border-t-0"
-      >
-        <span
-          class="min-w-0 flex-1 truncate font-semibold text-[color:var(--crm-fg,#0b1324)]"
-        >
-          {{ row.name || row.label || row[tableCols[0]] }}
-        </span>
-        <span
-          v-if="row.status || row.stage || row[tableCols[1]]"
-          class="inline-flex h-[22px] max-w-[140px] items-center gap-1.5 truncate rounded-md px-1.5 text-[11.5px] text-[color:var(--crm-muted-fg,#5b6478)]"
-        >
-          <i
-            class="block size-1.5 shrink-0 rounded-[2px]"
-            :style="{
-              background:
-                stageColor(row.status || row.stage || row[tableCols[1]]) ||
-                'var(--crm-c6)',
-            }"
-            aria-hidden="true"
-          />
-          {{ row.status || row.stage || row[tableCols[1]] }}
-        </span>
-        <span
-          class="w-16 text-right font-semibold tabular-nums text-[color:var(--crm-fg,#0b1324)]"
-        >
-          {{
-            (() => {
-              const raw = row.deal_value ?? row.value ?? row[tableCols[2]]
-              if (typeof raw === 'string') return raw
-              return formatKpiValue(
-                raw,
-                typeof raw === 'number' ? 'currency' : 'number',
-              )
-            })()
-          }}
-        </span>
-        <span
-          v-if="row.owner || row.deal_owner || row.initials"
-          class="flex size-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--crm-primary-soft,#e4f2f6)] text-[9px] font-bold text-[color:var(--crm-primary,#0a7393)]"
-        >
-          {{ rowInitials(row) }}
-        </span>
-      </div>
-    </div>
+    <!-- Table — Figma .tbl (td h=44, pad 0 10px) + .st + .av2.sm -->
+    <table
+      v-else-if="kind === 'table'"
+      class="report-tbl mt-1.5 w-full border-collapse"
+    >
+      <tbody>
+        <tr v-for="(row, i) in tableRows" :key="i">
+          <td>
+            <span class="font-semibold">{{
+              row.name || row.label || row[tableCols[0]]
+            }}</span>
+          </td>
+          <td>
+            <span
+              v-if="row.status || row.stage || row[tableCols[1]]"
+              class="report-st"
+            >
+              <i
+                :style="{
+                  background:
+                    stageColor(row.status || row.stage || row[tableCols[1]]) ||
+                    'var(--crm-faint, #8a94a6)',
+                }"
+              />
+              {{ row.status || row.stage || row[tableCols[1]] }}
+            </span>
+          </td>
+          <td class="num r">
+            {{
+              (() => {
+                const raw = row.deal_value ?? row.value ?? row[tableCols[2]]
+                if (typeof raw === 'string') return raw
+                return formatKpiValue(
+                  raw,
+                  typeof raw === 'number' ? 'currency' : 'number',
+                )
+              })()
+            }}
+          </td>
+          <td>
+            <span
+              v-if="row.owner || row.deal_owner || row.initials"
+              class="report-av2"
+              >{{ rowInitials(row) }}</span
+            >
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-    <!-- Line chart -->
-    <div v-else-if="kind === 'line'" class="mt-2 min-h-0 flex-1">
+    <!-- Line chart — Figma SVG is fixed 520×110, grid at 27/55/82 -->
+    <div v-else-if="kind === 'line'" class="mt-3 min-h-0 flex-1">
       <svg
         v-if="lineSeries.length"
-        class="h-full w-full"
-        viewBox="0 0 520 140"
-        preserveAspectRatio="none"
+        width="520"
+        height="110"
+        viewBox="0 0 520 110"
+        class="block overflow-visible"
       >
         <line
-          v-for="g in [28, 70, 112]"
+          v-for="g in lineGridYs"
           :key="g"
-          x1="8"
+          x1="0"
           :y1="g"
-          x2="512"
+          x2="520"
           :y2="g"
           stroke="var(--crm-border, #e1e7ec)"
           stroke-width="1"
@@ -156,10 +183,8 @@
           fill="none"
           :stroke="series.color"
           :stroke-width="series.dashed ? 2 : 2.5"
-          :stroke-dasharray="series.dashed ? '4 3' : undefined"
+          :stroke-dasharray="series.dashed ? '4 4' : undefined"
           :points="series.points"
-          stroke-linecap="round"
-          stroke-linejoin="round"
         />
       </svg>
       <div
@@ -170,40 +195,24 @@
       </div>
     </div>
 
-    <!-- Bar chart with value labels -->
-    <div v-else-if="kind === 'bar'" class="mt-2 min-h-0 flex-1">
-      <div
-        v-if="bars.length"
-        class="hb flex h-full min-h-0 items-end gap-2.5 pb-2.5 pt-1"
-      >
-        <div
-          v-for="(bar, i) in bars"
-          :key="i"
-          class="relative flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1"
-        >
-          <em
-            class="absolute -top-4 text-[11px] font-semibold not-italic text-[color:var(--crm-fg,#0b1324)]"
-          >
-            {{ bar.display }}
-          </em>
+    <!-- Bar chart — Figma .hb (v3 padding 18px + crm padding-top 8px) -->
+    <div v-else-if="kind === 'bar'" class="report-hb min-h-0 flex-1">
+      <template v-if="bars.length">
+        <div v-for="(bar, i) in bars" :key="i" class="report-hb__b">
+          <span class="report-hb__num">{{ bar.display }}</span>
           <i
-            class="block w-full rounded-t"
             :style="{
-              height: `${bar.height}%`,
+              height: bar.heightCss,
               background: bar.color,
               minHeight: bar.value ? '4px' : '0',
             }"
           />
-          <span
-            class="w-full truncate text-center text-[10.5px] text-[color:var(--crm-muted-fg,#5b6478)]"
-          >
-            {{ bar.short }}
-          </span>
+          <span class="report-hb__label">{{ bar.short }}</span>
         </div>
-      </div>
+      </template>
       <div
         v-else
-        class="flex h-full items-center justify-center text-[12px] text-[color:var(--crm-muted-fg,#5b6478)]"
+        class="flex h-full w-full items-center justify-center text-[12px] text-[color:var(--crm-muted-fg,#5b6478)]"
       >
         {{ __('No data for this period') }}
       </div>
@@ -214,8 +223,6 @@
 <script setup>
 import { chartColor, stageColor } from '@/utils/reports/chartColors'
 import { formatKpiValue } from '@/utils/reports/formatKpi'
-import LucideEllipsis from '~icons/lucide/ellipsis'
-import LucideGripVertical from '~icons/lucide/grip-vertical'
 import { computed } from 'vue'
 
 /** Figma PNG funnel palette (centered taper) — PNG wins over HTML c2/c3/…. */
@@ -236,6 +243,8 @@ const props = defineProps({
   tileType: { type: String, default: 'bar' },
   data: { type: Object, default: null },
   editing: { type: Boolean, default: false },
+  dragging: { type: Boolean, default: false },
+  selected: { type: Boolean, default: false },
 })
 
 const kind = computed(() => {
@@ -318,6 +327,11 @@ const bars = computed(() => {
     }))
   }
   const max = Math.max(...rows.map((r) => Number(r.value) || 0), 1)
+  // Figma capture uses absolute px heights (incl. short bars like 32px).
+  const heights = rows.map((r) =>
+    r.height != null ? Number(r.height) : null,
+  )
+  const usePxHeights = heights.some((h) => h != null && h > 100)
   return rows.slice(0, 8).map((r, i) => {
     const n = Number(r.value) || 0
     const display =
@@ -327,14 +341,15 @@ const bars = computed(() => {
           ? formatKpiValue(n, 'currency').replace('₹', '')
           : // Figma bar labels use one decimal (18.0, 22.2, …)
             Number(n).toFixed(1)
-    const height =
-      r.height != null
-        ? Number(r.height)
-        : (n / max) * 70 + (n ? 10 : 0)
+    const rawH = heights[i]
+    const heightCss =
+      rawH != null && usePxHeights
+        ? `${rawH}px`
+        : `${rawH != null ? rawH : (n / max) * 70 + (n ? 10 : 0)}%`
     return {
       label: r.label,
       value: r.value,
-      height,
+      heightCss,
       short: String(r.label || ''),
       display,
       color: r.color || stageColor(r.label) || chartColor(i),
@@ -342,29 +357,50 @@ const bars = computed(() => {
   })
 })
 
+/** Figma p-17 gridline Y positions inside the 520×110 SVG. */
+const lineGridYs = computed(() => props.data?.grid_ys || [27, 55, 82])
+
 const lineSeries = computed(() => {
   const labels = props.data?.labels || []
   const series = props.data?.series || []
   if (!series.length) return []
 
-  const allVals = series.flatMap((s) => (s.data || []).map(Number)).filter(Number.isFinite)
+  // Prefer exact Figma polyline points when provided by the fixture.
+  // Respect explicit `dashed` — do NOT force si>0 (This year is solid).
+  if (series.every((s) => s.points)) {
+    return series.map((s) => {
+      const dashed = Boolean(s.dashed)
+      return {
+        name: s.name,
+        dashed,
+        color: s.color || (dashed ? 'var(--crm-c6)' : 'var(--crm-c1)'),
+        points: String(s.points),
+      }
+    })
+  }
+
+  const allVals = series
+    .flatMap((s) => (s.data || []).map(Number))
+    .filter(Number.isFinite)
   const max = Math.max(...allVals, 1)
   const min = Math.min(...allVals, 0)
   const span = Math.max(max - min, 1)
-  const n = Math.max(labels.length, ...series.map((s) => (s.data || []).length), 1)
-  const padX = 16
-  const padY = 16
-  const w = 520 - padX * 2
-  const h = 140 - padY * 2
+  const n = Math.max(
+    labels.length,
+    ...series.map((s) => (s.data || []).length),
+    1,
+  )
+  const w = 520
+  const h = 110
 
   return series.map((s, si) => {
     const data = s.data || []
     const pts = data.map((v, i) => {
-      const x = padX + (n <= 1 ? w / 2 : (i / (n - 1)) * w)
-      const y = padY + h - ((Number(v) - min) / span) * h
+      const x = n <= 1 ? w / 2 : (i / (n - 1)) * w
+      const y = h - ((Number(v) - min) / span) * h
       return `${x.toFixed(1)},${y.toFixed(1)}`
     })
-    const dashed = Boolean(s.dashed || si > 0)
+    const dashed = Boolean(s.dashed)
     return {
       name: s.name,
       dashed,
@@ -382,3 +418,103 @@ function rowInitials(row) {
   return name.slice(0, 2).toUpperCase() || '—'
 }
 </script>
+
+<style scoped>
+/*
+ * Figma cascade: v3.css .hb { padding: 10px 18px } then crm.css
+ * .hb { padding-top: 8px } → computed padding 8px 18px 10px.
+ */
+.report-hb {
+  /* v3 .hb { padding:10px 18px; border-top } + crm { padding-top:8px } */
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  padding: 8px 18px 10px;
+  border-top: 1px solid var(--crm-border, #e1e7ec);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.report-hb__b {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  min-width: 0;
+  font-size: 10.5px;
+  color: var(--crm-muted-fg, #5b6478);
+}
+.report-hb__b i {
+  display: block;
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  flex: none;
+}
+.report-hb__num {
+  /* Inherited from .hb .b { font-size:10.5px } in Figma; weight/color via inline .num */
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--crm-fg, #0b1324);
+  font-variant-numeric: tabular-nums;
+  line-height: 15.225px;
+}
+.report-hb__label {
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-tbl td {
+  height: 44px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--crm-border, #e1e7ec);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.report-tbl tr:last-child td {
+  border-bottom: 0;
+}
+.report-tbl td.r {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.report-st {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--crm-neutral-soft, #eef1f6);
+  color: var(--crm-fg, #0b1324);
+}
+.report-st i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  display: block;
+  background: var(--crm-faint, #8a94a6);
+}
+.report-av2 {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--crm-primary-soft, #e4f2f6);
+  color: var(--crm-primary, #0a7393);
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
